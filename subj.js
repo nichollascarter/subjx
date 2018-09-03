@@ -678,8 +678,6 @@
 
                         let css = {};
 
-                        draggable[storage] = {};
-
                         if (!sel[storage].style || sel[storage].style === 'default') {
                                 css = { 
                                         width: Subj(sel).css('width'),
@@ -706,6 +704,8 @@
                         } else if (typeof sel[storage].style === 'object') {
                                 Object.assign(css, sel[storage].style);
                         }
+
+                        draggable[storage] = {};
 
                         Subj(draggable).css(css);
 
