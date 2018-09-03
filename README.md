@@ -27,6 +27,7 @@ Subj(elem).draggle('disable'); //disable tool
 ```
 
 2) Tool for creating a clone:
+
 ```javascript
 Subj(elem).clone({
 	stack: 'selector',
@@ -44,6 +45,5 @@ Subj(elem).clone({
 	appendTo: 'selector'
 });
 
-//Disable tool
-Subj(elem).clone('disable');
+Subj(elem).clone('disable'); //Disable tool
 ```
