@@ -1,0 +1,78 @@
+/* .dg-draggle {} */
+
+.dg-wrapper {
+    position: static;
+    width: 0;
+    height : 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+}
+
+.dg-controls {  
+    display: inline-block;
+    box-sizing: border-box;
+    top:0;
+    left:0;   
+    z-index: 2147483647;
+    border: 1px dashed #32B5FE;
+    cursor: move;
+}
+
+.dg-hdl {
+    border-radius: 10px;
+    width: 6px;
+    height: 6px;
+    margin-left: -4px;
+    margin-top: -4px;
+    background-color: #32B5FE;
+    border: 1px solid #32B5FE;
+}
+
+.dg, .dg-controls, .dg-hdl {
+    position: absolute;
+}
+
+.dg-hdl-t {
+    top: 0;
+}
+
+.dg-hdl-m {
+    top: 50%;
+}
+
+.dg-hdl-b {
+    top: 100%;
+}
+
+.dg-hdl-l {
+    left: 0;
+}
+
+.dg-hdl-c {
+    left: 50%;
+}
+
+.dg-hdl-r {
+    left: 100%;
+}
+
+.dg-rotator{
+    top: -25px;
+    left: 50%;
+}
+
+.dg-hdl-tc, .dg-hdl-bc {
+     cursor: ns-resize;
+}
+.dg-hdl-ml, .dg-hdl-mr {
+    cursor: ew-resize;
+}
+
+.dg-hdl-tl, .dg-hdl-br {
+    cursor : nwse-resize;
+}
+.dg-hdl-tr, .dg-hdl-bl {
+    cursor : nesw-resize;
+}
