@@ -672,7 +672,7 @@
 
                 function _down(e, sel) {
 
-                        const draggable = document.createElement('div');
+                        let draggable = document.createElement('div');
 
                         const pos = sel[storage].appendTo ? offset(Subj(sel[storage].appendTo)[0]) : offset(Subj('body')[0]);
 
