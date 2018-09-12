@@ -17,7 +17,7 @@
             || global.mozCancelAnimationFrame
             || function(requestID) {clearTimeout(requestID);};
 
-        const unitEXP = /px|em|%|ex|ch|rem|vh|vw|vmin|vmax|mm|cm|in|pt|pc|deg/;
+        const unitEXP = /px|em|%|ex|ch|rem|vh|vw|vmin|vmax|mm|cm|in|pt|pc|deg/; //supports only px|%
         const radToDeg = 180/Math.PI;  
 
         const forEach = Array.prototype.forEach,
@@ -25,7 +25,7 @@
                 warn = console.warn;
         
         const storage = (function () {
-                return 'Subj' + Math.random().toString(32).substr(2, 10);
+                return `Subj${Math.random().toString(32).substr(2, 10)}`;
         })();
         
         class Subject {
@@ -100,7 +100,7 @@
                 } else if (typeof method === 'object' || !method) {
                         return methods.enable.apply(this, arguments);
                 } else {
-                        warn('Method ' +  method + ' does not exist');
+                        warn(`Method ${method} does not exist`);
                 }
                            
                 function _init(sel, options) {                   
@@ -275,7 +275,7 @@
                         data.ctrlKey = e.ctrlKey;
                         data.cx = e.pageX;
                         data.cy = e.pageY;
-                        data.tl_off =  offset(data.divs.tl[0]);
+                        data.tl_off = offset(data.divs.tl[0]);
                         data.tr_off = offset(data.divs.tr[0]);
                         data.br_off = offset(data.divs.br[0]);
                                            
@@ -432,8 +432,8 @@
                                                                                                                                   
                                                 let doy = handle.is(pressed.divs.br);
                                                 
-                                                if (doy) controls.style.height = y + pressed.ch + 'px'; 
-                                                controls.style.width = x + pressed.cw + 'px'; 
+                                                if (doy) controls.style.height = `${y + pressed.ch}px`; 
+                                                controls.style.width = `${x + pressed.cw}px`; 
                                                 
                                                 revX = false; revY = false;                                                                                                                                                                                                                                                                              
                                             
@@ -449,9 +449,9 @@
                                             
                                                 let doy = handle.is(pressed.divs.tl);
   
-                                                controls.style.width = -x + pressed.cw + 'px'; 
+                                                controls.style.width = `${-x + pressed.cw}px`;
                                                  
-                                                if (doy) controls.style.height = -y + pressed.ch + 'px';  
+                                                if (doy) controls.style.height = `${-y + pressed.ch}px`;  
                                                 
                                                 revX = true; revY = true;                                                                  
                                             
@@ -470,9 +470,9 @@
                                                 
                                                 if (dox) y = -y; x = -x;
                                                 
-                                                controls.style.height = -y + pressed.ch + 'px';                                                                                                 
+                                                controls.style.height = `${-y + pressed.ch}px`;                                                                                                 
                                                  
-                                                if (dox) controls.style.width = x + pressed.cw + 'px';  
+                                                if (dox) controls.style.width = `${x + pressed.cw}px`; 
                                                 
                                                 revX = doy; revY = true;                                                                                                                                                                           
                                         
@@ -488,9 +488,9 @@
                                                 y = pressed.pageY - pressed.cy; 
                                                 x = pressed.pageX - pressed.cx;  
                                                 
-                                                controls.style.height = y + pressed.ch + 'px';                                                                                               
+                                                controls.style.height = `${y + pressed.ch}px`;                                                                                              
                                                  
-                                                if (dox) controls.style.width = -x + pressed.cw + 'px';   
+                                                if (dox) controls.style.width = `${-x + pressed.cw}px`;   
                                                 
                                                 revX = dox; revY = false;                               
                                         } 
@@ -498,8 +498,8 @@
                                         //recalculate coords while dimensions are changing
                                         coords = rotatedTopLeft(pressed.coordX, pressed.coordY, controls.style.width, controls.style.height,pressed.refang,revX,revY);
                                         
-                                        let resultY = pressed.coordY*2 - coords.top + 'px',
-                                            resultX = pressed.coordX*2 - coords.left + 'px';
+                                        let resultY = `${pressed.coordY*2 - coords.top}px`,
+                                            resultX = `${pressed.coordX*2 - coords.left}px`;
                                         
                                         controls.style.top = resultY; 
                                         controls.style.left = resultX;
@@ -519,11 +519,11 @@
                                         let left = pressed.pageX - pressed.x;                                      
                                                                                                                                                                                                   
                                         if (Math.abs(top-oldTop) >= snap) {
-                                                controls.style.top = top + 'px'; 
+                                                controls.style.top = `${top}px`; 
                                         }
                                         
                                          if (Math.abs(left-oldLeft) >= snap) {
-                                                controls.style.left = left + 'px';                                                
+                                                controls.style.left = `${left}px`;                                               
                                         }
                                                                                                                                                                                           
                                         Subj(pressed.parent).find('.dg-draggle').each(function(){
@@ -533,10 +533,10 @@
                                                         let _this = this[storage];
 
                                                         if (Math.abs(top-oldTop) >= snap) {
-                                                                _this.controls.style.top = parseFloat(_this.controls.style.top) - (oldTop - top) + 'px';
+                                                                _this.controls.style.top = `${parseFloat(_this.controls.style.top) - (oldTop - top)}px`;
                                                         }
                                                         if (Math.abs(left-oldLeft) >= snap) {
-                                                                _this.controls.style.left = parseFloat(_this.controls.style.left) - (oldLeft - left) + 'px';                        
+                                                                _this.controls.style.left = `${parseFloat(_this.controls.style.left) - (oldLeft - left)}px`;                        
                                                         }        
 
                                                         this.style.top = fromPX(_this.controls.style.top, Subj(pressed.parent).css('height'), d.top);
@@ -559,7 +559,7 @@
                             
                                         let degree = ((pressed.refang + radians - pressed.pressang) * (radToDeg)); 
 
-                                        let value = 'rotate(' + degree + 'deg)';                                        
+                                        let value = `rotate(${degree}deg)`;                                        
                                                                               
                                         const css = {
                                                 transform: value,
@@ -617,7 +617,7 @@
                 } else if (typeof method === 'object' || !method) {
                         return methods.enable.apply(this, arguments);
                 } else {
-                        warn('Method ' +  method + ' does not exist');
+                        warn(`Method ${method} does not exist`);
                 }
                 return false;
 
@@ -686,8 +686,8 @@
                                         padding: 0,
                                         border: '#32B5FE 1px solid',
                                         background:'transparent',
-                                        top: (e.pageY - pos.top) + 'px',
-                                        left : (e.pageX - pos.left) + 'px',
+                                        top: `${(e.pageY - pos.top)}px`,
+                                        left: `${(e.pageX - pos.left)}px`,
                                         position :'absolute'
                                 }
                         } else if (sel[storage].style === 'clone') {
@@ -697,8 +697,8 @@
                                         height: Subj(sel).css('height'),
                                         margin: 0,
                                         padding: 0,
-                                        top: (e.pageY - pos.top) + 'px',
-                                        left : (e.pageX - pos.left) + 'px',
+                                        top: `${(e.pageY - pos.top)}px`,
+                                        left: `${(e.pageX - pos.left)}px`,
                                         position :'absolute'
                                 }
                         } else if (typeof sel[storage].style === 'object') {
@@ -821,8 +821,8 @@
                                 const pos = offset(draggable.parentNode);  //sel.data.appendTo ? offset(Subj(sel.data.appendTo)[0]) :
                               
                                 // moving
-                                Subj(draggable).css({top : (pressed.pageY - pressed.y - pos.top) +'px'});
-                                Subj(draggable).css({left : (pressed.pageX - pressed.x - pos.left) + 'px'});
+                                Subj(draggable).css({top: `${(pressed.pageY - pressed.y - pos.top)}px`});
+                                Subj(draggable).css({left: `${(pressed.pageX - pressed.x - pos.left)}px`});
 
                                 let b, x, y; 
                                 b = offset(draggable);
@@ -860,7 +860,7 @@
                 } else if (typeof prop === 'object' || ! prop) {
                         return methods.setStyle.apply(this, arguments);
                 } else {
-                        warn('Method ' +  prop + ' does not exist');
+                        warn(`Method ${prop} does not exist`);
                 }
                 return false;
 
@@ -936,9 +936,9 @@
                                 if (document.addEventListener) {
                                         this[len].addEventListener(arguments[0], arguments[1], false);  
                                 } else if (document.attachEvent)  {
-                                        this[len].attachEvent('on' + arguments[0], arguments[1]);
+                                        this[len].attachEvent(`on${arguments[0]}`, arguments[1]);
                                 } else {
-                                        this[len]['on' + arguments[0]] = arguments[1];
+                                        this[len][`on${arguments[0]}`] = arguments[1];
                                 } 
 
                         } else if (arguments.length === 3 && typeof(arguments[1]) === 'string') {
@@ -963,9 +963,9 @@
                                 if (document.removeEventListener) {
                                         this[len].removeEventListener(arguments[0], arguments[1], false);  
                                 } else if (document.detachEvent) {
-                                            this[len].detachEvent('on' + arguments[0], arguments[1]);
+                                            this[len].detachEvent(`on${arguments[0]}`, arguments[1]);
                                 } else {
-                                            this[len]['on' + arguments[0]] = null;
+                                            this[len][`on${arguments[0]}`] = null;
                                 }
 
                         } else if (arguments.length === 3 && typeof(arguments[1]) === 'string') {
@@ -1003,18 +1003,18 @@
                         if (document.addEventListener) {
                             el.addEventListener(evt, doit, false);  
                         } else if (document.attachEvent)  {
-                            el.attachEvent('on' + evt, doit);
+                            el.attachEvent(`on${evt}`, doit);
                         } else {
-                            el['on' + evt] = doit;
+                            el[`on${evt}`] = doit;
                         }    
                 } else {
                         if (document.removeEventListener) {
                             el.removeEventListener(evt, doit, false);  
                         }
                         else if (document.detachEvent) {
-                            el.detachEvent('on' + evt, doit);
+                            el.detachEvent(`on${evt}`, doit);
                         } else {
-                            el['on' + evt] = null;
+                            el[`on${evt}`] = null;
                         }                                             
                 } 
         }
@@ -1071,7 +1071,7 @@
                         return value;
                 }
                 if (value.match('%')) {
-                        return parseFloat(value)*parseFloat(parent)/100 + 'px';
+                        return `${parseFloat(value)*parseFloat(parent)/100}px`;
                 }
         }
 
@@ -1080,7 +1080,7 @@
                         return value;
                 }
                 if (toUnit.match('%')) {
-                        return parseFloat(value)*100/parseFloat(parent) + '%';
+                        return `${parseFloat(value)*100/parseFloat(parent)}%`;
                 }
         }
         
