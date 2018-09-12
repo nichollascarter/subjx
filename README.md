@@ -4,7 +4,10 @@ Drag, resize, rotate pure javascript library(no dependencies)
 
 # Usage
 
-Library provides two simple actions with an element.
+Library provides two simple actions with an element. 
+
+## [Demo](http://jsfiddle.net/Doigrales/qgwzch0v/)
+
 
  - Getting an element:
 
@@ -21,7 +24,11 @@ const drop = function(event, el) {
 1) Move, rotate, resize:
 
 ```javascript
-Subj(elem).draggle({drop: drop}); // or just .draggle();
+Subj(elem).draggle({
+	//optional parameter
+	drop: drop,
+	snap: 20
+});
 
 Subj(elem).draggle('disable'); //disable tool
 ```
