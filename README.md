@@ -15,19 +15,19 @@ Library provides two simple actions with an element.
 const elem = 'selector' || DOM;
 
 const drop = function(event, el) {
-	console.log(`Element ${el} dropped!`);
+    console.log(`Element ${el} dropped!`);
 }
 ```
 
-- Choosing action:
+- Choosing an action:
 
 1) Move, rotate, resize:
 
 ```javascript
 Subj(elem).draggle({
-	//optional parameter
-	drop: drop,
-	snap: 20
+    //optional parameters
+    drop: drop,
+    snap: 20
 });
 
 Subj(elem).draggle('disable'); //disable tool
@@ -37,20 +37,22 @@ Subj(elem).draggle('disable'); //disable tool
 
 ```javascript
 Subj(elem).clone({
-	stack: 'selector',
-	//optional parameters
-        drop: drop,
-	style: 'clone' || { width: '100px', 
-			height: '100px',
-                        margin: 0,
-                        padding: 0,
-                        top: 0,
-                        left: 0,
-			background: 'black',
-                        position:'absolute'
-        },
-	appendTo: 'selector'
+    stack: 'selector',
+    //optional parameters
+    drop: drop,
+    style: 'clone' || 
+    { 
+        width: '100px', 
+	    height: '100px',
+	    margin: 0,
+	    padding: 0,
+	    top: 0,
+	    left: 0,
+	    background: 'black',
+	    position:'absolute'
+    },
+    appendTo: 'selector'
 });
 
-Subj(elem).clone('disable'); //Disable tool
+Subj(elem).clone('disable'); //disable tool
 ```
