@@ -12,7 +12,7 @@ Library provides two simple actions with an element.
  - Getting an element:
 
 ```javascript
-const elem = 'selector' || DOM;
+const elem = 'selector' || DOM element;
 
 const drop = function(event, el) {
     console.log(`Element ${el} dropped!`);
