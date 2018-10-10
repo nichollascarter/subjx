@@ -42,14 +42,14 @@ Subj(elem).clone({
     drop: drop,
     style: 'clone' || 
     { 
-        width: '100px', 
-	    height: '100px',
-	    margin: 0,
-	    padding: 0,
-	    top: 0,
-	    left: 0,
-	    background: 'black',
-	    position:'absolute'
+	width: '100px', 
+	height: '100px',
+	margin: 0,
+	padding: 0,
+	top: 0,
+	left: 0,
+	background: 'black',
+	position:'absolute'
     },
     appendTo: 'selector'
 });
