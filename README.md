@@ -12,7 +12,7 @@ Library provides two simple actions with an element.
  - Getting an element:
 
 ```javascript
-const elem = 'selector' || DOM;
+const elem = 'selector' || DOM element;
 
 const drop = function(event, el) {
     console.log(`Element ${el} dropped!`);
@@ -42,14 +42,14 @@ Subj(elem).clone({
     drop: drop,
     style: 'clone' || 
     { 
-        width: '100px', 
-	    height: '100px',
-	    margin: 0,
-	    padding: 0,
-	    top: 0,
-	    left: 0,
-	    background: 'black',
-	    position:'absolute'
+	width: '100px', 
+	height: '100px',
+	margin: 0,
+	padding: 0,
+	top: 0,
+	left: 0,
+	background: 'black',
+	position:'absolute'
     },
     appendTo: 'selector'
 });
