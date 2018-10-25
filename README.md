@@ -24,13 +24,13 @@ const drop = function(event, el) {
 1) Move, rotate, resize:
 
 ```javascript
-Subj(elem).draggle({
+Subj(elem).drag({
     //optional parameters
     drop: drop,
     snap: 20
 });
 
-Subj(elem).draggle('disable'); //disable tool
+Subj(elem).drag('disable'); //disable tool
 ```
 
 2) Tool for creating a clone:
