@@ -24,4 +24,6 @@ export function offset(node) {
     return node.getBoundingClientRect();
 }
 
+export function noop () {}
+
 

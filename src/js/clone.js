@@ -7,7 +7,8 @@ import {
     arrSlice,
     warn,
     storage,
-    offset
+    offset,
+    noop
 } from './common'
 
 export function _clone(method) {
@@ -59,12 +60,12 @@ export function _clone(method) {
             _touchDown(e, sel);
         };
 
-        _sel.on('mousedown', down);
-        _sel.on('touchstart', touchstart);
+        _sel.on('mousedown', down)
+            .on('touchstart', touchstart);
 
         sel[storage].removeEvents = function() {
-            _sel.off('mousedown', down);
-            _sel.off('touchstart', touchstart);
+            _sel.off('mousedown', down)
+                .off('touchstart', touchstart);
         }
     }
 
@@ -142,37 +143,41 @@ export function _clone(method) {
             _touchMove(evt, draggable);
         };
 
-        const drop = function(evt) {
+        let drop = noop;
 
-            const result = objectsCollide(draggable, Helper(sel[storage].stack)[0]);
-
-            if (sel[storage].drop && result) {
-                sel[storage].drop(evt, sel);
+        if (sel[storage].drop) {
+            drop = function (evt) {
+                let result = true;
+                if (sel[storage].stack) {
+                    result = objectsCollide(draggable, Helper(sel[storage].stack)[0]);
+                }
+                if (result) {
+                    sel[storage].drop(evt, sel);
+                }
             }
-        };
+        }
 
         const up = function(evt) {
             drop(evt);
             // Mouse events remove
             _up(evt, draggable);
-
-            Helper(document).off('mousemove', move);
-            Helper(document).off('mouseup', up);
+            Helper(document).off('mousemove', move)
+                            .off('mouseup', up);
         };
 
         const touchend = function(evt) {
             drop(evt.changedTouches[0]);
             // Mouse events remove
             _onTouchEnd(evt, draggable);
-            Helper(document).off('touchmove', touchmove);
-            Helper(document).off('touchend', touchend);
+            Helper(document).off('touchmove', touchmove)
+                            .off('touchend', touchend);
         };
 
-        Helper(document).on('mousemove', move);
-        Helper(document).on('mouseup', up);
+        Helper(document).on('mousemove', move)
+                        .on('mouseup', up);
 
-        Helper(document).on('touchmove', touchmove);
-        Helper(document).on('touchend', touchend);
+        Helper(document).on('touchmove', touchmove)
+                        .on('touchend', touchend);
     }
 
     function _compute(e, drggble) {
@@ -226,23 +231,13 @@ export function _clone(method) {
             if (!pressed.redraw) return;
             pressed.redraw = false;
 
-            //parent offset
             const pos = offset(draggable.parentNode);
 
-            // moving
             Helper(draggable).css({
-                top: `${(pressed.pageY - pressed.y - pos.top)}px`
-            });
-            Helper(draggable).css({
+                top: `${(pressed.pageY - pressed.y - pos.top)}px`,
                 left: `${(pressed.pageX - pressed.x - pos.left)}px`
             });
-
-            let b, x, y;
-            b = offset(draggable);
-            x = pressed.pageX - b.left;
-            y = pressed.pageY - b.top;
         }
-
         animate();
     }
 

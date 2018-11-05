@@ -7,7 +7,8 @@ import {
     arrSlice,
     warn,
     storage,
-    offset
+    offset,
+    noop
 } from './common'
 
 const brackets = '<div class="dg-hdl dg-rotator"></div>\n\
@@ -157,11 +158,12 @@ export function _drag(method) {
             _touchMove(e, sel);
         };
 
-        const drop = function(e) {
-            if (data.drop) {
+        let drop = noop; 
+        if (data.drop) {
+            drop = function(e) {  
                 data.drop(e, sel);
-            }
-        };
+            };
+        }
 
         const up = function(e) {
             drop(e);
