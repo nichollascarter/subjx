@@ -375,11 +375,8 @@ export function _drag(method) {
             if (!pressed.redraw) return;
             pressed.redraw = false;
 
-            let snap = 10;
-
-            if (options && options.snap) {
-                snap = options.snap;
-            }
+            let snap = options && options.snap? options.snap : 10,
+                moveEach = options && options.moveEach? options.moveEach : false;
 
             //set controls to local var
             const controls = pressed.controls,
@@ -538,25 +535,27 @@ export function _drag(method) {
                     controls.style.left = `${left}px`;
                 }
 
-                Helper(pressed.parent).find('.dg-drag').each(function() {
+                if (moveEach) {
+                    Helper(pressed.parent).find('.dg-drag').each(function() {
 
-                    if (sel !== this) {
+                        if (sel !== this) {
 
-                        let _this = this[storage];
+                            let _this = this[storage];
 
-                        if (Math.abs(top - oldTop) >= snap) {
-                            _this.controls.style.top = `${parseFloat(_this.controls.style.top) - (oldTop - top)}px`;
+                            if (Math.abs(top - oldTop) >= snap) {
+                                _this.controls.style.top = `${parseFloat(_this.controls.style.top) - (oldTop - top)}px`;
+                            }
+                            if (Math.abs(left - oldLeft) >= snap) {
+                                _this.controls.style.left = `${parseFloat(_this.controls.style.left) - (oldLeft - left)}px`;
+                            }
+
+                            this.style.top = fromPX(_this.controls.style.top, Helper(pressed.parent).css('height'), d.top);
+                            this.style.left = fromPX(_this.controls.style.left, Helper(pressed.parent).css('width'), d.left);
                         }
-                        if (Math.abs(left - oldLeft) >= snap) {
-                            _this.controls.style.left = `${parseFloat(_this.controls.style.left) - (oldLeft - left)}px`;
-                        }
+                    });
+                }
 
-                        this.style.top = fromPX(_this.controls.style.top, Helper(pressed.parent).css('height'), d.top);
-                        this.style.left = fromPX(_this.controls.style.left, Helper(pressed.parent).css('width'), d.left);
-                    }
-                });
-
-                sel.style.top = fromPX(controls.style.top,Helper(pressed.parent).css('height'), d.top);
+                sel.style.top = fromPX(controls.style.top, Helper(pressed.parent).css('height'), d.top);
                 sel.style.left = fromPX( controls.style.left, Helper(pressed.parent).css('width'), d.left);
             }
 
