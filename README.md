@@ -6,7 +6,7 @@ Touch-enabled draggable, resizable, rotatable library for creating drag-n-drop a
 
 Library provides two simple actions with an element. 
 
-## [Demo](http://jsfiddle.net/Doigrales/qgwzch0v/)
+## [Demo](http://jsfiddle.net/nichollascarter/qgwzch0v/)
 
  - Getting an element:
 
