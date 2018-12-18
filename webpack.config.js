@@ -6,6 +6,9 @@ const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 module.exports = {
     entry: "./src/js/index.js",
     output: {
+        library: 'Subj',
+        libraryTarget: 'window',
+        libraryExport: 'default',
         path: path.resolve(__dirname, "dist"),
         filename: "js/subj.js",
     },

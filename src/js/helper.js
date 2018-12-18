@@ -4,7 +4,6 @@ import {
 } from './common'
 
 export class Helper_ {
-
     constructor(params) {
         if (!params) return this;
 
@@ -49,13 +48,12 @@ export class Helper_ {
 function _css(prop) {
 
     const methods = {
-
-        setStyle: function(options) {
+        setStyle(options) {
             const obj = this;
             return _setStyle(obj, options);
         },
 
-        getStyle: function() {
+        getStyle() {
             const obj = this;
             return _getStyle(obj);
         }
@@ -221,6 +219,6 @@ function listenerDelegate(el, evt, sel, handler, act) {
     }
 }
 
-export const Helper = function(params) {
+export function Helper(params) {
     return new Helper_(params);
-};
+}

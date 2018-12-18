@@ -11,11 +11,11 @@ import {
     noop
 } from './common'
 
-export function _clone(method) {
+export default function _clone(method) {
 
     const methods = {
 
-        enable: function(options) {
+        enable(options) {
             const sel = this;
             return forEach.call(sel, function(value) {
                 if (!value[storage]) {
@@ -24,7 +24,7 @@ export function _clone(method) {
             });
         },
 
-        disable: function() {
+        disable() {
             const sel = this;
             return forEach.call(sel, function(value) {
                 _destroy(value);

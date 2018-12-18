@@ -1,4 +1,6 @@
-/* .dg-drag {} */
+/* .dg-drag { 
+    //Class appears on element when its draggable
+} */
 
 .dg-wrapper {
     position: static;
@@ -10,7 +12,7 @@
     -o-user-select: none;
 }
 
-.dg-controls {  
+.dg-controls {
     display: inline-block;
     box-sizing: border-box;
     top:0;
@@ -21,12 +23,13 @@
 }
 
 .dg-hdl {
+    cursor: pointer;
     border-radius: 10px;
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     margin-left: -4px;
     margin-top: -4px;
-    background-color: #32B5FE;
+    background-color: white;
     border: 1px solid #32B5FE;
 }
 
@@ -58,21 +61,7 @@
     left: 100%;
 }
 
-.dg-rotator{
+.dg-rotator {
     top: -25px;
     left: 50%;
-}
-
-.dg-hdl-tc, .dg-hdl-bc {
-     cursor: ns-resize;
-}
-.dg-hdl-ml, .dg-hdl-mr {
-    cursor: ew-resize;
-}
-
-.dg-hdl-tl, .dg-hdl-br {
-    cursor : nwse-resize;
-}
-.dg-hdl-tr, .dg-hdl-bl {
-    cursor : nesw-resize;
 }
