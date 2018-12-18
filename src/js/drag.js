@@ -24,11 +24,11 @@ const brackets = '<div class="dg-hdl dg-rotator"></div>\n\
 const unitEXP = /px|em|%|ex|ch|rem|vh|vw|vmin|vmax|mm|cm|in|pt|pc|deg/; //supports only px|%
 const radToDeg = 180 / Math.PI;
 
-export function _drag(method) {
+export default function _drag(method) {
 
     const methods = {
 
-        enable: function(options) {
+        enable(options) {
             const sel = this;
             return forEach.call(sel, function(value) {
                 if (!value[storage]) {
@@ -38,13 +38,13 @@ export function _drag(method) {
             });
         },
 
-        disable: function() {
+        disable() {
             const sel = this;
             forEach.call(sel, function(value) {
                 _destroy(value);
             });
             return this;
-        },
+        }
     };
 
     if (methods[method]) {
@@ -203,11 +203,11 @@ export function _drag(method) {
         data.w = coords.w;
         data.h = coords.h;
         data.handle = coords.handle;
-        data.doRotate = coords.rotate;
         data.coordY = coords.coordY;
         data.coordX = coords.coordX;
         data.doResize = doResize;
         data.doMove = !coords.rotate && !doResize;
+        data.doRotate = coords.rotate;
         data.onTopEdge = coords.onTopEdge;
         data.onLeftEdge = coords.onLeftEdge;
         data.onRightEdge = coords.onRightEdge;
@@ -258,20 +258,24 @@ export function _drag(method) {
         const c_left = parseFloat(Helper(ctrls).css('left'));
 
         //get current coordinates considering rotation angle                                                                                                  
-        const coords = rotatedTopLeft(c_left,
+        const coords = rotatedTopLeft(
+            c_left,
             c_top,
             data.cw,
             data.ch,
             data.refang,
             revX,
-            revY);
+            revY
+        );
 
         const offset_ = offset(ctrls);
 
-        const center_x = offset_.left + (data.cw / 2);
-        const center_y = offset_.top + (data.ch / 2);
+        const center_x = offset_.left + data.cw / 2;
+        const center_y = offset_.top + data.ch / 2;
 
         data.pressang = Math.atan2(e.pageY - center_y, e.pageX - center_x);
+        data.center_x = center_x;
+        data.center_y = center_y;
 
         return {
             tx: e.pageX - c_left,
@@ -558,19 +562,13 @@ export function _drag(method) {
                 }
 
                 sel.style.top = fromPX(controls.style.top, Helper(pressed.parent).css('height'), d.top);
-                sel.style.left = fromPX( controls.style.left, Helper(pressed.parent).css('width'), d.left);
+                sel.style.left = fromPX(controls.style.left, Helper(pressed.parent).css('width'), d.left);
             }
 
-            if (pressed && pressed.doRotate) {
+            if (pressed.doRotate) {
 
-                const offset_ = offset(controls);
-
-                const center_x = (offset_.left) + (parseFloat(controls.style.width) / 2);
-                const center_y = (offset_.top) + (parseFloat(controls.style.height) / 2);
-
-                const radians = Math.atan2(pressed.pageY - center_y, pressed.pageX - center_x);
-
-                const degree = ((pressed.refang + radians - pressed.pressang) * (radToDeg));
+                const radians = Math.atan2(pressed.pageY - pressed.center_y, pressed.pageX - pressed.center_x);
+                const degree = (pressed.refang + radians - pressed.pressang) * radToDeg;
 
                 const value = `rotate(${degree}deg)`;
 
