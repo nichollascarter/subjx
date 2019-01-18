@@ -8,6 +8,7 @@ import {
     warn,
     storage,
     offset,
+    isUndef,
     noop
 } from './common'
 
@@ -198,11 +199,16 @@ export default function _drag(method) {
                         coords.onTopEdge || 
                         coords.onLeftEdge;
 
-        data.x = coords.tx;
-        data.y = coords.ty;
-        data.w = coords.w;
-        data.h = coords.h;
+        data.siblings = coords.siblings;
+        data.center_x = coords.center_x;
+        data.center_y = coords.center_y;
+        data.origLeft = coords.left;
+        data.origTop = coords.top;
+        data.cw = coords.cw;
+        data.ch = coords.ch;
         data.handle = coords.handle;
+        data.pressang = coords.pressang;
+        data.refang = coords.refang;
         data.coordY = coords.coordY;
         data.coordX = coords.coordX;
         data.doResize = doResize;
@@ -214,29 +220,27 @@ export default function _drag(method) {
         data.onBottomEdge = coords.onBottomEdge;
 
         data.dimens = {
-            top: getUnitDimension(styleList.top ? styleList.top : _sel.css('top')),
-            left: getUnitDimension(styleList.left ? styleList.left : _sel.css('left')),
-            width: getUnitDimension(styleList.width ? styleList.width : _sel.css('width')),
-            height: getUnitDimension(styleList.height ? styleList.height : _sel.css('height'))
+            top: getUnitDimension(styleList.top || _sel.css('top')),
+            left: getUnitDimension(styleList.left || _sel.css('left')),
+            width: getUnitDimension(styleList.width || _sel.css('width')),
+            height: getUnitDimension(styleList.height || _sel.css('height'))
         };
     }
 
     function _compute(e, sel) {
 
-        const data = sel[storage];
-        const handle = Helper(e.target);
-        const ctrls = data.controls;
+        const data = sel[storage],
+            handle = Helper(e.target),
+            ctrls = data.controls;
 
+        //getting mouse position coordinates
         data.pageX = e.pageX;
         data.pageY = e.pageY;
-        data.ctrlKey = e.ctrlKey;
         data.cx = e.pageX;
         data.cy = e.pageY;
-        data.tl_off = offset(data.divs.tl[0]);
-        data.tr_off = offset(data.divs.tr[0]);
-        data.br_off = offset(data.divs.br[0]);
+        data.ctrlKey = e.ctrlKey;
 
-        data.refang = Math.atan2(data.tr_off.top - data.tl_off.top, data.tr_off.left - data.tl_off.left);
+        let factor = 1;
 
         //reverse axis
         const revX = handle.is(data.divs.tl) || 
@@ -248,41 +252,112 @@ export default function _drag(method) {
                     handle.is(data.divs.tr) || 
                     handle.is(data.divs.tc) || 
                     handle.is(data.divs.ml);
-        //reverse angle
-        if (handle.is(data.divs.tr) || handle.is(data.divs.bl)) { data.refang = -data.refang; }
 
-        data.cw = parseFloat(toPX(ctrls.style.width, data.parent.css('width')));
-        data.ch = parseFloat(toPX(ctrls.style.height, data.parent.css('height')));
+        //reverse angle
+        if (handle.is(data.divs.tr) || 
+            handle.is(data.divs.bl)
+        ) { 
+            factor = -1;
+        }
+
+        const tl_off = offset(data.divs.tl[0]),
+            tr_off = offset(data.divs.tr[0]);
+
+        let refang = Math.atan2(
+            tr_off.top - tl_off.top, 
+            tr_off.left - tl_off.left
+        ) * factor;
+
+        const cw = parseFloat(
+            toPX(ctrls.style.width, data.parent.css('width'))
+        );
+        const ch = parseFloat(
+            toPX(ctrls.style.height, data.parent.css('height'))
+        );
 
         const c_top = parseFloat(Helper(ctrls).css('top'));
         const c_left = parseFloat(Helper(ctrls).css('left'));
 
-        //get current coordinates considering rotation angle                                                                                                  
+        //getting current coordinates considering rotation angle                                                                                                  
         const coords = rotatedTopLeft(
             c_left,
             c_top,
-            data.cw,
-            data.ch,
-            data.refang,
+            cw,
+            ch,
+            refang,
             revX,
             revY
         );
 
+        const siblings = data.parent.find('.dg-drag');
+
+        siblings.each(function() {
+            if (sel !== this) {
+
+                const _data = this[storage];
+                const _ctrls = _data.controls;
+
+                const _tl_off = offset(_data.divs.tl[0]),
+                    _tr_off = offset(_data.divs.tr[0]);
+
+                const refang = Math.atan2(
+                    _tr_off.top - _tl_off.top,
+                    _tr_off.left - _tl_off.left
+                ) * factor;
+
+                _data.refang = refang;
+                _data.origTop = parseFloat(Helper(this).css('top'));
+                _data.origLeft = parseFloat(Helper(this).css('left'));
+
+                _data.cw = parseFloat(
+                    toPX(_ctrls.style.width, data.parent.css('width'))
+                );
+                _data.ch = parseFloat(
+                    toPX(_ctrls.style.height, data.parent.css('height'))
+                );
+        
+                const _c_top = parseFloat(Helper(_ctrls).css('top'));
+                const _c_left = parseFloat(Helper(_ctrls).css('left'));
+        
+                //getting current coordinates considering rotation angle                                                                                                  
+                const _coords = rotatedTopLeft(
+                    _c_left,
+                    _c_top,
+                    _data.cw,
+                    _data.ch,
+                    refang,
+                    revX,
+                    revY
+                );
+
+                _data.coordY = _coords.top;
+                _data.coordX = _coords.left;
+            } 
+        });
+
         const offset_ = offset(ctrls);
 
-        const center_x = offset_.left + data.cw / 2;
-        const center_y = offset_.top + data.ch / 2;
+        const center_x = offset_.left + cw / 2;
+        const center_y = offset_.top + ch / 2;
 
-        data.pressang = Math.atan2(e.pageY - center_y, e.pageX - center_x);
-        data.center_x = center_x;
-        data.center_y = center_y;
+        const pressang = Math.atan2(
+            e.pageY - center_y, 
+            e.pageX - center_x
+        );
 
         return {
-            tx: e.pageX - c_left,
-            ty: e.pageY - c_top,
+            siblings: siblings,
+            cw: cw,
+            ch: ch,
+            center_x: center_x,
+            center_y: center_y,
+            top: c_top,
+            left: c_left,
             coordY: coords.top,
             coordX: coords.left,
             handle: handle,
+            pressang: pressang, //mouse position angle regarding element's center
+            refang: refang, // rotated element angle
             rotate: handle.is(data.divs.rotator),
             onTopEdge: handle.is(data.divs.tl) || handle.is(data.divs.tc) || handle.is(data.divs.tr),
             onLeftEdge: handle.is(data.divs.tl) || handle.is(data.divs.ml) || handle.is(data.divs.bl),
@@ -328,7 +403,7 @@ export default function _drag(method) {
 
         const originalTopLeftAngle = Math.atan2(dy, dx);
 
-        // Add the unrotatedTL + rotationAngle to get total rotation
+        // Add the originalTopLeftAngle + rotationAngle to get total rotation
         const rotatedTopLeftAngle = originalTopLeftAngle + rotationAngle;
 
         // calc the radius of the rectangle (== diagonalLength/2)
@@ -381,17 +456,39 @@ export default function _drag(method) {
             if (!pressed.redraw) return;
             pressed.redraw = false;
 
-            let snap = options && options.snap? options.snap : 10,
-                moveEach = options && options.moveEach? options.moveEach : false;
+            let snap = { x: 10, y: 10},
+                moveEach = false,
+                resizeEach = false,
+                rotateEach = false;
+
+            const parentTransform = getParentTransform(pressed.parent);
+
+            if (options) {
+                if (options.snap) {
+                    snap.x = isUndef(options.snap.x) ? snap.x : options.snap.x;
+                    snap.y = isUndef(options.snap.y) ? snap.y : options.snap.y; 
+                }
+                
+                if (options.each) {
+                    moveEach = options.each.move || moveEach;
+                    resizeEach = options.each.resize || resizeEach;
+                    rotateEach = options.each.rotate || rotateEach; 
+                }    
+            }    
 
             //set controls to local var
             const controls = pressed.controls,
                 handle = pressed.handle,
-                d = pressed.dimens;
-
-            let coords, revX, revY, x, y, pos;
+                d = pressed.dimens,
+                scaleX = parentTransform[0] || 1,
+                scaleY = parentTransform[3] || 1;
 
             if (pressed.doResize) {
+
+                let revX, revY, x, y, pos;
+
+                let width = null;
+                let height = null;
 
                 if (handle.is(pressed.divs.br) || handle.is(pressed.divs.mr)) {
 
@@ -399,7 +496,7 @@ export default function _drag(method) {
                         pressed.cx, 
                         pressed.cy,
                         pressed.pageX,
-                        pressed.pageY, 
+                        pressed.pageY,
                         pressed.refang, 
                         false, 
                         false
@@ -408,13 +505,13 @@ export default function _drag(method) {
                     pressed.pageY = pos.top;
                     pressed.pageX = pos.left;
 
-                    y = pressed.pageY - pressed.cy;
-                    x = pressed.pageX - pressed.cx;
+                    y = (pressed.pageY - pressed.cy) / scaleY;
+                    x = (pressed.pageX - pressed.cx) / scaleX;
 
                     let doy = handle.is(pressed.divs.br);
 
-                    if (doy) { controls.style.height = `${y + pressed.ch}px`; }
-                    controls.style.width = `${x + pressed.cw}px`;
+                    if (doy) { height = y + pressed.ch; }
+                    width = x + pressed.cw;
 
                     revX = false;
                     revY = false;
@@ -434,13 +531,13 @@ export default function _drag(method) {
                     pressed.pageY = pos.top;
                     pressed.pageX = pos.left;
 
-                    let y = pressed.pageY - pressed.cy;
-                    let x = pressed.pageX - pressed.cx;
+                    y = - (pressed.pageY - pressed.cy) / scaleY;
+                    x = - (pressed.pageX - pressed.cx) / scaleX;
 
                     let doy = handle.is(pressed.divs.tl);
 
-                    controls.style.width = `${-x + pressed.cw}px`;
-                    if (doy) { controls.style.height = `${-y + pressed.ch}px`; }
+                    width = x + pressed.cw;
+                    if (doy) { height = y + pressed.ch; }
 
                     revX = true;
                     revY = true;
@@ -463,14 +560,13 @@ export default function _drag(method) {
                     pressed.pageY = pos.top;
                     pressed.pageX = pos.left;
 
-                    y = pressed.pageY - pressed.cy;
-                    x = pressed.pageX - pressed.cx;
+                    y = - (pressed.pageY - pressed.cy) / scaleY;
+                    x = - (pressed.pageX - pressed.cx) / scaleX;
 
                     if (dox) {y = -y;}
-                    x = -x;
 
-                    controls.style.height = `${-y + pressed.ch}px`;
-                    if (dox) { controls.style.width = `${x + pressed.cw}px`; }
+                    height = y + pressed.ch;
+                    if (dox) { width = x + pressed.cw; }
 
                     revX = doy;
                     revY = true;
@@ -492,100 +588,224 @@ export default function _drag(method) {
                     pressed.pageY = pos.top;
                     pressed.pageX = pos.left;
 
-                    y = pressed.pageY - pressed.cy;
-                    x = pressed.pageX - pressed.cx;
+                    y = (pressed.pageY - pressed.cy) / scaleY;
+                    x = - (pressed.pageX - pressed.cx) / scaleX;
 
-                    controls.style.height = `${y + pressed.ch}px`;
-                    if (dox) { controls.style.width = `${-x + pressed.cw}px`; }
+                    height = y + pressed.ch;
+                    if (dox) { width = x + pressed.cw; }
 
                     revX = dox;
                     revY = false;
                 }
 
-                //recalculate coords while dimensions are changing
-                coords = rotatedTopLeft(
-                    pressed.coordX, 
-                    pressed.coordY, 
-                    controls.style.width, 
-                    controls.style.height, 
-                    pressed.refang, 
-                    revX, 
-                    revY
+                processResize(
+                    width,
+                    height, 
+                    controls, 
+                    sel, 
+                    pressed,
+                    revX,
+                    revY,
+                    snap,
+                    d
                 );
 
-                let resultY = `${pressed.coordY*2 - coords.top}px`,
-                    resultX = `${pressed.coordX*2 - coords.left}px`;
+                if (resizeEach) {
+                    pressed.siblings.each(function() {
+                        if (sel !== this) {
 
-                controls.style.top = resultY;
-                controls.style.left = resultX;
+                            const _ctrls = this[storage].controls;
 
-                sel.style.top = fromPX(resultY, pressed.parent.css('height'), d.top);
-                sel.style.left = fromPX(resultX, pressed.parent.css('width'), d.left);
-                sel.style.width = fromPX(controls.style.width, pressed.parent.css('width'), d.width);
-                sel.style.height = fromPX(controls.style.height, pressed.parent.css('height'), d.height);
+                            const _w = width !== null ? this[storage].cw + x : null;
+                            const _h = height !== null ? this[storage].ch + y : null;
+
+                            processResize(
+                                _w,
+                                _h,
+                                _ctrls,
+                                this, 
+                                this[storage],
+                                revX,
+                                revY,
+                                snap,
+                                d
+                            );
+                        }
+                    });
+                }
             }
 
             if (pressed.doMove) {
 
-                let oldTop = parseFloat(Helper(controls).css('top'));
-                let oldLeft = parseFloat(Helper(controls).css('left'));
-
-                let top = pressed.pageY - pressed.y;
-                let left = pressed.pageX - pressed.x;
-
-                if (Math.abs(top - oldTop) >= snap) {
-                    controls.style.top = `${top}px`;
-                }
-
-                if (Math.abs(left - oldLeft) >= snap) {
-                    controls.style.left = `${left}px`;
-                }
+                const diffTop = (pressed.pageY - pressed.cy) / scaleY, 
+                    diffLeft = (pressed.pageX - pressed.cx) / scaleX; 
+                    
+                processMove(
+                    pressed.origTop + diffTop,
+                    pressed.origLeft + diffLeft,
+                    controls, 
+                    sel, 
+                    pressed.parent, 
+                    snap, 
+                    d
+                );
 
                 if (moveEach) {
-                    Helper(pressed.parent).find('.dg-drag').each(function() {
-
+                    pressed.siblings.each(function() {
                         if (sel !== this) {
+                            const _ctrls = this[storage].controls;
 
-                            let _this = this[storage];
-
-                            if (Math.abs(top - oldTop) >= snap) {
-                                _this.controls.style.top = `${parseFloat(_this.controls.style.top) - (oldTop - top)}px`;
-                            }
-                            if (Math.abs(left - oldLeft) >= snap) {
-                                _this.controls.style.left = `${parseFloat(_this.controls.style.left) - (oldLeft - left)}px`;
-                            }
-
-                            this.style.top = fromPX(_this.controls.style.top, Helper(pressed.parent).css('height'), d.top);
-                            this.style.left = fromPX(_this.controls.style.left, Helper(pressed.parent).css('width'), d.left);
+                            processMove(
+                                this[storage].origTop + diffTop, 
+                                this[storage].origLeft + diffLeft, 
+                                _ctrls, 
+                                this, 
+                                pressed.parent, 
+                                snap, 
+                                d
+                            );
                         }
                     });
                 }
-
-                sel.style.top = fromPX(controls.style.top, Helper(pressed.parent).css('height'), d.top);
-                sel.style.left = fromPX(controls.style.left, Helper(pressed.parent).css('width'), d.left);
             }
 
             if (pressed.doRotate) {
 
-                const radians = Math.atan2(pressed.pageY - pressed.center_y, pressed.pageX - pressed.center_x);
-                const degree = (pressed.refang + radians - pressed.pressang) * radToDeg;
+                const radians = Math.atan2(
+                    pressed.pageY - pressed.center_y, 
+                    pressed.pageX - pressed.center_x
+                ) - pressed.pressang;
 
-                const value = `rotate(${degree}deg)`;
+                processRotate(
+                    radians + pressed.refang,
+                    controls, 
+                    sel
+                );
 
-                const css = {
-                    transform: value,
-                    webkitTranform: value,
-                    mozTransform: value,
-                    msTransform: value,
-                    otransform: value,
-                    'transform-origin': '50% 50%', //rotation point - center                          
-                };
+                if (rotateEach) {
+                    pressed.siblings.each(function() {
+                        if (sel !== this) {
+                            const _ctrls = this[storage].controls;
 
-                Helper(controls).css(css);
-                Helper(sel).css(css);
+                            processRotate(
+                                radians + this[storage].refang, 
+                                _ctrls, 
+                                this
+                            );
+                        }
+                    });
+                }
             }
         }
         animate();
+    }
+
+    function processResize(
+        width, 
+        height, 
+        ctrls, 
+        sel, 
+        pressed, 
+        revX, 
+        revY, 
+        snap, 
+        d
+    ) {
+
+        if (width !== null) {
+            setParam(ctrls, width, snap.x, 'width');
+        }
+
+        if (height !== null) {
+            setParam(ctrls, height, snap.y, 'height');
+        }
+
+        //recalculate coords while dimensions are changing
+        const coords = rotatedTopLeft(
+            pressed.coordX, 
+            pressed.coordY, 
+            ctrls.style.width,
+            ctrls.style.height, 
+            pressed.refang, 
+            revX, 
+            revY
+        );
+
+        const resultY = `${pressed.coordY*2 - coords.top}px`,
+            resultX = `${pressed.coordX*2 - coords.left}px`;
+
+        ctrls.style.top = resultY;
+        ctrls.style.left = resultX;
+
+        sel.style.top = fromPX(resultY, pressed.parent.css('height'), d.top);
+        sel.style.left = fromPX(resultX, pressed.parent.css('width'), d.left);
+        sel.style.width = fromPX(ctrls.style.width, pressed.parent.css('width'), d.width);
+        sel.style.height = fromPX(ctrls.style.height, pressed.parent.css('height'), d.height);
+    }
+
+    function processMove(
+        top, 
+        left, 
+        ctrls, 
+        sel, 
+        parent, 
+        snap, 
+        d
+    ) {
+        setParam(ctrls, top, snap.y, 'top');
+        setParam(ctrls, left, snap.x, 'left');
+
+        sel.style.top = fromPX(
+            ctrls.style.top, 
+            parent.css('height'), 
+            d.top
+        );
+        sel.style.left = fromPX(
+            ctrls.style.left, 
+            parent.css('width'), 
+            d.left
+        );
+    }
+
+    function processRotate(radians, ctrls, sel) {
+        
+        const degree = radians * radToDeg;
+        const value = `rotate(${degree}deg)`;
+
+        const css = {
+            transform: value,
+            webkitTranform: value,
+            mozTransform: value,
+            msTransform: value,
+            otransform: value                        
+        };
+
+        Helper(ctrls).css(css);
+        Helper(sel).css(css);
+    }
+
+    function setParam(ctrls, value, snap, param) {
+
+        if (snap === 0) {
+            ctrls.style[param] = `${value}px`;
+        } else {
+            const result = snap * Math.round(value / snap);
+    
+            if (result - value < snap) {
+                ctrls.style[param] = `${result}px`;
+            }
+        }
+    }
+
+    function getParentTransform(el) {
+
+        const transform = el.css("-webkit-transform") ||
+            el.css("-moz-transform")
+            el.css("-ms-transform") ||
+            el.css("-o-transform") ||
+            el.css("transform") || 
+            'none';
+        return transform.match(/\d+\.?\d+|\d+/g);
     }
 
     function _destroy(sel) {
