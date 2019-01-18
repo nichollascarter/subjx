@@ -25,10 +25,17 @@ const drop = function(event, el) {
 ```javascript
 //enabling tool with the optional parameters
 Subj(elem).drag({
-    //set the snap size (default: 10)
-    snap: 20, 
-    //move other draggable elements
-    moveEach: true,
+    //snapping to grid (default: 10)
+    snap: {
+        x: 20,
+        y: 20
+    },
+    //mimic behavior with other draggable elements
+    each: {
+        move: true,
+        resize: true, 
+        rotate: true
+    }
     //call function on drop event
     drop: drop 
 });
