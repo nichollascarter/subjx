@@ -25,19 +25,19 @@
 .dg-hdl {
     cursor: pointer;
     border-radius: 10px;
-    width: 8px;
-    height: 8px;
-    margin-left: -4px;
-    margin-top: -4px;
+    width: 10px;
+    height: 10px;
     background-color: white;
     border: 1px solid #32B5FE;
+    margin-top: -6px;
+    margin-left: -6px;
 }
 
 .dg, .dg-controls, .dg-hdl {
     position: absolute;
 }
 
-.dg-hdl-t {
+.dg-hdl-t, {
     top: 0;
 }
 
