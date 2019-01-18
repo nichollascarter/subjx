@@ -356,7 +356,7 @@ export default function _drag(method) {
             coordY: coords.top,
             coordX: coords.left,
             handle: handle,
-            pressang: pressang, //mouse position angle regarding element's center
+            pressang: pressang, // mouse position angle regarding element's center
             refang: refang, // rotated element angle
             rotate: handle.is(data.divs.rotator),
             onTopEdge: handle.is(data.divs.tl) || handle.is(data.divs.tc) || handle.is(data.divs.tr),
@@ -805,7 +805,7 @@ export default function _drag(method) {
             el.css("-o-transform") ||
             el.css("transform") || 
             'none';
-        return transform.match(/\d+\.?\d+|\d+/g);
+        return transform.match(/\d+\.?\d+|\d+/g) || [];
     }
 
     function _destroy(sel) {
