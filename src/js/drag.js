@@ -800,10 +800,10 @@ export default function _drag(method) {
     function getParentTransform(el) {
 
         const transform = el.css("-webkit-transform") ||
-            el.css("-moz-transform")
+            el.css("-moz-transform") ||
             el.css("-ms-transform") ||
             el.css("-o-transform") ||
-            el.css("transform") || 
+            el.css("transform") ||
             'none';
         return transform.match(/\d+\.?\d+|\d+/g) || [];
     }
