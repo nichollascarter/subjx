@@ -1,7 +1,7 @@
 /*
  * Move, Rotate, Resize tool
- * Released under the MIT license, 2018
- * nichollascarter
+ * Released under the MIT license, 2018-2019
+ * nichollascarter@gmail.com
 */
 
 import '../style/subj.css';
