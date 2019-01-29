@@ -8,6 +8,8 @@ import {
     warn,
     storage,
     offset,
+    isDef,
+    isUndef,
     noop
 } from './common'
 
@@ -16,17 +18,15 @@ export default function _clone(method) {
     const methods = {
 
         enable(options) {
-            const sel = this;
-            return forEach.call(sel, function(value) {
-                if (!value[storage]) {
+            return forEach.call(this, function(value) {
+                if (isUndef(value[storage])) {
                     _init(value, options);
                 }
             });
         },
 
         disable() {
-            const sel = this;
-            return forEach.call(sel, function(value) {
+            return forEach.call(this, function(value) {
                 _destroy(value);
             });
         }
@@ -72,7 +72,6 @@ export default function _clone(method) {
     function _touchDown(e, sel) {
         e.stopImmediatePropagation();
         _down(e.touches[0], sel);
-
     }
 
     function _touchMove(e, sel) {
@@ -94,7 +93,7 @@ export default function _clone(method) {
 
         let draggable = document.createElement('div');
 
-        const pos = sel[storage].appendTo ? offset(Helper(sel[storage].appendTo)[0]) : offset(Helper('body')[0]);
+        const pos = isDef(sel[storage].appendTo) ? offset(Helper(sel[storage].appendTo)[0]) : offset(Helper('body')[0]);
 
         let css = {
             width: Helper(sel).css('width'),
@@ -106,7 +105,7 @@ export default function _clone(method) {
             position: 'absolute'
         };
 
-        if (!sel[storage].style || sel[storage].style === 'default') {
+        if (isUndef(sel[storage].style) || sel[storage].style === 'default') {
             css.border = '#32B5FE 1px dashed';
             css.background = 'transparent';         
         } else if (sel[storage].style === 'clone') {
@@ -119,7 +118,7 @@ export default function _clone(method) {
 
         Helper(draggable).css(css);
 
-        if (sel[storage].appendTo) {
+        if (isDef(sel[storage].appendTo)) {
             Helper(sel[storage].appendTo)[0].appendChild(draggable);
         } else {
             Helper('body')[0].appendChild(draggable);
@@ -145,11 +144,14 @@ export default function _clone(method) {
 
         let drop = noop;
 
-        if (sel[storage].drop) {
-            drop = function (evt) {
+        if (isDef(sel[storage].drop)) {
+            drop = function(evt) {
                 let result = true;
                 if (sel[storage].stack) {
-                    result = objectsCollide(draggable, Helper(sel[storage].stack)[0]);
+                    result = objectsCollide(
+                                draggable, 
+                                Helper(sel[storage].stack)[0]
+                            );
                 }
                 if (result) {
                     sel[storage].drop(evt, sel);
@@ -174,9 +176,8 @@ export default function _clone(method) {
         };
 
         Helper(document).on('mousemove', move)
-                        .on('mouseup', up);
-
-        Helper(document).on('touchmove', touchmove)
+                        .on('mouseup', up)
+                        .on('touchmove', touchmove)
                         .on('touchend', touchend);
     }
 
@@ -201,7 +202,7 @@ export default function _clone(method) {
     }
 
     function _move(e, drggble) {
-        if (!drggble[storage]) return;
+        if (isUndef(drggble[storage])) return;
         const d = drggble[storage];
         d.pageX = e.pageX;
         d.pageY = e.pageY;
@@ -210,7 +211,7 @@ export default function _clone(method) {
     }
 
     function _up(e, drggble) {
-        if (!drggble[storage]) return;
+        if (isUndef(drggble[storage])) return;
         const d = drggble[storage];
         d.redraw = false;
         cancelAnimFrame(d.frameId);
@@ -222,7 +223,7 @@ export default function _clone(method) {
 
         function animate() {
 
-            if (!draggable[storage]) return;
+            if (isUndef(draggable[storage])) return;
 
             draggable[storage].frameId = requestAnimFrame(animate);
 
@@ -242,7 +243,7 @@ export default function _clone(method) {
     }
 
     function _destroy(sel) {
-        if (!sel[storage]) return;
+        if (isUndef(sel[storage])) return;
         sel[storage].removeEvents();
         delete sel[storage];
     }
@@ -250,15 +251,18 @@ export default function _clone(method) {
 
 function objectsCollide(a, b) {
 
-    const aTop = offset(a).top,
-        aLeft = offset(a).left,
-        bTop = offset(b).top,
-        bLeft = offset(b).left;
+    const offset_a = offset(a),
+        offset_b = offset(b);
+
+    const aTop = offset_a.top,
+        aLeft = offset_a.left,
+        bTop = offset_b.top,
+        bLeft = offset_b.left;
 
     return !(
-        ((aTop) < (bTop)) ||
+        (aTop < bTop) ||
         (aTop > (bTop + Helper(b).css('height'))) ||
-        ((aLeft) < bLeft) ||
+        (aLeft < bLeft) ||
         (aLeft > (bLeft + Helper(b).css('width')))
     );
 }

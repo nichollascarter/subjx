@@ -1,5 +1,3 @@
-import { isUndefined } from "util";
-
 export const storage = (function() {
     return `Subj${Math.random().toString(32).substr(2, 10)}`;
 })();
@@ -26,10 +24,12 @@ export function offset(node) {
     return node.getBoundingClientRect();
 }
 
+export function isDef(val) {
+    return typeof val !== 'undefined' && typeof val !== null;
+}
+
 export function isUndef(val) {
     return typeof val === 'undefined' || typeof val === null;
 }
 
 export function noop() {}
-
-
