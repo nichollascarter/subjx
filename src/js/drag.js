@@ -55,7 +55,7 @@ export default function _drag(method) {
         warn(`Method ${method} does not exist`);
     }
 
-    function _init(sel, options) { console.log(options);
+    function _init(sel, options) {
 
         const wrapper = document.createElement('div');
         addClass(wrapper, 'dg-wrapper');
