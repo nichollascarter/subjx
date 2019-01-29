@@ -8,18 +8,19 @@ import {
     warn,
     storage,
     offset,
+    isDef,
     isUndef,
     noop
 } from './common'
 
-const brackets = '<div class="dg-hdl dg-rotator"></div>\n\
-            <div class="dg-hdl dg-hdl-t dg-hdl-l dg-hdl-tl"></div>\n\
-            <div class="dg-hdl dg-hdl-t dg-hdl-r dg-hdl-tr"></div>\n\
-            <div class="dg-hdl dg-hdl-b dg-hdl-r dg-hdl-br"></div>\n\
-            <div class="dg-hdl dg-hdl-b dg-hdl-l dg-hdl-bl"></div>\n\
-            <div class="dg-hdl dg-hdl-t dg-hdl-c dg-hdl-tc"></div>\n\
-            <div class="dg-hdl dg-hdl-b dg-hdl-c dg-hdl-bc"></div>\n\
-            <div class="dg-hdl dg-hdl-m dg-hdl-l dg-hdl-ml"></div>\n\
+const brackets = '<div class="dg-hdl dg-rotator"></div>\
+            <div class="dg-hdl dg-hdl-t dg-hdl-l dg-hdl-tl"></div>\
+            <div class="dg-hdl dg-hdl-t dg-hdl-r dg-hdl-tr"></div>\
+            <div class="dg-hdl dg-hdl-b dg-hdl-r dg-hdl-br"></div>\
+            <div class="dg-hdl dg-hdl-b dg-hdl-l dg-hdl-bl"></div>\
+            <div class="dg-hdl dg-hdl-t dg-hdl-c dg-hdl-tc"></div>\
+            <div class="dg-hdl dg-hdl-b dg-hdl-c dg-hdl-bc"></div>\
+            <div class="dg-hdl dg-hdl-m dg-hdl-l dg-hdl-ml"></div>\
             <div class="dg-hdl dg-hdl-m dg-hdl-r dg-hdl-mr"></div>';
 
 const unitEXP = /px|em|%|ex|ch|rem|vh|vw|vmin|vmax|mm|cm|in|pt|pc|deg/; //supports only px|%
@@ -30,33 +31,31 @@ export default function _drag(method) {
     const methods = {
 
         enable(options) {
-            const sel = this;
-            return forEach.call(sel, function(value) {
-                if (!value[storage]) {
+            return forEach.call(this, function(value) {
+                if (isUndef(value[storage])) {
                     _init(value, options);
                 };
-                _draw(value, options);
+                _draw(value);
             });
         },
 
         disable() {
-            const sel = this;
-            forEach.call(sel, function(value) {
+            forEach.call(this, function(value) {
                 _destroy(value);
             });
             return this;
         }
     };
 
-    if (methods[method]) {
+    if (isDef(methods[method])) {
         return methods[method].apply(this, arrSlice.call(arguments, 1));
-    } else if (typeof method === 'object' || !method) {
+    } else if (typeof method === 'object' || isUndef(method)) {
         return methods.enable.apply(this, arguments);
     } else {
         warn(`Method ${method} does not exist`);
     }
 
-    function _init(sel, options) {
+    function _init(sel, options) { console.log(options);
 
         const wrapper = document.createElement('div');
         addClass(wrapper, 'dg-wrapper');
@@ -93,9 +92,35 @@ export default function _drag(method) {
 
         const _container = Helper(container);
 
+        let snap = {
+            x: 10,
+            y: 10
+        };
+
+        let each = {
+            move: false,
+            resize: false,
+            rotate: false,
+        }
+
+        if (isDef(options)) {
+            if (isDef(options.snap)) {
+                snap.x = isUndef(options.snap.x) ? 10 : options.snap.x;
+                snap.y = isUndef(options.snap.y) ? 10 : options.snap.y;
+            }
+            
+            if (isDef(options.each)) {
+                each.move = options.each.move || false;
+                each.resize = options.each.resize || false;
+                each.rotate = options.each.rotate || false; 
+            }    
+        } 
+
         sel[storage] = {
             controls: controls,
             drop: options && options.drop ? options.drop : null,
+            snap: snap,
+            each: each,
             divs: {
                 tl: _container.find('.dg-hdl-tl'),
                 tr: _container.find('.dg-hdl-tr'),
@@ -160,7 +185,7 @@ export default function _drag(method) {
         };
 
         let drop = noop; 
-        if (data.drop) {
+        if (isUndef(data.drop)) {
             drop = function(e) {  
                 data.drop(e, sel);
             };
@@ -202,8 +227,8 @@ export default function _drag(method) {
         data.siblings = coords.siblings;
         data.center_x = coords.center_x;
         data.center_y = coords.center_y;
-        data.origLeft = coords.left;
-        data.origTop = coords.top;
+        data.origLeft = snapCandidate(coords.left, data.snap.x);
+        data.origTop = snapCandidate(coords.top, data.snap.y);
         data.cw = coords.cw;
         data.ch = coords.ch;
         data.handle = coords.handle;
@@ -306,8 +331,15 @@ export default function _drag(method) {
                 ) * factor;
 
                 _data.refang = refang;
-                _data.origTop = parseFloat(Helper(this).css('top'));
-                _data.origLeft = parseFloat(Helper(this).css('left'));
+
+                _data.origTop = snapCandidate(
+                    parseFloat(Helper(this).css('top')), 
+                    data.snap.y
+                );
+                _data.origLeft = snapCandidate(
+                    parseFloat(Helper(this).css('left')), 
+                    data.snap.x
+                );
 
                 _data.cw = parseFloat(
                     toPX(_ctrls.style.width, data.parent.css('width'))
@@ -443,38 +475,20 @@ export default function _drag(method) {
         };
     }
 
-    function _draw(sel, options) {
+    function _draw(sel) {
 
         function animate() {
 
             const pressed = sel[storage];
 
-            if (!pressed) return;
+            if (isUndef(pressed)) return;
 
             pressed.frame = requestAnimFrame(animate);
 
             if (!pressed.redraw) return;
             pressed.redraw = false;
 
-            let snap = { x: 10, y: 10},
-                moveEach = false,
-                resizeEach = false,
-                rotateEach = false;
-
             const parentTransform = getParentTransform(pressed.parent);
-
-            if (options) {
-                if (options.snap) {
-                    snap.x = isUndef(options.snap.x) ? snap.x : options.snap.x;
-                    snap.y = isUndef(options.snap.y) ? snap.y : options.snap.y; 
-                }
-                
-                if (options.each) {
-                    moveEach = options.each.move || moveEach;
-                    resizeEach = options.each.resize || resizeEach;
-                    rotateEach = options.each.rotate || rotateEach; 
-                }    
-            }    
 
             //set controls to local var
             const controls = pressed.controls,
@@ -482,6 +496,11 @@ export default function _drag(method) {
                 d = pressed.dimens,
                 scaleX = parentTransform[0] || 1,
                 scaleY = parentTransform[3] || 1;
+
+            let snap = pressed.snap,
+                moveEach = pressed.each.move,
+                resizeEach = pressed.each.resize,
+                rotateEach = pressed.each.rotate;
 
             if (pressed.doResize) {
 
@@ -641,7 +660,7 @@ export default function _drag(method) {
                     diffLeft = (pressed.pageX - pressed.cx) / scaleX; 
                     
                 processMove(
-                    pressed.origTop + diffTop,
+                    pressed.origTop + diffTop, 
                     pressed.origLeft + diffLeft,
                     controls, 
                     sel, 
@@ -657,7 +676,7 @@ export default function _drag(method) {
 
                             processMove(
                                 this[storage].origTop + diffTop, 
-                                this[storage].origLeft + diffLeft, 
+                                this[storage].origLeft + diffLeft,
                                 _ctrls, 
                                 this, 
                                 pressed.parent, 
@@ -744,8 +763,8 @@ export default function _drag(method) {
     }
 
     function processMove(
-        top, 
-        left, 
+        top,
+        left,
         ctrls, 
         sel, 
         parent, 
@@ -789,21 +808,26 @@ export default function _drag(method) {
         if (snap === 0) {
             ctrls.style[param] = `${value}px`;
         } else {
-            const result = snap * Math.round(value / snap);
-    
+            const result = snapCandidate(value, snap);
+
             if (result - value < snap) {
                 ctrls.style[param] = `${result}px`;
             }
         }
     }
 
+    function snapCandidate(value, gridSize) {
+        if (gridSize === 0) return value
+        return gridSize * Math.round(value / gridSize);
+    }
+
     function getParentTransform(el) {
 
-        const transform = el.css("-webkit-transform") ||
-            el.css("-moz-transform") ||
-            el.css("-ms-transform") ||
-            el.css("-o-transform") ||
-            el.css("transform") ||
+        const transform = el.css('-webkit-transform') ||
+            el.css('-moz-transform') ||
+            el.css('-ms-transform') ||
+            el.css('-o-transform') ||
+            el.css('transform') ||
             'none';
         return transform.match(/\d+\.?\d+|\d+/g) || [];
     }
@@ -812,14 +836,15 @@ export default function _drag(method) {
 
         const data = sel[storage];
 
-        if (!data) return;
+        if (isUndef(data)) return;
         cancelAnimFrame(data.frame);
-        if (data.removeEvents) {
+        if (isDef(data.removeEvents)) {
             data.removeEvents();
         }
         Helper(data.controls).off('mousedown')
                             .off('touchstart');
         removeClass(sel, 'dg-drag');
+        
         sel.parentNode.parentNode.replaceChild(sel, sel.parentNode);
         delete sel[storage];
     }
@@ -856,19 +881,19 @@ function removeClass(node, cls) {
 }
 
 function toPX(value, parent) {
-    if (value.match('px')) {
+    if (/px/.test(value)) {
         return value;
     }
-    if (value.match('%')) {
+    if (/%/.test(value)) {
         return `${parseFloat(value) * parseFloat(parent) / 100}px`;
     }
 }
 
 function fromPX(value, parent, toUnit) {
-    if (toUnit.match('px')) {
+    if (/px/.test(toUnit)) {
         return value;
     }
-    if (toUnit.match('%')) {
+    if (/%/.test(toUnit)) {
         return `${parseFloat(value) * 100 / parseFloat(parent)}%`;
     }
 }
