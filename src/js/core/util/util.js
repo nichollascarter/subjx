@@ -1,7 +1,3 @@
-export const storage = (function() {
-    return `Subj${Math.random().toString(32).substr(2, 10)}`;
-})();
-
 export const requestAnimFrame = requestAnimationFrame ||
         mozRequestAnimationFrame ||
         webkitRequestAnimationFrame ||
@@ -18,18 +14,17 @@ export const cancelAnimFrame = cancelAnimationFrame ||
 
 export const forEach = Array.prototype.forEach,
         arrSlice = Array.prototype.slice,
+        arrMap = Array.prototype.map,
         warn = console.warn;
 
-export function offset(node) {
-    return node.getBoundingClientRect();
-}
-
 export function isDef(val) {
-    return typeof val !== 'undefined' && typeof val !== null;
+    return val !== undefined && val !== null;
 }
 
 export function isUndef(val) {
-    return typeof val === 'undefined' || typeof val === null;
+    return val === undefined || val === null;
 }
 
-export function noop() {}
+export function isFunc(val) {
+    return typeof val === 'function';
+}

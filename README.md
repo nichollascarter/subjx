@@ -1,58 +1,72 @@
 # Drag/Resize/Rotate library
 
-Touch-enabled draggable, resizable, rotatable library for creating drag-n-drop application.
+Touch-enabled draggable, resizable, rotatable library for creating drag-n-drop applications.
 
 # Usage
 
-Library provides two simple actions with an element. 
+Library provides two actions with an element.
 
 ## [Demo](http://jsfiddle.net/nichollascarter/qgwzch0v/)
 
  - Getting an element:
 
-```javascript
-const elem = 'selector' || DOM element;
+ Main function `Subjx` returns new Subjx which based on elements finded by
+ passed parameters:
 
-const drop = function(event, el) {
-    console.log(`${el}`);
-}
+```javascript
+// possible parameters
+const xElem = Subjx( 'selector' ) |
+                Subjx( element ) | 
+                Subjx( elementArray );
 ```
 
 - Choosing an action:
 
-1) Move, rotate, resize:
+1) Transformation(move, resize, rotate):
 
 ```javascript
-//enabling tool with the optional parameters
-Subj(elem).drag({
-    //snapping to grid (default: 10)
+// enabling tool by `drag` method with the optional parameters
+// by default just call `.drag()`
+const xDraggables = xElem.drag({
+    // snapping to grid (default: 10)
     snap: {
         x: 20,
-        y: 20
+        y: 20,
+        angle: 45
     },
-    //mimic behavior with other draggable elements
+    // mimic behavior with other draggable elements
     each: {
         move: true,
         resize: true, 
         rotate: true
     }
-    //call function on drop event
-    drop: drop 
+    // call function on drop event
+    drop(e, el) {
+        console.log(el);
+    }
 });
-// or enabling with defaults
-Subj(elem).drag();
 
-//disabling tool
-Subj(elem).drag('disable');
+// method always returns array of new Draggable instances
+// for disabling use `disable` a method for each object
+xDraggables.forEach(item => {
+    item.disable();
+})
 ```
+Perhaps, better to use shortened construction:
+```javascript
+const xSVGElements = Subjx('.draggable').drag(...);
+```
+
+Important:
+`drag` method supports manipulation with SVG elements and their groups:
+`path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `g`
 
 2) Tool for creating a clone:
 
 ```javascript
-//enabling tool
-Subj(elem).clone({
-    //set clone style
-    style: 'clone' || 
+const xCloneable = xElem.clone({
+    // set clone style
+    style: 'clone' |
     { 
         width: '100px', 
         height: '100px',
@@ -63,14 +77,18 @@ Subj(elem).clone({
         background: 'black',
         position:'absolute'
     },
-    //set clone parent
+    // set clone parent
     appendTo: 'selector',
-    //dropping area
+    // dropping area
     stack: 'selector',
-    //call function on drop to area event 
-    drop: drop
+    // call function on drop to area event 
+    drop(e, el) {
+        console.log(el);
+    }
 });
 
-//disabling tool
-Subj(elem).clone('disable'); 
+// disabling
+xCloneable.forEach(item => {
+    item.disable();
+});
 ```

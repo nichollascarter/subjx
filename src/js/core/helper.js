@@ -1,10 +1,12 @@
 import {
     arrSlice,
     warn
-} from './common'
+} from './util/util'
 
 export class Helper_ {
+
     constructor(params) {
+
         if (!params) return this;
 
         if (typeof params === 'string') {
@@ -16,32 +18,40 @@ export class Helper_ {
         } else if (params.nodeType === 1 || params === document) {
             this[0] = params;
             this.length = 1;
-        } else if (params instanceof Subj || typeof params === 'object') {
+        } else if (params instanceof Subjx || typeof params === 'object') {
             this.length = params.length;
             for (let count = 0; count < this.length; count++) {
                 this[count] = params[count];
+            }
+        } else if (Array.isArray(params)) {
+            this.length = 0;
+            for (let count = 0; count < this.length; count++) {
+                if (params.nodeType === 1) {
+                    this[count] = params[count];
+                    this.length++;
+                }
             }
         }
         return this;
     }
 
     css(property) {
-        return _css.call(this, property)
+        return _css.call(this, property);
     }
     find(node) {
-        return _find.call(this, node)
+        return _find.call(this, node);
     }
     each(fn) {
-        return _each.call(this, fn)
+        return _each.call(this, fn);
     }
     on() {
-        return _on.apply(this, arguments)
+        return _on.apply(this, arguments);
     }
     off() {
-        return _off.apply(this, arguments)
+        return _off.apply(this, arguments);
     }
     is(selector) {
-        return _is.call(this, selector)
+        return _is.call(this, selector);
     }
 }
 
@@ -49,13 +59,11 @@ function _css(prop) {
 
     const methods = {
         setStyle(options) {
-            const obj = this;
-            return _setStyle(obj, options);
+            return _setStyle(this, options);
         },
 
         getStyle() {
-            const obj = this;
-            return _getStyle(obj);
+            return _getStyle(this);
         }
     };
 
@@ -117,7 +125,7 @@ function _find(sel) {
 
     while (len--) {
         selector = this[len].querySelectorAll(sel);
-        return Subj(selector);
+        return Helper(selector);
     }
 }
 
@@ -179,7 +187,7 @@ function _off() {
 
 function _is(selector) {
 
-    const _sel = Subj(selector);
+    const _sel = Helper(selector);
     let len = this.length;
 
     while (len--) {

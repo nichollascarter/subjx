@@ -1,28 +1,28 @@
-/*
- * Move, Rotate, Resize tool
+/* @license
+ * Move/Rotate/Resize tool
  * Released under the MIT license, 2018-2019
  * nichollascarter@gmail.com
 */
 
-import '../style/subj.css';
-import _drag from './drag'
-import _clone from './clone'
-import { Helper_ } from './helper'
+import '../style/subj.css'
+import _drag from './core/transform/index'
+import _clone from './core/clone/index'
+import { Helper_ } from './core/helper'
 
-class Subject extends Helper_ {
+class Subjx extends Helper_ {
 
     constructor(params) {
         super(params);
     }
 
     drag(method) {
-        return _drag.call(this, method)
+        return _drag.call(this, method);
     }
     clone(method) {
-        return _clone.call(this, method)
+        return _clone.call(this, method);
     }
 }
 
-export default function Subj(params) {
-    return new Subject(params);
+export default function(params) {
+    return new Subjx(params);
 }

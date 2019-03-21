@@ -6,13 +6,13 @@ const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 module.exports = {
     entry: "./src/js/index.js",
     output: {
-        library: 'Subj',
+        library: 'Subjx',
         libraryTarget: 'window',
         libraryExport: 'default',
         path: path.resolve(__dirname, "dist"),
-        filename: "js/subj.js",
+        filename: "js/subjx.js",
     },
-    //devtool: "source-map",
+    devtool: "source-map",
     module: {
         rules: [{
                 test: /\.js$/,
@@ -41,8 +41,7 @@ module.exports = {
 
     plugins: [
         new MiniCssExtractPlugin({
-          filename: "style/subj.css",
-          //chunkFilename: "_subj_.css"
+            filename: "style/subjx.css",
         })
     ],
     optimization: {
