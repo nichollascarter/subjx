@@ -4,7 +4,7 @@
  * nichollascarter@gmail.com
 */
 
-import '../style/subj.css'
+import '../style/subjx.css'
 import _drag from './core/transform/index'
 import _clone from './core/clone/index'
 import { Helper_ } from './core/helper'
