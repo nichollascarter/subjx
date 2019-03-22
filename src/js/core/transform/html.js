@@ -264,8 +264,8 @@ function _compute(e) {
 
     const offset_ = getOffset(ctrls);
 
-    const center_x = offset_.left + cw / 2;
-    const center_y = offset_.top + ch / 2;
+    const center_x = offset_.left + cw / 2,
+        center_y = offset_.top + ch / 2;
 
     const pressang = Math.atan2(
         e.pageY - center_y, 
