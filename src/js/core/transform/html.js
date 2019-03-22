@@ -62,11 +62,18 @@ export default class Draggable extends Subject {
     _apply() {
 
         const {
+            storage,
+            el
+        } = this;
+
+        const _el = Helper(el);
+
+        const {
             cached,
             parent,
             dimens,
             controls
-        } = this.storage;
+        } = storage;
 
         if (!cached) return;
 
@@ -79,20 +86,30 @@ export default class Draggable extends Subject {
         matrix[5] = 0;
 
         const css = matrixToCSS(matrix);
-        
-        css.top = fromPX(
-            parseFloat(this.el.style.top) + diffTop + 'px', 
-            parent.css('height'), 
-            dimens.top
-        ); 
+
+        const pW = parent.css('width'),
+                pH = parent.css('height');
+
+        const left = parseFloat(
+            toPX(_el.css('left'), pW)
+        );
+        const top = parseFloat(
+            toPX(_el.css('top'), pH)
+        );               
 
         css.left = fromPX(
-            parseFloat(this.el.style.left) + diffLeft + 'px', 
-            parent.css('width'), 
+            left + diffLeft + 'px', 
+            pW,
             dimens.left
         );
 
-        Helper(this.el).css(css);
+        css.top = fromPX(
+            top + diffTop + 'px', 
+            pH,
+            dimens.top
+        );
+
+        _el.css(css);
         Helper(controls).css(css);
 
         this.storage.cached = null;
