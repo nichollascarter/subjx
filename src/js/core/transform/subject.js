@@ -93,7 +93,10 @@ export default class Subject {
                 pageY,
                 center,
                 snap,
-                parentScale
+                parentScale,
+                doDrag,
+                doResize,
+                doRotate
             } = store;
     
             const scaleX = parentScale[0],
@@ -105,7 +108,7 @@ export default class Subject {
                     rotate: rotateEach
                 } = store.each;
     
-            if (store.doResize) {
+            if (doResize) {
     
                 let revX, revY, x, y, pos;
     
@@ -245,7 +248,7 @@ export default class Subject {
                 }
             }
     
-            if (store.doDrag) {
+            if (doDrag) {
     
                 const diffTop = (pageY - cy) / scaleY, 
                     diffLeft = (pageX - cx) / scaleX; 
@@ -259,14 +262,14 @@ export default class Subject {
                     ctx.Ob.notify('onmove',
                         ctx,
                         {
-                            diffTop: diffTop,
-                            diffLeft: diffLeft
+                            diffTop,
+                            diffLeft
                         }
                     );
                 }
             }
     
-            if (store.doRotate) {
+            if (doRotate) {
     
                 const radians = Math.atan2(
                     pageY - center.y, 
@@ -281,7 +284,7 @@ export default class Subject {
                     ctx.Ob.notify('onrotate',
                         ctx,
                         {
-                            radians: radians
+                            radians
                         }
                     );
                 }
@@ -423,7 +426,6 @@ export default class Subject {
         }
         Helper(document).off('touchmove', this._onTouchMove)
                         .off('touchend', this._onTouchEnd);
-
     }
 
     onMove(data) {
@@ -462,7 +464,6 @@ export default class Subject {
 function loadOptions(options) {
 
     addClass(this.el, 'dg-drag');
-
 
     let snap = {
         x: 10,
