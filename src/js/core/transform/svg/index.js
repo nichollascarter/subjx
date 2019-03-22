@@ -295,7 +295,7 @@ function _compute(e) {
     }
 
     const tl_off = getOffset(handles.tl),
-        tr_off = getOffset(handles.tr); 
+        tr_off = getOffset(handles.tr);
         
     const refang = Math.atan2(
         tr_off.top - tl_off.top, 
@@ -316,8 +316,10 @@ function _compute(e) {
         revY
     );
 
-    const center_x = c_left + cw / 2;
-    const center_y = c_top + ch / 2;
+    const boxOffset = getOffset(box);
+
+    const center_x = boxOffset.left + cw / 2,
+        center_y = boxOffset.top + ch / 2;
 
     const pressang = Math.atan2(
         e.pageY - center_y,
@@ -343,8 +345,10 @@ function _compute(e) {
         cw,
         ch,
         center: {
-            x: center_x,
-            y: center_y, 
+            x: boxOffset.left + cw / 2,
+            y: boxOffset.top + ch / 2,
+            left: c_left + cw / 2,
+            top: c_top + ch / 2
         },
         left: snapCandidate(c_left, snap.x),
         top: snapCandidate(c_top, snap.y),
@@ -409,6 +413,8 @@ function refreshState(params) {
         revY
     );
 
+    const boxOffset = getOffset(box);
+
     const transform = {
         orig: this.el.getAttribute('transform'),
         value: box.getAttribute('transform'),
@@ -422,8 +428,10 @@ function refreshState(params) {
         cw,
         ch,
         center: {
-            x: c_left + cw / 2,
-            y: c_top + ch / 2
+            x: boxOffset.left + cw / 2,
+            y: boxOffset.top + ch / 2,
+            left: c_left + cw / 2,
+            top: c_top + ch / 2
         },
         left: snapCandidate(c_left, snap.x),
         top: snapCandidate(c_top, snap.y),
@@ -562,7 +570,7 @@ function processRotate(radians) {
 
     const angle = snapToGrid(refang + radians, snap.angle);
 
-    const transform = `rotate(${angle * DEG} ${center.x} ${center.y})`;
+    const transform = `rotate(${angle * DEG} ${center.left} ${center.top})`;
 
     box.setAttribute('transform', transform);
 
@@ -751,8 +759,8 @@ function applyResize(element, data) {
     }
 
     const baseData = {
-        centerX: center.x,
-        centerY: center.y,
+        centerX: center.left,
+        centerY: center.top,
         newCenterX: centerX,
         newCenterY: centerY,
         angle: angle
