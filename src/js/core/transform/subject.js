@@ -516,8 +516,8 @@ function loadOptions(options) {
 
     this.storage = {
         drop: options && isFunc(options.drop) 
-                ? drop = function(e) {
-                    store.drop(e, this.el);
+                ? function(e) {
+                    options.drop(e, this.el);
                 } 
                 : function() {},
         snap,
