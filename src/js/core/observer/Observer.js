@@ -24,6 +24,7 @@ export default class Observable {
     }
 
     notify(eventName, source, data) {
+        
         if (isUndef(this.observers[eventName])) return;
 
         this.observers[eventName].forEach(observer => {
@@ -31,21 +32,21 @@ export default class Observable {
             switch (eventName) {
                 case 'onmove':
                     observer.onMove(data);
-                    break
+                    break;
                 case 'onrotate':
                     observer.onRotate(data);
-                    break
+                    break;
                 case 'onresize':
                     observer.onResize(data);
-                    break
+                    break;
                 case 'onapply':
                     observer.onApply(data);
-                    break
-                case 'onrefreshstate':
-                    observer.onRefreshState(data);
-                    break
+                    break;
+                case 'ongetstate':
+                    observer.onGetState(data);
+                    break;
                 default: 
-                    break
+                    break;
             }
         });
     }

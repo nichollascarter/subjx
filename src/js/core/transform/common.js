@@ -2,47 +2,6 @@ export const unitRE = /px|em|%|ex|ch|rem|vh|vw|vmin|vmax|mm|cm|in|pt|pc|deg/;
 export const RAD = Math.PI / 180;
 export const DEG = 180 / Math.PI;
 
-export function recalcPoint(params) {
-
-    const { 
-        x, 
-        y, 
-        centerX,
-        centerY,
-        angle,
-        newCenterX,
-        newCenterY
-    } = params;
-
-    const oldCoords = getRotatedPoint(
-        centerX,
-        centerY,
-        x,
-        y,
-        angle,
-        false,
-        false
-    );
-
-    const coords = getRotatedPoint(
-        newCenterX,
-        newCenterY,
-        x,
-        y,
-        angle,
-        false,
-        false
-    );
-
-    const nx = x - (oldCoords.left - coords.left),
-        ny = y - (oldCoords.top - coords.top);
-
-    return {
-        resX: floatToFixed(nx),
-        resY: floatToFixed(ny)
-    }
-}
-
 export function snapToGrid(value, snap) {
     
     if (snap === 0) {
@@ -58,7 +17,7 @@ export function snapToGrid(value, snap) {
 
 export function snapCandidate(value, gridSize) {
     if (gridSize === 0) return value;
-    return gridSize * Math.round(value / gridSize);
+    return Math.round(value / gridSize) * gridSize;
 }
 
 export function rotatedTopLeft(
@@ -70,9 +29,12 @@ export function rotatedTopLeft(
     revX, 
     revY
 ) {
+
+    const hw = parseFloat(width) / 2,
+        hh = parseFloat(height) / 2;
                 
-    const cx = x + parseFloat(width) / 2,
-        cy = y + parseFloat(height) / 2;
+    const cx = x + hw,
+        cy = y + hh;
 
     const dx = x - cx,
         dy = y - cy;
@@ -81,7 +43,7 @@ export function rotatedTopLeft(
 
     const rotatedTopLeftAngle = originalTopLeftAngle + rotationAngle;
 
-    const radius = Math.sqrt(Math.pow(parseFloat(width) / 2, 2) + Math.pow(parseFloat(height) / 2, 2));
+    const radius = Math.sqrt(Math.pow(hw, 2) + Math.pow(hh, 2));
             
     let cos = Math.cos(rotatedTopLeftAngle), 
         sin = Math.sin(rotatedTopLeftAngle);
@@ -98,37 +60,37 @@ export function rotatedTopLeft(
     }
 }
 
-export function getRotatedPoint(
-    cx, 
-    cy, 
-    x, 
-    y, 
-    angle, 
-    revX, 
-    revY
-) {
+// export function getRotatedPoint(
+//     cx, 
+//     cy, 
+//     x, 
+//     y, 
+//     angle, 
+//     revX, 
+//     revY
+// ) {
 
-    let cos = Math.cos(angle),
-        sin = Math.sin(angle);
+//     let cos = Math.cos(angle),
+//         sin = Math.sin(angle);
 
-    cos = revX === true ? -cos : cos;
-    sin = revY === true ? -sin : sin;
+//     cos = revX === true ? -cos : cos;
+//     sin = revY === true ? -sin : sin;
 
-    let nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
-        ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
+//     let nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
+//         ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
 
-    return {
-        left: floatToFixed(nx),
-        top: floatToFixed(ny)
-    }
-}
+//     return {
+//         left: floatToFixed(nx),
+//         top: floatToFixed(ny)
+//     }
+// }
 
 export function toPX(value, parent) {
     if (/px/.test(value)) {
         return value;
     }
     if (/%/.test(value)) {
-        return `${parseFloat(value) * parseFloat(parent) / 100}px`;
+        return `${(parseFloat(value) * parseFloat(parent) / 100)}px`;
     }
 }
 

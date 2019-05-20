@@ -1,3 +1,5 @@
+import { Helper } from '../helper'
+
 export function getOffset(node) {
     return node.getBoundingClientRect();
 }
@@ -12,19 +14,9 @@ export function getTransform(el) {
     return transform;
 }
 
-export function parseTransform(a) {
-    const b = {};
-
-    for (let i in a = a.match(/(\w+\((\-?\d+\.?\d*e?\-?\d*(?:,|\s)?)+\))+/g)) {
-        const c = a[i].match(/[\w\.\-]+/g);
-        b[c.shift()] = c.map(item => { return Number(item); });
-    }
-    return b;
-}
-
-export function parseMatrix(el) {
-    // matrix(scaleX(),skewY(),skewX(),scaleY(),translateX(),translateY())
-    const transform = getTransform(el).match(/-?\d+\.?\d+|-?\d+/g);
+export function parseMatrix(value) {
+    
+    const transform = value.match(/-?\d+\.?\d+|-?\d+/g);
 
     if (transform) {
         return transform.map(item => {
@@ -63,4 +55,25 @@ export function removeClass(node, cls) {
         }
     }
     return node;
+}
+
+export function objectsCollide(a, b) {
+
+    const { 
+        top: aTop,
+        left: aLeft
+    } = getOffset(a),
+    {
+        top: bTop,
+        left: bLeft
+    } = getOffset(b),
+    _a = Helper(a),
+    _b = Helper(b);
+    
+    return !(
+        ((aTop < bTop) ||
+        (aTop + parseFloat(_a.css('height'))) > (bTop + parseFloat(_b.css('height')))) ||
+        ((aLeft < bLeft) ||
+        (aLeft + parseFloat(_a.css('width'))) > (bLeft + parseFloat(_b.css('width'))))
+    )
 }

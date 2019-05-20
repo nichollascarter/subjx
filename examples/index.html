@@ -1,119 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    
+
+<head>
+
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <link rel="stylesheet" href="../dist/style/subjx.css"/>
+    <link rel="stylesheet" href="../dist/style/subjx.css" />
     <style>
-        html, 
+        html,
         body {
-            margin:0;
+            margin: 0;
             padding: 0;
             height: 100%;
         }
+
         .draggable {
             position: absolute;
-            width:150px;
-            height:100px; 
-            background-color:yellow;
+            width: 150px;
+            height: 10%;
+            background-color: yellow;
+        }
+
+        .clonable {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            left: 0;
         }
     </style>
     <script src="../dist/js/subjx.js" type="text/javascript" charset="utf-8"></script>
     <title>Demo</title>
-  </head>
-  <body>
-    
-    <div style ="width:100%; height:100%; background-color: white">
-        <div id="stack" style ="box-sizing: border-box; width:100%; height:49%;position: relative; border: #32B5FE 1px dashed">
-            <div class='clone' style='position: absolute; width:50px ;height:50px; background-color:yellow;top:0;left:0;'></div>
-            <div class='clone-clear' style='position: absolute; width:50px; height:50px; background-color:red;top:55px;left:0;'></div>
-            <div class='draggable' style='top:150px; left:150px;'></div>
-            <div class='draggable' style='top:150px; left:350px;'></div>
-        </div>
-        <svg width="100%" height="50%">
-                
-            <rect class="drag-svg" x="552" y="209" width="30" height="30" stroke="black" fill="transparent" stroke-width="5" transform="rotate(0 567 224)"></rect>
-            <rect class="drag-svg" x="469" y="211" rx="10" ry="10" width="30" height="30" stroke="black" fill="transparent" stroke-width="5" transform="rotate(0 484 226)"></rect>
-            
-            <circle cx="792" cy="152" r="20" stroke="red" fill="transparent" stroke-width="5" transform="rotate(0 792 152)"></circle>
-            <ellipse class="drag-svg" cx="358" cy="222" rx="22.000000000000004" ry="17" stroke="red" fill="transparent" stroke-width="5" transform="rotate(0 358 222)"></ellipse>
-            
-            <line class="drag-svg" x1="626" x2="666" y1="200" y2="240" stroke="orange" fill="transparent" stroke-width="5" transform="rotate(0 646 220)"></line>
-            <polyline class="drag-svg" points="599 73 604 83 609 78 614 93 619 88 624 103 629 98 634 113 639 108" stroke="orange" fill="transparent" stroke-width="5" transform="rotate(0 619 93)"></polyline>
-            
-            <polygon class="drag-svg" points="356 71 361 91 376 91 366 101 371 116 356 106 341 116 346 101 336 91 351 91" stroke="green" fill="transparent" stroke-width="5" transform="rotate(0 356 93.5)"></polygon>
-            
-            <path class="drag-svg" d="M451,91 Q471,66,481,91 T521,91 " fill="none" stroke="blue" stroke-width="5" transform="rotate(0 486 91)"></path>
-            
+</head>
+
+<body>
+
+    <div style="width:100%; height:100%; background-color: #000000c4">
+
+        <svg width="100%" height="50%" transform="scale(0.9, 0.9)">
+
+            <rect class="drag-svg" x="552" y="209" width="30" height="30" stroke="black" fill="transparent"
+                stroke-width="5" transform="rotate(0 567 224)"></rect>
+            <rect class="drag-svg" x="469" y="211" rx="10" ry="10" width="30" height="30" stroke="black"
+                fill="transparent" stroke-width="5" transform="rotate(0 484 226)"></rect>
+
+            <circle cx="792" cy="152" r="20" stroke="red" fill="transparent" stroke-width="5"
+                transform="rotate(0 792 152)"></circle>
+            <ellipse class="drag-svg" cx="358" cy="222" rx="22.000000000000004" ry="17" stroke="red" fill="transparent"
+                stroke-width="5" transform="rotate(0 358 222)"></ellipse>
+
+            <line class="drag-svg" x1="626" x2="666" y1="200" y2="240" stroke="orange" fill="transparent"
+                stroke-width="5" transform="rotate(0 646 220)"></line>
+            <polyline class="drag-svg" points="599 73 604 83 609 78 614 93 619 88 624 103 629 98 634 113 639 108"
+                stroke="orange" fill="transparent" stroke-width="5" transform="rotate(0 619 93)"></polyline>
+
+            <polygon class="drag-svg"
+                points="356 71 361 91 376 91 366 101 371 116 356 106 341 116 346 101 336 91 351 91" stroke="green"
+                fill="transparent" stroke-width="5" transform="rotate(0 356 93.5)"></polygon>
+
+            <path class="drag-svg" d="M451,91 Q471,66,481,91 T521,91 " fill="none" stroke="blue" stroke-width="5"
+                transform="rotate(0 486 91)"></path>
+
             <g class="drag-svg" style="visibility: visible; cursor: move;">
-                <ellipse cx="150.5" cy="75.478994" rx="25.75" ry="19.97899159663865" fill="#ffffff" stroke="#000000" pointer-events="all" transform="rotate(0 150.5 134.75)"></ellipse>
-                <path d="M150.5,94.12605099999999 L150.5,160.722692 M150.5,107.445385 L202,107.445385 M150.5,107.445385 L99,107.445385 M150.5,160.722692 L202,214 M150.5,160.722692 L99,214 " fill="none" stroke="white" stroke-miterlimit="10" pointer-events="stroke" visibility="hidden" stroke-width="9" transform="rotate(0 150.5 134.75)"></path>
-                <path d="M150.5,94.12605099999999 L150.5,160.722692 M150.5,107.445385 L202,107.445385 M150.5,107.445385 L99,107.445385 M150.5,160.722692 L202,214 M150.5,160.722692 L99,214 " fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="all" transform="rotate(0 150.5 134.75)"></path>
+                <ellipse cx="150.5" cy="75.478994" rx="25.75" ry="19.97899159663865" fill="#ffffff" stroke="#000000"
+                    pointer-events="all" transform="rotate(0 150.5 134.75)"></ellipse>
+                <path
+                    d="M150.5,94.12605099999999 L150.5,160.722692 M150.5,107.445385 L202,107.445385 M150.5,107.445385 L99,107.445385 M150.5,160.722692 L202,214 M150.5,160.722692 L99,214 "
+                    fill="none" stroke="white" stroke-miterlimit="10" pointer-events="stroke" visibility="hidden"
+                    stroke-width="9" transform="rotate(0 150.5 134.75)"></path>
+                <path
+                    d="M150.5,94.12605099999999 L150.5,160.722692 M150.5,107.445385 L202,107.445385 M150.5,107.445385 L99,107.445385 M150.5,160.722692 L202,214 M150.5,160.722692 L99,214 "
+                    fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="all"
+                    transform="rotate(0 150.5 134.75)"></path>
             </g>
-            
+
         </svg>
+        <div id="stack"
+            style="box-sizing: border-box; width:100%; height:49%;position: relative; border-top: #32B5FE 1px dashed">
+            <div class='clone clonable' style='background-color:yellow;top:0;'></div>
+            <div class='clone-styled clonable' style='background-color:green;top:55px;'></div>
+            <div class='clone-clear clonable' style='background-color:red;top:110px;'></div>
+            <div class='draggable' style='top:150px; left:150px;'></div>
+            <div class='draggable' style='top:150px; left:400px;'></div>
+        </div>
     </div>
-    
-  </body>
-    <script>
 
-        const svgs = 
-            Subjx('.drag-svg').drag({
-                each: {
-                    //move: true,
-                    resize: true, 
-                    rotate: true
-                },
-                snap: {
-                    x: 20,
-                    y: 20,
-                    angle: 20
-                }
-            });
+</body>
+<script>
 
-        const Draggables = 
-            Subjx('.draggable').drag({
-                each: {
-                    move: true,
-                    resize: true
-                }, 
-                snap: {
-                    x: 20,
-                    y: 20
-                }
-            });
-
-        Subjx('.clone').clone({
-            stack: '#stack',
-            style: 'clone',
-            drop(e, el, clone) {
-
-                const stack = Subjx('#stack')[0],
-                    offset = stack.getBoundingClientRect(),
-                    div = document.createElement('div');
-
-                div.style.top = `${e.pageY - offset.top}px`;
-                div.style.left = `${e.pageX - offset.left}px`;
-
-                div.classList.add('draggable');
-
-                stack.appendChild(div);
-
-                Draggables.push(...Subjx(div).drag());
+    const svgs =
+        Subjx('.drag-svg').drag({
+            container: '#svg-container',
+            snap: {
+                x: 30,
+                y: 30,
+                angle: 25
             }
         });
 
-        Subjx('.clone-clear').on('click', () => {
-
-            Draggables.forEach(item => {
-                item.disable();
-                item.el.parentNode.removeChild(item.el);
-            });
-
-            Draggables.splice(0, Draggables.length);
+    const Draggables =
+        Subjx('.draggable').drag({
+            container: '#stack',
+            each: {
+                move: true,
+                resize: true
+            },
+            snap: {
+                x: 40,
+                y: 40
+            }
         });
 
-    </script>
+    const drop = (e, el, clone) => {
+
+        const stack = Subjx('#stack')[0],
+            offset = stack.getBoundingClientRect(),
+            div = document.createElement('div');
+
+        div.style.top = `${e.clientY - offset.top}px`;
+        div.style.left = `${e.clientX - offset.left}px`;
+
+        div.classList.add('draggable');
+
+        stack.appendChild(div);
+
+        Draggables.push(...Subjx(div).drag());
+    };
+
+    Subjx('.clone').clone({
+        stack: '#stack',
+        appendTo: '#stack',
+        drop
+    });
+
+    Subjx('.clone-styled').clone({
+        stack: '#stack',
+        style: {
+            border: '1px dashed green',
+            background: 'transparent'
+        },
+        drop
+    });
+
+    Subjx('.clone-clear').on('click', () => {
+
+        Draggables.forEach(item => {
+            item.disable();
+            item.el.parentNode.removeChild(item.el);
+        });
+
+        Draggables.splice(0, Draggables.length);
+    });
+
+</script>
+
 </html>

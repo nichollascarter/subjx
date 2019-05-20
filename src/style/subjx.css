@@ -1,11 +1,7 @@
-/* .dg-drag { 
-    //Class appears on element when its draggable
-} */
-
 .dg-wrapper {
     position: static;
     width: 0;
-    height : 0;
+    height: 0;
     user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -15,8 +11,8 @@
 .dg-controls {
     display: inline-block;
     box-sizing: border-box;
-    top:0;
-    left:0;   
+    top: 0;
+    left: 0;   
     z-index: 2147483647;
     border: 1px dashed #32B5FE;
     cursor: move;
@@ -24,17 +20,17 @@
 
 .dg-hdl {
     cursor: pointer;
-    border-radius: 10px;
-    width: 10px;
-    height: 10px;
-    background-color: white;
+    border-radius: 9px;
+    width: 9px;
+    height: 9px;
     border: 1px solid #32B5FE;
-    margin-top: -6px;
-    margin-left: -6px;
+    margin-top: -5px;
+    margin-left: -5px;
 }
 
 .dg, .dg-controls, .dg-hdl {
     position: absolute;
+    background-color:rgba(0, 168, 255, 0.2);
 }
 
 .dg-hdl-t {
@@ -62,6 +58,16 @@
 }
 
 .dg-rotator {
-    top: -25px;
-    left: 50%;
+    top: 50%;
+    left: calc(100% + 50px);
+}
+
+.dg-normal {
+    display: inline-block;
+    box-sizing: border-box;
+    border: 0.5px dashed #32B5FE;
+    top: 50%;
+    left: 100%;
+    width: 50px;
+    height: 0;
 }

@@ -15,6 +15,7 @@ export const cancelAnimFrame = cancelAnimationFrame ||
 export const forEach = Array.prototype.forEach,
         arrSlice = Array.prototype.slice,
         arrMap = Array.prototype.map,
+        arrReduce = Array.prototype.reduce,
         warn = console.warn;
 
 export function isDef(val) {

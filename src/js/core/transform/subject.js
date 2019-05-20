@@ -5,7 +5,8 @@ import {
     cancelAnimFrame,
     isDef,
     isUndef,
-    isFunc
+    isFunc,
+    warn
 } from '../util/util'
 
 import {
@@ -14,7 +15,7 @@ import {
 } from '../util/css-util'
 
 import {
-    getRotatedPoint,
+    snapToGrid,
     RAD
 } from './common'
 
@@ -36,6 +37,7 @@ export default class Subject {
         this._onTouchMove = this._onTouchMove.bind(this);
         this._onMouseUp = this._onMouseUp.bind(this);
         this._onTouchEnd = this._onTouchEnd.bind(this);
+        this._animate = this._animate.bind(this);
     }
 
     enable(options) {
@@ -57,240 +59,266 @@ export default class Subject {
 
         if (isUndef(storage)) return;
 
+        // unexpected case
+        if (storage.onExecution) {
+            this._end();
+            Helper(document).off('mousemove', this._onMouseMove)
+                            .off('mouseup', this._onMouseUp)
+                            .off('touchmove', this._onTouchMove)
+                            .off('touchend', this._onTouchEnd);  
+        }
+
         removeClass(el, 'dg-drag');
-        this._destroy(); 
+        this._destroy();
 
         delete this.storage;  
     }
 
+    _init() {}
+
+    _destroy() {}
+
+    _drag() {}
+
+    _resize() {}
+
+    _rotate() {}
+
+    _cursorPoint() {}
+
     _load(options) {
-        loadOptions.call(this, options);
+
+        const { el, Ob } = this;
+
+        addClass(el, 'dg-drag');
+
+        const _snap = {
+            x: 10,
+            y: 10,
+            angle: 10 * RAD
+        };
+
+        const _each = {
+            move: false,
+            resize: false,
+            rotate: false
+        };
+
+        let _showHandles = true,
+            _restrict = null,
+            _drop = function() {};
+
+        let _container = el.parentNode;
+
+        let _proportions = false;
+
+        if (isDef(options)) {
+
+            const { 
+                snap, 
+                each, 
+                showHandles,
+                restrict,
+                drop,
+                container,
+                proportions
+            } = options;
+
+            if (isDef(snap)) {
+
+                const { x, y, angle } = snap;
+
+                _snap.x = isUndef(x) ? 10 : x;
+                _snap.y = isUndef(y) ? 10 : y;
+                _snap.angle = isUndef(angle) 
+                                ? _snap.angle 
+                                : angle * RAD;
+            }
+            
+            if (isDef(each)) {
+
+                const { move, resize, rotate } = each;
+
+                _each.move = move || false;
+                _each.resize = resize || false;
+                _each.rotate = rotate || false; 
+            }
+
+            if (isDef(restrict)) {
+                _restrict = restrict === 'parent'
+                    ? el.parentNode
+                    : Helper(restrict)[0] || document
+            }
+            
+            _drop = isFunc(options.drop)
+                    ? function(e) {
+                        drop(e, el);
+                    } 
+                    : _drop;
+
+            _showHandles = isUndef(showHandles) ||
+                            showHandles === true;
+                            
+            _container = Helper(container)[0] || _container;
+
+            _proportions = proportions || false;
+        }
+
+        this.storage = {
+            showHandles: _showHandles,
+            restrict: _restrict,
+            container: _container,
+            drop: _drop,
+            snap: _snap,
+            each: _each,
+            proportions: _proportions
+        };
+
+        if (_each.move || _each.resize || _each.rotate) {
+            Ob.subscribe('ongetstate', this);
+            Ob.subscribe('onapply', this);
+        }
+
+        if (_each.move) {
+            Ob.subscribe('onmove', this);
+        }
+        if (_each.resize) {
+            Ob.subscribe('onresize', this);
+        }
+        if (_each.rotate) {
+            Ob.subscribe('onrotate', this);
+        }
     }
 
     _draw() {
+        this._animate();
+    }
+
+    _animate() {
 
         const ctx = this;
-    
-        function animate() {
-    
-            const store = ctx.storage;
-    
-            store.frame = requestAnimFrame(animate);
-    
-            if (!store.doDraw) return;
-            store.doDraw = false;
-    
-            let { 
-                handle,
-                handles,
-                cx,
-                cy,
-                ch,
-                cw,
-                refang,
-                pressang,
-                pageX,
-                pageY,
-                center,
-                snap,
-                parentScale,
-                doDrag,
-                doResize,
-                doRotate
-            } = store;
-    
-            const scaleX = parentScale[0],
-                scaleY = parentScale[1];
-    
-            let { 
-                    move: moveEach, 
-                    resize: resizeEach, 
-                    rotate: rotateEach
-                } = store.each;
-    
-            if (doResize) {
-    
-                let revX, revY, x, y, pos;
-    
-                let width = null,
-                    height = null;
-    
-                if (handle.is(handles.br) || handle.is(handles.mr)) {
-    
-                    pos = getRotatedPoint(
-                        cx, 
-                        cy,
-                        pageX,
-                        pageY,
-                        refang,
-                        false, 
-                        false
-                    );
-    
-                    pageY = pos.top;
-                    pageX = pos.left;
-    
-                    y = (pageY - cy) / scaleY;
-                    x = (pageX - cx) / scaleX;
-    
-                    let doy = handle.is(handles.br);
-    
-                    if (doy) { height = y + ch; }
-                    width = x + cw;
-    
-                    revX = false;
-                    revY = false;
-    
-                } else if (handle.is(handles.tl) || handle.is(handles.ml)) {
-    
-                    pos = getRotatedPoint(
-                        cx, 
-                        cy, 
-                        pageX, 
-                        pageY, 
-                        refang, 
-                        false, 
-                        false
-                    );
-    
-                    pageY = pos.top;
-                    pageX = pos.left;
-    
-                    y = - (pageY - cy) / scaleY;
-                    x = - (pageX - cx) / scaleX;
-    
-                    let doy = handle.is(handles.tl);
-    
-                    width = x + cw;
-                    if (doy) { height = y + ch; }
-    
-                    revX = true;
-                    revY = true;
-    
-                } else if (handle.is(handles.tr) || handle.is(handles.tc)) {
-    
-                    let dox = handle.is(handles.tr);
-                    let doy = handle.is(handles.tc);
-    
-                    pos = getRotatedPoint(
-                        cx, 
-                        cy, 
-                        pageX, 
-                        pageY, 
-                        refang, 
-                        dox, 
-                        false
-                    );
-    
-                    pageY = pos.top;
-                    pageX = pos.left;
-    
-                    y = - (pageY - cy) / scaleY;
-                    x = - (pageX - cx) / scaleX;
-    
-                    if (dox) { y = -y; }
-    
-                    height = y + ch;
-                    if (dox) { width = x + cw; }
-    
-                    revX = doy;
-                    revY = true;
-    
-                } else if (handle.is(handles.bl) || handle.is(handles.bc)) {
-    
-                    let dox = handle.is(handles.bl);
-    
-                    pos = getRotatedPoint(
-                        cx, 
-                        cy, 
-                        pageX, 
-                        pageY, 
-                        refang, 
-                        false, 
-                        dox
-                    );
-    
-                    pageY = pos.top;
-                    pageX = pos.left;
-    
-                    y = (pageY - cy) / scaleY;
-                    x = - (pageX - cx) / scaleX;
-    
-                    height = y + ch;
-                    if (dox) { width = x + cw; }
-    
-                    revX = dox;
-                    revY = false;
-                }
-    
-                ctx._resize(
-                    width,
-                    height,
-                    revX,
-                    revY,
-                    x,
-                    y
-                );
-    
-                if (resizeEach) { 
-                    ctx.Ob.notify('onresize',
-                        ctx,
-                        {
-                            width: width,
-                            height: height,
-                            x: x,
-                            y: y,
-                            revX: revX,
-                            revY: revY,
-                            snap: snap
-                        }
-                    );
-                }
-            }
-    
-            if (doDrag) {
-    
-                const diffTop = (pageY - cy) / scaleY, 
-                    diffLeft = (pageX - cx) / scaleX; 
+        const { storage } = ctx;
 
-                ctx._drag(
-                    diffTop, 
-                    diffLeft,
-                );
-    
-                if (moveEach) {
-                    ctx.Ob.notify('onmove',
-                        ctx,
-                        {
-                            diffTop,
-                            diffLeft
-                        }
-                    );
+        if (isUndef(storage)) return;
+
+        storage.frame = requestAnimFrame(ctx._animate);
+
+        if (!storage.doDraw) return;
+        storage.doDraw = false; 
+
+        let {
+            e,
+            handle,
+            handles,
+            cx,
+            cy,
+            nx,
+            ny,
+            pressang,
+            clientX,
+            clientY,
+            center,
+            snap,
+            doDrag,
+            doResize,
+            doRotate,
+            revX,
+            revY
+        } = storage;
+
+        const { 
+            move: moveEach, 
+            resize: resizeEach, 
+            rotate: rotateEach
+        } = storage.each;
+
+        if (doResize) {
+
+            const { x, y } = this._pointToElement(
+                {
+                    x: clientX,
+                    y: clientY
                 }
-            }
-    
-            if (doRotate) {
-    
-                const radians = Math.atan2(
-                    pageY - center.y, 
-                    pageX - center.x
-                ) - pressang;
-    
-                ctx._rotate(
-                    radians
+            );
+
+            let dx = snapToGrid(x - cx, snap.x),
+                dy = snapToGrid(y - cy, snap.y);
+
+            const dox = handle.is(handles.ml) || 
+                handle.is(handles.mr) ||
+                handle.is(handles.tl) ||
+                handle.is(handles.tr) ||
+                handle.is(handles.bl) ||
+                handle.is(handles.br);
+
+            const doy = handle.is(handles.br) ||
+                handle.is(handles.bl) ||
+                handle.is(handles.bc) ||
+                handle.is(handles.tr) ||
+                handle.is(handles.tl) ||
+                handle.is(handles.tc);
+
+            dx = dox ? (revX ? - dx : dx) : 0,
+            dy =  doy ? (revY ? - dy : dy) : 0;
+
+            ctx._resize(
+                dx,
+                dy
+            );
+
+            if (resizeEach) {
+
+                ctx.Ob.notify('onresize',
+                    ctx,
+                    {
+                        dx,
+                        dy
+                    }
                 );
-    
-                if (rotateEach) {
-                    ctx.Ob.notify('onrotate',
-                        ctx,
-                        {
-                            radians
-                        }
-                    );
-                }
             }
         }
-        animate();
+
+        if (doDrag) {
+
+            const dx = snapToGrid(clientX - nx, snap.x),
+                dy = snapToGrid(clientY - ny, snap.y);
+
+            ctx._drag(
+                dx,
+                dy
+            );
+
+            if (moveEach) {
+                ctx.Ob.notify('onmove',
+                    ctx,
+                    {
+                        dx,
+                        dy
+                    }
+                );
+            }
+        }
+
+        if (doRotate) {
+
+            const radians = Math.atan2(
+                clientY - center.y, 
+                clientX - center.x
+            ) - pressang;
+
+            ctx._rotate(
+                snapToGrid(radians, snap.angle)
+            );
+
+            if (rotateEach) {
+                ctx.Ob.notify('onrotate',
+                    ctx,
+                    {
+                        radians
+                    }
+                );
+            }
+        }
     }
 
     _start(e) {
@@ -299,17 +327,11 @@ export default class Subject {
             e.stopImmediatePropagation();
         }
     
-        const store = this.storage; 
+        const { storage } = this; 
         const computed = this._compute(e);
 
-        store.pageX = e.pageX;
-        store.pageY = e.pageY;
-        store.cx = e.pageX;
-        store.cy = e.pageY;
-        store.ctrlKey = e.ctrlKey;
-
         Object.keys(computed).forEach(prop => {
-            store[prop] = computed[prop];
+            storage[prop] = computed[prop];
         });
 
         const {
@@ -328,27 +350,50 @@ export default class Subject {
                         onTopEdge ||
                         onLeftEdge;
 
-        const doRotate = handle.is(store.handles.rotator);
-        
-        store.doResize = doResize;
-        store.doDrag = !doRotate && !doResize;
-        store.doRotate = doRotate;
+        const doRotate = handle.is(storage.handles.rotator);
 
-        if (this.Ob) {
-            this.Ob.notify(
-                'onrefreshstate',
-                this,
-                {
-                    factor,
-                    revX,
-                    revY,
-                    onTopEdge,
-                    onLeftEdge,
-                    onRightEdge,
-                    onBottomEdge
-                }
-            );
-        }
+        const {
+            clientX,
+            clientY,
+            ctrlKey
+        } = e;
+
+        const { 
+            x, 
+            y 
+        } = this._cursorPoint(
+            {
+                clientX, 
+                clientY
+            }
+        );
+
+        const { 
+            x: nx, 
+            y: ny 
+        } = this._pointToElement({ x, y });
+        
+        storage.clientX = clientX;
+        storage.clientY = clientY;
+        storage.nx = x;
+        storage.ny = y;
+        storage.cx = nx;
+        storage.cy = ny;
+        storage.ctrlKey = ctrlKey;
+        storage.doResize = doResize;
+        storage.doDrag = !doRotate && !doResize;
+        storage.doRotate = doRotate;
+        storage.onExecution = true;
+
+        this.Ob.notify(
+            'ongetstate',
+            this,
+            {
+                factor,
+                revX,
+                revY
+            }
+        );
 
         this._draw();
     }
@@ -359,39 +404,43 @@ export default class Subject {
             e.preventDefault();
         }
         
-        const store = this.storage;
-        store.pageX = e.pageX;
-        store.pageY = e.pageY;
-        store.doDraw = true;
+        const { storage } = this;
+
+        const { x, y } = this._cursorPoint(e);
+
+        storage.clientX = x;
+        storage.clientY = y;
+        storage.doDraw = true;
     }
     
     _end(e) {
 
-        if (e.stopImmediatePropagation) {
+        if (isDef(e) && e.stopImmediatePropagation) {
             e.stopImmediatePropagation();
         }
 
-        const store = this.storage;
+        const { storage } = this;
 
-        const action = store.doResize ? 'resize' : (store.doDrag ? 'drag' : 'rotate');
+        const action = storage.doResize 
+            ? 'resize' 
+            : (storage.doDrag ? 'drag' : 'rotate');
 
-        store.doResize = false;
-        store.doDrag = false;
-        store.doRotate = false;
-        store.doDraw = false;
+        storage.doResize = false;
+        storage.doDrag = false;
+        storage.doRotate = false;
+        storage.doDraw = false;
+        storage.onExecution = false;
 
         this._apply(action);
 
-        if (this.Ob) {
-            this.Ob.notify(
-                'onapply',
-                this,
-                action
-            );
-        }
+        this.Ob.notify(
+            'onapply',
+            this,
+            action
+        );
 
-        cancelAnimFrame(store.frame);
-        store.drop.call(this, e);
+        cancelAnimFrame(storage.frame);
+        storage.drop.call(this, e);
     }
 
     _onMouseDown(e) {
@@ -407,121 +456,75 @@ export default class Subject {
     }
 
     _onMouseMove(e) {
-        this._moving(e, this.el);
+        this._moving(
+            e, 
+            this.el
+        );
     }
 
     _onTouchMove(e) {
-        this._moving(e.touches[0], this.el);
+        this._moving(
+            e.touches[0], 
+            this.el
+        );
     }
 
     _onMouseUp(e) {
-        this._end(e, this.el);
         Helper(document).off('mousemove', this._onMouseMove)
-                        .off('mouseup', this._onMouseUp);                        
+                        .off('mouseup', this._onMouseUp);  
+        this._end(e, this.el);                                      
     }
 
     _onTouchEnd(e) {
+        Helper(document).off('touchmove', this._onTouchMove)
+                        .off('touchend', this._onTouchEnd);
         if (e.touches.length === 0) {
             this._end(e.changedTouches[0], this.el);
         }
-        Helper(document).off('touchmove', this._onTouchMove)
-                        .off('touchend', this._onTouchEnd);
     }
 
     onMove(data) {
 
+        const { 
+            dx,
+            dy 
+        } = data;
+
         this._drag(
-            data.diffTop, 
-            data.diffLeft
+            dx,
+            dy
         );
     }
 
     onRotate(data) {
 
+        const {
+            snap
+        } = this.storage;
+
         this._rotate(
-            data.radians
+            snapToGrid(data.radians, snap.angle)
         );
     }
 
     onResize(data) {
-    
-        const w = data.width !== null ? this.storage.cw + data.x : null;
-        const h = data.height !== null ? this.storage.ch + data.y : null;
 
-       this._resize(
-            w,
-            h,
-            data.revX,
-            data.revY
+        const {
+            dx,
+            dy,
+            dox,
+            doy
+        } = data;
+
+        this._resize(
+            dx,
+            dy,
+            dox,
+            doy
         );
     }
 
     onApply(actionName) {
         this._apply(actionName);
     }
-}
-
-function loadOptions(options) {
-
-    addClass(this.el, 'dg-drag');
-
-    let snap = {
-        x: 10,
-        y: 10,
-        angle: 10 * RAD
-    };
-
-    let each = {
-        move: false,
-        resize: false,
-        rotate: false
-    }
-
-    if (isDef(options)) {
-
-        if (isDef(options.snap)) {
-
-            const { x, y, angle } = options.snap;
-
-            snap.x = isUndef(x) ? 10 : x;
-            snap.y = isUndef(y) ? 10 : y;
-            snap.angle = isUndef(angle) ? 10 * RAD : angle * RAD;
-        }
-        
-        if (isDef(options.each)) {
-
-            const { move, resize, rotate } = options.each;
-
-            each.move = move || false;
-            each.resize = resize || false;
-            each.rotate = rotate || false; 
-        }    
-    }
-
-    const Ob = this.Ob;
-
-    if (each.move || each.resize || each.rotate) {
-        Ob.subscribe('onrefreshstate', this);
-        Ob.subscribe('onapply', this);
-    }
-
-    if (each.move) {
-        Ob.subscribe('onmove', this);
-    }
-    if (each.resize) {
-        Ob.subscribe('onresize', this);
-    }
-    if (each.rotate) {
-        Ob.subscribe('onrotate', this);
-    }
-
-    this.storage = {
-        drop: options && isFunc(options.drop) 
-                ? function(e) {
-                    options.drop(e, this.el);
-                } 
-                : function() {},
-        snap,
-        each
-    };
 }

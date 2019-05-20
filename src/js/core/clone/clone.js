@@ -10,9 +10,9 @@ import {
 } from '../util/util'
 
 import {
-   getOffset
+   getOffset,
+   objectsCollide
 } from '../util/css-util'
-
 
 export default class Clone {
 
@@ -28,6 +28,7 @@ export default class Clone {
         this._onTouchMove = this._onTouchMove.bind(this);
         this._onMouseUp = this._onMouseUp.bind(this);
         this._onTouchEnd = this._onTouchEnd.bind(this);
+        this._animate = this._animate.bind(this);
 
         this.enable();
     }
@@ -45,216 +46,164 @@ export default class Clone {
     }
 
     _init() {
-        _init.call(this);
-    }
 
-    _draw(el) {
-        _draw.call(this, el);
-    }
+        const ctx = this;
 
-    _onMouseDown(e) {
-        _start.call(this, e);
-        Helper(document).on('mousemove', this._onMouseMove)
-                        .on('mouseup', this._onMouseUp);
-    }
+        const sel = ctx.el;
+        const _sel = Helper(sel);
 
-    _onMouseMove(e) {
-        _move.call(this, e);
-    }
+        const {
+            style,
+            drop,
+            appendTo,
+            stack
+        } = ctx.options;
 
-    _onMouseUp(e) {
-        _end.call(this, e);
-        Helper(document).off('mousemove', this._onMouseMove)
-                        .off('mouseup', this._onMouseUp);
-    }
+        const css = {
+            position: 'absolute',
+            'z-index': '2147483647'
+        };
 
-    _onTouchStart(e) {
-        _start.call(this, e.touches[0]);
-        Helper(document).on('touchmove', this._onTouchMove)
-                        .on('touchend', this._onTouchEnd);
-    }
-
-    _onTouchMove(e) {
-        _move.call(this, e.touches[0]);
-    }
-
-    _onTouchEnd(e) {
-
-        if (e.touches.length === 0) {
-            _end.call(this, e.changedTouches[0]);
+        if (isDef(style) && typeof style === 'object') {
+            Object.assign(css, style);
         }
-        Helper(document).off('touchmove', this._onTouchMove)
-                        .off('touchend', this._onTouchEnd);
-    }
-}
 
-function _init() {
+        const dropZone = isDef(stack) 
+                        ? Helper(stack)[0] 
+                        : document;
 
-    const ctx = this;
+        const onDrop = isFunc(drop)
+            ? function(evt) {
+                const {
+                    clone
+                } = this.storage;
 
-    const sel = ctx.el;
-    const _sel = Helper(sel);
+                const result = objectsCollide(
+                    clone,
+                    dropZone
+                );
 
-    const {
-        style,
-        drop,
-        appendTo,
-        stack
-    } = ctx.options;
-
-    let css = {
-        width: _sel.css('width'),
-        height: _sel.css('height'),
-        margin: 0,
-        padding: 0,
-        position: 'absolute'
-    };
-
-    if (isUndef(style)) {
-        css.border = '#32B5FE 1px dashed';
-        css.background = 'transparent';
-        css.transform = 'none';
-    } else if (typeof style === 'object') {
-        css = { ...style };
-    }
-
-    let onDrop = function() {};
-
-    if (isFunc(drop)) {
-        onDrop = function(evt) {
-            const {
-                clone,
-                stack
-            } = this.storage;
-
-            let result = true;
-            if (isDef(stack)) {
-                result = objectsCollide(
-                            clone, 
-                            stack
-                        );
+                if (result) {
+                    drop.call(this, evt, this.el, clone);
+                }
             }
-            if (result) {
-                drop.call(this, evt, this.el, clone);
-            }
+            : function() {};
+
+        ctx.storage = {
+            onDrop,
+            options: this.options,
+            css,
+            parent: Helper(appendTo)[0] || document.body,
+            stack: dropZone
+        };
+
+        _sel.on('mousedown', this._onMouseDown)
+            .on('touchstart', this._onTouchStart);
+    }
+
+    _start(e) {
+
+        if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
         }
+        
+        const { 
+            storage,
+            el
+        } = this;
+    
+        const {
+            parent,
+            css
+        } = storage; 
+    
+        const offset = getOffset(parent);
+    
+        const { 
+            clientX, 
+            clientY 
+        } = e; 
+    
+        css.left = `${(clientX - offset.left)}px`;
+        css.top = `${(clientY - offset.top)}px`;
+    
+        const clone = el.cloneNode(true);
+        Helper(clone).css(css);
+    
+        storage.clientX = clientX;
+        storage.clientY = clientY;
+        storage.cx = clientX;
+        storage.cy = clientY;
+        storage.clone = clone;
+    
+        Helper(parent)[0].appendChild(clone);
+        this._draw();
     }
 
-    const storage = {
-        onDrop,
-        options: this.options,
-        css,
-        parent: Helper(appendTo || 'body')[0],
-        stack: Helper(stack)[0]
-    };
+    _move(e) {
 
-    ctx.storage = storage;
-
-    _sel.on('mousedown', this._onMouseDown)
-        .on('touchstart', this._onTouchStart);
-}
-
-function _start(e) {
-
-    if (e.stopImmediatePropagation) {
-        e.stopImmediatePropagation();
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+    
+        const { storage } = this;
+    
+        storage.clientX = e.clientX;
+        storage.clientY = e.clientY;
+        storage.doDraw = true;
+        storage.doMove = true;
     }
     
-    const { 
-        storage,
-        el: sel
-    } = this;
-
-    const { 
-        options,
-        parent,
-        css
-    } = storage; 
-
-    const clone = options.style === 'clone' 
-                    ? sel.cloneNode(true)
-                    : document.createElement('div');
-
-    const offset = getOffset(parent);
-
-    css.left = `${(e.pageX - offset.left)}px`;
-    css.top = `${(e.pageY - offset.top)}px`;
-
-    Helper(clone).css(css);
-
-    storage.pageX = e.pageX;
-    storage.pageY = e.pageY;
-    storage.cx = e.pageX;
-    storage.cy = e.pageY;
-    storage.clone = clone;
-
-    Helper(parent)[0].appendChild(clone);
-    this._draw(clone);
-}
-
-function _move(e) {
-
-    if (e.preventDefault) {
-        e.preventDefault();
+    _end(e) {
+    
+        if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+        }
+    
+        const { 
+            storage
+        } = this;
+    
+        const {
+            clone,
+            frameId,
+            onDrop
+        } = storage;
+    
+        storage.doDraw = false;
+        cancelAnimFrame(frameId);
+    
+        if (isUndef(clone)) return;
+    
+        onDrop.call(this, e);
+        clone.parentNode.removeChild(clone);
+    
+        delete storage.clone;
+    }
+    
+    _draw() {
+        this._animate();
     }
 
-    const { storage } = this;
+    _animate() {
 
-    storage.pageX = e.pageX;
-    storage.pageY = e.pageY;
-    storage.doDraw = true;
-    storage.doMove = true;
-}
-
-function _end(e) {
-
-    if (e.stopImmediatePropagation) {
-        e.stopImmediatePropagation();
-    }
-
-    const { 
-        storage
-    } = this;
-
-    const {
-        clone,
-        frameId,
-        onDrop
-    } = storage;
-
-    storage.doDraw = false;
-    cancelAnimFrame(frameId);
-
-    if (isUndef(clone)) return;
-
-    onDrop.call(this, e);
-    clone.parentNode.removeChild(clone);
-
-    delete storage.clone;
-}
-
-function _draw(clone) {
-
-    const ctx = this;
-
-    function animate() {
-
-        const { storage } = ctx;
-
-        storage.frameId = requestAnimFrame(animate);
+        const { storage } = this;
+    
+        storage.frameId = requestAnimFrame(this._animate);
 
         const {
             doDraw,
-            pageX,
-            pageY,
+            clientX,
+            clientY,
             cx,
-            cy
+            cy,
+            clone
         } = storage;
 
         if (!doDraw) return;
         storage.doDraw = false;
 
-        const translate = `translate(${pageX - cx}px, ${pageY - cy}px)`;
+        const translate = `translate(${clientX - cx}px, ${clientY - cy}px)`;
 
         Helper(clone).css({
             transform: translate,
@@ -264,28 +213,47 @@ function _draw(clone) {
             otransform: translate 
         });
     }
+    
+    _destroy() {
+    
+        if (isUndef(this.storage)) return;
+        Helper(this.el).off('mousedown', this._onMouseDown)
+                        .off('touchstart', this._onTouchStart);
+        delete this.storage;
+    }
 
-    animate();
-}
+    _onMouseDown(e) {
+        this._start(e);
+        Helper(document).on('mousemove', this._onMouseMove)
+                        .on('mouseup', this._onMouseUp);
+    }
 
-function _destroy() {
+    _onMouseMove(e) {
+        this._move(e);
+    }
 
-    if (isUndef(this.storage)) return;
-    Helper(this.el).off('mousedown', this._onMouseDown)
-                    .off('touchstart', this._onTouchStart);
-    delete this.storage;
-}
+    _onMouseUp(e) {
+        this._end(e);
+        Helper(document).off('mousemove', this._onMouseMove)
+                        .off('mouseup', this._onMouseUp);
+    }
 
-function objectsCollide(a, b) {
+    _onTouchStart(e) {
+        this._start(e.touches[0]);
+        Helper(document).on('touchmove', this._onTouchMove)
+                        .on('touchend', this._onTouchEnd);
+    }
 
-    const { top: aTop, left: aLeft } = getOffset(a),
-        { top: bTop, left: bLeft } = getOffset(b),
-        _b = Helper(b);
+    _onTouchMove(e) {
+        this._move(e.touches[0]);
+    }
 
-    return !(
-        (aTop < bTop) ||
-        (aTop > (bTop + _b.css('height'))) ||
-        (aLeft < bLeft) ||
-        (aLeft > (bLeft + _b.css('width')))
-    )
+    _onTouchEnd(e) {
+
+        if (e.touches.length === 0) {
+            this._end(e.changedTouches[0]);
+        }
+        Helper(document).off('touchmove', this._onTouchMove)
+                        .off('touchend', this._onTouchEnd);
+    }
 }

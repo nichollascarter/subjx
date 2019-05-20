@@ -4,7 +4,8 @@ Touch-enabled draggable, resizable, rotatable library for creating drag-n-drop a
 
 # Usage
 
-Library provides two actions with an element.
+Library provides two actions with an element. More recently, was decided to make accent on SVG elements. 
+But HTML elements transformation support will be staying.
 
 ## [Demo](http://jsfiddle.net/nichollascarter/qgwzch0v/)
 
@@ -16,7 +17,7 @@ Library provides two actions with an element.
 ```javascript
 // possible parameters
 const xElem = Subjx( 'selector' ) |
-                Subjx( element ) | 
+                Subjx( element ) |
                 Subjx( elementArray );
 ```
 
@@ -28,6 +29,8 @@ const xElem = Subjx( 'selector' ) |
 // enabling tool by `drag` method with the optional parameters
 // by default just call `.drag()`
 const xDraggables = xElem.drag({
+    // manipulation area
+    container: '#container',
     // snapping to grid (default: 10)
     snap: {
         x: 20,
@@ -47,7 +50,7 @@ const xDraggables = xElem.drag({
 });
 
 // method always returns array of new Draggable instances
-// for disabling use `disable` a method for each object
+// for disabling use `disable` method for each object
 xDraggables.forEach(item => {
     item.disable();
 })
@@ -57,30 +60,22 @@ Perhaps, better to use shortened construction:
 const xSVGElements = Subjx('.draggable').drag(...);
 ```
 
-Important:
-`drag` method supports manipulation with SVG elements and their groups:
+Allowed SVG elements:
 `path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `g`
 
 2) Tool for creating a clone:
 
 ```javascript
 const xCloneable = xElem.clone({
-    // set clone style
-    style: 'clone' |
-    { 
-        width: '100px', 
-        height: '100px',
-        margin: 0,
-        padding: 0,
-        top: 0,
-        left: 0,
-        background: 'black',
-        position:'absolute'
-    },
-    // set clone parent
-    appendTo: 'selector',
     // dropping area
     stack: 'selector',
+    // set clone parent
+    appendTo: 'selector',
+    // set clone additional style
+    style: {
+        border: '1px dashed green',
+        background: 'transparent'
+    },
     // call function on drop to area event 
     drop(e, el) {
         console.log(el);
@@ -92,3 +87,6 @@ xCloneable.forEach(item => {
     item.disable();
 });
 ```
+
+### Work In Progress
+    This library depends of my another project and as far as possible it will be updating.

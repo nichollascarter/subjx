@@ -9,8 +9,6 @@ import {
 } from '../util/css-util'
 
 import {
-    snapToGrid,
-    snapCandidate,
     rotatedTopLeft,
     toPX,
     fromPX,
@@ -18,15 +16,18 @@ import {
     floatToFixed
 } from './common'
 
-const brackets = '<div class="dg-hdl dg-rotator"></div>\
-        <div class="dg-hdl dg-hdl-t dg-hdl-l dg-hdl-tl"></div>\
-        <div class="dg-hdl dg-hdl-t dg-hdl-r dg-hdl-tr"></div>\
-        <div class="dg-hdl dg-hdl-b dg-hdl-r dg-hdl-br"></div>\
-        <div class="dg-hdl dg-hdl-b dg-hdl-l dg-hdl-bl"></div>\
-        <div class="dg-hdl dg-hdl-t dg-hdl-c dg-hdl-tc"></div>\
-        <div class="dg-hdl dg-hdl-b dg-hdl-c dg-hdl-bc"></div>\
-        <div class="dg-hdl dg-hdl-m dg-hdl-l dg-hdl-ml"></div>\
-        <div class="dg-hdl dg-hdl-m dg-hdl-r dg-hdl-mr"></div>';
+const MIN_SIZE = 2;
+const BRACKETS = `
+        <div class="dg dg-normal"></div>
+        <div class="dg-hdl dg-hdl-t dg-hdl-l dg-hdl-tl"></div>
+        <div class="dg-hdl dg-hdl-t dg-hdl-r dg-hdl-tr"></div>
+        <div class="dg-hdl dg-hdl-b dg-hdl-r dg-hdl-br"></div>
+        <div class="dg-hdl dg-hdl-b dg-hdl-l dg-hdl-bl"></div>
+        <div class="dg-hdl dg-hdl-t dg-hdl-c dg-hdl-tc"></div>
+        <div class="dg-hdl dg-hdl-b dg-hdl-c dg-hdl-bc"></div>
+        <div class="dg-hdl dg-hdl-m dg-hdl-l dg-hdl-ml"></div>
+        <div class="dg-hdl dg-hdl-m dg-hdl-r dg-hdl-mr"></div>
+        <div class="dg-hdl dg-rotator"></div>`;
 
 export default class Draggable extends Subject {
 
@@ -35,8 +36,8 @@ export default class Draggable extends Subject {
         this.enable(options);
     }
 
-    _init(item, options) {
-        _init.call(this, item, options);
+    _init(item) {
+        _init.call(this, item);
     }
 
     _destroy(item) {
@@ -59,6 +60,50 @@ export default class Draggable extends Subject {
         return _compute.call(this, ...arguments);
     }
 
+    _pointToElement(data) {
+
+        const {
+            transform,
+        } = this.storage;
+
+        const { 
+            x, 
+            y 
+        } = data;
+
+        const ctm = [...transform.matrix];
+        ctm[4] = ctm[5] = 0;
+
+        return multiplyMatrixAndPoint(
+            {
+                x,
+                y
+            },
+            matrixInvert(ctm)
+        );
+    }
+
+    _cursorPoint(e) {
+
+        const { 
+            container
+        } = this.storage;
+
+        const globalMatrix = parseMatrix(
+            getTransform(Helper(container))
+        );
+
+        return multiplyMatrixAndPoint(
+            {
+                x: e.clientX,
+                y: e.clientY
+            },
+            matrixInvert(
+                globalMatrix
+            )
+        );
+    }
+
     _apply() {
 
         const {
@@ -79,6 +124,9 @@ export default class Draggable extends Subject {
 
         const matrix = [...cached];
 
+        const pW = parent.css('width'),
+            pH = parent.css('height');
+
         const diffLeft = matrix[4];
         const diffTop = matrix[5];
 
@@ -87,15 +135,19 @@ export default class Draggable extends Subject {
 
         const css = matrixToCSS(matrix);
 
-        const pW = parent.css('width'),
-                pH = parent.css('height');
-
         const left = parseFloat(
-            toPX(_el.css('left'), pW)
+            toPX(
+                _el[0].style.left || _el.css('left'),
+                pW
+            )
         );
+
         const top = parseFloat(
-            toPX(_el.css('top'), pH)
-        );               
+            toPX(
+                _el[0].style.top || _el.css('top'), 
+                pH
+            )
+        );
 
         css.left = fromPX(
             left + diffLeft + 'px', 
@@ -115,14 +167,13 @@ export default class Draggable extends Subject {
         this.storage.cached = null;
     }
 
-    onRefreshState(data) {
+    onGetState(data) {
 
         const store = this.storage;
 
-        const recalc = refreshState.call(this,
-            data.factor, 
-            data.revX, 
-            data.revY
+        const recalc = getState.call(
+            this,
+            data
         );
 
         Object.keys(recalc).forEach(key => {
@@ -133,32 +184,40 @@ export default class Draggable extends Subject {
 
 function _init(sel) {
 
-    const wrapper = document.createElement('div');
+    const { storage } = this;
 
-    addClass(wrapper, 'dg-wrapper');
-    sel.parentNode.insertBefore(wrapper, sel);
+    const container = document.createElement('div');
 
-    const container = wrapper;
+    addClass(container, 'dg-wrapper');
+    sel.parentNode.insertBefore(container, sel);
+
     const _sel = Helper(sel);
 
-    const w = _sel.css('width'),
-        h = _sel.css('height'),
-        t = _sel.css('top'),
-        l = _sel.css('left');
+    const {
+        left,
+        top,
+        width,
+        height
+    } = sel.style;
+
+    const w = width || _sel.css('width'),
+        h = height || _sel.css('height'),
+        t = top || _sel.css('top'),
+        l = left || _sel.css('left');
 
     const _parent = Helper(container.parentNode);
 
     const css = {
         top: t,
         left: l,
-        width: toPX(w, _parent.css('width')),
-        height: toPX(h, _parent.css('height')),
+        width: w,
+        height: h,
         transform: getTransform(_sel)
     };
 
     const controls = document.createElement('div');
-    controls.innerHTML = brackets;
-
+    controls.innerHTML = BRACKETS;
+    
     addClass(controls, 'dg-controls');
 
     container.appendChild(controls);
@@ -168,8 +227,8 @@ function _init(sel) {
 
     const _container = Helper(container);
 
-    Object.assign(this.storage, {
-        controls: controls,
+    Object.assign(storage, {
+        controls,
         handles: {
             tl: _container.find('.dg-hdl-tl'),
             tr: _container.find('.dg-hdl-tr'),
@@ -190,31 +249,24 @@ function _init(sel) {
 
 function _destroy() {
 
-    const { controls } = this.storage;
+    const { 
+        controls,
+        container 
+    } = this.storage;
 
     Helper(controls).off('mousedown', this._onMouseDown)
                     .off('touchstart', this._onTouchStart);
 
-    this.el.parentNode.removeChild(controls.parentNode);
+    container.removeChild(controls.parentNode);
 }
 
 function _compute(e) {
 
     const {
-        el,
-        storage
-    } = this;
-
-    const {
         handles,
-        controls: ctrls,
-        parent,
-        snap
-    } = storage;
+    } = this.storage;
 
     const handle = Helper(e.target);
-
-    let factor = 1;
 
     //reverse axis
     const revX = handle.is(handles.tl) || 
@@ -226,13 +278,62 @@ function _compute(e) {
                 handle.is(handles.tr) || 
                 handle.is(handles.tc) || 
                 handle.is(handles.ml);
+            
+    const onTopEdge = handle.is(handles.tl) || handle.is(handles.tc) || handle.is(handles.tr),
+        onLeftEdge = handle.is(handles.tl) || handle.is(handles.ml) || handle.is(handles.bl),
+        onRightEdge = handle.is(handles.tr) || handle.is(handles.mr) || handle.is(handles.br),
+        onBottomEdge = handle.is(handles.br) || handle.is(handles.bc) || handle.is(handles.bl);
 
     //reverse angle
-    if (handle.is(handles.tr) || 
-        handle.is(handles.bl)
-    ) {
-        factor = -1;
-    }
+    const factor = handle.is(handles.tr) || 
+                    handle.is(handles.bl) 
+                ? -1
+                : 1;
+
+    const _computed = getState.call(this, {
+        factor,
+        revX, 
+        revY
+    });
+
+    const { 
+        x: clientX, 
+        y: clientY
+    } = this._cursorPoint(e);
+
+    const pressang = Math.atan2(
+        clientY - _computed.center.y,
+        clientX - _computed.center.x
+    );
+
+    _computed.onTopEdge = onTopEdge;
+    _computed.onLeftEdge = onLeftEdge;
+    _computed.onRightEdge = onRightEdge;
+    _computed.onBottomEdge = onBottomEdge;
+    _computed.handle = handle;
+    _computed.pressang = pressang;
+    
+    return _computed; 
+}
+
+function getState(params) {
+
+    const {
+        factor,
+        revX,
+        revY
+    } = params;
+
+    const {
+        el,
+        storage
+    } = this;
+
+    const {
+        handles,
+        controls,
+        parent
+    } = storage;
 
     const tl_off = getOffset(handles.tl[0]),
         tr_off = getOffset(handles.tr[0]);
@@ -243,34 +344,16 @@ function _compute(e) {
     ) * factor;
 
     const cw = parseFloat(
-        toPX(ctrls.style.width, parent.css('width'))
+        toPX(controls.style.width, parent.css('width'))
     );
     const ch = parseFloat(
-        toPX(ctrls.style.height, parent.css('height'))
+        toPX(controls.style.height, parent.css('height'))
     );
 
-    const transform = parseMatrix(Helper(ctrls));
-
-    //getting current coordinates considering rotation angle                                                                                                  
-    const coords = rotatedTopLeft(
-        transform[4],
-        transform[5],
-        cw,
-        ch,
-        refang,
-        revX,
-        revY
-    );
-
-    const offset_ = getOffset(ctrls);
+    const offset_ = getOffset(controls);
 
     const center_x = offset_.left + cw / 2,
         center_y = offset_.top + ch / 2;
-
-    const pressang = Math.atan2(
-        e.pageY - center_y, 
-        e.pageX - center_x
-    );
 
     const _el = Helper(el);
     const styleList = el.style;
@@ -282,65 +365,23 @@ function _compute(e) {
         height: getUnitDimension(styleList.height || _el.css('height'))
     };
 
-    const parentTransform = parseMatrix(parent);
+    const transform = {
+        matrix: parseMatrix(
+            getTransform(Helper(controls))
+        ),
+        parentMatrix: parseMatrix(
+            getTransform(parent)
+        )
+    };
 
-    return {
-        parentScale: [parentTransform[0], parentTransform[3]],
-        transform,
-        cw,
-        ch,
-        center: {
-            x: center_x,
-            y: center_y
-        },
-        left: snapCandidate(transform[4], snap.x),
-        top: snapCandidate(transform[5], snap.y),
-        coordY: coords.top,
-        coordX: coords.left,
-        factor,
-        pressang,
-        refang,
-        revX,
-        revY,
-        handle,
-        onTopEdge: handle.is(handles.tl) || handle.is(handles.tc) || handle.is(handles.tr),
-        onLeftEdge: handle.is(handles.tl) || handle.is(handles.ml) || handle.is(handles.bl),
-        onRightEdge: handle.is(handles.tr) || handle.is(handles.mr) || handle.is(handles.br),
-        onBottomEdge: handle.is(handles.br) || handle.is(handles.bc) || handle.is(handles.bl),
-        dimens
-    }
-}
-
-function refreshState(factor, revX, revY) {
-
-    const {
-        controls: ctrls,
-        handles,
-        parent,
-        snap
-    } = this.storage;
-
-    const tl_off = getOffset(handles.tl[0]),
-        tr_off = getOffset(handles.tr[0]);
-
-    const refang = Math.atan2(
-        tr_off.top - tl_off.top,
-        tr_off.left - tl_off.left
-    ) * factor;
-
-    const cw = parseFloat(
-        toPX(ctrls.style.width, parent.css('width'))
-    );
-    const ch = parseFloat(
-        toPX(ctrls.style.height, parent.css('height'))
-    );
-
-    const transform = parseMatrix(Helper(ctrls));
+    const ctm = [...transform.matrix];
+    ctm[4] = 0;
+    ctm[5] = 0;
 
     //getting current coordinates considering rotation angle                                                                                                  
     const coords = rotatedTopLeft(
-        transform[4],
-        transform[5],
+        transform.matrix[4],
+        transform.matrix[5],
         cw,
         ch,
         refang,
@@ -348,35 +389,27 @@ function refreshState(factor, revX, revY) {
         revY
     );
 
-    const _sel = Helper(this.el);
-    const styleList = this.el.style;
-
     return {
-        transform: transform,
-        parentTransform: parseMatrix(parent),
-        left: snapCandidate(transform[4], snap.x),
-        top: snapCandidate(transform[5], snap.y),
-        coordX: coords.left,
-        coordY: coords.top,
-        refang: refang,
-        cw: cw,
-        ch: ch,
-        dimens: {
-            top: getUnitDimension(styleList.top || _sel.css('top')),
-            left: getUnitDimension(styleList.left || _sel.css('left')),
-            width: getUnitDimension(styleList.width || _sel.css('width')),
-            height: getUnitDimension(styleList.height || _sel.css('height'))
-        }
+        transform,
+        cw,
+        ch,
+        coords,
+        center: {
+            x: center_x,
+            y: center_y
+        },
+        factor,
+        refang,
+        revX,
+        revY,
+        dimens
     }
 }
 
 function processResize(
-    width,
-    height,
-    revX, 
-    revY
+   dx,
+   dy
 ) {
-
     const {
         el,
         storage
@@ -384,44 +417,41 @@ function processResize(
 
     const {
         controls,
-        snap,
-        left,
-        top,
-        coordX,
-        coordY,
-        refang,
+        coords,
+        cw,
+        ch,
         dimens,
         parent,
-        transform
+        transform,
+        refang,
+        revX,
+        revY
     } = storage;
 
     const { style } = controls;
 
-    if (width !== null) {
-        style.width = `${snapToGrid(width, snap.x)}px`;
-    }
+    const newWidth = cw + dx,
+        newHeight = ch + dy;
 
-    if (height !== null) {
-        style.height = `${snapToGrid(height, snap.y)}px`;
-    }
+    if (newWidth < MIN_SIZE || newHeight < MIN_SIZE) return;
 
-    const coords = rotatedTopLeft(
-        left,
-        top,
-        style.width,
-        style.height,
+    style.width = `${newWidth}px`;
+    style.height = `${newHeight}px`;
+
+    const matrix = [...transform.matrix];
+                                                                                                
+    const newCoords = rotatedTopLeft(
+        matrix[4],
+        matrix[5],
+        newWidth,
+        newHeight,
         refang,
         revX,
         revY
     );
 
-    const resultY = top - (coords.top - coordY),
-        resultX = left - (coords.left - coordX);
-
-    const matrix = [...transform];
-
-    matrix[4] = resultX;
-    matrix[5] = resultY;
+    matrix[4] -= (newCoords.left - coords.left);
+    matrix[5] -= (newCoords.top - coords.top);
     
     const css = matrixToCSS(matrix);
 
@@ -440,13 +470,12 @@ function processResize(
     );
 
     Helper(el).css(css);
-
     storage.cached = matrix;
 }
 
 function processMove(
-    top,
-    left
+    dx,
+    dy
 ) {
     const {
         el,
@@ -455,21 +484,36 @@ function processMove(
 
     const {
         controls,
-        transform,
-        snap
+        transform
     } = storage;
 
-    const matrix = [...transform];
+    const {
+        matrix,
+        parentMatrix
+    } = transform;
 
-    matrix[4] = snapToGrid(transform[4] + left, snap.x);
-    matrix[5] = snapToGrid(transform[5] + top, snap.y);
+    const pctm = [...parentMatrix];
+    pctm[4] = pctm[5] = 0;
+
+    const { x, y } = multiplyMatrixAndPoint(
+        {
+            x: dx,
+            y: dy
+        },
+        matrixInvert(pctm)
+    );
+
+    const n_matrix = [...matrix]; 
+
+    n_matrix[4] = matrix[4] + dx;
+    n_matrix[5] = matrix[5] + dy;
         
-    const css = matrixToCSS(matrix);
+    const css = matrixToCSS(n_matrix);
 
     Helper(controls).css(css);
     Helper(el).css(css);
 
-    storage.cached = matrix;
+    storage.cached = n_matrix;
 }
 
 function processRotate(radians) {
@@ -481,27 +525,32 @@ function processRotate(radians) {
 
     const {
         controls,
-        transform,
-        refang,
-        snap
+        transform
     } = storage;
 
-    const matrix = [...transform];
+    const {
+        matrix
+    } = transform;
 
-    const angle = snapToGrid(refang + radians, snap.angle);
+    const cos = floatToFixed(Math.cos(radians)),
+        sin = floatToFixed(Math.sin(radians));
 
-    //rotate(Xdeg) = matrix(cos(X), sin(X), -sin(X), cos(X), 0, 0);
-    matrix[0] = floatToFixed(Math.cos(angle));
-    matrix[1] = floatToFixed(Math.sin(angle));
-    matrix[2] = - floatToFixed(Math.sin(angle));
-    matrix[3] = floatToFixed(Math.cos(angle));
+    const rotMatrix = [
+        cos,
+        sin,
+        -sin,
+        cos,
+        0,
+        0
+    ];
 
-    const css = matrixToCSS(matrix);
+    const resMatrix = multiplyMatrix(rotMatrix, matrix);
+    const css = matrixToCSS(resMatrix);
 
     Helper(controls).css(css);
     Helper(el).css(css);
 
-    storage.cached = matrix;
+    storage.cached = resMatrix;
 }
 
 function matrixToCSS(arr) {
@@ -515,4 +564,168 @@ function matrixToCSS(arr) {
         msTransform: style,
         otransform: style                     
     }
+}
+
+function multiplyMatrixAndPoint(point, matrix) {
+
+    const {
+        x, y
+    } = point;
+
+    const [ a, b, c, d, e, f ] = matrix;
+
+    return {
+        x: a * x + c * y + e,
+        y: b * x + d * y + f
+    };
+}
+
+//http://blog.acipo.com/matrix-inversion-in-javascript/
+function matrixInvert(ctm) {
+    // I use Guassian Elimination to calculate the inverse:
+    // (1) 'augment' the matrix (left) by the identity (on the right)
+    // (2) Turn the matrix on the left into the identity by elemetry row ops
+    // (3) The matrix on the right is the inverse (was the identity matrix)
+    // There are 3 elemtary row ops: (I combine b and c in my code)
+    // (a) Swap 2 rows
+    // (b) Multiply a row by a scalar
+    // (c) Add 2 rows
+
+    const M = [
+        [ctm[0], ctm[2], ctm[4]],
+        [ctm[1], ctm[3], ctm[5]],
+        [0, 0, 1]
+    ];
+
+    //if the matrix isn't square: exit (error)
+    if (M.length !== M[0].length) {
+        return;
+    }
+
+    //create the identity matrix (I), and a copy (C) of the original
+    const dim = M.length;
+
+    const I = [],
+        C = [];
+
+    for (let i = 0; i < dim; i += 1) {
+        // Create the row
+        I[I.length] = [];
+        C[C.length] = [];
+        for (let j = 0; j < dim; j += 1) {
+
+            //if we're on the diagonal, put a 1 (for identity)
+            if (i == j) {
+                I[i][j] = 1;
+            } else {
+                I[i][j] = 0;
+            }
+
+            // Also, make the copy of the original
+            C[i][j] = M[i][j];
+        }
+    }
+
+    // Perform elementary row operations
+    for (let i = 0; i < dim; i += 1) {
+        // get the element e on the diagonal
+        let e = C[i][i];
+
+        // if we have a 0 on the diagonal (we'll need to swap with a lower row)
+        if (e === 0) {
+            //look through every row below the i'th row
+            for (let ii = i + 1; ii < dim; ii += 1) {
+                //if the ii'th row has a non-0 in the i'th col
+                if (C[ii][i] !== 0) {
+                    //it would make the diagonal have a non-0 so swap it
+                    for (let j = 0; j < dim; j++) {
+                        e = C[i][j]; //temp store i'th row
+                        C[i][j] = C[ii][j]; //replace i'th row by ii'th
+                        C[ii][j] = e; //repace ii'th by temp
+                        e = I[i][j]; //temp store i'th row
+                        I[i][j] = I[ii][j]; //replace i'th row by ii'th
+                        I[ii][j] = e; //repace ii'th by temp
+                    }
+                    //don't bother checking other rows since we've swapped
+                    break;
+                }
+            }
+            //get the new diagonal
+            e = C[i][i];
+            //if it's still 0, not invertable (error)
+            if (e === 0) {
+                return
+            }
+        }
+
+        // Scale this row down by e (so we have a 1 on the diagonal)
+        for (let j = 0; j < dim; j++) {
+            C[i][j] = C[i][j] / e; //apply to original matrix
+            I[i][j] = I[i][j] / e; //apply to identity
+        }
+
+        // Subtract this row (scaled appropriately for each row) from ALL of
+        // the other rows so that there will be 0's in this column in the
+        // rows above and below this one
+        for (let ii = 0; ii < dim; ii++) {
+            // Only apply to other rows (we want a 1 on the diagonal)
+            if (ii == i) {
+                continue;
+            }
+
+            // We want to change this element to 0
+            e = C[ii][i];
+
+            // Subtract (the row above(or below) scaled by e) from (the
+            // current row) but start at the i'th column and assume all the
+            // stuff left of diagonal is 0 (which it should be if we made this
+            // algorithm correctly)
+            for (let j = 0; j < dim; j++) {
+                C[ii][j] -= e * C[i][j]; //apply to original matrix
+                I[ii][j] -= e * I[i][j]; //apply to identity
+            }
+        }
+    }
+
+    //we've done all operations, C should be the identity
+    //matrix I should be the inverse:
+    return [
+        I[0][0], I[1][0],
+        I[0][1], I[1][1],
+        I[0][2], I[1][2]
+    ];
+}
+
+function multiplyMatrix(mtrx1, mtrx2) {
+
+    const m1 =  [
+        [mtrx1[0], mtrx1[2], mtrx1[4]],
+        [mtrx1[1], mtrx1[3], mtrx1[5]],
+        [0, 0, 1]
+    ];
+
+    const m2 =  [
+        [mtrx2[0], mtrx2[2], mtrx2[4]],
+        [mtrx2[1], mtrx2[3], mtrx2[5]],
+        [0, 0, 1]
+    ];
+
+    const result = [];
+
+    for(let j = 0; j < m2.length; j++) {
+        result[j] = [];
+        for(let k = 0; k < m1[0].length; k++) {
+            let sum = 0;
+            for(let i = 0; i < m1.length; i++) {
+                sum += m1[i][k] * m2[j][i];
+            }
+            result[j].push(sum);
+        }
+    }
+
+    return [
+        result[0][0], result[1][0], 
+        result[0][1], result[1][1], 
+        result[0][2], result[1][2]
+    ];
 }

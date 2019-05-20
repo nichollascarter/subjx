@@ -2,30 +2,30 @@ import { Helper } from '../../helper'
 import Subject from '../subject'
 
 import { 
-    parseTransform,
-    getOffset
-} from '../../util/css-util'
+    isUndef
+} from '../../util/util'
 
 import {
-    DEG,
-    snapToGrid,
-    snapCandidate,
-    rotatedTopLeft,
-    recalcPoint
+    floatToFixed
 } from '../common'
 
 import {
     movePath,
-    resizePath,
-    setCoord,
-    getFactor
+    resizePath
 } from './path'
-import { isUndef } from '../../util/util';
 
-const MIN_SIZE = 2; 
-const ROT_OFFSET = 25;
-const floatRE = /[+-]?\d+(\.\d+)?/g; 
-const translateRE = /translate\(.*\)(.*)translate\(.*\)|$/;
+import {
+    ALLOWED_ELEMENTS,
+    createSVGElement,
+    createSVGMatrix,
+    getTransformToElement,
+    matrixToString,
+    pointTo
+} from './util'
+
+const MIN_SIZE = 2;
+const ROT_OFFSET = 50;
+const floatRE = /[+-]?\d+(\.\d+)?/g;
 
 export default class DraggableSVG extends Subject {
 
@@ -34,8 +34,8 @@ export default class DraggableSVG extends Subject {
         this.enable(options);
     }
 
-    _init(item, options) {
-        _init.call(this, item, options);
+    _init(item) {
+        _init.call(this, item);
     }
 
     _destroy(item) {
@@ -58,137 +58,205 @@ export default class DraggableSVG extends Subject {
         return _compute.call(this, ...arguments);
     }
 
-    _apply(actionName) {
+    _cursorPoint(e) {
 
-        const {
-            box, 
-            handles,
-            refang,
-            factor,
-            wrapper,
-            cached,
-            transform
+        const { 
+            container
         } = this.storage;
 
-        const translate = parseTransform(wrapper.getAttribute('transform') || 'translate(0 0)').translate;
+        return pointTo(
+            container.getScreenCTM().inverse(), 
+            container, 
+            e.clientX, 
+            e.clientY
+        );
+    }
 
-        const { x, y, width: newWidth, height: newHeight } = box.getBBox();
+    _pointToElement(data) {
 
-        const dx = translate[0],
-            dy = translate[1],
-            resultX = x + dx,
-            resultY = y + dy;
+        const {
+            transform,
+            container
+        } = this.storage;
 
-        const centerX = resultX + newWidth / 2,
-            centerY = resultY + newHeight / 2;
+        const { 
+            x, 
+            y 
+        } = data;
 
-        if (actionName !== 'rotate') {
+        const { ctm } = transform;
+        const matrix = ctm.inverse();
 
-            applyTransformToHandles(box, handles, {
-                x: resultX,
-                y: resultY,
-                width: newWidth,
-                height: newHeight,
-                angle: refang * factor
-            });
-        }
+        const pt = container.createSVGPoint();
+        pt.x = x;
+        pt.y = y;
+        matrix.e = matrix.f = 0;
+
+        return pt.matrixTransform(matrix);
+    }
+
+    _apply(actionName) {
+
+        const { 
+            el: element,
+            storage
+        } = this;
+
+        const {
+            container,
+            box,
+            handles,
+            normalLine,
+            cached,
+            transform
+        } = storage;
+
+        if (isUndef(cached)) return;
+
+        const {
+            scaleX,
+            scaleY,
+            dx,
+            dy,
+            ox,
+            oy
+        } = cached;
+
+        const {
+            matrix
+        } = transform;
 
         if (actionName === 'drag') {
-
+        
             if (dx === 0 && dy === 0) return;
-                
-            wrapper.removeAttribute('transform');
 
-            const els = [];
+            // create translate matrix for an element
+            const eM = createSVGMatrix();
 
-            if (this.el.tagName.toLowerCase() === 'g') {
+            eM.e = dx;
+            eM.f = dy;
 
-                this.el.childNodes.forEach(item => {
-                    if (item.nodeType === 1) {
-                        els.push(item);
+            const translateMatrix = eM.multiply(matrix)
+                                        .multiply(eM.inverse());
+
+            element.setAttribute(
+                'transform', 
+                matrixToString(translateMatrix)
+            );
+
+            if (isGroup(element)) {
+
+                const els = checkChildElements(element);
+
+                els.forEach(child => {
+
+                    const pt = container.createSVGPoint();
+                    const ctm = getTransformToElement(element.parentNode, container).inverse();
+                    pt.x = ox;
+                    pt.y = oy;
+                    ctm.e = ctm.f = 0;
+                    const newPT = pt.matrixTransform(ctm);
+
+                    // create translate matrix for an element
+                    const eM = createSVGMatrix();
+
+                    eM.e = dx;
+                    eM.f = dy;
+
+                    const translateMatrix = eM.multiply(
+                        getTransformToElement(child, child.parentNode)
+                    ).multiply(eM.inverse());
+
+                    child.setAttribute(
+                        'transform', 
+                        matrixToString(translateMatrix)
+                    );   
+                    
+                    if (!isGroup(child)) {
+                        applyTranslate(child, {
+                            x: newPT.x,
+                            y: newPT.y
+                        });
                     }
                 });
 
-                this.el.removeAttribute('transform');
             } else {
-                els.push(this.el);
-            }
-
-            els.forEach((element) => {
                 applyTranslate(element, {
                     x: dx,
-                    y: dy,
-                    angle: refang * factor * DEG,
-                    centerX,
-                    centerY
+                    y: dy
                 });
-            })
+            } 
         }
 
         if (actionName === 'resize') {
 
-            if (isUndef(cached)) return;
+            const { 
+                x, 
+                y,
+                width: newWidth,
+                height: newHeight
+            } = box.getBBox();
 
-            const els = [];
-
-            const {
-                revX, 
-                revY,
-                scaleX,
-                scaleY,
-                diffX,
-                diffY
-            } = cached;
+            applyTransformToHandles(
+                box, 
+                handles, 
+                normalLine, 
+                {
+                    x,
+                    y,
+                    width: newWidth,
+                    height: newHeight
+                }, 
+                container
+            );
                 
-            let isGroup = false;
+            if (isGroup(element)) {
 
-            if (this.el.tagName.toLowerCase() === 'g') {
-                this.el.childNodes.forEach(item => {
-                    if (item.nodeType === 1) {
-                        els.push(item);
+                const els = checkChildElements(element);
+
+                els.forEach(child => {
+
+                    if (!isGroup(child)) {
+
+                        applyResize(child, {
+                            scaleX,
+                            scaleY,
+                            defaultCTM: child.__ctm__,
+                            bBox: transform.bBox,
+                            container,
+                            storage
+                        });
                     }
                 });
-                isGroup = true;
-            } else {
-                els.push(this.el);
-            }
 
-            els.forEach((element) => {
+            } else {
 
                 applyResize(element, {
                     scaleX,
                     scaleY,
-                    diffX: diffX * getFactor(revX),
-                    diffY: diffY * getFactor(revY),
-                    revX,
-                    revY,
-                    angle: refang * factor,
-                    factor,
-                    centerX,
-                    centerY,    
-                    bBox: isGroup === true 
-                            ? transform.bBox 
-                            : element.getBBox(),
-                    store: this.storage
+                    defaultCTM: transform.ctm,
+                    bBox: transform.bBox,
+                    container,
+                    storage
                 });
-            });
+            }
 
-            this.storage.cached = null;
+            element.setAttribute(
+                'transform',
+                matrixToString(matrix)
+            );
         }
+        this.storage.cached = null;
     }
 
-    onRefreshState(data) {
+    onGetState(data) {
 
         const store = this.storage;
 
-        const recalc = refreshState.call(
+        const recalc = getState.call(
             this,
             data
         );
-
-        Object.keys(data).forEach(key => {
-            store[key] = data[key];
-        });
 
         Object.keys(recalc).forEach(key => {
             store[key] = recalc[key];
@@ -198,83 +266,128 @@ export default class DraggableSVG extends Subject {
 
 function _init(sel) {
 
-    const wrapper = createSVG('g');
-    sel.parentNode.appendChild(wrapper);
+    const { storage } = this;
 
     const {
-        width: w, 
-        height: h, 
-        x, 
-        y
+        showHandles,
+        container
+    } = storage;
+
+    const wrapper = createSVGElement('g');
+    container.appendChild(wrapper);
+
+    const {
+        width: cw,
+        height: ch,
+        x: cx,
+        y: cy
     } = sel.getBBox();
 
-    const transform = sel.getAttribute('transform') || 'translate(0 0)';
-
-    const box = createSVG('rect');
+    const elCTM = getTransformToElement(sel, container);
+    const box = createSVGElement('rect');
 
     const attrs = [
-        ['width', w],
-        ['height', h],
-        ['x', x],
-        ['y', y],
-        ['fill', 'transparent'],
+        ['width', cw],
+        ['height', ch],
+        ['x', cx],
+        ['y', cy],
+        ['fill', 'rgba(0, 168, 255, 0.2)'],
         ['stroke', '#00a8ff'],
         ['stroke-dasharray', '3 3'],
-        ['transform', transform]
+        ['vector-effect', 'non-scaling-stroke'],
+        ['transform', matrixToString(elCTM)]
     ];
 
     attrs.forEach(item => {
         box.setAttribute(item[0], item[1]);
     });
 
-    let group = createSVG('g');
-        group.appendChild(box);
+    const handlesGroup = createSVGElement('g'),
+        normalLineGroup = createSVGElement('g'),
+        group = createSVGElement('g');
 
+    group.appendChild(box);
     wrapper.appendChild(group);
+    wrapper.appendChild(normalLineGroup);
+    wrapper.appendChild(handlesGroup);
+
+    const { 
+        x: bX,
+        y: bY,
+        width: bW,
+        height: bH
+    } = box.getBBox();
+
+    const boxCTM = getTransformToElement(box, box.parentNode);
 
     const handles = {
-        tl: [x, y],
-        tr: [x + w, y],
-        br: [x + w, y + h],
-        bl: [x, y + h],
-        tc: [x + w / 2, y],
-        bc: [x + w / 2, y + h],
-        ml: [x, y + h / 2],
-        mr: [x + w, y + h / 2],
-        rotator: [x + w / 2, y - ROT_OFFSET]
+        tl: pointTo(boxCTM, container, bX, bY),
+        tr: pointTo(boxCTM, container, bX + bW, bY),
+        br: pointTo(boxCTM, container, bX + bW, bY + bH),
+        bl: pointTo(boxCTM, container, bX, bY + bH),
+        tc: pointTo(boxCTM, container, bX + bW / 2, bY),
+        bc: pointTo(boxCTM, container, bX + bW / 2, bY + bH),
+        ml: pointTo(boxCTM, container, bX, bY + bH / 2),
+        mr: pointTo(boxCTM, container, bX + bW, bY + bH / 2),
+        //center: pointTo(boxCTM, container, bX + bW / 2, bY + bH / 2),
+        rotator: {}
     };
+
+    const theta = Math.atan2(
+        handles.tl.y - handles.tr.y,
+        handles.tl.x - handles.tr.x
+    );
+
+    handles.rotator.x = handles.mr.x - ROT_OFFSET * Math.cos(theta);
+    handles.rotator.y = handles.mr.y - ROT_OFFSET * Math.sin(theta);
+
+    const normalLine = createSVGElement('line');
+
+    if (showHandles) {
+        
+        normalLine.x1.baseVal.value = handles.mr.x;
+        normalLine.y1.baseVal.value = handles.mr.y;
+        normalLine.x2.baseVal.value = handles.rotator.x;
+        normalLine.y2.baseVal.value = handles.rotator.y;
+
+        normalLine.setAttribute('stroke', '#00a8ff');
+        normalLine.setAttribute('stroke-dasharray', '3 3');
+        normalLine.setAttribute('vector-effect', 'non-scaling-stroke');
+
+        normalLineGroup.appendChild(normalLine);
+    }
 
     Object.keys(handles).forEach(key => {
         const data = handles[key];
-        handles[key] = createHandler(data[0], data[1], transform);
-        wrapper.appendChild(
-            createSVG('g').appendChild(handles[key]).parentNode
-        );
+        handles[key] = createHandler(data.x, data.y);
+        if (showHandles) {
+            handlesGroup.appendChild(handles[key])
+        }
     });
 
-    Object.assign(this.storage, {
+    Object.assign(storage, {
         wrapper,
         box,
         handles,
-        parent: wrapper.parentNode
+        normalLine,
+        parent: sel.parentNode
     });
 
     Helper(wrapper).on('mousedown', this._onMouseDown)
-                    .on('touchstart', this._onTouchStart);
+                    .on('touchstart', this._onTouchStart);               
 }
 
 function _compute(e) {
 
     const {
-        box,
-        handles,
-        snap,
-        parent
-    } = this.storage;
+        storage
+    } = this;
+
+    const {
+        handles
+    } = storage;
 
     const handle = Helper(e.target);
-
-    let factor = 1;
 
     //reverse axis
     const revX = handle.is(handles.tl) ||
@@ -287,351 +400,351 @@ function _compute(e) {
                 handle.is(handles.tc) || 
                 handle.is(handles.ml);
 
-    //reverse angle
-    if (handle.is(handles.tr) || 
-        handle.is(handles.bl)
-    ) { 
-        factor = -1;
-    }
-
-    const tl_off = getOffset(handles.tl),
-        tr_off = getOffset(handles.tr);
-        
-    const refang = Math.atan2(
-        tr_off.top - tl_off.top, 
-        tr_off.left - tl_off.left
-    ) * factor;
-
-    const bBox = box.getBBox();
-
-    const { width: cw, height: ch, x: c_left, y: c_top } = bBox;
-                                                                                                
-    const coords = rotatedTopLeft(
-        c_left,
-        c_top,
-        cw,
-        ch,
-        refang,
-        revX,
-        revY
-    );
-
-    const boxOffset = getOffset(box);
-
-    const center_x = boxOffset.left + cw / 2,
-        center_y = boxOffset.top + ch / 2;
-
-    const pressang = Math.atan2(
-        e.pageY - center_y,
-        e.pageX - center_x
-    );
-
     const onTopEdge = handle.is(handles.tl) || handle.is(handles.tc) || handle.is(handles.tr),
         onLeftEdge = handle.is(handles.tl) || handle.is(handles.ml) || handle.is(handles.bl),
         onRightEdge = handle.is(handles.tr) || handle.is(handles.mr) || handle.is(handles.br),
         onBottomEdge = handle.is(handles.br) || handle.is(handles.bc) || handle.is(handles.bl);
 
-    const transform = {
-        orig: this.el.getAttribute('transform'),
-        value: box.getAttribute('transform'),
-        scaleX: revX ? cw + c_left : c_left,
-        scaleY: revY ? ch + c_top : c_top,
-        bBox
-    };
+    const _computed = getState.call(this, {
+        revX, 
+        revY
+    });
 
-    return {
-        transform,
-        parentScale: parseTransform(parent.getAttribute('transform') || 'scale(1 1)').scale,
-        cw,
-        ch,
-        center: {
-            x: boxOffset.left + cw / 2,
-            y: boxOffset.top + ch / 2,
-            left: c_left + cw / 2,
-            top: c_top + ch / 2
-        },
-        left: snapCandidate(c_left, snap.x),
-        top: snapCandidate(c_top, snap.y),
-        coordX: coords.left,
-        coordY: coords.top,
-        factor,
-        pressang,
-        refang,
-        revX,
-        revY,
-        handle,
-        onTopEdge,
-        onLeftEdge,
-        onRightEdge,
-        onBottomEdge
-    }
+    const { 
+        x: clientX, 
+        y: clientY
+    } = this._cursorPoint(e);
+
+    const pressang = Math.atan2(
+        clientY - _computed.center.y,
+        clientX - _computed.center.x
+    );
+
+    _computed.onTopEdge = onTopEdge;
+    _computed.onLeftEdge = onLeftEdge;
+    _computed.onRightEdge = onRightEdge;
+    _computed.onBottomEdge = onBottomEdge;
+    _computed.handle = handle;
+    _computed.pressang = pressang;
+   
+    return _computed;
 }
 
 function _destroy() {
 
-    const { wrapper } = this.storage;
+    const {
+        wrapper, 
+        container 
+    } = this.storage;
 
     Helper(wrapper).off('mousedown', this._onMouseDown)
                     .off('touchstart', this._onTouchStart);
 
-    this.el.parentNode.removeChild(wrapper);
+    container.removeChild(wrapper);
 }
 
-function refreshState(params) {
+function getState(params) {
 
-    const { 
-        factor, 
-        revX, 
-        revY,
+    const {
+        revX,
+        revY
     } = params;
 
     const { 
+        el: element,
+        storage
+    } = this;
+
+    const {
+        container,
         box,
-        handles,
-        snap
-    } = this.storage;
+        wrapper,
+        parent
+    } = storage;
 
-    const tl_off = getOffset(handles.tl),
-        tr_off = getOffset(handles.tr);
+    const eBBox = this.el.getBBox();
 
-    let refang = Math.atan2(
-        tr_off.y - tl_off.y, 
-        tr_off.x - tl_off.x
-    ) * factor;
+    const {
+        x: el_x,
+        y: el_y,
+        width: el_w,
+        height: el_h
+    } = eBBox;
 
-    const bBox = box.getBBox();
+    const { 
+        width: cw, 
+        height: ch, 
+        x: c_left, 
+        y: c_top 
+    } = box.getBBox();
 
-    const { width: cw, height: ch, x: c_left, y: c_top } = bBox;
-                                                                                                 
-    const coords = rotatedTopLeft(
-        c_left,
-        c_top,
-        cw,
-        ch,
-        refang,
-        revX,
-        revY
-    );
-
-    const boxOffset = getOffset(box);
+    const elMatrix = getTransformToElement(element, parent);
+    const boxGroup = box.parentNode;
 
     const transform = {
-        orig: this.el.getAttribute('transform'),
-        value: box.getAttribute('transform'),
-        scaleX: revX ? cw + c_left : c_left,
-        scaleY: revY ? ch + c_top : c_top,
-        bBox
+        matrix: elMatrix,
+        ctm: getTransformToElement(element, container),
+        wrapperMatrix: getTransformToElement(wrapper, wrapper.parentNode),
+        boxCTM: getTransformToElement(boxGroup, container),
+        boxMatrix: getTransformToElement(boxGroup, boxGroup.parentNode),
+        parentMatrix: getTransformToElement(parent, container),
+        trMatrix: createSVGMatrix(),
+        scMatrix: createSVGMatrix(),
+        rotMatrix: createSVGMatrix(),
+        scaleX: (revX ? el_w + el_x : el_x),
+        scaleY: (revY ? el_h + el_y : el_y),
+        bBox: eBBox
     };
+
+    const hW = cw / 2,
+        hH = ch / 2;
+
+    const boxCenter = pointTo(
+        getTransformToElement(box, container), 
+        container, 
+        c_left + hW,
+        c_top + hH
+    );
+
+    const elementCenter = pointTo(
+        elMatrix, 
+        container, 
+        el_x + el_w / 2,
+        el_y + el_h / 2
+    );
+
+    checkChildElements(element).forEach(child => {
+        child.__ctm__ = getTransformToElement(child, container);
+    });
 
     return {
         transform,
         cw,
         ch,
         center: {
-            x: boxOffset.left + cw / 2,
-            y: boxOffset.top + ch / 2,
-            left: c_left + cw / 2,
-            top: c_top + ch / 2
+            x: boxCenter.x,
+            y: boxCenter.y,
+            el_x: elementCenter.x,
+            el_y: elementCenter.y
         },
-        left: snapCandidate(c_left, snap.x),
-        top: snapCandidate(c_top, snap.y),
-        coordX: coords.left,
-        coordY: coords.top,
-        factor,
-        refang
-    }
+        left: c_left,
+        top: c_top,
+        revX,
+        revY
+    };
 }
 
 function processResize(
-    width,
-    height,
-    revX, 
-    revY
+    dx,
+    dy
 ) {
 
     const {
+        container,
         box,
         handles,
-        snap,
+        normalLine,
         left,
         top,
-        coordX,
-        coordY,
-        refang,
-        factor,
         cw,
         ch,
-        transform
-    } = this.storage;
-        
-    const sel = this.el;
-        
-    let newWidth = Number(box.getAttribute('width')),
-        newHeight = Number(box.getAttribute('height'));
-
-    if (width !== null) {
-        newWidth = snapToGrid(width, snap.x);
-    }
-
-    if (height !== null) {
-        newHeight = snapToGrid(height, snap.y);
-    }
-
-    if (Math.abs(newWidth) < MIN_SIZE || Math.abs(newHeight) < MIN_SIZE) return;
-
-    const coords = rotatedTopLeft(
-        left,
-        top,
-        newWidth,
-        newHeight,
-        refang,
+        transform,
         revX,
         revY
-    );
+    } = this.storage;
 
-    const resultY = top - (coords.top - coordY),
-        resultX = left - (coords.left - coordX);
+    const { 
+        matrix,
+        scMatrix,
+        trMatrix,
+        scaleX: ptX,
+        scaleY: ptY
+    } = transform;
 
-    applyTransformToHandles(box, handles, {
-        x: resultX,
-        y: resultY,
+    const { el } = this;
+
+    let {
         width: newWidth,
-        height: newHeight,
-        angle: refang * factor
-    });
+        height: newHeight
+    } = box.getBBox();
+
+    newWidth = cw + dx;
+    newHeight = ch + dy;
+
+    if (Math.abs(newWidth) < MIN_SIZE || Math.abs(newHeight) < MIN_SIZE) return;
 
     const scaleX = newWidth / cw,
         scaleY = newHeight / ch;
 
+    // setup scale matrix
+    scMatrix.a = scaleX;
+    scMatrix.b = 0;
+    scMatrix.c = 0;
+    scMatrix.d = scaleY;
+    scMatrix.e = 0;
+    scMatrix.f = 0;
+
+    // translate compensation matrix
+    trMatrix.e = ptX;
+    trMatrix.f = ptY;
+
+    //now must to do: translate(x y) scale(sx sy) translate(-x -y)
+    const res = matrix.multiply(trMatrix)
+                        .multiply(scMatrix)
+                        .multiply(trMatrix.inverse());
+
+    el.setAttribute(
+        'transform', 
+        matrixToString(res)
+    );
+
     this.storage.cached = {
-        scaleX: scaleX,
-        scaleY: scaleY,
-        diffX: newWidth - cw,
-        diffY: newHeight - ch,
-        revX: revX,
-        revY: revY
+        scaleX,
+        scaleY
     };
 
-    const { scaleX: ptX, scaleY: ptY } = transform;
-
-    const scaleString = `translate(${ptX} ${ptY}) scale(${scaleX} ${scaleY}) translate(${-ptX} ${-ptY})`;
-
-    if (sel.tagName.toLowerCase() === 'g') {
-        sel.childNodes.forEach(element => {
-
-            if (element.nodeType !== 1) return;
-
-            const oldTransform = element.getAttribute('transform') || '';
-            element.setAttribute(
-                'transform', 
-                oldTransform.replace(translateRE, scaleString)
-            );
-        });
-    } else {
-        const oldTransform = sel.getAttribute('transform') || '';
-        sel.setAttribute(
-            'transform', 
-            oldTransform.replace(translateRE, scaleString)
-        );
-    }
+    applyTransformToHandles(
+        box,
+        handles,
+        normalLine,
+        {
+            x: revX ? left - dx : left,
+            y: revY ? top - dy : top,
+            width: newWidth,
+            height: newHeight,
+        },
+        container
+    );
 }
 
 function processMove(
-    top,
-    left
+    dx,
+    dy
 ) {
-    let {
-        snap,
+    const {
+        container,
         transform,
         wrapper
     } = this.storage;
 
-    const originTransform = transform.orig || '';
-    
-    const x = snapToGrid(left, snap.x),
-        y = snapToGrid(top, snap.y);
+    const {
+        matrix,
+        trMatrix,
+        scMatrix,
+        wrapperMatrix,
+        parentMatrix
+    } = transform;
 
-    const transformString = `translate(${x} ${y})`;
-    const newTransform = originTransform.replace(/translate\(.+\)|^/, transformString);
+    scMatrix.e = dx;
+    scMatrix.f = dy;
 
-    wrapper.setAttribute('transform', transformString);
-    this.el.setAttribute('transform', newTransform);
+    const moveWrapper = scMatrix.multiply(wrapperMatrix);
+
+    wrapper.setAttribute(
+        'transform',
+        matrixToString(moveWrapper)
+    );
+
+    parentMatrix.e = parentMatrix.f = 0;
+    const { x, y } = pointTo(
+        parentMatrix.inverse(), 
+        container, 
+        dx,
+        dy
+    );
+
+    trMatrix.e = x;
+    trMatrix.f = y;
+
+    const moveElement = trMatrix.multiply(matrix);
+
+    this.el.setAttribute(
+        'transform', 
+        matrixToString(moveElement)
+    );
+
+    this.storage.cached = {
+        dx: x,
+        dy: y,
+        ox: dx,
+        oy: dy
+    }
 }
 
 function processRotate(radians) {
 
     const {
-        refang,
-        snap,
         center,
-        box,
-        handles
+        transform,
+        wrapper
     } = this.storage;
 
-    const angle = snapToGrid(refang + radians, snap.angle);
+    const {
+        matrix,
+        wrapperMatrix,
+        parentMatrix,
+        trMatrix,
+        scMatrix,
+        rotMatrix
+    } = transform;
 
-    const transform = `rotate(${angle * DEG} ${center.left} ${center.top})`;
+    const cos = floatToFixed(Math.cos(radians)),
+        sin = floatToFixed(Math.sin(radians));
 
-    box.setAttribute('transform', transform);
-
-    Object.keys(handles).forEach(hdl => {
-        handles[hdl].setAttribute('transform', transform);
-    });
-
-    if (this.el.tagName.toLowerCase() === 'g') {
-        this.el.childNodes.forEach((element) => {
-            if (element.nodeType !== 1) return;
-            element.setAttribute('transform', transform);
-        });
-    } else {
-        this.el.setAttribute('transform', transform);
-    }
-}
-
-function createSVG(name) {
-    return document.createElementNS('http://www.w3.org/2000/svg', name);
-}
-
-function createHandler(l, t, transform) {
-
-    const handler = createSVG('circle');
+    // rotate(a cx cy) is equivalent to translate(cx cy) rotate(a) translate(-cx -cy)
+    trMatrix.e = center.x;
+    trMatrix.f = center.y;
     
-    const items = {
-        cx: l,
-        cy: t,
-        r: 6,
-        fill: 'white',
-        stroke: '#00a8ff',
-        transform: transform
-    };
+    rotMatrix.a = cos;
+    rotMatrix.b = sin;
+    rotMatrix.c = - sin;
+    rotMatrix.d = cos;
+    
+    const wrapMatrix = trMatrix.multiply(rotMatrix)
+                            .multiply(trMatrix.inverse())
+                            .multiply(wrapperMatrix);
 
-    Object.keys(items).map(key => {
-        handler.setAttribute(key, items[key]);
-    });
+    wrapper.setAttribute(
+        'transform',
+        matrixToString(wrapMatrix)
+    );
+    
+    scMatrix.e = center.el_x;
+    scMatrix.f = center.el_y;
 
-    return handler;
+    parentMatrix.e = parentMatrix.f = 0;
+    const resRotMatrix = parentMatrix.inverse()
+                            .multiply(rotMatrix)
+                            .multiply(parentMatrix);
+
+    const rotateMatrix = scMatrix.multiply(resRotMatrix)
+                                .multiply(scMatrix.inverse());
+                                                
+    const elMatrix = rotateMatrix.multiply(matrix);
+
+    this.el.setAttribute(
+        'transform',
+        matrixToString(elMatrix)
+    );
 }
 
 function applyTranslate(element, data) {
 
     const {
         x,
-        y,
-        angle,
-        centerX,
-        centerY
+        y
     } = data;
 
-    const attrs = [
-        ['transform', `rotate(${angle} ${centerX} ${centerY})`]
-    ];
+    const attrs = [];
 
     switch(element.tagName.toLowerCase()) {
 
+        case 'use':
+        case 'image':
         case 'text':
         case 'rect': {
 
-                let resX = Number(element.getAttribute('x')) + x,
+                const resX = Number(element.getAttribute('x')) + x,
                     resY = Number(element.getAttribute('y')) + y;
 
                 attrs.push(
@@ -644,7 +757,7 @@ function applyTranslate(element, data) {
         case 'circle':
         case 'ellipse': {
 
-                let resX = Number(element.getAttribute('cx')) + x,
+                const resX = Number(element.getAttribute('cx')) + x,
                     resY = Number(element.getAttribute('cy')) + y;
 
                 attrs.push(
@@ -656,7 +769,7 @@ function applyTranslate(element, data) {
         
         case 'line': {
 
-                let resX1 = Number(element.getAttribute('x1')) + x,
+                const resX1 = Number(element.getAttribute('x1')) + x,
                     resY1 = Number(element.getAttribute('y1')) + y,
                     resX2 = Number(element.getAttribute('x2')) + x,
                     resY2 = Number(element.getAttribute('y2')) + y;
@@ -695,11 +808,12 @@ function applyTranslate(element, data) {
                 attrs.push(['d', movePath(
                     {
                         path, 
-                        x, 
-                        y
+                        dx: x, 
+                        dy: y
                     }
                 )]);
             }
+
             break;
 
         default:
@@ -716,72 +830,37 @@ function applyResize(element, data) {
     const {
         scaleX,
         scaleY,
-        diffX,
-        diffY,
-        revX,
-        revY,
-        angle,
-        centerX,
-        centerY,
         bBox,
-        store
+        defaultCTM,
+        container
     } = data;
 
     const {
-        onRightEdge,
-        onLeftEdge,
-        onTopEdge,
-        onBottomEdge,
-        center
-    } = store;
-
-    const { 
-        x: boxX, 
-        y: boxY, 
         width: boxW, 
         height: boxH
     } = bBox;
 
-    let fixedX = 0, 
-        fixedY = 0;
-    
-    if (onRightEdge) {
-        fixedX = boxX;
-    } 
-    if (onLeftEdge) {
-        fixedX = boxX + boxW;
-    } 
-    if (onTopEdge) {
-        fixedY = boxY + boxH;
-    } 
-    if (onBottomEdge) {
-        fixedY = boxY;
-    }
+    const attrs = [];
 
-    const baseData = {
-        centerX: center.left,
-        centerY: center.top,
-        newCenterX: centerX,
-        newCenterY: centerY,
-        angle: angle
-    };
-
-    const attrs = [
-        ['transform', `rotate(${angle * DEG} ${centerX} ${centerY})`]
-    ];
+    const ctm = getTransformToElement(element, container);
+    const localCTM = defaultCTM.inverse().multiply(ctm);
 
     switch(element.tagName.toLowerCase()) {
 
         case 'text': {
 
-            const x = Number(element.getAttribute('x')),
-                y = Number(element.getAttribute('y'));
+            const x = element.x.baseVal.value,
+                y = element.y.baseVal.value;
 
-            const { resX, resY } = recalcPoint({
-                x: setCoord(x, diffX, fixedX, boxW),
-                y: setCoord(y, diffY, fixedY, boxH),
-                ...baseData
-            });
+            const { 
+                x: resX,
+                y: resY
+            } = pointTo(
+                localCTM, 
+                container, 
+                x, 
+                y
+            );
 
             attrs.push(
                 ['x', resX + (scaleX < 0 ? boxW : 0)],
@@ -792,16 +871,20 @@ function applyResize(element, data) {
 
         case 'circle': {
 
-                const r = Number(element.getAttribute('r')),
-                    cx = Number(element.getAttribute('cx')),
-                    cy = Number(element.getAttribute('cy')),
+                const r = element.r.baseVal.value,
+                    cx = element.cx.baseVal.value,
+                    cy = element.cy.baseVal.value,
                     newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-                const { resX, resY } = recalcPoint({
-                    x: setCoord(cx, diffX, fixedX, boxW),
-                    y: setCoord(cy, diffY, fixedY, boxH),
-                    ...baseData
-                });
+                const { 
+                    x: resX,
+                    y: resY
+                } = pointTo(
+                    localCTM, 
+                    container, 
+                    cx, 
+                    cy
+                );
 
                 attrs.push(
                     ['r', newR],
@@ -810,22 +893,39 @@ function applyResize(element, data) {
                 );
             }
             break;
-
+  
+        case 'image':
         case 'rect': {
 
-                const width = Number(element.getAttribute('width')),
-                    height = Number(element.getAttribute('height')),
-                    x = Number(element.getAttribute('x')),
-                    y = Number(element.getAttribute('y'));
+                const width = element.width.baseVal.value,
+                    height = element.height.baseVal.value,
+                    x = element.x.baseVal.value,
+                    y = element.y.baseVal.value;
 
-                const { resX, resY } = recalcPoint({
-                    x: setCoord(x, diffX, fixedX, boxW),
-                    y: setCoord(y, diffY, fixedY, boxH),
-                    ...baseData
-                });
+                const { 
+                    x: resX,
+                    y: resY
+                } = pointTo(
+                    localCTM, 
+                    container, 
+                    x, 
+                    y
+                );
 
-                const newWidth = width * Math.abs(scaleX),
-                    newHeight = height * Math.abs(scaleY);
+                localCTM.e = localCTM.f = 0;
+
+                const { 
+                    x: newW,
+                    y: newH
+                } = pointTo(
+                    localCTM, 
+                    container, 
+                    width,
+                    height
+                );
+
+                const newWidth = Math.abs(newW),
+                    newHeight = Math.abs(newH);
 
                 attrs.push(
                     ['x', resX - (scaleX < 0 ? newWidth : 0)],
@@ -838,44 +938,68 @@ function applyResize(element, data) {
     
         case 'ellipse': {
 
-                const rx = Number(element.getAttribute('rx')),
-                    ry = Number(element.getAttribute('ry')),
-                    cx = Number(element.getAttribute('cx')),
-                    cy = Number(element.getAttribute('cy'));
+                const rx = element.rx.baseVal.value,
+                    ry = element.ry.baseVal.value,
+                    cx = element.cx.baseVal.value,
+                    cy = element.cy.baseVal.value;
 
-                const { resX, resY } = recalcPoint({
-                    x: setCoord(cx, diffX, fixedX, boxW),
-                    y: setCoord(cy, diffY, fixedY, boxH),
-                    ...baseData
-                });
+                const { 
+                    x: cx1,
+                    y: cy1
+                } = pointTo(
+                    localCTM, 
+                    container, 
+                    cx, 
+                    cy
+                );
+
+                localCTM.e = localCTM.f = 0;
+
+                const { 
+                    x: nRx,
+                    y: nRy
+                } = pointTo(
+                    localCTM, 
+                    container, 
+                    rx, 
+                    ry
+                );
 
                 attrs.push(
-                    ['rx', rx * Math.abs(scaleX)],
-                    ['ry', ry * Math.abs(scaleY)],
-                    ['cx', resX],
-                    ['cy', resY]
+                    ['rx', Math.abs(nRx)],
+                    ['ry', Math.abs(nRy)],
+                    ['cx', cx1],
+                    ['cy', cy1]
                 );
             }
             break;
         
         case 'line': {
 
-                const resX1 = Number(element.getAttribute('x1')),
-                    resY1 = Number(element.getAttribute('y1')),
-                    resX2 = Number(element.getAttribute('x2')),
-                    resY2 = Number(element.getAttribute('y2'));
+                const resX1 = element.x1.baseVal.value,
+                    resY1 = element.y1.baseVal.value,
+                    resX2 = element.x2.baseVal.value,
+                    resY2 = element.y2.baseVal.value;
 
-                const { resX : resX1_, resY: resY1_  } = recalcPoint({
-                    x: setCoord(resX1, diffX, fixedX, boxW),
-                    y: setCoord(resY1, diffY, fixedY, boxH),
-                    ...baseData
-                });
+                const { 
+                    x: resX1_,
+                    y: resY1_
+                } = pointTo(
+                    localCTM, 
+                    container, 
+                    resX1, 
+                    resY1
+                );
 
-                const { resX : resX2_, resY: resY2_  } = recalcPoint({
-                    x: setCoord(resX2, diffX, fixedX, boxW),
-                    y: setCoord(resY2, diffY, fixedY, boxH),
-                    ...baseData
-                });
+                const { 
+                    x: resX2_,
+                    y: resY2_
+                } = pointTo(
+                    localCTM, 
+                    container, 
+                    resX2,
+                    resY2
+                );
 
                 attrs.push(
                     ['x1', resX1_],
@@ -892,14 +1016,18 @@ function applyResize(element, data) {
                 const points = parsePoints(element.getAttribute('points'));
                 const result = points.map(item => {
 
-                    const { resX, resY } = recalcPoint({
-                        x: setCoord(Number(item[0]), diffX, fixedX, boxW),
-                        y: setCoord(Number(item[1]), diffY, fixedY, boxH),
-                        ...baseData
-                    });
+                    const { 
+                        x,
+                        y
+                    } = pointTo(
+                        localCTM, 
+                        container, 
+                        Number(item[0]), 
+                        Number(item[1])
+                    );
 
-                    item[0] = resX;
-                    item[1] = resY;
+                    item[0] = x;
+                    item[1] = y;
 
                     return item.join(' ');
 
@@ -915,15 +1043,9 @@ function applyResize(element, data) {
 
                 attrs.push(['d', resizePath(
                     {
-                        bBox,
                         path,
-                        baseData,
-                        dx: diffX, 
-                        dy: diffY,
-                        revX,
-                        revY,
-                        fixedX,
-                        fixedY
+                        localCTM,
+                        container
                     }
                 )]);
             }
@@ -938,36 +1060,63 @@ function applyResize(element, data) {
     });
 }
 
-function applyTransformToHandles(box, handles, data) {
+function applyTransformToHandles(
+    box, 
+    handles, 
+    normalLine, 
+    data, 
+    container
+) {
 
-    let { x, y, width, height, angle } = data;
+    let { 
+        x, 
+        y, 
+        width, 
+        height
+    } = data;
 
-    const halfWidth = width / 2,
-        halfHeight = height / 2;
+    const hW = width / 2,
+        hH = height / 2;
 
-    const newTransform = `rotate(${angle * DEG} ${x + halfWidth} ${y + halfHeight})`;
+    const boxCTM = getTransformToElement(
+        box, 
+        box.parentNode.parentNode
+    );
 
     const attrs = {
-        tl: [x, y],
-        ml: [x, y + halfHeight],
-        bl: [x, y + height],
-        tc: [x + halfWidth, y],
-        tr: [x + width, y],
-        mr: [x + width, y + halfHeight],
-        br: [x + width, y + height],
-        bc: [x + halfWidth, y + height],
-        rotator: [x + halfWidth, y - ROT_OFFSET + (height < 0 ? height : 0)]
+        tl: pointTo(boxCTM, container, x, y),
+        tr: pointTo(boxCTM, container, x + width, y),
+        br: pointTo(boxCTM, container, x + width, y + height),
+        bl: pointTo(boxCTM, container, x, y + height),
+        tc: pointTo(boxCTM, container, x + hW, y),
+        bc: pointTo(boxCTM, container, x + hW, y + height),
+        ml: pointTo(boxCTM, container, x, y + hH),
+        mr: pointTo(boxCTM, container, x + width, y + hH),
+        //center: pointTo(boxCTM, container, x + hW, y + hH),
+        rotator: {}
     };
+
+    const theta = Math.atan2(
+        attrs.tl.y - attrs.tr.y,
+        attrs.tl.x - attrs.tr.x
+    );
+
+    attrs.rotator.x = attrs.mr.x - ROT_OFFSET * Math.cos(theta);
+    attrs.rotator.y = attrs.mr.y - ROT_OFFSET * Math.sin(theta);
+
+    normalLine.x1.baseVal.value = attrs.mr.x;
+    normalLine.y1.baseVal.value = attrs.mr.y;
+    normalLine.x2.baseVal.value = attrs.rotator.x;
+    normalLine.y2.baseVal.value = attrs.rotator.y;
 
     x = x + (width < 0 ? width : 0);
     y = y + (height < 0 ? height : 0);
 
     const boxAttrs = {
-        x: x,
-        y: y,
+        x,
+        y,
         width: Math.abs(width),
-        height: Math.abs(height),
-        transform: newTransform
+        height: Math.abs(height)
     };
 
     Object.keys(boxAttrs).forEach(attr => {
@@ -976,17 +1125,71 @@ function applyTransformToHandles(box, handles, data) {
 
     Object.keys(handles).forEach(key => {
         const hdl = handles[key];
-        hdl.setAttribute('cx', attrs[key][0]);
-        hdl.setAttribute('cy', attrs[key][1]);
-        hdl.setAttribute('transform', newTransform);
+        hdl.setAttribute('cx', attrs[key].x);
+        hdl.setAttribute('cy', attrs[key].y);
     });
 }
 
+function isGroup(element) {
+    return element.tagName.toLowerCase() === 'g';
+}
+
+function checkChildElements(element) {
+
+    const arrOfElements = [];
+
+    if (isGroup(element)) {
+
+        element.childNodes.forEach(item => {
+
+            if (item.nodeType === 1) {
+
+                const tagName = item.tagName.toLowerCase(); 
+
+                if (ALLOWED_ELEMENTS.indexOf(tagName) !== -1) { 
+                    if (tagName === 'g') {
+                        arrOfElements.push(...checkChildElements(item));
+                    }
+                    arrOfElements.push(item);
+                }
+            }
+        });
+
+    } else {
+        arrOfElements.push(element);
+    }
+
+    return arrOfElements;
+}
+
 function parsePoints(pts) {
-    return pts.match(floatRE).reduce((result, value, index, array) => {
-        if (index % 2 === 0) {
-            result.push(array.slice(index, index + 2));
-        } 
-        return result; 
-    }, []);
+    return pts.match(floatRE).reduce(
+        (result, value, index, array) => {
+            if (index % 2 === 0) {
+                result.push(array.slice(index, index + 2));
+            } 
+            return result; 
+        },
+        []
+    );
+}
+
+function createHandler(l, t) {
+
+    const handler = createSVGElement('circle');
+    
+    const items = {
+        cx: l,
+        cy: t,
+        r: '5',
+        fill: 'rgba(0, 168, 255, 0.2)',
+        stroke: '#00a8ff',
+        'vector-effect': 'non-scaling-stroke'
+    };
+
+    Object.keys(items).map(key => {
+        handler.setAttribute(key, items[key]);
+    });
+
+    return handler;
 }
