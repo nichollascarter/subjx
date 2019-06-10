@@ -21,7 +21,7 @@ export default function _drag(options) {
                     );
                 }
             }
-            return result; 
+            return result;
         }, []);
     }
 }

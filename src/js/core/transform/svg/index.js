@@ -1,7 +1,7 @@
 import { Helper } from '../../helper'
 import Subject from '../subject'
 
-import { 
+import {
     isUndef
 } from '../../util/util'
 
@@ -34,40 +34,196 @@ export default class DraggableSVG extends Subject {
         this.enable(options);
     }
 
-    _init(item) {
-        _init.call(this, item);
+    _init(sel) {
+
+        const { storage } = this;
+
+        const {
+            showHandles,
+            container
+        } = storage;
+
+        const wrapper = createSVGElement('g');
+        container.appendChild(wrapper);
+
+        const {
+            width: cw,
+            height: ch,
+            x: cx,
+            y: cy
+        } = sel.getBBox();
+
+        const elCTM = getTransformToElement(sel, container);
+        const box = createSVGElement('rect');
+
+        const attrs = [
+            ['width', cw],
+            ['height', ch],
+            ['x', cx],
+            ['y', cy],
+            ['fill', 'rgba(0, 168, 255, 0.2)'],
+            ['stroke', '#00a8ff'],
+            ['stroke-dasharray', '3 3'],
+            ['vector-effect', 'non-scaling-stroke'],
+            ['transform', matrixToString(elCTM)]
+        ];
+
+        attrs.forEach(item => {
+            box.setAttribute(item[0], item[1]);
+        });
+
+        const handlesGroup = createSVGElement('g'),
+            normalLineGroup = createSVGElement('g'),
+            group = createSVGElement('g');
+
+        group.appendChild(box);
+        wrapper.appendChild(group);
+        wrapper.appendChild(normalLineGroup);
+        wrapper.appendChild(handlesGroup);
+
+        const {
+            x: bX,
+            y: bY,
+            width: bW,
+            height: bH
+        } = box.getBBox();
+
+        const boxCTM = getTransformToElement(box, box.parentNode);
+
+        const handles = {
+            tl: pointTo(boxCTM, container, bX, bY),
+            tr: pointTo(boxCTM, container, bX + bW, bY),
+            br: pointTo(boxCTM, container, bX + bW, bY + bH),
+            bl: pointTo(boxCTM, container, bX, bY + bH),
+            tc: pointTo(boxCTM, container, bX + bW / 2, bY),
+            bc: pointTo(boxCTM, container, bX + bW / 2, bY + bH),
+            ml: pointTo(boxCTM, container, bX, bY + bH / 2),
+            mr: pointTo(boxCTM, container, bX + bW, bY + bH / 2),
+            //center: pointTo(boxCTM, container, bX + bW / 2, bY + bH / 2),
+            rotator: {}
+        };
+
+        const theta = Math.atan2(
+            handles.tl.y - handles.tr.y,
+            handles.tl.x - handles.tr.x
+        );
+
+        handles.rotator.x = handles.mr.x - ROT_OFFSET * Math.cos(theta);
+        handles.rotator.y = handles.mr.y - ROT_OFFSET * Math.sin(theta);
+
+        const normalLine = createSVGElement('line');
+
+        if (showHandles) {
+
+            normalLine.x1.baseVal.value = handles.mr.x;
+            normalLine.y1.baseVal.value = handles.mr.y;
+            normalLine.x2.baseVal.value = handles.rotator.x;
+            normalLine.y2.baseVal.value = handles.rotator.y;
+
+            normalLine.setAttribute('stroke', '#00a8ff');
+            normalLine.setAttribute('stroke-dasharray', '3 3');
+            normalLine.setAttribute('vector-effect', 'non-scaling-stroke');
+
+            normalLineGroup.appendChild(normalLine);
+        }
+
+        Object.keys(handles).forEach(key => {
+            const data = handles[key];
+            handles[key] = createHandler(data.x, data.y);
+            if (showHandles) {
+                handlesGroup.appendChild(handles[key])
+            }
+        });
+
+        Object.assign(storage, {
+            wrapper,
+            box,
+            handles,
+            normalLine,
+            parent: sel.parentNode
+        });
+
+        Helper(wrapper).on('mousedown', this._onMouseDown)
+            .on('touchstart', this._onTouchStart);
     }
 
-    _destroy(item) {
-        _destroy.call(this, item);
+    _destroy() {
+
+        const {
+            wrapper,
+            container
+        } = this.storage;
+
+        Helper(wrapper)
+            .off('mousedown', this._onMouseDown)
+            .off('touchstart', this._onTouchStart);
+
+        container.removeChild(wrapper);
     }
 
-    _drag() {
-        processMove.call(this, ...arguments);
-    }
+    _compute(e) {
 
-    _rotate() {
-        processRotate.call(this, ...arguments);
-    }
+        const {
+            storage
+        } = this;
 
-    _resize() {
-        processResize.call(this, ...arguments);
-    }
+        const {
+            handles
+        } = storage;
 
-    _compute() {
-        return _compute.call(this, ...arguments);
+        const handle = Helper(e.target);
+
+        //reverse axis
+        const revX = handle.is(handles.tl) ||
+            handle.is(handles.ml) ||
+            handle.is(handles.bl) ||
+            handle.is(handles.tc);
+
+        const revY = handle.is(handles.tl) ||
+            handle.is(handles.tr) ||
+            handle.is(handles.tc) ||
+            handle.is(handles.ml);
+
+        const onTopEdge = handle.is(handles.tl) || handle.is(handles.tc) || handle.is(handles.tr),
+            onLeftEdge = handle.is(handles.tl) || handle.is(handles.ml) || handle.is(handles.bl),
+            onRightEdge = handle.is(handles.tr) || handle.is(handles.mr) || handle.is(handles.br),
+            onBottomEdge = handle.is(handles.br) || handle.is(handles.bc) || handle.is(handles.bl);
+
+        const _computed = this._getState({
+            revX,
+            revY
+        });
+
+        const {
+            x: clientX,
+            y: clientY
+        } = this._cursorPoint(e);
+
+        const pressang = Math.atan2(
+            clientY - _computed.center.y,
+            clientX - _computed.center.x
+        );
+
+        _computed.onTopEdge = onTopEdge;
+        _computed.onLeftEdge = onLeftEdge;
+        _computed.onRightEdge = onRightEdge;
+        _computed.onBottomEdge = onBottomEdge;
+        _computed.handle = handle;
+        _computed.pressang = pressang;
+
+        return _computed;
     }
 
     _cursorPoint(e) {
 
-        const { 
+        const {
             container
         } = this.storage;
 
         return pointTo(
-            container.getScreenCTM().inverse(), 
-            container, 
-            e.clientX, 
+            container.getScreenCTM().inverse(),
+            container,
+            e.clientX,
             e.clientY
         );
     }
@@ -79,9 +235,9 @@ export default class DraggableSVG extends Subject {
             container
         } = this.storage;
 
-        const { 
-            x, 
-            y 
+        const {
+            x,
+            y
         } = data;
 
         const { ctm } = transform;
@@ -97,7 +253,7 @@ export default class DraggableSVG extends Subject {
 
     _apply(actionName) {
 
-        const { 
+        const {
             el: element,
             storage
         } = this;
@@ -127,7 +283,7 @@ export default class DraggableSVG extends Subject {
         } = transform;
 
         if (actionName === 'drag') {
-        
+
             if (dx === 0 && dy === 0) return;
 
             // create translate matrix for an element
@@ -137,10 +293,10 @@ export default class DraggableSVG extends Subject {
             eM.f = dy;
 
             const translateMatrix = eM.multiply(matrix)
-                                        .multiply(eM.inverse());
+                .multiply(eM.inverse());
 
             element.setAttribute(
-                'transform', 
+                'transform',
                 matrixToString(translateMatrix)
             );
 
@@ -168,10 +324,10 @@ export default class DraggableSVG extends Subject {
                     ).multiply(eM.inverse());
 
                     child.setAttribute(
-                        'transform', 
+                        'transform',
                         matrixToString(translateMatrix)
-                    );   
-                    
+                    );
+
                     if (!isGroup(child)) {
                         applyTranslate(child, {
                             x: newPT.x,
@@ -185,31 +341,31 @@ export default class DraggableSVG extends Subject {
                     x: dx,
                     y: dy
                 });
-            } 
+            }
         }
 
         if (actionName === 'resize') {
 
-            const { 
-                x, 
+            const {
+                x,
                 y,
                 width: newWidth,
                 height: newHeight
             } = box.getBBox();
 
             applyTransformToHandles(
-                box, 
-                handles, 
-                normalLine, 
+                box,
+                handles,
+                normalLine,
                 {
                     x,
                     y,
                     width: newWidth,
                     height: newHeight
-                }, 
+                },
                 container
             );
-                
+
             if (isGroup(element)) {
 
                 const els = checkChildElements(element);
@@ -249,483 +405,290 @@ export default class DraggableSVG extends Subject {
         this.storage.cached = null;
     }
 
-    onGetState(data) {
+    getControls() {
+        return this.storage.wrapper;
+    }
 
-        const store = this.storage;
+    _processResize(dx, dy) {
 
-        const recalc = getState.call(
-            this,
-            data
+        const {
+            container,
+            box,
+            handles,
+            normalLine,
+            left,
+            top,
+            cw,
+            ch,
+            transform,
+            revX,
+            revY
+        } = this.storage;
+
+        const {
+            matrix,
+            scMatrix,
+            trMatrix,
+            scaleX: ptX,
+            scaleY: ptY
+        } = transform;
+
+        const { el } = this;
+
+        let {
+            width: newWidth,
+            height: newHeight
+        } = box.getBBox();
+
+        newWidth = cw + dx;
+        newHeight = ch + dy;
+
+        if (Math.abs(newWidth) < MIN_SIZE || Math.abs(newHeight) < MIN_SIZE) return;
+
+        const scaleX = newWidth / cw,
+            scaleY = newHeight / ch;
+
+        // setup scale matrix
+        scMatrix.a = scaleX;
+        scMatrix.b = 0;
+        scMatrix.c = 0;
+        scMatrix.d = scaleY;
+        scMatrix.e = 0;
+        scMatrix.f = 0;
+
+        // translate compensation matrix
+        trMatrix.e = ptX;
+        trMatrix.f = ptY;
+
+        //now must to do: translate(x y) scale(sx sy) translate(-x -y)
+        const scaleMatrix = trMatrix
+            .multiply(scMatrix)
+            .multiply(trMatrix.inverse());
+
+        const res = matrix.multiply(scaleMatrix);
+
+        el.setAttribute(
+            'transform',
+            matrixToString(res)
         );
 
-        Object.keys(recalc).forEach(key => {
-            store[key] = recalc[key];
-        });
-    }
-}
+        this.storage.cached = {
+            scaleX,
+            scaleY
+        };
 
-function _init(sel) {
-
-    const { storage } = this;
-
-    const {
-        showHandles,
-        container
-    } = storage;
-
-    const wrapper = createSVGElement('g');
-    container.appendChild(wrapper);
-
-    const {
-        width: cw,
-        height: ch,
-        x: cx,
-        y: cy
-    } = sel.getBBox();
-
-    const elCTM = getTransformToElement(sel, container);
-    const box = createSVGElement('rect');
-
-    const attrs = [
-        ['width', cw],
-        ['height', ch],
-        ['x', cx],
-        ['y', cy],
-        ['fill', 'rgba(0, 168, 255, 0.2)'],
-        ['stroke', '#00a8ff'],
-        ['stroke-dasharray', '3 3'],
-        ['vector-effect', 'non-scaling-stroke'],
-        ['transform', matrixToString(elCTM)]
-    ];
-
-    attrs.forEach(item => {
-        box.setAttribute(item[0], item[1]);
-    });
-
-    const handlesGroup = createSVGElement('g'),
-        normalLineGroup = createSVGElement('g'),
-        group = createSVGElement('g');
-
-    group.appendChild(box);
-    wrapper.appendChild(group);
-    wrapper.appendChild(normalLineGroup);
-    wrapper.appendChild(handlesGroup);
-
-    const { 
-        x: bX,
-        y: bY,
-        width: bW,
-        height: bH
-    } = box.getBBox();
-
-    const boxCTM = getTransformToElement(box, box.parentNode);
-
-    const handles = {
-        tl: pointTo(boxCTM, container, bX, bY),
-        tr: pointTo(boxCTM, container, bX + bW, bY),
-        br: pointTo(boxCTM, container, bX + bW, bY + bH),
-        bl: pointTo(boxCTM, container, bX, bY + bH),
-        tc: pointTo(boxCTM, container, bX + bW / 2, bY),
-        bc: pointTo(boxCTM, container, bX + bW / 2, bY + bH),
-        ml: pointTo(boxCTM, container, bX, bY + bH / 2),
-        mr: pointTo(boxCTM, container, bX + bW, bY + bH / 2),
-        //center: pointTo(boxCTM, container, bX + bW / 2, bY + bH / 2),
-        rotator: {}
-    };
-
-    const theta = Math.atan2(
-        handles.tl.y - handles.tr.y,
-        handles.tl.x - handles.tr.x
-    );
-
-    handles.rotator.x = handles.mr.x - ROT_OFFSET * Math.cos(theta);
-    handles.rotator.y = handles.mr.y - ROT_OFFSET * Math.sin(theta);
-
-    const normalLine = createSVGElement('line');
-
-    if (showHandles) {
-        
-        normalLine.x1.baseVal.value = handles.mr.x;
-        normalLine.y1.baseVal.value = handles.mr.y;
-        normalLine.x2.baseVal.value = handles.rotator.x;
-        normalLine.y2.baseVal.value = handles.rotator.y;
-
-        normalLine.setAttribute('stroke', '#00a8ff');
-        normalLine.setAttribute('stroke-dasharray', '3 3');
-        normalLine.setAttribute('vector-effect', 'non-scaling-stroke');
-
-        normalLineGroup.appendChild(normalLine);
+        applyTransformToHandles(
+            box,
+            handles,
+            normalLine,
+            {
+                x: revX ? left - dx : left,
+                y: revY ? top - dy : top,
+                width: newWidth,
+                height: newHeight,
+            },
+            container
+        );
     }
 
-    Object.keys(handles).forEach(key => {
-        const data = handles[key];
-        handles[key] = createHandler(data.x, data.y);
-        if (showHandles) {
-            handlesGroup.appendChild(handles[key])
+    _processMove(dx, dy) {
+        const {
+            container,
+            transform,
+            wrapper
+        } = this.storage;
+
+        const {
+            matrix,
+            trMatrix,
+            scMatrix,
+            wrapperMatrix,
+            parentMatrix
+        } = transform;
+
+        scMatrix.e = dx;
+        scMatrix.f = dy;
+
+        const moveWrapper = scMatrix.multiply(wrapperMatrix);
+
+        wrapper.setAttribute(
+            'transform',
+            matrixToString(moveWrapper)
+        );
+
+        parentMatrix.e = parentMatrix.f = 0;
+        const { x, y } = pointTo(
+            parentMatrix.inverse(),
+            container,
+            dx,
+            dy
+        );
+
+        trMatrix.e = x;
+        trMatrix.f = y;
+
+        const moveElement = trMatrix.multiply(matrix);
+
+        this.el.setAttribute(
+            'transform',
+            matrixToString(moveElement)
+        );
+
+        this.storage.cached = {
+            dx: x,
+            dy: y,
+            ox: dx,
+            oy: dy
         }
-    });
-
-    Object.assign(storage, {
-        wrapper,
-        box,
-        handles,
-        normalLine,
-        parent: sel.parentNode
-    });
-
-    Helper(wrapper).on('mousedown', this._onMouseDown)
-                    .on('touchstart', this._onTouchStart);               
-}
-
-function _compute(e) {
-
-    const {
-        storage
-    } = this;
-
-    const {
-        handles
-    } = storage;
-
-    const handle = Helper(e.target);
-
-    //reverse axis
-    const revX = handle.is(handles.tl) ||
-                handle.is(handles.ml) ||
-                handle.is(handles.bl) ||
-                handle.is(handles.tc);
-
-    const revY = handle.is(handles.tl) || 
-                handle.is(handles.tr) || 
-                handle.is(handles.tc) || 
-                handle.is(handles.ml);
-
-    const onTopEdge = handle.is(handles.tl) || handle.is(handles.tc) || handle.is(handles.tr),
-        onLeftEdge = handle.is(handles.tl) || handle.is(handles.ml) || handle.is(handles.bl),
-        onRightEdge = handle.is(handles.tr) || handle.is(handles.mr) || handle.is(handles.br),
-        onBottomEdge = handle.is(handles.br) || handle.is(handles.bc) || handle.is(handles.bl);
-
-    const _computed = getState.call(this, {
-        revX, 
-        revY
-    });
-
-    const { 
-        x: clientX, 
-        y: clientY
-    } = this._cursorPoint(e);
-
-    const pressang = Math.atan2(
-        clientY - _computed.center.y,
-        clientX - _computed.center.x
-    );
-
-    _computed.onTopEdge = onTopEdge;
-    _computed.onLeftEdge = onLeftEdge;
-    _computed.onRightEdge = onRightEdge;
-    _computed.onBottomEdge = onBottomEdge;
-    _computed.handle = handle;
-    _computed.pressang = pressang;
-   
-    return _computed;
-}
-
-function _destroy() {
-
-    const {
-        wrapper, 
-        container 
-    } = this.storage;
-
-    Helper(wrapper).off('mousedown', this._onMouseDown)
-                    .off('touchstart', this._onTouchStart);
-
-    container.removeChild(wrapper);
-}
-
-function getState(params) {
-
-    const {
-        revX,
-        revY
-    } = params;
-
-    const { 
-        el: element,
-        storage
-    } = this;
-
-    const {
-        container,
-        box,
-        wrapper,
-        parent
-    } = storage;
-
-    const eBBox = this.el.getBBox();
-
-    const {
-        x: el_x,
-        y: el_y,
-        width: el_w,
-        height: el_h
-    } = eBBox;
-
-    const { 
-        width: cw, 
-        height: ch, 
-        x: c_left, 
-        y: c_top 
-    } = box.getBBox();
-
-    const elMatrix = getTransformToElement(element, parent);
-    const boxGroup = box.parentNode;
-
-    const transform = {
-        matrix: elMatrix,
-        ctm: getTransformToElement(element, container),
-        wrapperMatrix: getTransformToElement(wrapper, wrapper.parentNode),
-        boxCTM: getTransformToElement(boxGroup, container),
-        boxMatrix: getTransformToElement(boxGroup, boxGroup.parentNode),
-        parentMatrix: getTransformToElement(parent, container),
-        trMatrix: createSVGMatrix(),
-        scMatrix: createSVGMatrix(),
-        rotMatrix: createSVGMatrix(),
-        scaleX: (revX ? el_w + el_x : el_x),
-        scaleY: (revY ? el_h + el_y : el_y),
-        bBox: eBBox
-    };
-
-    const hW = cw / 2,
-        hH = ch / 2;
-
-    const boxCenter = pointTo(
-        getTransformToElement(box, container), 
-        container, 
-        c_left + hW,
-        c_top + hH
-    );
-
-    const elementCenter = pointTo(
-        elMatrix, 
-        container, 
-        el_x + el_w / 2,
-        el_y + el_h / 2
-    );
-
-    checkChildElements(element).forEach(child => {
-        child.__ctm__ = getTransformToElement(child, container);
-    });
-
-    return {
-        transform,
-        cw,
-        ch,
-        center: {
-            x: boxCenter.x,
-            y: boxCenter.y,
-            el_x: elementCenter.x,
-            el_y: elementCenter.y
-        },
-        left: c_left,
-        top: c_top,
-        revX,
-        revY
-    };
-}
-
-function processResize(
-    dx,
-    dy
-) {
-
-    const {
-        container,
-        box,
-        handles,
-        normalLine,
-        left,
-        top,
-        cw,
-        ch,
-        transform,
-        revX,
-        revY
-    } = this.storage;
-
-    const { 
-        matrix,
-        scMatrix,
-        trMatrix,
-        scaleX: ptX,
-        scaleY: ptY
-    } = transform;
-
-    const { el } = this;
-
-    let {
-        width: newWidth,
-        height: newHeight
-    } = box.getBBox();
-
-    newWidth = cw + dx;
-    newHeight = ch + dy;
-
-    if (Math.abs(newWidth) < MIN_SIZE || Math.abs(newHeight) < MIN_SIZE) return;
-
-    const scaleX = newWidth / cw,
-        scaleY = newHeight / ch;
-
-    // setup scale matrix
-    scMatrix.a = scaleX;
-    scMatrix.b = 0;
-    scMatrix.c = 0;
-    scMatrix.d = scaleY;
-    scMatrix.e = 0;
-    scMatrix.f = 0;
-
-    // translate compensation matrix
-    trMatrix.e = ptX;
-    trMatrix.f = ptY;
-
-    //now must to do: translate(x y) scale(sx sy) translate(-x -y)
-    const res = matrix.multiply(trMatrix)
-                        .multiply(scMatrix)
-                        .multiply(trMatrix.inverse());
-
-    el.setAttribute(
-        'transform', 
-        matrixToString(res)
-    );
-
-    this.storage.cached = {
-        scaleX,
-        scaleY
-    };
-
-    applyTransformToHandles(
-        box,
-        handles,
-        normalLine,
-        {
-            x: revX ? left - dx : left,
-            y: revY ? top - dy : top,
-            width: newWidth,
-            height: newHeight,
-        },
-        container
-    );
-}
-
-function processMove(
-    dx,
-    dy
-) {
-    const {
-        container,
-        transform,
-        wrapper
-    } = this.storage;
-
-    const {
-        matrix,
-        trMatrix,
-        scMatrix,
-        wrapperMatrix,
-        parentMatrix
-    } = transform;
-
-    scMatrix.e = dx;
-    scMatrix.f = dy;
-
-    const moveWrapper = scMatrix.multiply(wrapperMatrix);
-
-    wrapper.setAttribute(
-        'transform',
-        matrixToString(moveWrapper)
-    );
-
-    parentMatrix.e = parentMatrix.f = 0;
-    const { x, y } = pointTo(
-        parentMatrix.inverse(), 
-        container, 
-        dx,
-        dy
-    );
-
-    trMatrix.e = x;
-    trMatrix.f = y;
-
-    const moveElement = trMatrix.multiply(matrix);
-
-    this.el.setAttribute(
-        'transform', 
-        matrixToString(moveElement)
-    );
-
-    this.storage.cached = {
-        dx: x,
-        dy: y,
-        ox: dx,
-        oy: dy
     }
-}
 
-function processRotate(radians) {
+    _processRotate(radians) {
 
-    const {
-        center,
-        transform,
-        wrapper
-    } = this.storage;
+        const {
+            center,
+            transform,
+            wrapper
+        } = this.storage;
 
-    const {
-        matrix,
-        wrapperMatrix,
-        parentMatrix,
-        trMatrix,
-        scMatrix,
-        rotMatrix
-    } = transform;
+        const {
+            matrix,
+            wrapperMatrix,
+            parentMatrix,
+            trMatrix,
+            scMatrix,
+            rotMatrix
+        } = transform;
 
-    const cos = floatToFixed(Math.cos(radians)),
-        sin = floatToFixed(Math.sin(radians));
+        const cos = floatToFixed(Math.cos(radians)),
+            sin = floatToFixed(Math.sin(radians));
 
-    // rotate(a cx cy) is equivalent to translate(cx cy) rotate(a) translate(-cx -cy)
-    trMatrix.e = center.x;
-    trMatrix.f = center.y;
-    
-    rotMatrix.a = cos;
-    rotMatrix.b = sin;
-    rotMatrix.c = - sin;
-    rotMatrix.d = cos;
-    
-    const wrapMatrix = trMatrix.multiply(rotMatrix)
-                            .multiply(trMatrix.inverse())
-                            .multiply(wrapperMatrix);
+        // rotate(a cx cy) is equivalent to translate(cx cy) rotate(a) translate(-cx -cy)
+        trMatrix.e = center.x;
+        trMatrix.f = center.y;
 
-    wrapper.setAttribute(
-        'transform',
-        matrixToString(wrapMatrix)
-    );
-    
-    scMatrix.e = center.el_x;
-    scMatrix.f = center.el_y;
+        rotMatrix.a = cos;
+        rotMatrix.b = sin;
+        rotMatrix.c = - sin;
+        rotMatrix.d = cos;
 
-    parentMatrix.e = parentMatrix.f = 0;
-    const resRotMatrix = parentMatrix.inverse()
-                            .multiply(rotMatrix)
-                            .multiply(parentMatrix);
+        const wrapMatrix = trMatrix.multiply(rotMatrix)
+            .multiply(trMatrix.inverse())
+            .multiply(wrapperMatrix);
 
-    const rotateMatrix = scMatrix.multiply(resRotMatrix)
-                                .multiply(scMatrix.inverse());
-                                                
-    const elMatrix = rotateMatrix.multiply(matrix);
+        wrapper.setAttribute(
+            'transform',
+            matrixToString(wrapMatrix)
+        );
 
-    this.el.setAttribute(
-        'transform',
-        matrixToString(elMatrix)
-    );
+        scMatrix.e = center.el_x;
+        scMatrix.f = center.el_y;
+
+        parentMatrix.e = parentMatrix.f = 0;
+        const resRotMatrix = parentMatrix.inverse()
+            .multiply(rotMatrix)
+            .multiply(parentMatrix);
+
+        const rotateMatrix = scMatrix.multiply(resRotMatrix)
+            .multiply(scMatrix.inverse());
+
+        const elMatrix = rotateMatrix.multiply(matrix);
+
+        this.el.setAttribute(
+            'transform',
+            matrixToString(elMatrix)
+        );
+    }
+
+    _getState(params) {
+
+        const {
+            revX,
+            revY
+        } = params;
+
+        const {
+            el: element,
+            storage
+        } = this;
+
+        const {
+            container,
+            box,
+            wrapper,
+            parent
+        } = storage;
+
+        const eBBox = this.el.getBBox();
+
+        const {
+            x: el_x,
+            y: el_y,
+            width: el_w,
+            height: el_h
+        } = eBBox;
+
+        const {
+            width: cw,
+            height: ch,
+            x: c_left,
+            y: c_top
+        } = box.getBBox();
+
+        const elMatrix = getTransformToElement(element, parent);
+        const boxGroup = box.parentNode;
+
+        const transform = {
+            matrix: elMatrix,
+            ctm: getTransformToElement(element, container),
+            wrapperMatrix: getTransformToElement(wrapper, wrapper.parentNode),
+            boxCTM: getTransformToElement(boxGroup, container),
+            boxMatrix: getTransformToElement(boxGroup, boxGroup.parentNode),
+            parentMatrix: getTransformToElement(parent, container),
+            trMatrix: createSVGMatrix(),
+            scMatrix: createSVGMatrix(),
+            rotMatrix: createSVGMatrix(),
+            scaleX: (revX ? el_w + el_x : el_x),
+            scaleY: (revY ? el_h + el_y : el_y),
+            bBox: eBBox
+        };
+
+        const hW = cw / 2,
+            hH = ch / 2;
+
+        const boxCenter = pointTo(
+            getTransformToElement(box, container),
+            container,
+            c_left + hW,
+            c_top + hH
+        );
+
+        const elementCenter = pointTo(
+            elMatrix,
+            container,
+            el_x + el_w / 2,
+            el_y + el_h / 2
+        );
+
+        checkChildElements(element).forEach(child => {
+            child.__ctm__ = getTransformToElement(child, container);
+        });
+
+        return {
+            transform,
+            cw,
+            ch,
+            center: {
+                x: boxCenter.x,
+                y: boxCenter.y,
+                el_x: elementCenter.x,
+                el_y: elementCenter.y
+            },
+            left: c_left,
+            top: c_top,
+            revX,
+            revY
+        };
+    }
 }
 
 function applyTranslate(element, data) {
@@ -737,82 +700,82 @@ function applyTranslate(element, data) {
 
     const attrs = [];
 
-    switch(element.tagName.toLowerCase()) {
+    switch (element.tagName.toLowerCase()) {
 
         case 'use':
         case 'image':
         case 'text':
         case 'rect': {
 
-                const resX = Number(element.getAttribute('x')) + x,
-                    resY = Number(element.getAttribute('y')) + y;
+            const resX = Number(element.getAttribute('x')) + x,
+                resY = Number(element.getAttribute('y')) + y;
 
-                attrs.push(
-                    ['x', resX],
-                    ['y', resY]
-                );
-            }
+            attrs.push(
+                ['x', resX],
+                ['y', resY]
+            );
+        }
             break;
 
         case 'circle':
         case 'ellipse': {
 
-                const resX = Number(element.getAttribute('cx')) + x,
-                    resY = Number(element.getAttribute('cy')) + y;
+            const resX = Number(element.getAttribute('cx')) + x,
+                resY = Number(element.getAttribute('cy')) + y;
 
-                attrs.push(
-                    ['cx', resX],
-                    ['cy', resY]
-                );
-            }
+            attrs.push(
+                ['cx', resX],
+                ['cy', resY]
+            );
+        }
             break;
-        
+
         case 'line': {
 
-                const resX1 = Number(element.getAttribute('x1')) + x,
-                    resY1 = Number(element.getAttribute('y1')) + y,
-                    resX2 = Number(element.getAttribute('x2')) + x,
-                    resY2 = Number(element.getAttribute('y2')) + y;
+            const resX1 = Number(element.getAttribute('x1')) + x,
+                resY1 = Number(element.getAttribute('y1')) + y,
+                resX2 = Number(element.getAttribute('x2')) + x,
+                resY2 = Number(element.getAttribute('y2')) + y;
 
-                attrs.push(
-                    ['x1', resX1],
-                    ['y1', resY1],
-                    ['x2', resX2],
-                    ['y2', resY2]
-                );
-            }
+            attrs.push(
+                ['x1', resX1],
+                ['y1', resY1],
+                ['x2', resX2],
+                ['y2', resY2]
+            );
+        }
             break;
 
         case 'polygon':
         case 'polyline': {
 
-                const points = parsePoints(element.getAttribute('points'));
-                const result = points.map(item => { 
+            const points = parsePoints(element.getAttribute('points'));
+            const result = points.map(item => {
 
-                    item[0] = Number(item[0]) + x;
-                    item[1] = Number(item[1]) + y;
+                item[0] = Number(item[0]) + x;
+                item[1] = Number(item[1]) + y;
 
-                    return item.join(' ');
-                }).join(' '); 
+                return item.join(' ');
+            }).join(' ');
 
-                attrs.push(
-                    ['points', result]
-                );
-            }
+            attrs.push(
+                ['points', result]
+            );
+        }
             break;
-        
+
         case 'path': {
 
-                const path = element.getAttribute('d');
+            const path = element.getAttribute('d');
 
-                attrs.push(['d', movePath(
-                    {
-                        path, 
-                        dx: x, 
-                        dy: y
-                    }
-                )]);
-            }
+            attrs.push(['d', movePath(
+                {
+                    path,
+                    dx: x,
+                    dy: y
+                }
+            )]);
+        }
 
             break;
 
@@ -836,7 +799,7 @@ function applyResize(element, data) {
     } = data;
 
     const {
-        width: boxW, 
+        width: boxW,
         height: boxH
     } = bBox;
 
@@ -845,20 +808,20 @@ function applyResize(element, data) {
     const ctm = getTransformToElement(element, container);
     const localCTM = defaultCTM.inverse().multiply(ctm);
 
-    switch(element.tagName.toLowerCase()) {
+    switch (element.tagName.toLowerCase()) {
 
         case 'text': {
 
             const x = element.x.baseVal.value,
                 y = element.y.baseVal.value;
 
-            const { 
+            const {
                 x: resX,
                 y: resY
             } = pointTo(
-                localCTM, 
-                container, 
-                x, 
+                localCTM,
+                container,
+                x,
                 y
             );
 
@@ -867,191 +830,191 @@ function applyResize(element, data) {
                 ['y', resY + (scaleY < 0 ? boxH : 0)]
             );
         }
-        break;
+            break;
 
         case 'circle': {
 
-                const r = element.r.baseVal.value,
-                    cx = element.cx.baseVal.value,
-                    cy = element.cy.baseVal.value,
-                    newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
+            const r = element.r.baseVal.value,
+                cx = element.cx.baseVal.value,
+                cy = element.cy.baseVal.value,
+                newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-                const { 
-                    x: resX,
-                    y: resY
-                } = pointTo(
-                    localCTM, 
-                    container, 
-                    cx, 
-                    cy
-                );
+            const {
+                x: resX,
+                y: resY
+            } = pointTo(
+                localCTM,
+                container,
+                cx,
+                cy
+            );
 
-                attrs.push(
-                    ['r', newR],
-                    ['cx', resX],
-                    ['cy', resY]
-                );
-            }
+            attrs.push(
+                ['r', newR],
+                ['cx', resX],
+                ['cy', resY]
+            );
+        }
             break;
-  
+
         case 'image':
         case 'rect': {
 
-                const width = element.width.baseVal.value,
-                    height = element.height.baseVal.value,
-                    x = element.x.baseVal.value,
-                    y = element.y.baseVal.value;
+            const width = element.width.baseVal.value,
+                height = element.height.baseVal.value,
+                x = element.x.baseVal.value,
+                y = element.y.baseVal.value;
 
-                const { 
-                    x: resX,
-                    y: resY
-                } = pointTo(
-                    localCTM, 
-                    container, 
-                    x, 
-                    y
-                );
+            const {
+                x: resX,
+                y: resY
+            } = pointTo(
+                localCTM,
+                container,
+                x,
+                y
+            );
 
-                localCTM.e = localCTM.f = 0;
+            localCTM.e = localCTM.f = 0;
 
-                const { 
-                    x: newW,
-                    y: newH
-                } = pointTo(
-                    localCTM, 
-                    container, 
-                    width,
-                    height
-                );
+            const {
+                x: newW,
+                y: newH
+            } = pointTo(
+                localCTM,
+                container,
+                width,
+                height
+            );
 
-                const newWidth = Math.abs(newW),
-                    newHeight = Math.abs(newH);
+            const newWidth = Math.abs(newW),
+                newHeight = Math.abs(newH);
 
-                attrs.push(
-                    ['x', resX - (scaleX < 0 ? newWidth : 0)],
-                    ['y', resY - (scaleY < 0 ? newHeight : 0)],
-                    ['width', newWidth],
-                    ['height', newHeight]
-                );
-            }
+            attrs.push(
+                ['x', resX - (scaleX < 0 ? newWidth : 0)],
+                ['y', resY - (scaleY < 0 ? newHeight : 0)],
+                ['width', newWidth],
+                ['height', newHeight]
+            );
+        }
             break;
-    
+
         case 'ellipse': {
 
-                const rx = element.rx.baseVal.value,
-                    ry = element.ry.baseVal.value,
-                    cx = element.cx.baseVal.value,
-                    cy = element.cy.baseVal.value;
+            const rx = element.rx.baseVal.value,
+                ry = element.ry.baseVal.value,
+                cx = element.cx.baseVal.value,
+                cy = element.cy.baseVal.value;
 
-                const { 
-                    x: cx1,
-                    y: cy1
-                } = pointTo(
-                    localCTM, 
-                    container, 
-                    cx, 
-                    cy
-                );
+            const {
+                x: cx1,
+                y: cy1
+            } = pointTo(
+                localCTM,
+                container,
+                cx,
+                cy
+            );
 
-                localCTM.e = localCTM.f = 0;
+            localCTM.e = localCTM.f = 0;
 
-                const { 
-                    x: nRx,
-                    y: nRy
-                } = pointTo(
-                    localCTM, 
-                    container, 
-                    rx, 
-                    ry
-                );
+            const {
+                x: nRx,
+                y: nRy
+            } = pointTo(
+                localCTM,
+                container,
+                rx,
+                ry
+            );
 
-                attrs.push(
-                    ['rx', Math.abs(nRx)],
-                    ['ry', Math.abs(nRy)],
-                    ['cx', cx1],
-                    ['cy', cy1]
-                );
-            }
+            attrs.push(
+                ['rx', Math.abs(nRx)],
+                ['ry', Math.abs(nRy)],
+                ['cx', cx1],
+                ['cy', cy1]
+            );
+        }
             break;
-        
+
         case 'line': {
 
-                const resX1 = element.x1.baseVal.value,
-                    resY1 = element.y1.baseVal.value,
-                    resX2 = element.x2.baseVal.value,
-                    resY2 = element.y2.baseVal.value;
+            const resX1 = element.x1.baseVal.value,
+                resY1 = element.y1.baseVal.value,
+                resX2 = element.x2.baseVal.value,
+                resY2 = element.y2.baseVal.value;
 
-                const { 
-                    x: resX1_,
-                    y: resY1_
-                } = pointTo(
-                    localCTM, 
-                    container, 
-                    resX1, 
-                    resY1
-                );
+            const {
+                x: resX1_,
+                y: resY1_
+            } = pointTo(
+                localCTM,
+                container,
+                resX1,
+                resY1
+            );
 
-                const { 
-                    x: resX2_,
-                    y: resY2_
-                } = pointTo(
-                    localCTM, 
-                    container, 
-                    resX2,
-                    resY2
-                );
+            const {
+                x: resX2_,
+                y: resY2_
+            } = pointTo(
+                localCTM,
+                container,
+                resX2,
+                resY2
+            );
 
-                attrs.push(
-                    ['x1', resX1_],
-                    ['y1', resY1_],
-                    ['x2', resX2_],
-                    ['y2', resY2_]
-                );
-            }
+            attrs.push(
+                ['x1', resX1_],
+                ['y1', resY1_],
+                ['x2', resX2_],
+                ['y2', resY2_]
+            );
+        }
             break;
 
         case 'polygon':
         case 'polyline': {
 
-                const points = parsePoints(element.getAttribute('points'));
-                const result = points.map(item => {
+            const points = parsePoints(element.getAttribute('points'));
+            const result = points.map(item => {
 
-                    const { 
-                        x,
-                        y
-                    } = pointTo(
-                        localCTM, 
-                        container, 
-                        Number(item[0]), 
-                        Number(item[1])
-                    );
+                const {
+                    x,
+                    y
+                } = pointTo(
+                    localCTM,
+                    container,
+                    Number(item[0]),
+                    Number(item[1])
+                );
 
-                    item[0] = x;
-                    item[1] = y;
+                item[0] = x;
+                item[1] = y;
 
-                    return item.join(' ');
+                return item.join(' ');
 
-                }).join(' ');
+            }).join(' ');
 
-                attrs.push(['points', result]);
-            }
+            attrs.push(['points', result]);
+        }
             break;
-        
+
         case 'path': {
 
-                const path = element.getAttribute('d');
+            const path = element.getAttribute('d');
 
-                attrs.push(['d', resizePath(
-                    {
-                        path,
-                        localCTM,
-                        container
-                    }
-                )]);
-            }
+            attrs.push(['d', resizePath(
+                {
+                    path,
+                    localCTM,
+                    container
+                }
+            )]);
+        }
             break;
 
-        default: {}
+        default: { }
             break;
     }
 
@@ -1061,17 +1024,17 @@ function applyResize(element, data) {
 }
 
 function applyTransformToHandles(
-    box, 
-    handles, 
-    normalLine, 
-    data, 
+    box,
+    handles,
+    normalLine,
+    data,
     container
 ) {
 
-    let { 
-        x, 
-        y, 
-        width, 
+    let {
+        x,
+        y,
+        width,
         height
     } = data;
 
@@ -1079,7 +1042,7 @@ function applyTransformToHandles(
         hH = height / 2;
 
     const boxCTM = getTransformToElement(
-        box, 
+        box,
         box.parentNode.parentNode
     );
 
@@ -1144,9 +1107,9 @@ function checkChildElements(element) {
 
             if (item.nodeType === 1) {
 
-                const tagName = item.tagName.toLowerCase(); 
+                const tagName = item.tagName.toLowerCase();
 
-                if (ALLOWED_ELEMENTS.indexOf(tagName) !== -1) { 
+                if (ALLOWED_ELEMENTS.indexOf(tagName) !== -1) {
                     if (tagName === 'g') {
                         arrOfElements.push(...checkChildElements(item));
                     }
@@ -1167,8 +1130,8 @@ function parsePoints(pts) {
         (result, value, index, array) => {
             if (index % 2 === 0) {
                 result.push(array.slice(index, index + 2));
-            } 
-            return result; 
+            }
+            return result;
         },
         []
     );
@@ -1177,7 +1140,7 @@ function parsePoints(pts) {
 function createHandler(l, t) {
 
     const handler = createSVGElement('circle');
-    
+
     const items = {
         cx: l,
         cy: t,

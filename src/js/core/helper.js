@@ -110,7 +110,7 @@ function _each(fn) {
     const arr = arrSlice.call(this, 0);
 
     for (let index = arr.length - 1; index >= 0; --index) {
-        let func = function() {
+        let func = function () {
             return arr[index];
         };
         fn.call(func());
@@ -150,7 +150,7 @@ function _on() {
                 this[len][`on${arguments[0]}`] = arguments[1];
             }
 
-        } else if (arguments.length === 3 && typeof(arguments[1]) === 'string') {
+        } else if (arguments.length === 3 && typeof (arguments[1]) === 'string') {
             listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], true);
         }
     }
@@ -177,7 +177,7 @@ function _off() {
                 this[len][`on${arguments[0]}`] = null;
             }
 
-        } else if (arguments.length === 3 && typeof(arguments[1]) === 'string') {
+        } else if (arguments.length === 3 && typeof (arguments[1]) === 'string') {
             listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], false);
         }
     }
@@ -198,7 +198,7 @@ function _is(selector) {
 
 function listenerDelegate(el, evt, sel, handler, act) {
 
-    const doit = function(event) {
+    const doit = function (event) {
         let t = event.target;
         while (t && t !== this) {
             if (t.matches(sel)) {

@@ -36,8 +36,24 @@
 <body>
 
     <div style="width:100%; height:100%; background-color: #000000c4">
+        <div style="display: inline; box-sizing: border-box; color: white">
+            Double click on element to activate/deactive
 
-        <svg width="100%" height="50%" transform="scale(0.9, 0.9)">
+            <div id="move">
+                Move:
+                <span></span>
+            </div>
+            <div id="resize">
+                Resize:
+                <span></span>
+            </div>
+            <div id="rotate">
+                Rotate:
+                <span></span>
+            </div>
+        </div>
+
+        <svg id="svg-container" width="100%" height="50%" transform="scale(1, 1)">
 
             <rect class="drag-svg" x="552" y="209" width="30" height="30" stroke="black" fill="transparent"
                 stroke-width="5" transform="rotate(0 567 224)"></rect>
@@ -73,7 +89,6 @@
                     fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="all"
                     transform="rotate(0 150.5 134.75)"></path>
             </g>
-
         </svg>
         <div id="stack"
             style="box-sizing: border-box; width:100%; height:49%;position: relative; border-top: #32B5FE 1px dashed">
@@ -88,30 +103,96 @@
 </body>
 <script>
 
+    const methods = {
+
+        onInit(el) {
+            console.log('init');
+        },
+        onMove(dx, dy) {
+            Subjx('#move > span')[0].innerHTML = `x: ${dx}px; y: ${dy}px`;
+        },
+        onResize(dx, dy) {
+            Subjx('#resize > span')[0].innerHTML = `x: ${dx}px; y: ${dy}px`;
+        },
+        onRotate(rad) {
+            Subjx('#rotate > span')[0].innerHTML = `${Math.floor(rad * 180 / Math.PI)}deg`;
+        },
+        onDrop(e, el) {
+            console.log('is dropped');
+        },
+        onDestroy(el) {
+            console.log('is destroyed');
+        }
+    };
+
+    const svgOptions = {
+
+        container: '#svg-container',
+        snap: {
+            x: 30,
+            y: 30,
+            angle: 25
+        },
+        ...methods
+    }
+
     const svgs =
-        Subjx('.drag-svg').drag({
-            container: '#svg-container',
-            snap: {
-                x: 30,
-                y: 30,
-                angle: 25
-            }
+        Subjx('.drag-svg').drag(svgOptions);
+
+    svgs.forEach(item => {
+        Subjx(item.storage.wrapper).on('dblclick', () => {
+            item.disable();
         });
+    });
+
+    // double click activating/deactivating the drag method
+    Subjx('.drag-svg').on('dblclick', e => {
+        if (e.currentTarget.classList.contains('dg-drag')) return;
+        const xDraggable = Subjx(e.currentTarget).drag(svgOptions)[0];
+        // adding event to controls
+        const controls = xDraggable.getControls();
+        Subjx(controls).on('dblclick', () => {
+            xDraggable.disable();
+        });
+    });
+
+    const options = {
+        container: '#stack',
+        each: {
+            move: true,
+            resize: true
+        },
+        snap: {
+            x: 40,
+            y: 40,
+            angle: 0
+        },
+        ...methods
+    }
 
     const Draggables =
-        Subjx('.draggable').drag({
-            container: '#stack',
-            each: {
-                move: true,
-                resize: true
-            },
-            snap: {
-                x: 40,
-                y: 40
-            }
-        });
+        Subjx('.draggable').drag(options);
 
-    const drop = (e, el, clone) => {
+    Draggables.forEach(item => {
+        const controls = item.getControls();
+        Subjx(controls).on('dblclick', () => {
+            item.disable();
+            Draggables.splice(Draggables.indexOf(item), 1);
+        });
+    });
+
+    Subjx('.draggable').on('dblclick', e => {
+        if (e.currentTarget.classList.contains('dg-drag')) return;
+        const xDraggable = Subjx(e.currentTarget).drag(options)[0];
+        Draggables.push(xDraggable);
+        // adding event to controls
+        const controls = xDraggable.getControls();
+        Subjx(controls).on('dblclick', () => {
+            xDraggable.disable();
+        });
+    });
+
+    const onDrop = (e, el, clone) => {
 
         const stack = Subjx('#stack')[0],
             offset = stack.getBoundingClientRect(),
@@ -130,7 +211,7 @@
     Subjx('.clone').clone({
         stack: '#stack',
         appendTo: '#stack',
-        drop
+        onDrop
     });
 
     Subjx('.clone-styled').clone({
@@ -139,7 +220,7 @@
             border: '1px dashed green',
             background: 'transparent'
         },
-        drop
+        onDrop
     });
 
     Subjx('.clone-clear').on('click', () => {

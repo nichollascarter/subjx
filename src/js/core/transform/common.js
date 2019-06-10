@@ -3,7 +3,7 @@ export const RAD = Math.PI / 180;
 export const DEG = 180 / Math.PI;
 
 export function snapToGrid(value, snap) {
-    
+
     if (snap === 0) {
         return value;
     } else {
@@ -21,18 +21,18 @@ export function snapCandidate(value, gridSize) {
 }
 
 export function rotatedTopLeft(
-    x, 
-    y, 
-    width, 
-    height, 
-    rotationAngle, 
-    revX, 
+    x,
+    y,
+    width,
+    height,
+    rotationAngle,
+    revX,
     revY
 ) {
 
     const hw = parseFloat(width) / 2,
         hh = parseFloat(height) / 2;
-                
+
     const cx = x + hw,
         cy = y + hh;
 
@@ -44,8 +44,8 @@ export function rotatedTopLeft(
     const rotatedTopLeftAngle = originalTopLeftAngle + rotationAngle;
 
     const radius = Math.sqrt(Math.pow(hw, 2) + Math.pow(hh, 2));
-            
-    let cos = Math.cos(rotatedTopLeftAngle), 
+
+    let cos = Math.cos(rotatedTopLeftAngle),
         sin = Math.sin(rotatedTopLeftAngle);
 
     cos = revX === true ? -cos : cos;
@@ -59,31 +59,6 @@ export function rotatedTopLeft(
         top: floatToFixed(ry)
     }
 }
-
-// export function getRotatedPoint(
-//     cx, 
-//     cy, 
-//     x, 
-//     y, 
-//     angle, 
-//     revX, 
-//     revY
-// ) {
-
-//     let cos = Math.cos(angle),
-//         sin = Math.sin(angle);
-
-//     cos = revX === true ? -cos : cos;
-//     sin = revY === true ? -sin : sin;
-
-//     let nx = (cos * (x - cx)) + (sin * (y - cy)) + cx,
-//         ny = (cos * (y - cy)) - (sin * (x - cx)) + cy;
-
-//     return {
-//         left: floatToFixed(nx),
-//         top: floatToFixed(ny)
-//     }
-// }
 
 export function toPX(value, parent) {
     if (/px/.test(value)) {

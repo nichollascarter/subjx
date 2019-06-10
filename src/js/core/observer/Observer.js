@@ -1,15 +1,15 @@
-import { isUndef } from "../util/util";
+import { isDef, isUndef } from "../util/util";
 
 export default class Observable {
-  
+
     constructor() {
         this.observers = {};
     }
-  
+
     subscribe(eventName, sub) {
 
         const obs = this.observers;
-     
+
         if (isUndef(obs[eventName])) {
             Object.defineProperty(obs, eventName, {
                 value: []
@@ -18,34 +18,40 @@ export default class Observable {
 
         obs[eventName].push(sub);
     }
-  
-    unsubscribe(f) {
-       this.observers = this.observers.filter(subscriber => subscriber !== f);
+
+    unsubscribe(eventName, f) {
+
+        const obs = this.observers;
+
+        if (isDef(obs[eventName])) {
+            const index = obs[eventName].indexOf(f);
+            obs[eventName].splice(index, 1);
+        }
     }
 
     notify(eventName, source, data) {
-        
+
         if (isUndef(this.observers[eventName])) return;
 
         this.observers[eventName].forEach(observer => {
             if (source === observer) return;
             switch (eventName) {
                 case 'onmove':
-                    observer.onMove(data);
+                    observer.notifyMove(data);
                     break;
                 case 'onrotate':
-                    observer.onRotate(data);
+                    observer.notifyRotate(data);
                     break;
                 case 'onresize':
-                    observer.onResize(data);
+                    observer.notifyResize(data);
                     break;
                 case 'onapply':
-                    observer.onApply(data);
+                    observer.notifyApply(data);
                     break;
                 case 'ongetstate':
-                    observer.onGetState(data);
+                    observer.notifyGetState(data);
                     break;
-                default: 
+                default:
                     break;
             }
         });

@@ -9,6 +9,16 @@ But HTML elements transformation support will be staying.
 
 ## [Demo](http://jsfiddle.net/nichollascarter/qgwzch0v/)
 
+## Installation
+
+Run `npm install` to install with `npm`.
+
+Including via a `<script>` tag:
+
+```html
+<script src="../dist/js/subjx.js"></script>
+```
+
  - Getting an element:
 
  Main function `Subjx` returns new Subjx which based on elements finded by
@@ -44,7 +54,7 @@ const xDraggables = xElem.drag({
         rotate: true
     }
     // call function on drop event
-    drop(e, el) {
+    onDrop(e, el) {
         console.log(el);
     }
 });
@@ -63,6 +73,33 @@ const xSVGElements = Subjx('.draggable').drag(...);
 Allowed SVG elements:
 `path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `g`
 
+Avaliable methods:
+```javascript
+const methods = {
+    
+    onInit(el) {
+        // fires on tool activation
+    },
+    onMove(dx, dy) {
+        // fires on moving
+    },
+    onResize(dx, dy) {
+        // fires on resizing
+    },
+    onRotate(rad) {
+        // fires on rotation
+    },
+    onDrop(e, el) {
+        // fires on drop
+    },
+    onDestroy(el) {
+        // fires on tool deactivation
+    }
+};
+
+Subjx('.draggable').drag(methods);
+```
+
 2) Tool for creating a clone:
 
 ```javascript
@@ -77,7 +114,7 @@ const xCloneable = xElem.clone({
         background: 'transparent'
     },
     // call function on drop to area event 
-    drop(e, el) {
+    onDrop(e, el) {
         console.log(el);
     }
 });

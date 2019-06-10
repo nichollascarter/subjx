@@ -54,7 +54,7 @@ export default class Clone {
 
         const {
             style,
-            drop,
+            onDrop,
             appendTo,
             stack
         } = ctx.options;
@@ -72,8 +72,9 @@ export default class Clone {
                         ? Helper(stack)[0] 
                         : document;
 
-        const onDrop = isFunc(drop)
+        const _onDrop = isFunc(onDrop)
             ? function(evt) {
+
                 const {
                     clone
                 } = this.storage;
@@ -84,13 +85,13 @@ export default class Clone {
                 );
 
                 if (result) {
-                    drop.call(this, evt, this.el, clone);
+                    onDrop.call(this, evt, this.el, clone);
                 }
             }
-            : function() {};
+            : () => {};
 
         ctx.storage = {
-            onDrop,
+            onDrop: _onDrop,
             options: this.options,
             css,
             parent: Helper(appendTo)[0] || document.body,
@@ -217,15 +218,17 @@ export default class Clone {
     _destroy() {
     
         if (isUndef(this.storage)) return;
-        Helper(this.el).off('mousedown', this._onMouseDown)
-                        .off('touchstart', this._onTouchStart);
+        Helper(this.el)
+            .off('mousedown', this._onMouseDown)
+            .off('touchstart', this._onTouchStart);
         delete this.storage;
     }
 
     _onMouseDown(e) {
         this._start(e);
-        Helper(document).on('mousemove', this._onMouseMove)
-                        .on('mouseup', this._onMouseUp);
+        Helper(document)
+            .on('mousemove', this._onMouseMove)
+            .on('mouseup', this._onMouseUp);
     }
 
     _onMouseMove(e) {
@@ -234,14 +237,16 @@ export default class Clone {
 
     _onMouseUp(e) {
         this._end(e);
-        Helper(document).off('mousemove', this._onMouseMove)
-                        .off('mouseup', this._onMouseUp);
+        Helper(document)
+            .off('mousemove', this._onMouseMove)
+            .off('mouseup', this._onMouseUp);
     }
 
     _onTouchStart(e) {
         this._start(e.touches[0]);
-        Helper(document).on('touchmove', this._onTouchMove)
-                        .on('touchend', this._onTouchEnd);
+        Helper(document)
+            .on('touchmove', this._onTouchMove)
+            .on('touchend', this._onTouchEnd);
     }
 
     _onTouchMove(e) {
@@ -253,7 +258,8 @@ export default class Clone {
         if (e.touches.length === 0) {
             this._end(e.changedTouches[0]);
         }
-        Helper(document).off('touchmove', this._onTouchMove)
-                        .off('touchend', this._onTouchEnd);
+        Helper(document)
+            .off('touchmove', this._onTouchMove)
+            .off('touchend', this._onTouchEnd);
     }
 }

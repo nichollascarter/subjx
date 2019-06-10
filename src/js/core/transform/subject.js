@@ -29,6 +29,7 @@ export default class Subject {
 
         this.el = el;
         this.storage = null;
+        this.proxyMethods = null;
         this.Ob = Observable;
 
         this._onMouseDown = this._onMouseDown.bind(this);
@@ -54,7 +55,9 @@ export default class Subject {
 
         const {
             storage,
-            el
+            proxyMethods,
+            el,
+            Ob
         } = this;
 
         if (isUndef(storage)) return;
@@ -62,29 +65,46 @@ export default class Subject {
         // unexpected case
         if (storage.onExecution) {
             this._end();
-            Helper(document).off('mousemove', this._onMouseMove)
-                            .off('mouseup', this._onMouseUp)
-                            .off('touchmove', this._onTouchMove)
-                            .off('touchend', this._onTouchEnd);  
+            Helper(document)
+                .off('mousemove', this._onMouseMove)
+                .off('mouseup', this._onMouseUp)
+                .off('touchmove', this._onTouchMove)
+                .off('touchend', this._onTouchEnd);
         }
 
         removeClass(el, 'dg-drag');
         this._destroy();
 
-        delete this.storage;  
+        Ob.unsubscribe('ongetstate', this);
+        Ob.unsubscribe('onapply', this);
+        Ob.unsubscribe('onmove', this);
+        Ob.unsubscribe('onresize', this);
+        Ob.unsubscribe('onrotate', this);
+
+        proxyMethods.onDestroy.call(this, el);
+        delete this.storage;
     }
 
-    _init() {}
+    _init() { }
 
-    _destroy() {}
+    _destroy() { }
 
-    _drag() {}
+    _cursorPoint() { }
 
-    _resize() {}
+    _drag() {
+        this._processMove(...arguments);
+        this.proxyMethods.onMove.call(this, ...arguments);
+    }
 
-    _rotate() {}
+    _rotate() {
+        this._processRotate(...arguments);
+        this.proxyMethods.onRotate.call(this, ...arguments);
+    }
 
-    _cursorPoint() {}
+    _resize() {
+        this._processResize(...arguments);
+        this.proxyMethods.onResize.call(this, ...arguments);
+    }
 
     _load(options) {
 
@@ -106,7 +126,12 @@ export default class Subject {
 
         let _showHandles = true,
             _restrict = null,
-            _drop = function() {};
+            _onInit = () => { },
+            _onMove = () => { },
+            _onRotate = () => { },
+            _onResize = () => { },
+            _onDrop = () => { },
+            _onDestroy = () => { };
 
         let _container = el.parentNode;
 
@@ -114,12 +139,17 @@ export default class Subject {
 
         if (isDef(options)) {
 
-            const { 
-                snap, 
-                each, 
+            const {
+                snap,
+                each,
                 showHandles,
                 restrict,
-                drop,
+                onInit,
+                onDrop,
+                onMove,
+                onResize,
+                onRotate,
+                onDestroy,
                 container,
                 proportions
             } = options;
@@ -130,18 +160,18 @@ export default class Subject {
 
                 _snap.x = isUndef(x) ? 10 : x;
                 _snap.y = isUndef(y) ? 10 : y;
-                _snap.angle = isUndef(angle) 
-                                ? _snap.angle 
-                                : angle * RAD;
+                _snap.angle = isUndef(angle)
+                    ? _snap.angle
+                    : angle * RAD;
             }
-            
+
             if (isDef(each)) {
 
                 const { move, resize, rotate } = each;
 
                 _each.move = move || false;
                 _each.resize = resize || false;
-                _each.rotate = rotate || false; 
+                _each.rotate = rotate || false;
             }
 
             if (isDef(restrict)) {
@@ -149,29 +179,41 @@ export default class Subject {
                     ? el.parentNode
                     : Helper(restrict)[0] || document
             }
-            
-            _drop = isFunc(options.drop)
-                    ? function(e) {
-                        drop(e, el);
-                    } 
-                    : _drop;
 
             _showHandles = isUndef(showHandles) ||
-                            showHandles === true;
-                            
+                showHandles === true;
+
             _container = Helper(container)[0] || _container;
 
             _proportions = proportions || false;
+
+
+            _onInit = createEvent(onInit);
+            _onDrop = createEvent(onDrop);
+            _onMove = createEvent(onMove);
+            _onResize = createEvent(onResize);
+            _onRotate = createEvent(onRotate);
+            _onDestroy = createEvent(onDestroy);
+
+            _onInit.call(this, el);
         }
 
         this.storage = {
             showHandles: _showHandles,
             restrict: _restrict,
             container: _container,
-            drop: _drop,
             snap: _snap,
             each: _each,
             proportions: _proportions
+        };
+
+        this.proxyMethods = {
+            onInit: _onInit,
+            onDrop: _onDrop,
+            onMove: _onMove,
+            onResize: _onResize,
+            onRotate: _onRotate,
+            onDestroy: _onDestroy
         };
 
         if (_each.move || _each.resize || _each.rotate) {
@@ -204,10 +246,9 @@ export default class Subject {
         storage.frame = requestAnimFrame(ctx._animate);
 
         if (!storage.doDraw) return;
-        storage.doDraw = false; 
+        storage.doDraw = false;
 
         let {
-            e,
             handle,
             handles,
             cx,
@@ -226,9 +267,9 @@ export default class Subject {
             revY
         } = storage;
 
-        const { 
-            move: moveEach, 
-            resize: resizeEach, 
+        const {
+            move: moveEach,
+            resize: resizeEach,
             rotate: rotateEach
         } = storage.each;
 
@@ -244,7 +285,7 @@ export default class Subject {
             let dx = snapToGrid(x - cx, snap.x),
                 dy = snapToGrid(y - cy, snap.y);
 
-            const dox = handle.is(handles.ml) || 
+            const dox = handle.is(handles.ml) ||
                 handle.is(handles.mr) ||
                 handle.is(handles.tl) ||
                 handle.is(handles.tr) ||
@@ -259,7 +300,7 @@ export default class Subject {
                 handle.is(handles.tc);
 
             dx = dox ? (revX ? - dx : dx) : 0,
-            dy =  doy ? (revY ? - dy : dy) : 0;
+                dy = doy ? (revY ? - dy : dy) : 0;
 
             ctx._resize(
                 dx,
@@ -302,7 +343,7 @@ export default class Subject {
         if (doRotate) {
 
             const radians = Math.atan2(
-                clientY - center.y, 
+                clientY - center.y,
                 clientX - center.x
             ) - pressang;
 
@@ -326,8 +367,8 @@ export default class Subject {
         if (e.stopImmediatePropagation) {
             e.stopImmediatePropagation();
         }
-    
-        const { storage } = this; 
+
+        const { storage } = this;
         const computed = this._compute(e);
 
         Object.keys(computed).forEach(prop => {
@@ -344,11 +385,11 @@ export default class Subject {
             revX,
             revY
         } = computed;
-    
+
         const doResize = onRightEdge ||
-                        onBottomEdge ||
-                        onTopEdge ||
-                        onLeftEdge;
+            onBottomEdge ||
+            onTopEdge ||
+            onLeftEdge;
 
         const doRotate = handle.is(storage.handles.rotator);
 
@@ -358,21 +399,21 @@ export default class Subject {
             ctrlKey
         } = e;
 
-        const { 
-            x, 
-            y 
+        const {
+            x,
+            y
         } = this._cursorPoint(
             {
-                clientX, 
+                clientX,
                 clientY
             }
         );
 
-        const { 
-            x: nx, 
-            y: ny 
+        const {
+            x: nx,
+            y: ny
         } = this._pointToElement({ x, y });
-        
+
         storage.clientX = clientX;
         storage.clientY = clientY;
         storage.nx = x;
@@ -403,7 +444,7 @@ export default class Subject {
         if (e.preventDefault) {
             e.preventDefault();
         }
-        
+
         const { storage } = this;
 
         const { x, y } = this._cursorPoint(e);
@@ -412,17 +453,20 @@ export default class Subject {
         storage.clientY = y;
         storage.doDraw = true;
     }
-    
+
     _end(e) {
 
         if (isDef(e) && e.stopImmediatePropagation) {
             e.stopImmediatePropagation();
         }
 
-        const { storage } = this;
+        const {
+            storage,
+            proxyMethods
+        } = this;
 
-        const action = storage.doResize 
-            ? 'resize' 
+        const action = storage.doResize
+            ? 'resize'
             : (storage.doDrag ? 'drag' : 'rotate');
 
         storage.doResize = false;
@@ -440,54 +484,64 @@ export default class Subject {
         );
 
         cancelAnimFrame(storage.frame);
-        storage.drop.call(this, e);
+        proxyMethods.onDrop.call(this, e, this.el);
     }
 
     _onMouseDown(e) {
         this._start(e);
-        Helper(document).on('mousemove', this._onMouseMove)
-                        .on('mouseup', this._onMouseUp);
+        Helper(document)
+            .on('mousemove', this._onMouseMove)
+            .on('mouseup', this._onMouseUp);
     }
 
     _onTouchStart(e) {
         this._start(e.touches[0]);
-        Helper(document).on('touchmove', this._onTouchMove)
-                        .on('touchend', this._onTouchEnd);
+        Helper(document)
+            .on('touchmove', this._onTouchMove)
+            .on('touchend', this._onTouchEnd);
     }
 
     _onMouseMove(e) {
         this._moving(
-            e, 
+            e,
             this.el
         );
     }
 
     _onTouchMove(e) {
         this._moving(
-            e.touches[0], 
+            e.touches[0],
             this.el
         );
     }
 
     _onMouseUp(e) {
-        Helper(document).off('mousemove', this._onMouseMove)
-                        .off('mouseup', this._onMouseUp);  
-        this._end(e, this.el);                                      
+        Helper(document)
+            .off('mousemove', this._onMouseMove)
+            .off('mouseup', this._onMouseUp);
+        this._end(
+            e,
+            this.el
+        );
     }
 
     _onTouchEnd(e) {
-        Helper(document).off('touchmove', this._onTouchMove)
-                        .off('touchend', this._onTouchEnd);
+        Helper(document)
+            .off('touchmove', this._onTouchMove)
+            .off('touchend', this._onTouchEnd);
         if (e.touches.length === 0) {
-            this._end(e.changedTouches[0], this.el);
+            this._end(
+                e.changedTouches[0],
+                this.el)
+                ;
         }
     }
 
-    onMove(data) {
+    notifyMove(data) {
 
-        const { 
+        const {
             dx,
-            dy 
+            dy
         } = data;
 
         this._drag(
@@ -496,7 +550,7 @@ export default class Subject {
         );
     }
 
-    onRotate(data) {
+    notifyRotate(data) {
 
         const {
             snap
@@ -507,7 +561,7 @@ export default class Subject {
         );
     }
 
-    onResize(data) {
+    notifyResize(data) {
 
         const {
             dx,
@@ -524,7 +578,28 @@ export default class Subject {
         );
     }
 
-    onApply(actionName) {
+    notifyApply(actionName) {
         this._apply(actionName);
     }
+
+    notifyGetState(data) {
+
+        const store = this.storage;
+
+        const recalc = this._getState(
+            data
+        );
+
+        Object.keys(recalc).forEach(key => {
+            store[key] = recalc[key];
+        });
+    }
+}
+
+function createEvent(fn) {
+    return isFunc(fn)
+        ? function () {
+            fn.call(this, ...arguments);
+        }
+        : () => { };
 }

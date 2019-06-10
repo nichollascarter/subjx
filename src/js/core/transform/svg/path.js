@@ -1,5 +1,5 @@
-import { 
-    warn 
+import {
+    warn
 } from './../../util/util'
 
 import {
@@ -10,7 +10,7 @@ import {
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
 const sepRE = /\s*,\s*|\s+/g;
 
-function parsePath(path)  {
+function parsePath(path) {
 
     let match = dRE.lastIndex = 0;
 
@@ -22,15 +22,15 @@ function parsePath(path)  {
         const upCmd = cmd.toUpperCase();
 
         // normalize the data
-		const data = match[2]
-                        .replace(/[^e\s+]-/g, ' -')
-                        .replace(/ +/g, ' ');
+        const data = match[2]
+            .replace(/([^e])-/g, '$1 -')
+            .replace(/ +/g, ' ');
 
         serialized.push({
             relative: cmd !== upCmd,
             key: upCmd,
             cmd: cmd,
-            value: data.trim().split(sepRE).map(val => { 
+            values: data.trim().split(sepRE).map(val => {
                 if (!isNaN(val)) {
                     return Number(val);
                 }
@@ -43,10 +43,10 @@ function parsePath(path)  {
 
 export function movePath(params) {
 
-    const { 
-        path, 
-        dx, 
-        dy 
+    const {
+        path,
+        dx,
+        dy
     } = params;
 
     try {
@@ -54,6 +54,7 @@ export function movePath(params) {
         const serialized = parsePath(path);
 
         let str = '';
+        let space = ' ';
 
         let firstCommand = true;
 
@@ -61,8 +62,8 @@ export function movePath(params) {
 
             const item = serialized[i];
 
-            const { 
-                value: values,
+            const {
+                values,
                 key: cmd,
                 relative
             } = item;
@@ -75,11 +76,11 @@ export function movePath(params) {
 
                     for (let k = 0, len = values.length; k < len; k += 2) {
 
-                        const [ x, y ] = values.slice(k, k + 2);
-                    
+                        const [x, y] = values.slice(k, k + 2);
+
                         if (!(relative && !firstCommand)) {
                             x += dx;
-                            y += dy;    
+                            y += dy;
                         }
 
                         coordinates.push(
@@ -159,7 +160,7 @@ export function movePath(params) {
 
                     for (let k = 0, len = values.length; k < len; k += 2) {
 
-                        const [ x, y ] = values.slice(k, k + 2);
+                        const [x, y] = values.slice(k, k + 2);
 
                         if (!relative) {
                             x += dx;
@@ -173,13 +174,13 @@ export function movePath(params) {
                     }
                     break;
                 }
-                
+
                 case 'Q':
                 case 'S': {
 
                     for (let k = 0, len = values.length; k < len; k += 4) {
 
-                        const [ x1, y1, x2, y2 ] = values.slice(k, k + 4);
+                        const [x1, y1, x2, y2] = values.slice(k, k + 4);
 
                         if (!relative) {
                             x1 += dx;
@@ -199,17 +200,18 @@ export function movePath(params) {
                 }
                 case 'Z':
                     values[0] = '';
+                    space = '';
                     break;
             }
 
-            str += item.cmd + coordinates.join(',') + ' ';
+            str += item.cmd + coordinates.join(',') + space;
         }
 
         return str;
 
-    } catch(err) {
+    } catch (err) {
         warn('Path parsing error: ' + err);
-    } 
+    }
 }
 
 export function resizePath(params) {
@@ -225,65 +227,67 @@ export function resizePath(params) {
         const serialized = parsePath(path);
 
         let str = '';
+        let space = ' ';
+
         const res = [];
-    
+
         let firstCommand = true;
-    
+
         for (let i = 0, len = serialized.length; i < len; i++) {
-    
+
             const item = serialized[i];
-    
-            const { 
-                value: values,
+
+            const {
+                values,
                 key: cmd,
                 relative
             } = item;
-                
+
             switch (cmd) {
-    
+
                 case 'A': {
-    
+
                     //A rx ry x-axis-rotation large-arc-flag sweep-flag x y
                     const coordinates = [];
-                    
+
                     for (let k = 0, len = values.length; k < len; k += 7) {
-    
-                        const [ rx, ry, x_axis_rot, large_arc_flag, sweep_flag, x, y ] = 
+
+                        const [rx, ry, x_axis_rot, large_arc_flag, sweep_flag, x, y] =
                             values.slice(k, k + 7);
-    
+
                         const mtrx = cloneMatrix(localCTM);
-    
-                        if (relative) { 
+
+                        if (relative) {
                             mtrx.e = mtrx.f = 0;
                         }
-    
+
                         const {
                             x: resX,
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             x,
                             y
                         );
-    
+
                         coordinates.push(
                             resX,
                             resY
                         );
-    
+
                         mtrx.e = mtrx.f = 0;
-    
+
                         const {
                             x: newRx,
                             y: newRy
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             rx,
                             ry
                         );
-    
+
                         coordinates.unshift(
                             newRx,
                             newRy,
@@ -292,56 +296,56 @@ export function resizePath(params) {
                             sweep_flag
                         );
                     }
-    
+
                     res.push(coordinates);
                     break;
                 }
-    
+
                 case 'C': {
-    
+
                     //C x1 y1, x2 y2, x y (or c dx1 dy1, dx2 dy2, dx dy)
                     const coordinates = [];
-    
+
                     for (let k = 0, len = values.length; k < len; k += 6) {
-    
-                        const [ x1, y1, x2, y2, x, y ] = values.slice(k, k + 6);
-    
+
+                        const [x1, y1, x2, y2, x, y] = values.slice(k, k + 6);
+
                         const mtrx = cloneMatrix(localCTM);
-    
-                        if (relative) { 
+
+                        if (relative) {
                             mtrx.e = mtrx.f = 0;
                         }
-    
+
                         const {
                             x: resX1,
                             y: resY1
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             x1,
                             y1
                         );
-    
+
                         const {
                             x: resX2,
                             y: resY2
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             x2,
                             y2
                         );
-    
+
                         const {
                             x: resX,
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             x,
                             y
                         );
-    
+
                         coordinates.push(
                             resX1,
                             resY1,
@@ -351,253 +355,259 @@ export function resizePath(params) {
                             resY
                         );
                     }
-    
+
                     res.push(coordinates);
                     break;
                 }
-    
+                // this command make impossible free transform within group
+                // todo: use only proportional resizing or need to be converted to L
                 case 'H': {
-    
+
+                    // H x (or h dx)
                     const coordinates = [];
-    
+
                     for (let k = 0, len = values.length; k < len; k += 1) {
-    
-                        const [ x ] = values.slice(k, k + 1);
-    
+
+                        const [x] = values.slice(k, k + 1);
+
                         const mtrx = cloneMatrix(localCTM);
-    
-                        if (relative) { 
+
+                        if (relative) {
                             mtrx.e = mtrx.f = 0;
                         }
-    
-                        const { 
+
+                        const {
                             x: resX
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             x,
                             0
                         );
-    
+
                         coordinates.push(
                             resX
                         );
                     }
-                    
+
                     res.push(coordinates);
                     break;
                 }
-    
+                // this command make impossible free transform within group
+                // todo: use only proportional resizing or need to be converted to L
                 case 'V': {
-    
+
+                    // V y (or v dy)
                     const coordinates = [];
-    
+
                     for (let k = 0, len = values.length; k < len; k += 1) {
-    
-                        const [ y ] = values.slice(k, k + 1);
-    
+
+                        const [y] = values.slice(k, k + 1);
+
                         const mtrx = cloneMatrix(localCTM);
-    
-                        if (relative) { 
+
+                        if (relative) {
                             mtrx.e = mtrx.f = 0;
                         }
-    
-                        const { 
+
+                        const {
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             0,
                             y
                         );
-    
+
                         coordinates.push(
                             resY
                         );
                     }
-    
+
                     res.push(coordinates);
                     break;
                 }
-    
-                case 'T':
+
+                case 'T': // T x y (or t dx dy)
                 case 'L': {
-    
+
+                    // L x y (or l dx dy)
                     const coordinates = [];
-    
+
                     for (let k = 0, len = values.length; k < len; k += 2) {
-    
-                        const [ x, y ] = values.slice(k, k + 2);
-    
+
+                        const [x, y] = values.slice(k, k + 2);
+
                         const mtrx = cloneMatrix(localCTM);
-    
-                        if (relative) { 
+
+                        if (relative) {
                             mtrx.e = mtrx.f = 0;
                         }
-    
-                        const { 
+
+                        const {
                             x: resX,
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             x,
                             y
                         );
-    
+
                         coordinates.push(
-                            resX, 
+                            resX,
                             resY
                         );
                     }
-    
+
                     res.push(coordinates);
                     break;
                 }
-    
+
                 case 'M': {
-    
+
                     // M x y (or dx dy)
                     const coordinates = [];
-    
+
                     for (let k = 0, len = values.length; k < len; k += 2) {
-    
-                        const [ x, y ] = values.slice(k, k + 2);
-    
+
+                        const [x, y] = values.slice(k, k + 2);
+
                         const mtrx = cloneMatrix(localCTM);
-    
+
                         if (relative && !firstCommand) {
                             mtrx.e = mtrx.f = 0;
                         }
-    
-                        const { 
+
+                        const {
                             x: resX,
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             x,
                             y
                         );
-    
+
                         coordinates.push(
-                            resX, 
+                            resX,
                             resY
                         );
-    
+
                         firstCommand = false;
                     }
-    
+
                     res.push(coordinates);
                     break;
                 }
-    
+
                 case 'Q': {
-    
+
                     //Q x1 y1, x y (or q dx1 dy1, dx dy)
                     const coordinates = [];
-    
+
                     for (let k = 0, len = values.length; k < len; k += 4) {
-    
-                        const [ x1, y1, x, y ] = values.slice(k, k + 4);
-    
+
+                        const [x1, y1, x, y] = values.slice(k, k + 4);
+
                         const mtrx = cloneMatrix(localCTM);
-    
-                        if (relative) { 
+
+                        if (relative) {
                             mtrx.e = mtrx.f = 0;
                         }
-    
-                        const { 
+
+                        const {
                             x: resX1,
                             y: resY1
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             x1,
                             y1
                         );
-    
-                        const { 
+
+                        const {
                             x: resX,
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             x,
                             y
                         );
-    
+
                         coordinates.push(
-                            resX1, 
+                            resX1,
                             resY1,
-                            resX, 
+                            resX,
                             resY
                         );
                     }
-    
-                    res.push(coordinates);     
+
+                    res.push(coordinates);
                     break;
                 }
-    
+
                 case 'S': {
-    
+
                     //S x2 y2, x y (or s dx2 dy2, dx dy)
                     const coordinates = [];
-    
+
                     for (let k = 0, len = values.length; k < len; k += 4) {
-    
-                        const [ x2, y2, x, y ] = values.slice(k, k + 4);
-    
+
+                        const [x2, y2, x, y] = values.slice(k, k + 4);
+
                         const mtrx = cloneMatrix(localCTM);
-    
-                        if (relative) { 
+
+                        if (relative) {
                             mtrx.e = mtrx.f = 0;
                         }
-    
-                        const { 
+
+                        const {
                             x: resX2,
                             y: resY2
                         } = pointTo(
                             mtrx,
-                            container, 
+                            container,
                             x2,
                             y2
                         );
-    
-                        const { 
+
+                        const {
                             x: resX,
                             y: resY
                         } = pointTo(
                             localCTM,
-                            container, 
+                            container,
                             x,
                             y
                         );
-    
+
                         coordinates.push(
-                            resX2, 
+                            resX2,
                             resY2,
-                            resX, 
+                            resX,
                             resY
                         );
                     }
-    
+
                     res.push(coordinates);
                     break;
                 }
-    
+
                 case 'Z': {
                     res.push(['']);
+                    space = '';
                     break;
                 }
             }
-    
-            str += item.cmd + res[i].join(',') + ' ';
+
+            str += item.cmd + res[i].join(',') + space;
         }
-    
+
         return str;
 
-    } catch(err) {
+    } catch (err) {
         warn('Path parsing error: ' + err);
     }
 }

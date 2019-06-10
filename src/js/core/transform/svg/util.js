@@ -1,8 +1,8 @@
 import { warn } from './../../util/util'
 
 export const ALLOWED_ELEMENTS = [
-    'circle', 'ellipse', 
-    'image', 'line', 
+    'circle', 'ellipse',
+    'image', 'line',
     'path', 'polygon',
     'polyline', 'rect',
     'text', 'g'
@@ -44,7 +44,7 @@ export function cloneMatrix(b) {
     a.d = b.d;
     a.e = b.e;
     a.f = b.f;
-    
+
     return a;
 }
 

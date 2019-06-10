@@ -15,11 +15,11 @@ class Subjx extends Helper_ {
         super(params);
     }
 
-    drag(method) {
-        return _drag.call(this, method);
+    drag(params) {
+        return _drag.call(this, params);
     }
-    clone(method) {
-        return _clone.call(this, method);
+    clone(params) {
+        return _clone.call(this, params);
     }
 }
 
