@@ -1,6 +1,6 @@
 {
     "name": "subjx",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "Drag, Rotate, Resize plugin",
     "main": "src/index.js",
     "scripts": {
