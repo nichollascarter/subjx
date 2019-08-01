@@ -52,7 +52,9 @@ const xDraggables = xElem.drag({
         move: true,
         resize: true, 
         rotate: true
-    }
+    },
+    // If true, aspect ratio will be kept when resizing
+    proportions: false,
     // call function on drop event
     onDrop(e, el) {
         console.log(el);

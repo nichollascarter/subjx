@@ -303,8 +303,9 @@ export default class Draggable extends Subject {
 
         const { style } = controls;
 
-        const newWidth = cw + dx,
-            newHeight = ch + dy;
+        // if proportions is set to true, then scale proportionally
+        const newWidth = this.storage.proportions ? cw * ((cw + dx) / cw) : cw + dx,
+            newHeight = this.storage.proportions ? ch * ((cw + dx) / cw) : ch + dy;
 
         if (newWidth < MIN_SIZE || newHeight < MIN_SIZE) return;
 
