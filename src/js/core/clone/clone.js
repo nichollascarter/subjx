@@ -41,7 +41,7 @@ export default class Clone {
     }
 
     disable() {
-        _destroy.call(this);
+        this._destroy();
     }
 
     _init() {
@@ -63,7 +63,8 @@ export default class Clone {
         const css = {
             position: 'absolute',
             'z-index': '2147483647',
-            ...((isDef(style) && typeof style === 'object') && style)
+            style: (isDef(style) && typeof style === 'object') ? style : undefined
+            //...((isDef(style) && typeof style === 'object') && style)
         };
 
         const dropZone = isDef(stack) 
@@ -91,7 +92,7 @@ export default class Clone {
             onDrop: _onDrop,
             options,
             css,
-            parent: helper(appendTo)[0] || document.body,
+            parent: isDef(appendTo) ? helper(appendTo)[0] : document.body,
             stack: dropZone
         };
 
