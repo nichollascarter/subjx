@@ -1,4 +1,4 @@
-.dg-wrapper {
+.sjx-wrapper {
     position: static;
     width: 0;
     height: 0;
@@ -8,66 +8,67 @@
     -o-user-select: none;
 }
 
-.dg-controls {
+.sjx-controls {
     display: inline-block;
-    box-sizing: border-box;
     top: 0;
-    left: 0;   
+    left: 0;
     z-index: 2147483647;
-    border: 1px dashed #32B5FE;
-    cursor: move;
+    border: 1px dashed;
 }
 
-.dg-hdl {
-    cursor: pointer;
-    border-radius: 9px;
-    width: 9px;
-    height: 9px;
-    border: 1px solid #32B5FE;
-    margin-top: -5px;
-    margin-left: -5px;
+.sjx-hdl {
+    border-radius: 11px;
+    width: 11px;
+    height: 11px;
+    border: 1px solid;
 }
 
-.dg, .dg-controls, .dg-hdl {
+.sjx-controls, .sjx-hdl {
     position: absolute;
+    border-color: #32B5FE;
+    box-sizing: border-box;
     background-color:rgba(0, 168, 255, 0.2);
 }
 
-.dg-hdl-t {
-    top: 0;
+.sjx-hdl-t {
+    top: calc(0% - 6px);
 }
 
-.dg-hdl-m {
-    top: 50%;
+.sjx-hdl-m {
+    top: calc(50% - 5px);
 }
 
-.dg-hdl-b {
-    top: 100%;
+.sjx-hdl-b {
+    top: calc(100% - 5px);
 }
 
-.dg-hdl-l {
-    left: 0;
+.sjx-hdl-l {
+    left: calc(0% - 6px);
 }
 
-.dg-hdl-c {
-    left: 50%;
+.sjx-hdl-c {
+    left: calc(50% - 6px);
 }
 
-.dg-hdl-r {
-    left: 100%;
+.sjx-hdl-r {
+    left: calc(100% - 5px);
 }
 
-.dg-rotator {
-    top: 50%;
-    left: calc(100% + 50px);
+.sjx-rotator {
+    left: calc(100% + 45px);
 }
 
-.dg-normal {
+.sjx-normal {
     display: inline-block;
     box-sizing: border-box;
-    border: 0.5px dashed #32B5FE;
+    border-width: 0.5px;
+    border-style: dashed;
     top: 50%;
     left: 100%;
     width: 50px;
     height: 0;
+}
+
+.sjx-hidden {
+    display: none;
 }

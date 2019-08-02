@@ -1,4 +1,4 @@
-import { Helper } from '../helper'
+import { helper } from '../Helper';
 
 export function getOffset(node) {
     return node.getBoundingClientRect();
@@ -15,7 +15,6 @@ export function getTransform(el) {
 }
 
 export function parseMatrix(value) {
-
     const transform = value.match(/-?\d+\.?\d+|-?\d+/g);
 
     if (transform) {
@@ -58,22 +57,21 @@ export function removeClass(node, cls) {
 }
 
 export function objectsCollide(a, b) {
-
     const {
-        top: aTop,
-        left: aLeft
-    } = getOffset(a),
+            top: aTop,
+            left: aLeft
+        } = getOffset(a),
         {
             top: bTop,
             left: bLeft
         } = getOffset(b),
-        _a = Helper(a),
-        _b = Helper(b);
+        _a = helper(a),
+        _b = helper(b);
 
     return !(
         ((aTop < bTop) ||
             (aTop + parseFloat(_a.css('height'))) > (bTop + parseFloat(_b.css('height')))) ||
         ((aLeft < bLeft) ||
             (aLeft + parseFloat(_a.css('width'))) > (bLeft + parseFloat(_b.css('width'))))
-    )
+    );
 }

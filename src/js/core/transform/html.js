@@ -1,33 +1,25 @@
-import { Helper } from '../helper'
-import Subject from './subject'
+import { helper } from '../Helper';
+import Subject from './Subject';
 
 import {
     addClass,
     getTransform,
     parseMatrix,
     getOffset
-} from '../util/css-util'
+} from '../util/css-util';
 
 import {
     rotatedTopLeft,
-    toPX,
-    fromPX,
-    getUnitDimension,
     floatToFixed
-} from './common'
+} from './common';
+
+import {
+    isDef,
+    isUndef
+} from '../util/util';
 
 const MIN_SIZE = 2;
-const BRACKETS = `
-        <div class="dg dg-normal"></div>
-        <div class="dg-hdl dg-hdl-t dg-hdl-l dg-hdl-tl"></div>
-        <div class="dg-hdl dg-hdl-t dg-hdl-r dg-hdl-tr"></div>
-        <div class="dg-hdl dg-hdl-b dg-hdl-r dg-hdl-br"></div>
-        <div class="dg-hdl dg-hdl-b dg-hdl-l dg-hdl-bl"></div>
-        <div class="dg-hdl dg-hdl-t dg-hdl-c dg-hdl-tc"></div>
-        <div class="dg-hdl dg-hdl-b dg-hdl-c dg-hdl-bc"></div>
-        <div class="dg-hdl dg-hdl-m dg-hdl-l dg-hdl-ml"></div>
-        <div class="dg-hdl dg-hdl-m dg-hdl-r dg-hdl-mr"></div>
-        <div class="dg-hdl dg-rotator"></div>`;
+const CENTER_DELTA = 6;
 
 export default class Draggable extends Subject {
 
@@ -36,92 +28,115 @@ export default class Draggable extends Subject {
         this.enable(options);
     }
 
-    _init(sel) {
-
-        const { storage } = this;
-
+    _init(el) {
         const container = document.createElement('div');
 
-        addClass(container, 'dg-wrapper');
-        sel.parentNode.insertBefore(container, sel);
+        addClass(container, 'sjx-wrapper');
+        el.parentNode.insertBefore(container, el);
 
-        const _sel = Helper(sel);
+        const $el = helper(el);
+
+        const { options } = this;
+
+        const {
+            rotationPoint,
+        } = options;
 
         const {
             left,
             top,
             width,
             height
-        } = sel.style;
+        } = el.style;
 
-        const w = width || _sel.css('width'),
-            h = height || _sel.css('height'),
-            t = top || _sel.css('top'),
-            l = left || _sel.css('left');
+        const w = width || $el.css('width'),
+            h = height || $el.css('height'),
+            t = top || $el.css('top'),
+            l = left || $el.css('left');
 
-        const _parent = Helper(container.parentNode);
+        const $parent = helper(container.parentNode);
 
         const css = {
             top: t,
             left: l,
             width: w,
             height: h,
-            transform: getTransform(_sel)
+            transform: getTransform($el)
         };
 
         const controls = document.createElement('div');
-        controls.innerHTML = BRACKETS;
 
-        addClass(controls, 'dg-controls');
+        const handles = {
+            normal: ['sjx-hdl', 'sjx-normal'],
+            tl: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-l', 'sjx-hdl-tl'],
+            tr: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-r', 'sjx-hdl-tr'],
+            br: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-r', 'sjx-hdl-br'],
+            bl: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-l', 'sjx-hdl-bl'],
+            tc: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-c', 'sjx-hdl-tc'],
+            bc: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-c', 'sjx-hdl-bc'],
+            ml: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-l', 'sjx-hdl-ml'],
+            mr: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-r', 'sjx-hdl-mr'],
+            center: rotationPoint ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined,
+            //...(rotationPoint && { center: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc']}), IE11 not supports
+            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator']
+        };
+
+        Object.keys(handles).forEach(key => {
+            const data = handles[key];
+            if (isUndef(data)) return;
+            const handler = createHandler(data);
+            handles[key] = handler;
+            controls.appendChild(handler);
+        });
+
+        if (isDef(handles.center)) {
+            const cHandle = helper(handles.center);
+            cHandle.css({
+                left: `${el.getAttribute('data-cx')}px`,
+                top: `${el.getAttribute('data-cy')}px`
+            });
+        }
+
+        addClass(controls, 'sjx-controls');
 
         container.appendChild(controls);
 
-        const _controls = Helper(controls);
-        _controls.css(css);
+        const $controls = helper(controls);
+        $controls.css(css);
 
-        const _container = Helper(container);
+        const $container = helper(container);
 
-        Object.assign(storage, {
+        this.storage = {
             controls,
-            handles: {
-                tl: _container.find('.dg-hdl-tl'),
-                tr: _container.find('.dg-hdl-tr'),
-                br: _container.find('.dg-hdl-br'),
-                bl: _container.find('.dg-hdl-bl'),
-                tc: _container.find('.dg-hdl-tc'),
-                bc: _container.find('.dg-hdl-bc'),
-                ml: _container.find('.dg-hdl-ml'),
-                mr: _container.find('.dg-hdl-mr'),
-                rotator: _container.find('.dg-rotator')
-            },
-            parent: _parent
-        });
+            handles,
+            radius: $container.find('.sjx-radius'),
+            parent: $parent
+        };
 
-        _controls.on('mousedown', this._onMouseDown)
+        $controls
+            .on('mousedown', this._onMouseDown)
             .on('touchstart', this._onTouchStart);
     }
 
     _destroy() {
-
         const {
-            controls,
-            container
+            controls
         } = this.storage;
 
-        Helper(controls)
+        helper(controls)
             .off('mousedown', this._onMouseDown)
             .off('touchstart', this._onTouchStart);
 
-        container.removeChild(controls.parentNode);
+        const wrapper = controls.parentNode;
+        wrapper.parentNode.removeChild(wrapper);
     }
 
     _compute(e) {
-
         const {
             handles,
         } = this.storage;
 
-        const handle = Helper(e.target);
+        const handle = helper(e.target);
 
         //reverse axis
         const revX = handle.is(handles.tl) ||
@@ -172,7 +187,6 @@ export default class Draggable extends Subject {
     }
 
     _pointToElement(data) {
-
         const {
             transform,
         } = this.storage;
@@ -185,23 +199,34 @@ export default class Draggable extends Subject {
         const ctm = [...transform.matrix];
         ctm[4] = ctm[5] = 0;
 
+        return this._applyMatrixToPoint(
+            matrixInvert(ctm),
+            x,
+            y
+        );
+    }
+
+    _pointToControls(data) {
+        return this._pointToElement(data);
+    }
+
+    _applyMatrixToPoint(matrix, x, y) {
         return multiplyMatrixAndPoint(
             {
                 x,
                 y
             },
-            matrixInvert(ctm)
+            matrix
         );
     }
 
     _cursorPoint(e) {
-
         const {
             container
-        } = this.storage;
+        } = this.options;
 
         const globalMatrix = parseMatrix(
-            getTransform(Helper(container))
+            getTransform(helper(container))
         );
 
         return multiplyMatrixAndPoint(
@@ -216,100 +241,95 @@ export default class Draggable extends Subject {
     }
 
     _apply() {
-
         const {
-            storage,
-            el
+            el,
+            storage
         } = this;
 
-        const _el = Helper(el);
+        const $el = helper(el);
 
         const {
             cached,
-            parent,
-            dimens,
-            controls
+            controls,
+            transform,
+            handles
         } = storage;
 
-        if (!cached) return;
+        const $controls = helper(controls);
 
-        const matrix = [...cached];
+        const cw = parseFloat($controls.css('width')),
+            ch = parseFloat($controls.css('height'));
 
-        const pW = parent.css('width'),
-            pH = parent.css('height');
+        const hW = cw / 2,
+            hH = ch / 2;
 
-        const diffLeft = matrix[4];
-        const diffTop = matrix[5];
+        const {
+            center: cHandle
+        } = handles;
 
-        matrix[4] = 0;
-        matrix[5] = 0;
+        const isDefCenter = isDef(cHandle);
 
-        const css = matrixToCSS(matrix);
+        const centerX = isDefCenter
+                ? parseFloat(helper(cHandle).css('left'))
+                : hW,
+            centerY = isDefCenter
+                ? parseFloat(helper(cHandle).css('top'))
+                : hH;
+
+        el.setAttribute('data-cx', centerX);
+        el.setAttribute('data-cy', centerY);
+
+        if (isUndef(cached)) return;
+
+        const { dx, dy } = cached;
+
+        const css = matrixToCSS(transform.matrix);
 
         const left = parseFloat(
-            toPX(
-                _el[0].style.left || _el.css('left'),
-                pW
-            )
+            el.style.left || $el.css('left'),
         );
 
         const top = parseFloat(
-            toPX(
-                _el[0].style.top || _el.css('top'),
-                pH
-            )
+            el.style.top || $el.css('top'),
         );
 
-        css.left = fromPX(
-            left + diffLeft + 'px',
-            pW,
-            dimens.left
-        );
+        css.left = `${left + dx}px`;
+        css.top = `${top + dy}px`;
 
-        css.top = fromPX(
-            top + diffTop + 'px',
-            pH,
-            dimens.top
-        );
-
-        _el.css(css);
-        Helper(controls).css(css);
+        $el.css(css);
+        $controls.css(css);
 
         this.storage.cached = null;
-    }
-
-    getControls() {
-        return this.storage.controls;
     }
 
     _processResize(dx, dy) {
         const {
             el,
-            storage
+            storage,
+            options
         } = this;
+
+        const {
+            proportions
+        } = options;
 
         const {
             controls,
             coords,
             cw,
             ch,
-            dimens,
-            parent,
             transform,
             refang,
             revX,
             revY
         } = storage;
 
-        const { style } = controls;
+        const ratio = (cw + dx) / cw;
 
-        const newWidth = cw + dx,
-            newHeight = ch + dy;
+        const newWidth = proportions ? cw * ratio : cw + dx,
+            newHeight = proportions ? ch * ratio : ch + dy;
 
         if (newWidth < MIN_SIZE || newHeight < MIN_SIZE) return;
-
-        style.width = `${newWidth}px`;
-        style.height = `${newHeight}px`;
 
         const matrix = [...transform.matrix];
 
@@ -323,27 +343,24 @@ export default class Draggable extends Subject {
             revY
         );
 
-        matrix[4] -= (newCoords.left - coords.left);
-        matrix[5] -= (newCoords.top - coords.top);
+        const nx = coords.left - newCoords.left,
+            ny = coords.top - newCoords.top;
+
+        matrix[4] += nx;
+        matrix[5] += ny;
 
         const css = matrixToCSS(matrix);
 
-        Helper(controls).css(css);
+        css.width = `${newWidth}px`;
+        css.height = `${newHeight}px`;
 
-        css.width = fromPX(
-            style.width,
-            parent.css('width'),
-            dimens.width
-        );
+        helper(controls).css(css);
+        helper(el).css(css);
 
-        css.height = fromPX(
-            style.height,
-            parent.css('height'),
-            dimens.height
-        );
-
-        Helper(el).css(css);
-        storage.cached = matrix;
+        storage.cached = {
+            dx: nx,
+            dy: ny
+        };
     }
 
     _processMove(dx, dy) {
@@ -362,16 +379,8 @@ export default class Draggable extends Subject {
             parentMatrix
         } = transform;
 
-        // const pctm = [...parentMatrix];
-        // pctm[4] = pctm[5] = 0;
-
-        // const { x, y } = multiplyMatrixAndPoint(
-        //     {
-        //         x: dx,
-        //         y: dy
-        //     },
-        //     matrixInvert(pctm)
-        // );
+        const pctm = [...parentMatrix];
+        pctm[4] = pctm[5] = 0;
 
         const n_matrix = [...matrix];
 
@@ -380,14 +389,16 @@ export default class Draggable extends Subject {
 
         const css = matrixToCSS(n_matrix);
 
-        Helper(controls).css(css);
-        Helper(el).css(css);
+        helper(controls).css(css);
+        helper(el).css(css);
 
-        storage.cached = n_matrix;
+        storage.cached = {
+            dx,
+            dy
+        };
     }
 
     _processRotate(radians) {
-
         const {
             el,
             storage
@@ -395,7 +406,8 @@ export default class Draggable extends Subject {
 
         const {
             controls,
-            transform
+            transform,
+            center
         } = storage;
 
         const {
@@ -405,6 +417,15 @@ export default class Draggable extends Subject {
 
         const cos = floatToFixed(Math.cos(radians)),
             sin = floatToFixed(Math.sin(radians));
+
+        const translateMatrix = [
+            1,
+            0,
+            0,
+            1,
+            center.cx,
+            center.cy
+        ];
 
         const rotMatrix = [
             cos,
@@ -423,18 +444,20 @@ export default class Draggable extends Subject {
             multiplyMatrix(rotMatrix, pctm)
         );
 
-        const resMatrix = multiplyMatrix(resRotMatrix, matrix);
+        const nMatrix = multiplyMatrix(
+            multiplyMatrix(translateMatrix, resRotMatrix),
+            matrixInvert(translateMatrix)
+        );
+
+        const resMatrix = multiplyMatrix(nMatrix, matrix);
 
         const css = matrixToCSS(resMatrix);
 
-        Helper(controls).css(css);
-        Helper(el).css(css);
-
-        storage.cached = resMatrix;
+        helper(controls).css(css);
+        helper(el).css(css);
     }
 
     _getState(params) {
-
         const {
             factor,
             revX,
@@ -443,7 +466,8 @@ export default class Draggable extends Subject {
 
         const {
             el,
-            storage
+            storage,
+            options
         } = this;
 
         const {
@@ -452,39 +476,50 @@ export default class Draggable extends Subject {
             parent
         } = storage;
 
-        const tl_off = getOffset(handles.tl[0]),
-            tr_off = getOffset(handles.tr[0]);
+        const {
+            center: cHandle,
+            tl,
+            tr
+        } = handles;
+
+        const tl_off = getOffset(tl),
+            tr_off = getOffset(tr);
 
         const refang = Math.atan2(
             tr_off.top - tl_off.top,
             tr_off.left - tl_off.left
         ) * factor;
 
-        const cw = parseFloat(
-            toPX(controls.style.width, parent.css('width'))
-        );
-        const ch = parseFloat(
-            toPX(controls.style.height, parent.css('height'))
+        const $controls = helper(controls);
+
+        const containerMatrix = parseMatrix(
+            getTransform(helper(options.container))
         );
 
-        const _el = Helper(el);
-        const styleList = el.style;
+        const matrix = parseMatrix(
+            getTransform(helper(controls))
+        );
 
-        const dimens = {
-            top: getUnitDimension(styleList.top || _el.css('top')),
-            left: getUnitDimension(styleList.left || _el.css('left')),
-            width: getUnitDimension(styleList.width || _el.css('width')),
-            height: getUnitDimension(styleList.height || _el.css('height'))
-        };
+        const pMatrix = parseMatrix(
+            getTransform(parent)
+        );
+
+        const parentMatrix = parent === container
+            ? multiplyMatrix(
+                pMatrix,
+                containerMatrix
+            )
+            : containerMatrix;
 
         const transform = {
-            matrix: parseMatrix(
-                getTransform(Helper(controls))
-            ),
-            parentMatrix: parseMatrix(
-                getTransform(parent)
-            )
+            matrix,
+            parentMatrix,
+            scX: Math.sqrt(matrix[0] * matrix[0] + matrix[1] * matrix[1]),
+            scY: Math.sqrt(matrix[2] * matrix[2] + matrix[3] * matrix[3]),
         };
+
+        const cw = parseFloat($controls.css('width')),
+            ch = parseFloat($controls.css('height'));
 
         //getting current coordinates considering rotation angle                                                                                                  
         const coords = rotatedTopLeft(
@@ -497,18 +532,20 @@ export default class Draggable extends Subject {
             revY
         );
 
-        const offset_ = getOffset(el);
+        const hW = cw / 2,
+            hH = ch / 2;
 
-        const center_x = offset_.left + cw / 2,
-            center_y = offset_.top + ch / 2;
+        const offset_ = getOffset(el),
+            isDefCenter = isDef(cHandle);
 
-        const { x, y } = multiplyMatrixAndPoint(
-            {
-                x: center_x,
-                y: center_y
-            },
-            matrixInvert(transform.parentMatrix)
-        );
+        const centerX = isDefCenter
+                ? parseFloat(helper(cHandle).css('left'))
+                : hW,
+            centerY = isDefCenter
+                ? parseFloat(helper(cHandle).css('top'))
+                : hH;
+        
+        const cDelta = isDefCenter ? CENTER_DELTA : 0;
 
         return {
             transform,
@@ -516,20 +553,56 @@ export default class Draggable extends Subject {
             ch,
             coords,
             center: {
-                x,
-                y
+                x: offset_.left + centerX - cDelta,
+                y: offset_.top + centerY - cDelta,
+                cx: -centerX + hW - cDelta,
+                cy: -centerY + hH - cDelta,
+                hx: centerX,
+                hy: centerY
             },
             factor,
             refang,
             revX,
-            revY,
-            dimens
-        }
+            revY
+        };
     }
+
+    _moveCenterHandle(x, y) {
+        const { storage } = this;
+        const { handles, center } = storage;
+
+        const left = `${center.hx + x}px`,
+            top = `${center.hy + y}px`;
+
+        helper(handles.center).css(
+            {
+                left,
+                top
+            }
+        );
+    }
+
+    resetCenterPoint() {
+        const { storage } = this;
+        const { 
+            handles,
+        } = storage;
+
+        helper(handles.center).css(
+            {
+                left: null,
+                top: null
+            }
+        );
+    }
+
+    get controls() {
+        return this.storage.controls;
+    }
+
 }
 
 function matrixToCSS(arr) {
-
     const style = `matrix(${arr.join()})`;
 
     return {
@@ -538,11 +611,10 @@ function matrixToCSS(arr) {
         mozTransform: style,
         msTransform: style,
         otransform: style
-    }
+    };
 }
 
 function multiplyMatrixAndPoint(point, matrix) {
-
     const {
         x, y
     } = point;
@@ -588,7 +660,6 @@ function matrixInvert(ctm) {
         I[I.length] = [];
         C[C.length] = [];
         for (let j = 0; j < dim; j += 1) {
-
             //if we're on the diagonal, put a 1 (for identity)
             if (i == j) {
                 I[i][j] = 1;
@@ -629,7 +700,7 @@ function matrixInvert(ctm) {
             e = C[i][i];
             //if it's still 0, not invertable (error)
             if (e === 0) {
-                return
+                return;
             }
         }
 
@@ -672,7 +743,6 @@ function matrixInvert(ctm) {
 }
 
 function multiplyMatrix(mtrx1, mtrx2) {
-
     const m1 = [
         [mtrx1[0], mtrx1[2], mtrx1[4]],
         [mtrx1[1], mtrx1[3], mtrx1[5]],
@@ -703,4 +773,12 @@ function multiplyMatrix(mtrx1, mtrx2) {
         result[0][1], result[1][1],
         result[0][2], result[1][2]
     ];
+}
+
+function createHandler(classList) {
+    const element = document.createElement('div');
+    classList.forEach(cls => {
+        addClass(element, cls);
+    });
+    return element;
 }

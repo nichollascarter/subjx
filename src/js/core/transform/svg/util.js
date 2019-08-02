@@ -1,4 +1,4 @@
-import { warn } from './../../util/util'
+import { warn } from './../../util/util';
 
 export const ALLOWED_ELEMENTS = [
     'circle', 'ellipse',
@@ -35,7 +35,6 @@ export function pointTo(ctm, svg, x, y) {
 }
 
 export function cloneMatrix(b) {
-
     const a = createSVGMatrix();
 
     a.a = b.a;
@@ -48,9 +47,8 @@ export function cloneMatrix(b) {
     return a;
 }
 
-export function checkElement(sel) {
-
-    const tagName = sel.tagName.toLowerCase();
+export function checkElement(el) {
+    const tagName = el.tagName.toLowerCase();
 
     if (ALLOWED_ELEMENTS.indexOf(tagName) === -1) {
         warn(
@@ -61,4 +59,13 @@ export function checkElement(sel) {
     } else {
         return true;
     }
+}
+
+export function isIdentity(matrix) {
+    return matrix.a === 1 &&
+        matrix.b === 0 &&
+        matrix.c === 0 &&
+        matrix.d === 1 &&
+        matrix.e === 0 &&
+        matrix.f === 0;
 }

@@ -1,4 +1,4 @@
-import { Helper } from '../helper'
+import { helper } from '../Helper';
 
 import {
     requestAnimFrame,
@@ -7,17 +7,16 @@ import {
     isDef,
     isUndef,
     isFunc
-} from '../util/util'
+} from '../util/util';
 
 import {
-   getOffset,
-   objectsCollide
-} from '../util/css-util'
+    getOffset,
+    objectsCollide
+} from '../util/css-util';
 
 export default class Clone {
 
     constructor(el, options) {
-
         this.el = el;
         this.options = options || {};
         this.storage = null;
@@ -46,35 +45,33 @@ export default class Clone {
     }
 
     _init() {
+        const self = this;
 
-        const ctx = this;
-
-        const sel = ctx.el;
-        const _sel = Helper(sel);
+        const { 
+            el, 
+            options 
+        } = self;
+        const $el = helper(el);
 
         const {
             style,
             onDrop,
             appendTo,
             stack
-        } = ctx.options;
+        } = options;
 
         const css = {
             position: 'absolute',
-            'z-index': '2147483647'
+            'z-index': '2147483647',
+            ...((isDef(style) && typeof style === 'object') && style)
         };
 
-        if (isDef(style) && typeof style === 'object') {
-            Object.assign(css, style);
-        }
-
         const dropZone = isDef(stack) 
-                        ? Helper(stack)[0] 
-                        : document;
+            ? helper(stack)[0] 
+            : document;
 
         const _onDrop = isFunc(onDrop)
             ? function(evt) {
-
                 const {
                     clone
                 } = this.storage;
@@ -90,20 +87,19 @@ export default class Clone {
             }
             : () => {};
 
-        ctx.storage = {
+        self.storage = {
             onDrop: _onDrop,
-            options: this.options,
+            options,
             css,
-            parent: Helper(appendTo)[0] || document.body,
+            parent: helper(appendTo)[0] || document.body,
             stack: dropZone
         };
 
-        _sel.on('mousedown', this._onMouseDown)
-            .on('touchstart', this._onTouchStart);
+        $el.on('mousedown', self._onMouseDown)
+            .on('touchstart', self._onTouchStart);
     }
 
     _start(e) {
-
         if (e.stopImmediatePropagation) {
             e.stopImmediatePropagation();
         }
@@ -129,7 +125,7 @@ export default class Clone {
         css.top = `${(clientY - offset.top)}px`;
     
         const clone = el.cloneNode(true);
-        Helper(clone).css(css);
+        helper(clone).css(css);
     
         storage.clientX = clientX;
         storage.clientY = clientY;
@@ -137,12 +133,11 @@ export default class Clone {
         storage.cy = clientY;
         storage.clone = clone;
     
-        Helper(parent)[0].appendChild(clone);
+        helper(parent)[0].appendChild(clone);
         this._draw();
     }
 
     _move(e) {
-
         if (e.preventDefault) {
             e.preventDefault();
         }
@@ -156,7 +151,6 @@ export default class Clone {
     }
     
     _end(e) {
-    
         if (e.stopImmediatePropagation) {
             e.stopImmediatePropagation();
         }
@@ -187,7 +181,6 @@ export default class Clone {
     }
 
     _animate() {
-
         const { storage } = this;
     
         storage.frameId = requestAnimFrame(this._animate);
@@ -206,7 +199,7 @@ export default class Clone {
 
         const translate = `translate(${clientX - cx}px, ${clientY - cy}px)`;
 
-        Helper(clone).css({
+        helper(clone).css({
             transform: translate,
             webkitTranform: translate,
             mozTransform: translate,
@@ -216,9 +209,8 @@ export default class Clone {
     }
     
     _destroy() {
-    
         if (isUndef(this.storage)) return;
-        Helper(this.el)
+        helper(this.el)
             .off('mousedown', this._onMouseDown)
             .off('touchstart', this._onTouchStart);
         delete this.storage;
@@ -226,7 +218,7 @@ export default class Clone {
 
     _onMouseDown(e) {
         this._start(e);
-        Helper(document)
+        helper(document)
             .on('mousemove', this._onMouseMove)
             .on('mouseup', this._onMouseUp);
     }
@@ -237,14 +229,14 @@ export default class Clone {
 
     _onMouseUp(e) {
         this._end(e);
-        Helper(document)
+        helper(document)
             .off('mousemove', this._onMouseMove)
             .off('mouseup', this._onMouseUp);
     }
 
     _onTouchStart(e) {
         this._start(e.touches[0]);
-        Helper(document)
+        helper(document)
             .on('touchmove', this._onTouchMove)
             .on('touchend', this._onTouchEnd);
     }
@@ -254,12 +246,12 @@ export default class Clone {
     }
 
     _onTouchEnd(e) {
-
         if (e.touches.length === 0) {
             this._end(e.changedTouches[0]);
         }
-        Helper(document)
+        helper(document)
             .off('touchmove', this._onTouchMove)
             .off('touchend', this._onTouchEnd);
     }
+
 }

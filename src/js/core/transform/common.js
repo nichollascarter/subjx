@@ -1,9 +1,7 @@
-export const unitRE = /px|em|%|ex|ch|rem|vh|vw|vmin|vmax|mm|cm|in|pt|pc|deg/;
 export const RAD = Math.PI / 180;
 export const DEG = 180 / Math.PI;
 
 export function snapToGrid(value, snap) {
-
     if (snap === 0) {
         return value;
     } else {
@@ -29,7 +27,6 @@ export function rotatedTopLeft(
     revX,
     revY
 ) {
-
     const hw = parseFloat(width) / 2,
         hh = parseFloat(height) / 2;
 
@@ -57,31 +54,9 @@ export function rotatedTopLeft(
     return {
         left: floatToFixed(rx),
         top: floatToFixed(ry)
-    }
+    };
 }
 
-export function toPX(value, parent) {
-    if (/px/.test(value)) {
-        return value;
-    }
-    if (/%/.test(value)) {
-        return `${(parseFloat(value) * parseFloat(parent) / 100)}px`;
-    }
-}
-
-export function fromPX(value, parent, toUnit) {
-    if (/px/.test(toUnit)) {
-        return value;
-    }
-    if (/%/.test(toUnit)) {
-        return `${parseFloat(value) * 100 / parseFloat(parent)}%`;
-    }
-}
-
-export function getUnitDimension(value) {
-    return value.match(unitRE)[0];
-}
-
-export function floatToFixed(val) {
-    return Number(val.toFixed(6));
+export function floatToFixed(val, size = 6) {
+    return Number(val.toFixed(size));
 }

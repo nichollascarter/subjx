@@ -6,7 +6,7 @@ const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 module.exports = {
     entry: "./src/js/index.js",
     output: {
-        library: 'Subjx',
+        library: 'subjx',
         libraryTarget: 'window',
         libraryExport: 'default',
         path: path.resolve(__dirname, "dist"),
@@ -15,30 +15,39 @@ module.exports = {
     devtool: "source-map",
     module: {
         rules: [{
-                test: /\.js$/,
-                exclude: /(node_modules|bower_components)/,
-                use: {
-                    loader: "babel-loader",
-                    options: {
-                        presets: ["@babel/preset-env"]
-                    }
-                }
-            },
-            {
-                test: /\.css$/,
-                use: [
-                    {
-                        loader: MiniCssExtractPlugin.loader,
-                        options: {
-                            publicPath: './src'
-                        }
-                    },
-                    'css-loader'
-                ]
+            test: /\.js?$/,
+            enforce: "pre",
+            loader: "eslint-loader",
+            exclude: /node_modules/,
+            options: {
+                emitWarning: true,
+                configFile: './.eslintrc.js'
             }
+        },
+        {
+            test: /\.js$/,
+            exclude: /(node_modules|bower_components)/,
+            use: {
+                loader: "babel-loader",
+                options: {
+                    presets: ["@babel/preset-env"]
+                }
+            }
+        },
+        {
+            test: /\.css$/,
+            use: [
+                {
+                    loader: MiniCssExtractPlugin.loader,
+                    options: {
+                        publicPath: './src'
+                    }
+                },
+                'css-loader'
+            ]
+        }
         ]
     },
-
     plugins: [
         new MiniCssExtractPlugin({
             filename: "style/subjx.css",

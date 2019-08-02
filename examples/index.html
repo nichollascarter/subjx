@@ -12,7 +12,12 @@
         body {
             margin: 0;
             padding: 0;
-            height: 100%;
+        }
+
+        .page {
+            height: 100vh;
+            min-height: 100vh;
+            background-color: #000000c4;
         }
 
         .draggable {
@@ -35,129 +40,290 @@
 
 <body>
 
-    <div style="width:100%; height:100%; background-color: #000000c4">
-        <div style="display: inline; box-sizing: border-box; color: white">
-            Double click on element to activate/deactive
+    <div class="page">
+        <svg id="svg-container" width="100%" height="100%" transform="scale(1, 1)">
 
-            <div id="move">
-                Move:
-                <span></span>
-            </div>
-            <div id="resize">
-                Resize:
-                <span></span>
-            </div>
-            <div id="rotate">
-                Rotate:
-                <span></span>
-            </div>
-        </div>
+            <rect class="drag-svg" x="709" y="451" rx="10" ry="10" width="30" height="30" stroke="black"
+                fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></rect>
 
-        <svg id="svg-container" width="100%" height="50%" transform="scale(1, 1)">
+            <circle class="drag-svg" cx="1032" cy="392" r="20" stroke="red" fill="transparent" stroke-width="5"
+                transform="matrix(1,0,0,1,0,0)">
+            </circle>
+            <ellipse class="drag-svg" cx="598" cy="462" rx="22.000000000000004" ry="17" stroke="red" fill="transparent"
+                stroke-width="5" transform="matrix(1,0,0,1,0,0)"></ellipse>
 
-            <rect class="drag-svg" x="552" y="209" width="30" height="30" stroke="black" fill="transparent"
-                stroke-width="5" transform="rotate(0 567 224)"></rect>
-            <rect class="drag-svg" x="469" y="211" rx="10" ry="10" width="30" height="30" stroke="black"
-                fill="transparent" stroke-width="5" transform="rotate(0 484 226)"></rect>
-
-            <circle cx="792" cy="152" r="20" stroke="red" fill="transparent" stroke-width="5"
-                transform="rotate(0 792 152)"></circle>
-            <ellipse class="drag-svg" cx="358" cy="222" rx="22.000000000000004" ry="17" stroke="red" fill="transparent"
-                stroke-width="5" transform="rotate(0 358 222)"></ellipse>
-
-            <line class="drag-svg" x1="626" x2="666" y1="200" y2="240" stroke="orange" fill="transparent"
-                stroke-width="5" transform="rotate(0 646 220)"></line>
-            <polyline class="drag-svg" points="599 73 604 83 609 78 614 93 619 88 624 103 629 98 634 113 639 108"
-                stroke="orange" fill="transparent" stroke-width="5" transform="rotate(0 619 93)"></polyline>
+            <line class="drag-svg" x1="866" x2="906" y1="440" y2="480" stroke="orange" fill="transparent"
+                stroke-width="5" transform="matrix(1,0,0,1,0,0)"></line>
+            <polyline class="drag-svg" points="839 313 844 323 849 318 854 333 859 328 864 343 869 338 874 353 879 348"
+                stroke="orange" fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></polyline>
 
             <polygon class="drag-svg"
-                points="356 71 361 91 376 91 366 101 371 116 356 106 341 116 346 101 336 91 351 91" stroke="green"
-                fill="transparent" stroke-width="5" transform="rotate(0 356 93.5)"></polygon>
+                points="596 311 601 331 616 331 606 341 611 356 596 346 581 356 586 341 576 331 591 331" stroke="green"
+                fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></polygon>
 
-            <path class="drag-svg" d="M451,91 Q471,66,481,91 T521,91 " fill="none" stroke="blue" stroke-width="5"
-                transform="rotate(0 486 91)"></path>
+            <path class="drag-svg" d="M691,331 Q711,306,721,331 T761,331 " fill="none" stroke="blue" stroke-width="5"
+                transform="matrix(1,0,0,1,0,0)"></path>
 
-            <g class="drag-svg" style="visibility: visible; cursor: move;">
-                <ellipse cx="150.5" cy="75.478994" rx="25.75" ry="19.97899159663865" fill="#ffffff" stroke="#000000"
-                    pointer-events="all" transform="rotate(0 150.5 134.75)"></ellipse>
-                <path
-                    d="M150.5,94.12605099999999 L150.5,160.722692 M150.5,107.445385 L202,107.445385 M150.5,107.445385 L99,107.445385 M150.5,160.722692 L202,214 M150.5,160.722692 L99,214 "
-                    fill="none" stroke="white" stroke-miterlimit="10" pointer-events="stroke" visibility="hidden"
-                    stroke-width="9" transform="rotate(0 150.5 134.75)"></path>
-                <path
-                    d="M150.5,94.12605099999999 L150.5,160.722692 M150.5,107.445385 L202,107.445385 M150.5,107.445385 L99,107.445385 M150.5,160.722692 L202,214 M150.5,160.722692 L99,214 "
-                    fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="all"
-                    transform="rotate(0 150.5 134.75)"></path>
+            <!-- <g class="drag-svg" style="visibility: visible; cursor: move;">
+                        <ellipse cx="150.5" cy="75.478994" rx="25.75" ry="19.97899159663865" fill="#ffffff" stroke="#000000"
+                            pointer-events="all" transform="rotate(0 150.5 134.75)"></ellipse>
+                        <path
+                            d="M150.5,94.12605099999999 L150.5,160.722692 M150.5,107.445385 L202,107.445385 M150.5,107.445385 L99,107.445385 M150.5,160.722692 L202,214 M150.5,160.722692 L99,214 "
+                            fill="none" stroke="white" stroke-miterlimit="10" pointer-events="stroke" visibility="hidden"
+                            stroke-width="9" transform="rotate(0 150.5 134.75)"></path>
+                        <path
+                            d="M150.5,94.12605099999999 L150.5,160.722692 M150.5,107.445385 L202,107.445385 M150.5,107.445385 L99,107.445385 M150.5,160.722692 L202,214 M150.5,160.722692 L99,214 "
+                            fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="all"
+                            transform="rotate(0 150.5 134.75)"></path>
+                    </g> -->
+            <g transform="matrix(0.9500001132488251,0,0,0.9500001132488251,1.92109370231628,1.2884521484375)">
+                <g class="drag-svg"
+                    transform="matrix(0.3500001132488251,0,0,0.3500001132488251,152.92109370231628,288.2884521484375)"
+                    eq-symbol="{&amp;quot;type&amp;quot;:&amp;quot;bar&amp;quot;}" id="g2.30" inkscape:label="Layer 1"
+                    cursor="pointer" pointid="2004" data-hasqtip="23">
+                    <rect ry="10.70776" rx="12.154166" y="38.23836" x="771.47726" height="312.14304" width="122.2324"
+                        id="rect3.32"
+                        style="fill: rgb(128, 128, 128); fill-opacity: 1; fill-rule: nonzero; stroke: rgb(128, 128, 128); stroke-width: 0.0960435; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;"
+                        transform="matrix(1,0,0,1,5.684341886080802e-14,0)"></rect>
+                    <g eq-data="{&amp;quot;type&amp;quot;:&amp;quot;bar&amp;quot;}"
+                        transform="matrix(1,0,0,1,-273.7513427734375,-39.90102767944336)" id="g3.34" has_alarms="false"
+                        opacity="1">
+                        <rect inkscape:label="#rect3075"
+                            transform="matrix(-0.9999929666519165,-0.003725029993802309,0.0037353700026869774,-0.9999929666519165,540.7825298309326,-418.99274206906546)"
+                            id="rect4.36" width="110.22992" height="153.59864688000002" x="-618.80493" y="-795.03693"
+                            rx="10.960701" ry="10.454464"
+                            style="fill: rgb(0, 170, 212); fill-opacity: 1; fill-rule: nonzero; stroke: rgb(0, 0, 255); stroke-width: 0.090121; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </rect>
+                        <path
+                            d="m1044.15255,21.5702,0,84.875 c47.74669,-0.90559,89.67722,-7.41958,116.65625,-17.0625 l0,-50.75 c-26.97901,-9.64293,-68.90948,-16.15693,-116.65625,-17.0625 z"
+                            id="path4.38" inkscape:connector-curvature="0"
+                            transform="matrix(1,0,0,1,2.842170943040401e-14,151.1605682373048)"
+                            style="fill: rgb(0, 170, 212); fill-opacity: 1; fill-rule: evenodd; stroke: rgb(0, 0, 0); stroke-width: 1.023; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none;">
+                        </path>
+                    </g>
+                    <path
+                        d="m738.4006899999999,-39.47579999999999 c-81.79091,0.35958,-149.30332,18.16033,-156.21871,41.1875,-0.56516,1.88189,-0.7187,3.75366,-0.46875,5.59375,-0.97168,1.50623,-1.53125,3.24172,-1.53125,5.09375 l0,340.5 c0,2.1512,0.74899,4.153,2.03125,5.8125 l-0.21875,0,0.75,0.65625 c0.54414,0.59928,1.1626,1.14133,1.84375,1.625,0.0188,0.0133,0.0436,0.0181,0.0625,0.0312 l48.46875,42.3125,51.15625,44.65625,56.06246,-0.0625,56.0938,-0.0625,52.24997,-44.5625,52.25,-44.59375,-1.375,0 c1.2769,-1.6595,2.0312,-3.6613,2.0312,-5.8125 l0,-340.5 c0,-1.87506,-0.5369,-3.63711,-1.5312,-5.15625,3.3376,-23.89888,-60.5075,-44.52004,-145.71877,-46.5625 l-15.9375,-0.15625 zm139.37497,88.5625,-0.25,137.71875,-0.25,137.75,-11.125,2.75c-19.7825,4.90058,-55.9925,9.875,-71.87497,9.875l-5.4063,0,0,-137.3125,0,-137.3125,4.3126,-0.5c2.3612,-0.279,10.40577,-1.00088,17.90617,-1.59375,21.0858,-1.66675,43.0386,-5.34696,63.9062,-10.6875l2.7813,-0.6875z"
+                        id="path3.36" inkscape:connector-curvature="0"
+                        style="fill: rgb(255, 255, 255); fill-opacity: 1; stroke: rgb(204, 204, 204); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;"
+                        transform="matrix(1,0,0,1,5.684341886080802e-14,0)"></path>
+                    <path inkscape:connector-curvature="0" id="path3.38"
+                        d="m738.4007300000001,-40.48595 c-81.79095,0.35958,-149.30336,18.16033,-156.21875,41.1875,-0.56516,1.88189,-0.7187,3.75366,-0.46875,5.59375,-0.97168,1.50623,-1.53125,3.24172,-1.53125,5.09375 l0,340.5 c0,2.1512,0.74899,4.153,2.03125,5.8125 l-0.21875,0,0.75,0.65625 c0.54415,0.59928,1.1626,1.14133,1.84375,1.625,0.0188,0.0133,0.0436,0.0181,0.0625,0.0312 l48.46875,42.3125,51.15625,44.65625,56.0625,-0.0625,56.0938,-0.0625,52.25,-44.5625,52.25,-44.59375,-1.375,0 c1.2769,-1.6595,2.0312,-3.6613,2.0312,-5.8125 l0,-340.5 c0,-1.87506,-0.5369,-3.63711,-1.5312,-5.15625,3.3376,-23.89888,-60.5075,-44.52004,-145.7188,-46.5625 l-15.9375,-0.15625 zm139.375,88.5625,-0.25,137.71875,-0.25,137.75,-11.125,2.75c-19.7825,4.90058,-55.9925,9.875,-71.875,9.875l-5.4063,0,0,-137.3125,0,-137.3125,4.3126,-0.5c2.3612,-0.279,10.4058,-1.00088,17.9062,-1.59375,21.0858,-1.66675,43.0386,-5.34696,63.9062,-10.6875l2.7813,-0.6875z"
+                        style="fill: url(&quot;#linearGradient8169&quot;); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;"
+                        transform="matrix(1,0,0,1,5.684341886080802e-14,0)"></path>
+                    <path sodipodi:nodetypes="csc" inkscape:connector-curvature="0" id="path3.40"
+                        d="m581.6126300000001,4.8237100000000055 c0,0,37.95122,22.37102,158.33198,24.25633,122.89209,1.92466,159.70578,-24.25632,159.70578,-24.25632 "
+                        style="fill: none; stroke: rgb(0, 0, 0); stroke-width: 0.824838px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1;"
+                        transform="matrix(1,0,0,1,5.684341886080802e-14,0)"></path>
+                    <g transform="matrix(1,0,0,1,695.9509277343751,11.229127883911133)" id="g3.42">
+                        <rect id="rect4.44" width="8.0812206" height="443.45697" x="-120.42635999999999"
+                            y="-31.340300000000013" rx="12.153773" ry="11.608517"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;"
+                            transform="matrix(1,0,0,1,2.2737367544323206e-13,0)"></rect>
+                        <rect ry="11.608518" rx="12.153773" y="-7.096660000000014" x="-72.96945" height="440.42654"
+                            width="8.0812206" id="rect4.46"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;"
+                            transform="matrix(1,0,0,1,2.2737367544323206e-13,0)"></rect>
+                        <rect id="rect4.48" width="59.308102" height="9.0774384" x="-109.35971" y="446.52380000000005"
+                            rx="11.595519" ry="4.038835"
+                            transform="matrix(0.929118812084198,0.36978161334991455,-0.05634022504091263,0.9984118938446045,7.3064765930178055,-100.17460536956776)"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2.0536; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </rect>
+                        <rect
+                            transform="matrix(0.929118812084198,0.36978161334991455,-0.05634022504091263,0.9984118938446045,7.3064765930178055,-100.17460536956776)"
+                            ry="4.038835" rx="11.595519" y="403.42181000000005" x="-111.97332999999998"
+                            height="9.0774384" width="59.308102" id="rect4.50"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2.0536; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </rect>
+                        <rect id="rect4.52" width="59.308102" height="9.0774384" x="-114.70575000000002"
+                            y="358.36066000000005" rx="11.595519" ry="4.038835"
+                            transform="matrix(0.929118812084198,0.36978161334991455,-0.05634022504091263,0.9984118938446045,7.3064765930178055,-100.17460536956776)"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2.0536; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </rect>
+                        <rect
+                            transform="matrix(0.929118812084198,0.36978161334991455,-0.05634022504091263,0.9984118938446045,7.3064765930178055,-100.17460536956776)"
+                            ry="4.038835" rx="11.595519" y="315.25854000000004" x="-117.31808000000001"
+                            height="9.0774384" width="59.308102" id="rect4.54"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2.0536; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </rect>
+                        <rect id="rect4.56" width="59.308102" height="9.0774384" x="-119.93301000000002" y="272.15671"
+                            rx="11.595519" ry="4.038835"
+                            transform="matrix(0.929118812084198,0.36978161334991455,-0.05634022504091263,0.9984118938446045,7.3064765930178055,-100.17460536956776)"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2.0536; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </rect>
+                        <rect
+                            transform="matrix(0.929118812084198,0.36978161334991455,-0.05634022504091263,0.9984118938446045,7.3064765930178055,-100.17460536956776)"
+                            ry="4.038835" rx="11.595519" y="227.09548999999998" x="-122.66547000000003"
+                            height="9.0774384" width="59.308102" id="rect4.58"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2.0536; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </rect>
+                        <rect
+                            transform="matrix(0.929118812084198,0.36978161334991455,-0.05634022504091263,0.9984118938446045,7.3064765930178055,-100.17460536956776)"
+                            ry="4.038835" rx="11.595519" y="176.15679999999998" x="-125.7543" height="9.0774384"
+                            width="59.308102" id="rect4.60"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2.0536; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </rect>
+                        <rect id="rect4.62" width="59.308102" height="9.0774384" x="-128.48672" y="131.09561000000002"
+                            rx="11.595519" ry="4.038835"
+                            transform="matrix(0.929118812084198,0.36978161334991455,-0.05634022504091263,0.9984118938446045,7.3064765930178055,-100.17460536956776)"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2.0536; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </rect>
+                        <path sodipodi:type="arc" id="path4.64" sodipodi:cx="1177.8379" sodipodi:cy="384.65134"
+                            sodipodi:rx="104.04572" sodipodi:ry="103.03556"
+                            d="m1551.8836,174.65134 c0,56.90497,-46.5828,103.03556,-104.0457,103.03556,-57.4629,0,-104.0457,-46.13059,-104.0457,-103.03556,0,-0.39735,0,-0.79469,0.01,-1.19201 "
+                            sodipodi:start="0" sodipodi:end="3.1531618"
+                            transform="matrix(0.3349516689777374,0,0,-0.5638693571090698,-566.6286349296568,76.69136047363281)"
+                            sodipodi:open="true"
+                            style="fill: none; stroke: rgb(51, 51, 51); stroke-width: 23.0102; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </path>
+                        <path sodipodi:open="true"
+                            transform="matrix(0.3349516689777374,0,0,-0.5638693571090698,-519.307162761688,98.65562438964844)"
+                            sodipodi:end="3.1531618" sodipodi:start="0"
+                            d="m1551.8836,174.65134 c0,56.90497,-46.5828,103.03556,-104.0457,103.03556,-57.4629,0,-104.0457,-46.13059,-104.0457,-103.03556,0,-0.39735,0,-0.79469,0.01,-1.19201 "
+                            sodipodi:ry="103.03556" sodipodi:rx="104.04572" sodipodi:cy="384.65134"
+                            sodipodi:cx="1177.8379" id="path4.66" sodipodi:type="arc"
+                            style="fill: none; stroke: rgb(51, 51, 51); stroke-width: 23.0102; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </path>
+                        <rect
+                            transform="matrix(0.929118812084198,0.36978161334991455,-0.05634022504091263,0.9984118938446045,7.3064765930178055,-100.17460536956776)"
+                            ry="4.038835" rx="11.595519" y="489.62585" x="-106.74667" height="9.0774384"
+                            width="59.308102" id="rect4.68"
+                            style="fill: rgb(255, 255, 0); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 2.0536; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;">
+                        </rect>
+                    </g>
+                    <path sodipodi:nodetypes="csc" inkscape:connector-curvature="0" id="path3.44"
+                        d="m582.2532100000001,357.56799 c0,0,56.94364,43.64091,160.86361,41.43735,101.90248,-2.16079,156.73889,-41.43735,156.73889,-41.43735 "
+                        style="fill: none; stroke: rgb(51, 51, 51); stroke-width: 0.82516px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1;"
+                        transform="matrix(1,0,0,1,5.684341886080802e-14,0)"></path>
+                    <path inkscape:connector-curvature="0" id="path3.46"
+                        d="m722.0866100000001,462.24827000000005 c-20.60291,-0.97586,-40.62622,-3.55278,-57.5,-7.40002 l-3.57142,-0.81429,-0.0936,-13.47688 c-0.0515,-7.41229,0.0326,-13.39888,0.18691,-13.30352,0.60929,0.37656,16.37335,3.45334,22.94241,4.47783,41.31529,6.44339,90.33154,4.72634,131.42996,-4.60402,2.59492,-0.58912,4.78117,-1.07112,4.85833,-1.07112,0.0771,0,0.14028,6.02679,0.14028,13.39286,0,7.36607,-0.0983,13.39286,-0.21838,13.39286,-0.1201,0,-2.32993,0.48059,-4.91071,1.06799,-19.05507,4.337,-41.43967,7.21216,-63.97805,8.21757,-7.05972,0.31493,-23.73442,0.38368,-29.28572,0.12074 z"
+                        style="fill: rgb(51, 51, 51); fill-opacity: 1; stroke: rgb(51, 51, 51); stroke-width: 0.535714; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; stroke-dasharray: none; stroke-dashoffset: 0;"
+                        transform="matrix(1,0,0,1,5.684341886080802e-14,0)"></path>
+                </g>
+
             </g>
         </svg>
+    </div>
+    <div class="page">
         <div id="stack"
-            style="box-sizing: border-box; width:100%; height:49%;position: relative; border-top: #32B5FE 1px dashed">
+            style="overflow: auto; box-sizing: border-box; width:100%; height:100%;position: relative; border-top: #32B5FE 1px dashed">
+            <div id="container" style="box-sizing: border-box; width:100%; height:100%;position: relative;">
+                <div id='wrapper'>
+                    <div class='draggable' style='top:150px; left:100px;'></div>
+                    <div class='draggable' style='top:150px; left:400px;'></div>
+                </div>
+            </div>
             <div class='clone clonable' style='background-color:yellow;top:0;'></div>
             <div class='clone-styled clonable' style='background-color:green;top:55px;'></div>
             <div class='clone-clear clonable' style='background-color:red;top:110px;'></div>
-            <div class='draggable' style='top:150px; left:150px;'></div>
-            <div class='draggable' style='top:150px; left:400px;'></div>
         </div>
     </div>
 
 </body>
 <script>
 
-    const methods = {
+    class ZoomContainer {
 
+        constructor() {
+            this.scale = 1;
+        }
+
+        zoom(e) {
+            e.preventDefault();
+            if (!e.shiftKey) return;
+            let { scale } = this;
+            const newScale = scale + (e.wheelDelta < 0 ? -0.25 : 0.25);
+            scale = newScale > 2 || newScale < 0.5 ? scale : newScale;
+            subjx(e.currentTarget).css({
+                transform: `scale(${scale},${scale})`
+            });
+            this.scale = scale;
+        }
+
+    }
+
+    const zoomSvg = new ZoomContainer(),
+        zoomHtml = new ZoomContainer();
+
+    subjx('#svg-container')
+        .on('mousewheel', e => {
+            zoomSvg.zoom(e);
+        });
+
+    subjx('#container')
+        .on('mousewheel', e => {
+            zoomHtml.zoom(e);
+        });
+
+    // create Observable instance
+    const obs = subjx.createObservable();
+
+    const methods = {
         onInit(el) {
-            console.log('init');
+            //console.log('init');
         },
-        onMove(dx, dy) {
-            Subjx('#move > span')[0].innerHTML = `x: ${dx}px; y: ${dy}px`;
+        onMove() {
+            //console.log('is moving');
         },
         onResize(dx, dy) {
-            Subjx('#resize > span')[0].innerHTML = `x: ${dx}px; y: ${dy}px`;
+            //console.log('is resizing');
         },
         onRotate(rad) {
-            Subjx('#rotate > span')[0].innerHTML = `${Math.floor(rad * 180 / Math.PI)}deg`;
+            //console.log('is rotating');
         },
         onDrop(e, el) {
-            console.log('is dropped');
+            //console.log('is dropped');
         },
         onDestroy(el) {
-            console.log('is destroyed');
+            //console.log('is destroyed');
         }
     };
 
     const svgOptions = {
-
         container: '#svg-container',
+        restrict: '#svg-container',
+        proportions: true,
+        rotationPoint: true,
+        //themeColor: 'white',
+        each: {
+           // move: true,
+            rotate: true
+        },
         snap: {
-            x: 30,
-            y: 30,
+            x: 0,
+            y: 0,
             angle: 25
         },
+        cursorMove: 'move',
+        cursorRotate: 'crosshair',
+        cursorResize: 'pointer',
         ...methods
-    }
+    };
 
-    const svgs =
-        Subjx('.drag-svg').drag(svgOptions);
+    const svgs = subjx('.drag-svg')
+        .drag(svgOptions, obs);
 
     svgs.forEach(item => {
-        Subjx(item.storage.wrapper).on('dblclick', () => {
+        subjx(item.controls).on('dblclick', () => {
             item.disable();
         });
     });
 
     // double click activating/deactivating the drag method
-    Subjx('.drag-svg').on('dblclick', e => {
-        if (e.currentTarget.classList.contains('dg-drag')) return;
-        const xDraggable = Subjx(e.currentTarget).drag(svgOptions)[0];
+    subjx('.drag-svg').on('dblclick', e => {
+        if (e.currentTarget.classList.contains('sjx-drag')) return;
+        const xDraggable = subjx(e.currentTarget).drag(svgOptions, obs)[0];
         // adding event to controls
-        const controls = xDraggable.getControls();
-        Subjx(controls).on('dblclick', () => {
+        const controls = xDraggable.controls;
+        subjx(controls).on('dblclick', () => {
             xDraggable.disable();
         });
     });
 
     const options = {
-        container: '#stack',
+        container: '#container',
+        restrict: '#container',
+        //rotationPoint: true,
+        proportions: true,
         each: {
             move: true,
             resize: true
@@ -167,34 +333,36 @@
             y: 40,
             angle: 0
         },
+        cursorMove: 'move',
+        cursorRotate: 'crosshair',
+        cursorResize: 'pointer',
         ...methods
-    }
+    };
 
-    const Draggables =
-        Subjx('.draggable').drag(options);
+    const Draggables = subjx('.draggable').drag(options);
 
     Draggables.forEach(item => {
-        const controls = item.getControls();
-        Subjx(controls).on('dblclick', () => {
+        const controls = item.controls;
+        subjx(controls).on('dblclick', () => {
             item.disable();
             Draggables.splice(Draggables.indexOf(item), 1);
         });
     });
 
-    Subjx('.draggable').on('dblclick', e => {
-        if (e.currentTarget.classList.contains('dg-drag')) return;
-        const xDraggable = Subjx(e.currentTarget).drag(options)[0];
+    subjx('.draggable').on('dblclick', e => {
+        if (e.currentTarget.classList.contains('sjx-drag')) return;
+        const xDraggable = subjx(e.currentTarget).drag(options)[0];
         Draggables.push(xDraggable);
         // adding event to controls
-        const controls = xDraggable.getControls();
-        Subjx(controls).on('dblclick', () => {
+        const controls = xDraggable.controls;
+        subjx(controls).on('dblclick', () => {
             xDraggable.disable();
         });
     });
 
     const onDrop = (e, el, clone) => {
 
-        const stack = Subjx('#stack')[0],
+        const stack = subjx('#container')[0],
             offset = stack.getBoundingClientRect(),
             div = document.createElement('div');
 
@@ -205,17 +373,18 @@
 
         stack.appendChild(div);
 
-        Draggables.push(...Subjx(div).drag());
+        Draggables.push(...subjx(div).drag());
     };
 
-    Subjx('.clone').clone({
-        stack: '#stack',
+    subjx('.clone').clone({
+        stack: '#container',
         appendTo: '#stack',
         onDrop
     });
 
-    Subjx('.clone-styled').clone({
-        stack: '#stack',
+    subjx('.clone-styled').clone({
+        stack: '#container',
+        appendTo: '#stack',
         style: {
             border: '1px dashed green',
             background: 'transparent'
@@ -223,7 +392,7 @@
         onDrop
     });
 
-    Subjx('.clone-clear').on('click', () => {
+    subjx('.clone-clear').on('click', () => {
 
         Draggables.forEach(item => {
             item.disable();

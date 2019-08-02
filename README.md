@@ -19,16 +19,18 @@ Including via a `<script>` tag:
 <script src="../dist/js/subjx.js"></script>
 ```
 
+## Get started
+
  - Getting an element:
 
- Main function `Subjx` returns new Subjx which based on elements finded by
+ Main function `subjx` returns `Subjx` instance which based on elements finded by
  passed parameters:
 
 ```javascript
 // possible parameters
-const xElem = Subjx( 'selector' ) |
-                Subjx( element ) |
-                Subjx( elementArray );
+const xElem = subjx( 'selector' ) |
+                subjx( element ) |
+                subjx( elementArray );
 ```
 
 - Choosing an action:
@@ -38,45 +40,49 @@ const xElem = Subjx( 'selector' ) |
 ```javascript
 // enabling tool by `drag` method with the optional parameters
 // by default just call `.drag()`
-const xDraggables = xElem.drag({
-    // manipulation area
-    container: '#container',
-    // snapping to grid (default: 10)
-    snap: {
-        x: 20,
-        y: 20,
-        angle: 45
-    },
-    // mimic behavior with other draggable elements
-    each: {
-        move: true,
-        resize: true, 
-        rotate: true
-    }
-    // call function on drop event
-    onDrop(e, el) {
-        console.log(el);
-    }
-});
+const xDraggables = xElem.drag();
 
 // method always returns array of new Draggable instances
 // for disabling use `disable` method for each object
 xDraggables.forEach(item => {
     item.disable();
-})
+});
 ```
-Perhaps, better to use shortened construction:
+Possible parameters:
 ```javascript
-const xSVGElements = Subjx('.draggable').drag(...);
+subjx('.draggable').drag({
+    // transformation coordinate system
+    container: 'selector' | element,
+    // constrain movement along an axis
+    axis: 'x' | 'y'
+    // snapping to grid (default: 10)
+    snap: {
+        x: 20(px),
+        y: 20(px),
+        angle: 45(deg)
+    },
+    // mimic behavior with other '.draggable' elements
+    each: {
+        move: true,
+        resize: true, 
+        rotate: true
+    },
+    // keep aspect ratio when resizing
+    proportions: true,
+    // experimental option
+    // show rotation point
+    rotationPoint: true
+});
 ```
 
 Allowed SVG elements:
 `path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `g`
 
+#### Warning: group resizing in experimental mode
+
 Avaliable methods:
 ```javascript
-const methods = {
-    
+subjx('.draggable').drag({
     onInit(el) {
         // fires on tool activation
     },
@@ -95,9 +101,7 @@ const methods = {
     onDestroy(el) {
         // fires on tool deactivation
     }
-};
-
-Subjx('.draggable').drag(methods);
+});
 ```
 
 2) Tool for creating a clone:

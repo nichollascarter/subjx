@@ -1,28 +1,22 @@
 /* @license
  * Move/Rotate/Resize tool
  * Released under the MIT license, 2018-2019
+ * Karen Sarksyan
  * nichollascarter@gmail.com
 */
 
-import '../style/subjx.css'
-import _drag from './core/transform/index'
-import _clone from './core/clone/index'
-import { Helper_ } from './core/helper'
+import '../style/subjx.css';
+import Subjx from './core/Subjx';
+import Observable from './core/observable/Observable';
 
-class Subjx extends Helper_ {
+export { Subjx, Observable };
 
-    constructor(params) {
-        super(params);
-    }
-
-    drag(params) {
-        return _drag.call(this, params);
-    }
-    clone(params) {
-        return _clone.call(this, params);
-    }
-}
-
-export default function(params) {
+export default function subjx(params) {
     return new Subjx(params);
 }
+
+Object.defineProperty(subjx, 'createObservable', {
+    value: () => {
+        return new Observable();
+    }
+});

@@ -1,4 +1,4 @@
-import { Helper } from '../helper'
+import { helper } from '../Helper';
 
 import {
     requestAnimFrame,
@@ -7,22 +7,22 @@ import {
     isUndef,
     isFunc,
     warn
-} from '../util/util'
+} from '../util/util';
 
 import {
     addClass,
-    removeClass
-} from '../util/css-util'
+    removeClass,
+    getOffset
+} from '../util/css-util';
 
 import {
     snapToGrid,
     RAD
-} from './common'
+} from './common';
 
 export default class Subject {
 
-    constructor(el, Observable) {
-
+    constructor(el, observable) {
         if (this.constructor === Subject) {
             throw new TypeError('Cannot construct Subject instances directly');
         }
@@ -30,7 +30,7 @@ export default class Subject {
         this.el = el;
         this.storage = null;
         this.proxyMethods = null;
-        this.Ob = Observable;
+        this.observable = observable;
 
         this._onMouseDown = this._onMouseDown.bind(this);
         this._onTouchStart = this._onTouchStart.bind(this);
@@ -42,9 +42,8 @@ export default class Subject {
     }
 
     enable(options) {
-
         if (isUndef(this.storage)) {
-            this._load(options);
+            this._processOptions(options);
             this._init(this.el);
         } else {
             warn('Already enabled');
@@ -52,12 +51,10 @@ export default class Subject {
     }
 
     disable() {
-
         const {
             storage,
             proxyMethods,
-            el,
-            Ob
+            el
         } = this;
 
         if (isUndef(storage)) return;
@@ -65,21 +62,17 @@ export default class Subject {
         // unexpected case
         if (storage.onExecution) {
             this._end();
-            Helper(document)
+            helper(document)
                 .off('mousemove', this._onMouseMove)
                 .off('mouseup', this._onMouseUp)
                 .off('touchmove', this._onTouchMove)
                 .off('touchend', this._onTouchEnd);
         }
 
-        removeClass(el, 'dg-drag');
-        this._destroy();
+        removeClass(el, 'sjx-drag');
 
-        Ob.unsubscribe('ongetstate', this);
-        Ob.unsubscribe('onapply', this);
-        Ob.unsubscribe('onmove', this);
-        Ob.unsubscribe('onresize', this);
-        Ob.unsubscribe('onrotate', this);
+        this._destroy();
+        this.unsubscribe();
 
         proxyMethods.onDestroy.call(this, el);
         delete this.storage;
@@ -106,11 +99,10 @@ export default class Subject {
         this.proxyMethods.onResize.call(this, ...arguments);
     }
 
-    _load(options) {
+    _processOptions(options) {
+        const { el } = this;
 
-        const { el, Ob } = this;
-
-        addClass(el, 'dg-drag');
+        addClass(el, 'sjx-drag');
 
         const _snap = {
             x: 10,
@@ -124,8 +116,14 @@ export default class Subject {
             rotate: false
         };
 
-        let _showHandles = true,
-            _restrict = null,
+        let _restrict = null,
+            _proportions = false,
+            _axis = 'xy',
+            _cursorMove = 'auto',
+            _cursorResize = 'auto',
+            _cursorRotate = 'auto',
+            _themeColor = '#00a8ff',
+            _rotationPoint = false,
             _onInit = () => { },
             _onMove = () => { },
             _onRotate = () => { },
@@ -135,14 +133,15 @@ export default class Subject {
 
         let _container = el.parentNode;
 
-        let _proportions = false;
-
         if (isDef(options)) {
-
             const {
                 snap,
                 each,
-                showHandles,
+                axis,
+                cursorMove,
+                cursorResize,
+                cursorRotate,
+                rotationPoint,
                 restrict,
                 onInit,
                 onDrop,
@@ -151,11 +150,11 @@ export default class Subject {
                 onRotate,
                 onDestroy,
                 container,
-                proportions
+                proportions,
+                themeColor
             } = options;
 
             if (isDef(snap)) {
-
                 const { x, y, angle } = snap;
 
                 _snap.x = isUndef(x) ? 10 : x;
@@ -166,7 +165,6 @@ export default class Subject {
             }
 
             if (isDef(each)) {
-
                 const { move, resize, rotate } = each;
 
                 _each.move = move || false;
@@ -177,16 +175,21 @@ export default class Subject {
             if (isDef(restrict)) {
                 _restrict = restrict === 'parent'
                     ? el.parentNode
-                    : Helper(restrict)[0] || document
+                    : helper(restrict)[0] || document;
             }
 
-            _showHandles = isUndef(showHandles) ||
-                showHandles === true;
+            _themeColor = themeColor || '#00a8ff';
+            _cursorMove = cursorMove || 'auto';
+            _cursorResize = cursorResize || 'auto';
+            _cursorRotate = cursorRotate || 'auto';
+            _axis = axis || 'xy';
 
-            _container = Helper(container)[0] || _container;
+            _container = isDef(container) && helper(container)[0]
+                ? helper(container)[0]
+                : _container;
 
+            _rotationPoint = rotationPoint || false;
             _proportions = proportions || false;
-
 
             _onInit = createEvent(onInit);
             _onDrop = createEvent(onDrop);
@@ -198,8 +201,13 @@ export default class Subject {
             _onInit.call(this, el);
         }
 
-        this.storage = {
-            showHandles: _showHandles,
+        this.options = {
+            axis: _axis,
+            themeColor: _themeColor,
+            cursorMove: _cursorMove,
+            cursorRotate: _cursorRotate,
+            cursorResize: _cursorResize,
+            rotationPoint: _rotationPoint,
             restrict: _restrict,
             container: _container,
             snap: _snap,
@@ -216,20 +224,7 @@ export default class Subject {
             onDestroy: _onDestroy
         };
 
-        if (_each.move || _each.resize || _each.rotate) {
-            Ob.subscribe('ongetstate', this);
-            Ob.subscribe('onapply', this);
-        }
-
-        if (_each.move) {
-            Ob.subscribe('onmove', this);
-        }
-        if (_each.resize) {
-            Ob.subscribe('onresize', this);
-        }
-        if (_each.rotate) {
-            Ob.subscribe('onrotate', this);
-        }
+        this.subscribe(_each);
     }
 
     _draw() {
@@ -237,43 +232,51 @@ export default class Subject {
     }
 
     _animate() {
-
-        const ctx = this;
-        const { storage } = ctx;
+        const self = this;
+        const {
+            observable,
+            storage,
+            options
+        } = self;
 
         if (isUndef(storage)) return;
 
-        storage.frame = requestAnimFrame(ctx._animate);
+        storage.frame = requestAnimFrame(self._animate);
 
         if (!storage.doDraw) return;
         storage.doDraw = false;
 
         let {
-            handle,
-            handles,
-            cx,
-            cy,
-            nx,
-            ny,
-            pressang,
+            dox,
+            doy,
             clientX,
             clientY,
-            center,
-            snap,
             doDrag,
             doResize,
             doRotate,
+            doSetCenter,
             revX,
             revY
         } = storage;
 
         const {
+            snap,
+            each,
+            restrict
+        } = options;
+
+        const {
             move: moveEach,
             resize: resizeEach,
             rotate: rotateEach
-        } = storage.each;
+        } = each;
 
         if (doResize) {
+            const {
+                transform,
+                cx,
+                cy
+            } = storage;
 
             const { x, y } = this._pointToElement(
                 {
@@ -282,35 +285,25 @@ export default class Subject {
                 }
             );
 
-            let dx = snapToGrid(x - cx, snap.x),
-                dy = snapToGrid(y - cy, snap.y);
+            let dx = dox
+                ? snapToGrid(x - cx, snap.x / transform.scX)
+                : 0;
 
-            const dox = handle.is(handles.ml) ||
-                handle.is(handles.mr) ||
-                handle.is(handles.tl) ||
-                handle.is(handles.tr) ||
-                handle.is(handles.bl) ||
-                handle.is(handles.br);
-
-            const doy = handle.is(handles.br) ||
-                handle.is(handles.bl) ||
-                handle.is(handles.bc) ||
-                handle.is(handles.tr) ||
-                handle.is(handles.tl) ||
-                handle.is(handles.tc);
+            let dy = doy
+                ? snapToGrid(y - cy, snap.y / transform.scY)
+                : 0;
 
             dx = dox ? (revX ? - dx : dx) : 0,
-                dy = doy ? (revY ? - dy : dy) : 0;
+            dy = doy ? (revY ? - dy : dy) : 0;
 
-            ctx._resize(
+            self._resize(
                 dx,
                 dy
             );
 
             if (resizeEach) {
-
-                ctx.Ob.notify('onresize',
-                    ctx,
+                observable.notify('onresize',
+                    self,
                     {
                         dx,
                         dy
@@ -320,18 +313,39 @@ export default class Subject {
         }
 
         if (doDrag) {
+            const {
+                restrictOffset,
+                elementOffset,
+                nx,
+                ny
+            } = storage;
 
-            const dx = snapToGrid(clientX - nx, snap.x),
-                dy = snapToGrid(clientY - ny, snap.y);
+            if (isDef(restrict)) {
+                if ((clientX - restrictOffset.left) < nx - elementOffset.left) {
+                    clientX = nx - elementOffset.left + restrictOffset.left;
+                }
 
-            ctx._drag(
+                if ((clientY - restrictOffset.top) < ny - elementOffset.top) {
+                    clientY = ny - elementOffset.top + restrictOffset.top;
+                }
+            }
+
+            let dx = dox
+                ? snapToGrid(clientX - nx, snap.x)
+                : 0;
+
+            let dy = doy
+                ? snapToGrid(clientY - ny, snap.y)
+                : 0;
+
+            self._drag(
                 dx,
                 dy
             );
 
             if (moveEach) {
-                ctx.Ob.notify('onmove',
-                    ctx,
+                observable.notify('onmove',
+                    self,
                     {
                         dx,
                         dy
@@ -341,34 +355,62 @@ export default class Subject {
         }
 
         if (doRotate) {
+            const {
+                pressang,
+                center
+            } = storage;
 
             const radians = Math.atan2(
                 clientY - center.y,
                 clientX - center.x
             ) - pressang;
 
-            ctx._rotate(
+            self._rotate(
                 snapToGrid(radians, snap.angle)
             );
 
             if (rotateEach) {
-                ctx.Ob.notify('onrotate',
-                    ctx,
+                observable.notify('onrotate',
+                    self,
                     {
                         radians
                     }
                 );
             }
         }
+
+        if (doSetCenter) {
+            const { 
+                bx, 
+                by 
+            } = storage;
+
+            const { x, y } = this._pointToControls(
+                {
+                    x: clientX,
+                    y: clientY
+                }
+            );
+
+            self._moveCenterHandle(
+                x - bx,
+                y - by
+            );
+        }
     }
 
     _start(e) {
-
         if (e.stopImmediatePropagation) {
             e.stopImmediatePropagation();
         }
 
-        const { storage } = this;
+        const {
+            observable,
+            storage,
+            options,
+            el
+        } = this;
+
         const computed = this._compute(e);
 
         Object.keys(computed).forEach(prop => {
@@ -386,17 +428,34 @@ export default class Subject {
             revY
         } = computed;
 
-        const doResize = onRightEdge ||
+        const doResize =
+            onRightEdge ||
             onBottomEdge ||
             onTopEdge ||
             onLeftEdge;
 
-        const doRotate = handle.is(storage.handles.rotator);
+        const { 
+            handles, 
+            radius 
+        } = storage;
+        
+        const { 
+            axis, 
+            restrict 
+        } = options;
+
+        if (isDef(radius)) {
+            removeClass(radius, 'sjx-hidden');
+        }
+
+        const doRotate = handle.is(handles.rotator),
+            doSetCenter = isDef(handles.center)
+                ? handle.is(handles.center)
+                : false;
 
         const {
             clientX,
-            clientY,
-            ctrlKey
+            clientY
         } = e;
 
         const {
@@ -414,19 +473,51 @@ export default class Subject {
             y: ny
         } = this._pointToElement({ x, y });
 
+        const { 
+            x: bx, 
+            y: by 
+        } = this._pointToControls({ x, y });
+
         storage.clientX = clientX;
         storage.clientY = clientY;
         storage.nx = x;
         storage.ny = y;
         storage.cx = nx;
         storage.cy = ny;
-        storage.ctrlKey = ctrlKey;
+        storage.bx = bx;
+        storage.by = by;
         storage.doResize = doResize;
-        storage.doDrag = !doRotate && !doResize;
+        storage.doDrag = !(doRotate || doResize || doSetCenter);
         storage.doRotate = doRotate;
+        storage.doSetCenter = doSetCenter;
         storage.onExecution = true;
+        storage.cursor = null;
+        storage.elementOffset = getOffset(el);
+        storage.restrictOffset = isDef(restrict)
+            ? getOffset(restrict)
+            : null;
 
-        this.Ob.notify(
+        storage.dox = /\x/.test(axis) && (doResize
+            ?
+            handle.is(handles.ml) ||
+            handle.is(handles.mr) ||
+            handle.is(handles.tl) ||
+            handle.is(handles.tr) ||
+            handle.is(handles.bl) ||
+            handle.is(handles.br)
+            : true);
+
+        storage.doy = /\y/.test(axis) && (doResize
+            ?
+            handle.is(handles.br) ||
+            handle.is(handles.bl) ||
+            handle.is(handles.bc) ||
+            handle.is(handles.tr) ||
+            handle.is(handles.tl) ||
+            handle.is(handles.tc)
+            : true);
+
+        observable.notify(
             'ongetstate',
             this,
             {
@@ -440,29 +531,60 @@ export default class Subject {
     }
 
     _moving(e) {
-
         if (e.preventDefault) {
             e.preventDefault();
         }
 
-        const { storage } = this;
+        const {
+            storage,
+            options
+        } = this;
 
-        const { x, y } = this._cursorPoint(e);
+        const {
+            x,
+            y
+        } = this._cursorPoint(e);
 
+        storage.e = e;
         storage.clientX = x;
         storage.clientY = y;
         storage.doDraw = true;
+
+        let {
+            doRotate,
+            doDrag,
+            doResize,
+            cursor
+        } = storage;
+
+        const {
+            cursorMove,
+            cursorResize,
+            cursorRotate
+        } = options;
+
+        if (isUndef(cursor)) {
+            if (doDrag) {
+                cursor = cursorMove;
+            } else if (doRotate) {
+                cursor = cursorRotate;
+            } else if (doResize) {
+                cursor = cursorResize;
+            }
+            helper(document.body).css({ cursor });
+        }
     }
 
     _end(e) {
-
         if (isDef(e) && e.stopImmediatePropagation) {
             e.stopImmediatePropagation();
         }
 
         const {
+            observable,
             storage,
-            proxyMethods
+            proxyMethods,
+            el
         } = this;
 
         const action = storage.doResize
@@ -472,31 +594,38 @@ export default class Subject {
         storage.doResize = false;
         storage.doDrag = false;
         storage.doRotate = false;
+        storage.doSetCenter = false;
         storage.doDraw = false;
         storage.onExecution = false;
+        storage.cursor = null;
 
         this._apply(action);
 
-        this.Ob.notify(
+        observable.notify(
             'onapply',
             this,
             action
         );
 
         cancelAnimFrame(storage.frame);
-        proxyMethods.onDrop.call(this, e, this.el);
+        proxyMethods.onDrop.call(this, e, el);
+
+        helper(document.body).css({ cursor: 'auto' });
+        if (isDef(storage.radius)) {
+            addClass(storage.radius, 'sjx-hidden');
+        }
     }
 
     _onMouseDown(e) {
         this._start(e);
-        Helper(document)
+        helper(document)
             .on('mousemove', this._onMouseMove)
             .on('mouseup', this._onMouseUp);
     }
 
     _onTouchStart(e) {
         this._start(e.touches[0]);
-        Helper(document)
+        helper(document)
             .on('touchmove', this._onTouchMove)
             .on('touchend', this._onTouchEnd);
     }
@@ -516,9 +645,10 @@ export default class Subject {
     }
 
     _onMouseUp(e) {
-        Helper(document)
+        helper(document)
             .off('mousemove', this._onMouseMove)
             .off('mouseup', this._onMouseUp);
+
         this._end(
             e,
             this.el
@@ -526,19 +656,19 @@ export default class Subject {
     }
 
     _onTouchEnd(e) {
-        Helper(document)
+        helper(document)
             .off('touchmove', this._onTouchMove)
             .off('touchend', this._onTouchEnd);
+
         if (e.touches.length === 0) {
             this._end(
                 e.changedTouches[0],
-                this.el)
-                ;
+                this.el
+            );
         }
     }
 
     notifyMove(data) {
-
         const {
             dx,
             dy
@@ -551,10 +681,9 @@ export default class Subject {
     }
 
     notifyRotate(data) {
-
         const {
             snap
-        } = this.storage;
+        } = this.options;
 
         this._rotate(
             snapToGrid(data.radians, snap.angle)
@@ -562,7 +691,6 @@ export default class Subject {
     }
 
     notifyResize(data) {
-
         const {
             dx,
             dy,
@@ -583,17 +711,52 @@ export default class Subject {
     }
 
     notifyGetState(data) {
-
-        const store = this.storage;
+        const { storage } = this;
 
         const recalc = this._getState(
             data
         );
 
         Object.keys(recalc).forEach(key => {
-            store[key] = recalc[key];
+            storage[key] = recalc[key];
         });
     }
+
+    subscribe(events) {
+        const { observable: ob } = this;
+
+        const {
+            resize,
+            move,
+            rotate
+        } = events;
+
+        if (move || resize || rotate) {
+            ob.subscribe('ongetstate', this)
+                .subscribe('onapply', this);
+        }
+
+        if (move) {
+            ob.subscribe('onmove', this);
+        }
+        if (resize) {
+            ob.subscribe('onresize', this);
+        }
+        if (rotate) {
+            ob.subscribe('onrotate', this);
+        }
+    }
+
+    unsubscribe() {
+        const { observable: ob } = this;
+
+        ob.unsubscribe('ongetstate', this)
+            .unsubscribe('onapply', this)
+            .unsubscribe('onmove', this)
+            .unsubscribe('onresize', this)
+            .unsubscribe('onrotate', this);
+    }
+
 }
 
 function createEvent(fn) {
