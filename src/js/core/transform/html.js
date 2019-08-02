@@ -471,6 +471,10 @@ export default class Draggable extends Subject {
         } = this;
 
         const {
+            container
+        } = options;
+
+        const {
             handles,
             controls,
             parent
@@ -493,7 +497,7 @@ export default class Draggable extends Subject {
         const $controls = helper(controls);
 
         const containerMatrix = parseMatrix(
-            getTransform(helper(options.container))
+            getTransform(helper(container))
         );
 
         const matrix = parseMatrix(
