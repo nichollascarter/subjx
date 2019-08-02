@@ -18,6 +18,7 @@ module.exports = {
     "rules": {
         "indent": ["error", 4],
         "init-declarations": "off",
+        "no-undef": "warn",
         "no-console": "warn",
         "no-inline-comments": "off",
         "no-irregular-whitespace": 'error',
