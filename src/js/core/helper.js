@@ -123,7 +123,7 @@ export default class Helper {
                     this[len][`on${arguments[0]}`] = arguments[1];
                 }
             } else if (arguments.length === 3 && typeof (arguments[1]) === 'string') {
-                listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], true);
+                listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], arguments[3], true);
             }
         }
         return this;
@@ -147,7 +147,7 @@ export default class Helper {
                     this[len][`on${arguments[0]}`] = null;
                 }
             } else if (arguments.length === 3 && typeof (arguments[1]) === 'string') {
-                listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], false);
+                listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], arguments[3], false);
             }
         }
 
@@ -166,7 +166,7 @@ export default class Helper {
 
 }
 
-function listenerDelegate(el, evt, sel, handler, act) {
+function listenerDelegate(el, evt, sel, handler, options, act) {
     const doit = function (event) {
         let t = event.target;
         while (t && t !== this) {
@@ -179,7 +179,7 @@ function listenerDelegate(el, evt, sel, handler, act) {
 
     if (act === true) {
         if (document.addEventListener) {
-            el.addEventListener(evt, doit, false);
+            el.addEventListener(evt, doit, options || false);
         } else if (document.attachEvent) {
             el.attachEvent(`on${evt}`, doit);
         } else {
@@ -187,7 +187,7 @@ function listenerDelegate(el, evt, sel, handler, act) {
         }
     } else {
         if (document.removeEventListener) {
-            el.removeEventListener(evt, doit, false);
+            el.removeEventListener(evt, doit, options || false);
         } else if (document.detachEvent) {
             el.detachEvent(`on${evt}`, doit);
         } else {
