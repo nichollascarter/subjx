@@ -294,7 +294,7 @@ export default class Subject {
                 : 0;
 
             dx = dox ? (revX ? - dx : dx) : 0,
-                dy = doy ? (revY ? - dy : dy) : 0;
+            dy = doy ? (revY ? - dy : dy) : 0;
 
             self._resize(
                 dx,
@@ -380,9 +380,9 @@ export default class Subject {
         }
 
         if (doSetCenter) {
-            const {
-                bx,
-                by
+            const { 
+                bx, 
+                by 
             } = storage;
 
             const { x, y } = this._pointToControls(
@@ -434,14 +434,14 @@ export default class Subject {
             onTopEdge ||
             onLeftEdge;
 
-        const {
-            handles,
-            radius
+        const { 
+            handles, 
+            radius 
         } = storage;
-
-        const {
-            axis,
-            restrict
+        
+        const { 
+            axis, 
+            restrict 
         } = options;
 
         if (isDef(radius)) {
@@ -473,9 +473,9 @@ export default class Subject {
             y: ny
         } = this._pointToElement({ x, y });
 
-        const {
-            x: bx,
-            y: by
+        const { 
+            x: bx, 
+            y: by 
         } = this._pointToControls({ x, y });
 
         storage.clientX = clientX;
