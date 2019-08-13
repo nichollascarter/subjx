@@ -2,7 +2,7 @@
     "name": "subjx",
     "version": "0.1.5",
     "description": "Drag, Rotate, Resize plugin",
-    "main": "src/js/",
+    "main": "dist/js/subjx.js",
     "scripts": {
         "build": "webpack --mode production",
         "dev": "webpack --mode development",
