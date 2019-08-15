@@ -2,7 +2,13 @@
     "name": "subjx",
     "version": "0.1.5",
     "description": "Drag, Rotate, Resize plugin",
-    "main": "dist/js/subjx.js",
+    "author": "Karen Sarksyan (https://github.com/nichollascarter)",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/nichollascarter/subjx.git"
+    },
+    "main": "src/js",
     "scripts": {
         "build": "webpack --mode production",
         "dev": "webpack --mode development",
