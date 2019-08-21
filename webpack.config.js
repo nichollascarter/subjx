@@ -1,18 +1,22 @@
 const path = require("path");
+const webpack = require('webpack');
 const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
 
-module.exports = {
+let libraryName = "subjx";
+
+const env = process.env.NODE_ENV || 'production';
+
+if (env === 'production') {
+    libraryName = "subjx";
+} else {
+    libraryName = "subjx.dev";
+}
+
+const config = {
     entry: "./src/js/index.js",
-    output: {
-        library: 'subjx',
-        libraryTarget: 'window',
-        libraryExport: 'default',
-        path: path.resolve(__dirname, "dist"),
-        filename: "js/subjx.js",
-    },
-    devtool: "source-map",
+    //devtool: "source-map",
     module: {
         rules: [{
             test: /\.js?$/,
@@ -21,7 +25,7 @@ module.exports = {
             exclude: /node_modules/,
             options: {
                 emitWarning: true,
-                configFile: './.eslintrc.js'
+                configFile: "./.eslintrc.js"
             }
         },
         {
@@ -40,27 +44,57 @@ module.exports = {
                 {
                     loader: MiniCssExtractPlugin.loader,
                     options: {
-                        publicPath: './src'
+                        publicPath: "./src"
                     }
                 },
-                'css-loader'
+                "css-loader"
             ]
-        }
-        ]
+        }]
     },
     plugins: [
         new MiniCssExtractPlugin({
             filename: "style/subjx.css",
-        })
+        }),
+        new webpack.DefinePlugin({
+            'process.env': {
+                NODE_ENV: JSON.stringify(env)
+            }
+        })   
     ],
     optimization: {
         minimizer: [
             new UglifyJsPlugin({
                 cache: true,
                 parallel: true,
-                sourceMap: true // set to true if you want JS source maps
+                sourceMap: false
             }),
             new OptimizeCSSAssetsPlugin({})
         ]
     }
 }
+
+const umdConfig = {
+    ...config,
+    output: {
+        library: "subjx",
+        libraryTarget: "umd",
+        libraryExport: "default",
+        path: path.resolve(__dirname, "dist"),
+        filename: `js/${libraryName}.js`
+    }
+};
+
+const commonjs2Config = {
+    ...config,
+    output: {
+        library: "subjx",
+        libraryTarget: "commonjs2",
+        path: path.resolve(__dirname, "dist"),
+        filename: `js/${libraryName}.common.js`
+    }
+}
+
+module.exports = [
+    umdConfig,
+    commonjs2Config
+];
