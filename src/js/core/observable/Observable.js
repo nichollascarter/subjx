@@ -38,23 +38,23 @@ export default class Observable {
             if (source === observer) return;
             switch (eventName) {
 
-            case 'onmove':
-                observer.notifyMove(data);
-                break;
-            case 'onrotate':
-                observer.notifyRotate(data);
-                break;
-            case 'onresize':
-                observer.notifyResize(data);
-                break;
-            case 'onapply':
-                observer.notifyApply(data);
-                break;
-            case 'ongetstate':
-                observer.notifyGetState(data);
-                break;
-            default:
-                break;
+                case 'onmove':
+                    observer.notifyMove(data);
+                    break;
+                case 'onrotate':
+                    observer.notifyRotate(data);
+                    break;
+                case 'onresize':
+                    observer.notifyResize(data);
+                    break;
+                case 'onapply':
+                    observer.notifyApply(data);
+                    break;
+                case 'ongetstate':
+                    observer.notifyGetState(data);
+                    break;
+                default:
+                    break;
             
             }
         });

@@ -147,7 +147,7 @@ export default class DraggableSVG extends Subject {
             radius.x2.baseVal.value = centerX || boxCenter.x;
             radius.y2.baseVal.value = centerY || boxCenter.y;
 
-            setLineStyle(radius, themeColor);
+            setLineStyle(radius, '#fe3232');
             radius.setAttribute('opacity', 0.5);
 
             normalLineGroup.appendChild(radius);
@@ -156,7 +156,16 @@ export default class DraggableSVG extends Subject {
         Object.keys(handles).forEach(key => {
             const data = handles[key];
             if (isUndef(data)) return;
-            handles[key] = createHandler(data.x, data.y, themeColor);
+            const { x, y } = data;
+            const color = key === 'center'
+                ? '#fe3232'
+                : themeColor;
+
+            handles[key] = createHandler(
+                x, 
+                y, 
+                color
+            );
             handlesGroup.appendChild(handles[key]);
         });
 
@@ -896,79 +905,73 @@ function applyTranslate(element, data) {
 
     switch (element.tagName.toLowerCase()) {
 
-    case 'use':
-    case 'image':
-    case 'text':
-    case 'rect': {
-        const resX = element.x.baseVal.value + x,
-            resY = element.y.baseVal.value + y;
+        case 'use':
+        case 'image':
+        case 'text':
+        case 'rect': {
+            const resX = element.x.baseVal.value + x,
+                resY = element.y.baseVal.value + y;
 
-        attrs.push(
-            ['x', resX],
-            ['y', resY]
-        );
-    }
-        break;
+            attrs.push(
+                ['x', resX],
+                ['y', resY]
+            );
+            break;
+        }      
+        case 'circle':
+        case 'ellipse': {
+            const resX = element.cx.baseVal.value + x,
+                resY = element.cy.baseVal.value + y;
 
-    case 'circle':
-    case 'ellipse': {
-        const resX = element.cx.baseVal.value + x,
-            resY = element.cy.baseVal.value + y;
+            attrs.push(
+                ['cx', resX],
+                ['cy', resY]
+            );
+            break;
+        }   
+        case 'line': {
+            const resX1 = element.x1.baseVal.value + x,
+                resY1 = element.y1.baseVal.value + y,
+                resX2 = element.x2.baseVal.value + x,
+                resY2 = element.y2.baseVal.value + y;
 
-        attrs.push(
-            ['cx', resX],
-            ['cy', resY]
-        );
-    }
-        break;
+            attrs.push(
+                ['x1', resX1],
+                ['y1', resY1],
+                ['x2', resX2],
+                ['y2', resY2]
+            );
+            break;
+        }
+        case 'polygon':
+        case 'polyline': {
+            const points = parsePoints(element.getAttribute('points'));
+            const result = points.map(item => {
+                item[0] = Number(item[0]) + x;
+                item[1] = Number(item[1]) + y;
 
-    case 'line': {
-        const resX1 = element.x1.baseVal.value + x,
-            resY1 = element.y1.baseVal.value + y,
-            resX2 = element.x2.baseVal.value + x,
-            resY2 = element.y2.baseVal.value + y;
+                return item.join(' ');
+            }).join(' ');
 
-        attrs.push(
-            ['x1', resX1],
-            ['y1', resY1],
-            ['x2', resX2],
-            ['y2', resY2]
-        );
-    }
-        break;
+            attrs.push(
+                ['points', result]
+            );
+            break;
+        }
+        case 'path': {
+            const path = element.getAttribute('d');
 
-    case 'polygon':
-    case 'polyline': {
-        const points = parsePoints(element.getAttribute('points'));
-        const result = points.map(item => {
-            item[0] = Number(item[0]) + x;
-            item[1] = Number(item[1]) + y;
-
-            return item.join(' ');
-        }).join(' ');
-
-        attrs.push(
-            ['points', result]
-        );
-    }
-        break;
-
-    case 'path': {
-        const path = element.getAttribute('d');
-
-        attrs.push(['d', movePath(
-            {
-                path,
-                dx: x,
-                dy: y
-            }
-        )]);
-    }
-
-        break;
-
-    default:
-        break;
+            attrs.push(['d', movePath(
+                {
+                    path,
+                    dx: x,
+                    dy: y
+                }
+            )]);
+            break;
+        }
+        default:
+            break;
     
     }
 
@@ -998,194 +1001,187 @@ function applyResize(element, data) {
 
     switch (element.tagName.toLowerCase()) {
 
-    case 'text': {
-        const x = element.x.baseVal.value,
-            y = element.y.baseVal.value;
+        case 'text': {
+            const x = element.x.baseVal.value,
+                y = element.y.baseVal.value;
 
-        const {
-            x: resX,
-            y: resY
-        } = pointTo(
-            localCTM,
-            container,
-            x,
-            y
-        );
-
-        attrs.push(
-            ['x', resX + (scaleX < 0 ? boxW : 0)],
-            ['y', resY + (scaleY < 0 ? boxH : 0)]
-        );
-    }
-        break;
-
-    case 'circle': {
-        const r = element.r.baseVal.value,
-            cx = element.cx.baseVal.value,
-            cy = element.cy.baseVal.value,
-            newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
-
-        const {
-            x: resX,
-            y: resY
-        } = pointTo(
-            localCTM,
-            container,
-            cx,
-            cy
-        );
-
-        attrs.push(
-            ['r', newR],
-            ['cx', resX],
-            ['cy', resY]
-        );
-    }
-        break;
-
-    case 'image':
-    case 'rect': {
-        const width = element.width.baseVal.value,
-            height = element.height.baseVal.value,
-            x = element.x.baseVal.value,
-            y = element.y.baseVal.value;
-
-        const {
-            x: resX,
-            y: resY
-        } = pointTo(
-            localCTM,
-            container,
-            x,
-            y
-        );
-
-        const newWidth = Math.abs(width * scaleX),
-            newHeight = Math.abs(height * scaleY);
-
-        attrs.push(
-            ['x', resX - (scaleX < 0 ? newWidth : 0)],
-            ['y', resY - (scaleY < 0 ? newHeight : 0)],
-            ['width', newWidth],
-            ['height', newHeight]
-        );
-    }
-        break;
-
-    case 'ellipse': {
-        const rx = element.rx.baseVal.value,
-            ry = element.ry.baseVal.value,
-            cx = element.cx.baseVal.value,
-            cy = element.cy.baseVal.value;
-
-        const {
-            x: cx1,
-            y: cy1
-        } = pointTo(
-            localCTM,
-            container,
-            cx,
-            cy
-        );
-
-        const scaleMatrix = createSVGMatrix();
-
-        scaleMatrix.a = scaleX;
-        scaleMatrix.d = scaleY;
-
-        const {
-            x: nRx,
-            y: nRy
-        } = pointTo(
-            scaleMatrix,
-            container,
-            rx,
-            ry
-        );
-
-        attrs.push(
-            ['rx', Math.abs(nRx)],
-            ['ry', Math.abs(nRy)],
-            ['cx', cx1],
-            ['cy', cy1]
-        );
-    }
-        break;
-
-    case 'line': {
-        const resX1 = element.x1.baseVal.value,
-            resY1 = element.y1.baseVal.value,
-            resX2 = element.x2.baseVal.value,
-            resY2 = element.y2.baseVal.value;
-
-        const {
-            x: resX1_,
-            y: resY1_
-        } = pointTo(
-            localCTM,
-            container,
-            resX1,
-            resY1
-        );
-
-        const {
-            x: resX2_,
-            y: resY2_
-        } = pointTo(
-            localCTM,
-            container,
-            resX2,
-            resY2
-        );
-
-        attrs.push(
-            ['x1', resX1_],
-            ['y1', resY1_],
-            ['x2', resX2_],
-            ['y2', resY2_]
-        );
-    }
-        break;
-
-    case 'polygon':
-    case 'polyline': {
-        const points = parsePoints(element.getAttribute('points'));
-        const result = points.map(item => {
             const {
-                x,
-                y
+                x: resX,
+                y: resY
             } = pointTo(
                 localCTM,
                 container,
-                Number(item[0]),
-                Number(item[1])
+                x,
+                y
             );
 
-            item[0] = x;
-            item[1] = y;
+            attrs.push(
+                ['x', resX + (scaleX < 0 ? boxW : 0)],
+                ['y', resY + (scaleY < 0 ? boxH : 0)]
+            );
+            break;
+        }
+        case 'circle': {
+            const r = element.r.baseVal.value,
+                cx = element.cx.baseVal.value,
+                cy = element.cy.baseVal.value,
+                newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-            return item.join(' ');
-        }).join(' ');
-
-        attrs.push(['points', result]);
-    }
-        break;
-
-    case 'path': {
-        const path = element.getAttribute('d');
-
-        attrs.push(['d', resizePath(
-            {
-                path,
+            const {
+                x: resX,
+                y: resY
+            } = pointTo(
                 localCTM,
-                container
-            }
-        )]);
-    }
-        break;
+                container,
+                cx,
+                cy
+            );
 
-    default: { }
-        break;
+            attrs.push(
+                ['r', newR],
+                ['cx', resX],
+                ['cy', resY]
+            );
+            break;
+        }
+        case 'image':
+        case 'rect': {
+            const width = element.width.baseVal.value,
+                height = element.height.baseVal.value,
+                x = element.x.baseVal.value,
+                y = element.y.baseVal.value;
+
+            const {
+                x: resX,
+                y: resY
+            } = pointTo(
+                localCTM,
+                container,
+                x,
+                y
+            );
+
+            const newWidth = Math.abs(width * scaleX),
+                newHeight = Math.abs(height * scaleY);
+
+            attrs.push(
+                ['x', resX - (scaleX < 0 ? newWidth : 0)],
+                ['y', resY - (scaleY < 0 ? newHeight : 0)],
+                ['width', newWidth],
+                ['height', newHeight]
+            );
+            break;
+        }
+        case 'ellipse': {
+            const rx = element.rx.baseVal.value,
+                ry = element.ry.baseVal.value,
+                cx = element.cx.baseVal.value,
+                cy = element.cy.baseVal.value;
+
+            const {
+                x: cx1,
+                y: cy1
+            } = pointTo(
+                localCTM,
+                container,
+                cx,
+                cy
+            );
+
+            const scaleMatrix = createSVGMatrix();
+
+            scaleMatrix.a = scaleX;
+            scaleMatrix.d = scaleY;
+
+            const {
+                x: nRx,
+                y: nRy
+            } = pointTo(
+                scaleMatrix,
+                container,
+                rx,
+                ry
+            );
+
+            attrs.push(
+                ['rx', Math.abs(nRx)],
+                ['ry', Math.abs(nRy)],
+                ['cx', cx1],
+                ['cy', cy1]
+            );
+            break;
+        }
+        case 'line': {
+            const resX1 = element.x1.baseVal.value,
+                resY1 = element.y1.baseVal.value,
+                resX2 = element.x2.baseVal.value,
+                resY2 = element.y2.baseVal.value;
+
+            const {
+                x: resX1_,
+                y: resY1_
+            } = pointTo(
+                localCTM,
+                container,
+                resX1,
+                resY1
+            );
+
+            const {
+                x: resX2_,
+                y: resY2_
+            } = pointTo(
+                localCTM,
+                container,
+                resX2,
+                resY2
+            );
+
+            attrs.push(
+                ['x1', resX1_],
+                ['y1', resY1_],
+                ['x2', resX2_],
+                ['y2', resY2_]
+            );
+            break;
+        }
+        case 'polygon':
+        case 'polyline': {
+            const points = parsePoints(element.getAttribute('points'));
+            const result = points.map(item => {
+                const {
+                    x,
+                    y
+                } = pointTo(
+                    localCTM,
+                    container,
+                    Number(item[0]),
+                    Number(item[1])
+                );
+
+                item[0] = x;
+                item[1] = y;
+
+                return item.join(' ');
+            }).join(' ');
+
+            attrs.push(['points', result]);
+            break;
+        }
+        case 'path': {
+            const path = element.getAttribute('d');
+
+            attrs.push(['d', resizePath(
+                {
+                    path,
+                    localCTM,
+                    container
+                }
+            )]);
+            break;
+        }
+        default:
+            break;
     
     }
 
@@ -1333,7 +1329,8 @@ function createHandler(l, t, color) {
         fill: color,
         stroke: color,
         'fill-opacity': 0.2,
-        'vector-effect': 'non-scaling-stroke'
+        'vector-effect': 'non-scaling-stroke',
+        'stroke-width': 2
     };
 
     Object.keys(items).map(key => {

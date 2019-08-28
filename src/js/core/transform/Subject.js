@@ -478,44 +478,49 @@ export default class Subject {
             y: by 
         } = this._pointToControls({ x, y });
 
-        storage.clientX = clientX;
-        storage.clientY = clientY;
-        storage.nx = x;
-        storage.ny = y;
-        storage.cx = nx;
-        storage.cy = ny;
-        storage.bx = bx;
-        storage.by = by;
-        storage.doResize = doResize;
-        storage.doDrag = !(doRotate || doResize || doSetCenter);
-        storage.doRotate = doRotate;
-        storage.doSetCenter = doSetCenter;
-        storage.onExecution = true;
-        storage.cursor = null;
-        storage.elementOffset = getOffset(el);
-        storage.restrictOffset = isDef(restrict)
-            ? getOffset(restrict)
-            : null;
+        const newStorageValues = {
+            clientX,
+            clientY,
+            nx: x,
+            ny: y,
+            cx: nx,
+            cy: ny,
+            bx,
+            by,
+            doResize,
+            doDrag: !(doRotate || doResize || doSetCenter),
+            doRotate,
+            doSetCenter,
+            onExecution: true,
+            cursor: null,
+            elementOffset: getOffset(el),
+            restrictOffset: isDef(restrict)
+                ? getOffset(restrict)
+                : null,
+            dox: /\x/.test(axis) && (doResize
+                ?
+                handle.is(handles.ml) ||
+                handle.is(handles.mr) ||
+                handle.is(handles.tl) ||
+                handle.is(handles.tr) ||
+                handle.is(handles.bl) ||
+                handle.is(handles.br)
+                : true),
+            doy: /\y/.test(axis) && (doResize
+                ?
+                handle.is(handles.br) ||
+                handle.is(handles.bl) ||
+                handle.is(handles.bc) ||
+                handle.is(handles.tr) ||
+                handle.is(handles.tl) ||
+                handle.is(handles.tc)
+                : true)
+        };
 
-        storage.dox = /\x/.test(axis) && (doResize
-            ?
-            handle.is(handles.ml) ||
-            handle.is(handles.mr) ||
-            handle.is(handles.tl) ||
-            handle.is(handles.tr) ||
-            handle.is(handles.bl) ||
-            handle.is(handles.br)
-            : true);
-
-        storage.doy = /\y/.test(axis) && (doResize
-            ?
-            handle.is(handles.br) ||
-            handle.is(handles.bl) ||
-            handle.is(handles.bc) ||
-            handle.is(handles.tr) ||
-            handle.is(handles.tl) ||
-            handle.is(handles.tc)
-            : true);
+        this.storage = {
+            ...storage,
+            ...newStorageValues
+        };
 
         observable.notify(
             'ongetstate',
@@ -717,9 +722,10 @@ export default class Subject {
             data
         );
 
-        Object.keys(recalc).forEach(key => {
-            storage[key] = recalc[key];
-        });
+        this.storage = {
+            ...storage,
+            ...recalc
+        };
     }
 
     subscribe(events) {

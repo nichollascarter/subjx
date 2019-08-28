@@ -19,7 +19,7 @@ import {
 } from '../util/util';
 
 const MIN_SIZE = 2;
-const CENTER_DELTA = 6;
+const CENTER_DELTA = 7;
 
 export default class Draggable extends Subject {
 
@@ -93,7 +93,9 @@ export default class Draggable extends Subject {
             const cHandle = helper(handles.center);
             cHandle.css({
                 left: `${el.getAttribute('data-cx')}px`,
-                top: `${el.getAttribute('data-cy')}px`
+                top: `${el.getAttribute('data-cy')}px`,
+                'border-color': 'rgb(254, 50, 50)',
+                'background-color': 'rgb(254, 50, 50, 0.2)'
             });
         }
 

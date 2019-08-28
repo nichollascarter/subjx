@@ -37,11 +37,35 @@ export default class Helper {
     }
 
     css(prop) {
+        const _getStyle = obj => {
+            let len = obj.length;
+
+            while (len--) {
+                if (obj[len].currentStyle) {
+                    return obj[len].currentStyle[prop];
+                } else if (document.defaultView && document.defaultView.getComputedStyle) {
+                    return document.defaultView.getComputedStyle(obj[len], '')[prop];
+                } else {
+                    return obj[len].style[prop];
+                }
+            }
+        };
+
+        const _setStyle = (obj, options) => {
+            let len = obj.length;
+
+            while (len--) {
+                for (let property in options) {
+                    obj[len].style[property] = options[property];
+                }
+            }
+            return obj.style;
+        };
+
         const methods = {
             setStyle(options) {
                 return _setStyle(this, options);
             },
-
             getStyle() {
                 return _getStyle(this);
             }
@@ -55,32 +79,6 @@ export default class Helper {
             warn(`Method ${prop} does not exist`);
         }
         return false;
-
-
-        function _getStyle(obj) {
-            let len = obj.length;
-
-            while (len--) {
-                if (obj[len].currentStyle) {
-                    return obj[len].currentStyle[prop];
-                } else if (document.defaultView && document.defaultView.getComputedStyle) {
-                    return document.defaultView.getComputedStyle(obj[len], '')[prop];
-                } else {
-                    return obj[len].style[prop];
-                }
-            }
-        }
-
-        function _setStyle(obj, options) {
-            let len = obj.length;
-
-            while (len--) {
-                for (let property in options) {
-                    obj[len].style[property] = options[property];
-                }
-            }
-            return obj.style;
-        }
     }
 
     find(sel) {
@@ -97,7 +95,7 @@ export default class Helper {
         const arr = arrSlice.call(this, 0);
 
         for (let index = arr.length - 1; index >= 0; --index) {
-            let func = function () {
+            const func = () => {
                 return arr[index];
             };
             fn.call(func());

@@ -31,7 +31,7 @@ export function addClass(node, cls) {
 
     if (node.classList) {
         if (cls.indexOf(' ') > -1) {
-            cls.split(/\s+/).forEach(function (cl) {
+            cls.split(/\s+/).forEach(cl => {
                 return node.classList.add(cl);
             });
         } else {
@@ -46,7 +46,7 @@ export function removeClass(node, cls) {
 
     if (node.classList) {
         if (cls.indexOf(' ') > -1) {
-            cls.split(/\s+/).forEach(function (cl) {
+            cls.split(/\s+/).forEach(cl => {
                 return node.classList.remove(cl);
             });
         } else {

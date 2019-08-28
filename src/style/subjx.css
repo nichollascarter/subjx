@@ -17,10 +17,10 @@
 }
 
 .sjx-hdl {
-    border-radius: 11px;
-    width: 11px;
-    height: 11px;
-    border: 1px solid;
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    border: 2px solid;
 }
 
 .sjx-controls, .sjx-hdl {
@@ -35,11 +35,11 @@
 }
 
 .sjx-hdl-m {
-    top: calc(50% - 5px);
+    top: calc(50% - 6px);
 }
 
 .sjx-hdl-b {
-    top: calc(100% - 5px);
+    top: calc(100% - 6px);
 }
 
 .sjx-hdl-l {
@@ -51,7 +51,7 @@
 }
 
 .sjx-hdl-r {
-    left: calc(100% - 5px);
+    left: calc(100% - 6px);
 }
 
 .sjx-rotator {
