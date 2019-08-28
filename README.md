@@ -4,8 +4,7 @@ Touch-enabled draggable, resizable, rotatable library for creating drag-n-drop a
 
 # Usage
 
-Library provides two actions with an element. More recently, was decided to make accent on SVG elements. 
-But HTML elements transformation support will be staying.
+Library provides dragging/resizing/rotating SVG/HTML Elements.
 
 ## [Demo](http://jsfiddle.net/nichollascarter/qgwzch0v/)
 
@@ -27,6 +26,8 @@ Including via a `<script>` tag:
  passed parameters:
 
 ```javascript
+import subjx from 'subjx';
+
 // possible parameters
 const xElem = subjx( 'selector' ) |
                 subjx( element ) |
@@ -69,14 +70,26 @@ subjx('.draggable').drag({
     },
     // keep aspect ratio when resizing
     proportions: true,
-    // experimental option
+    // ----- experimental options ------
     // show rotation point
-    rotationPoint: true
+    rotationPoint: true,
+    // restrict moving
+    // spreads to dragging one element 
+    restrict: 'selector'
 });
+```
+Subscribing new draggable element to previously activated(useful with `each` option)
+```javascript
+const observable = subjx.createObservable();
+subjx('.draggable').drag({...}, observable)
+
+const createDraggableAndSubscribe = e => {
+    subjx(e.target).drag({...}, observable);
+};
 ```
 
 Allowed SVG elements:
-`path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `g`
+`path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `circle`, `g`
 
 #### Warning: group resizing in experimental mode
 
@@ -128,6 +141,3 @@ xCloneable.forEach(item => {
     item.disable();
 });
 ```
-
-### Work In Progress
-    This library depends of my another project and as far as possible it will be updating.
