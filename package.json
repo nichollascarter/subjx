@@ -1,7 +1,7 @@
 {
     "name": "subjx",
     "version": "0.1.5",
-    "description": "Drag, Rotate, Resize plugin",
+    "description": "Drag, Rotate, Resize library",
     "author": "Karen Sarksyan (https://github.com/nichollascarter)",
     "license": "MIT",
     "repository": {
