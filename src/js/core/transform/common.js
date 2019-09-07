@@ -25,7 +25,9 @@ export function rotatedTopLeft(
     height,
     rotationAngle,
     revX,
-    revY
+    revY,
+    doW,
+    doH
 ) {
     const hw = parseFloat(width) / 2,
         hh = parseFloat(height) / 2;
@@ -36,11 +38,10 @@ export function rotatedTopLeft(
     const dx = x - cx,
         dy = y - cy;
 
-    const originalTopLeftAngle = Math.atan2(dy, dx);
-
+    const originalTopLeftAngle = Math.atan2(doW ? 0 : dy, doH ? 0 : dx);
     const rotatedTopLeftAngle = originalTopLeftAngle + rotationAngle;
 
-    const radius = Math.sqrt(Math.pow(hw, 2) + Math.pow(hh, 2));
+    const radius = Math.sqrt(Math.pow(doH ? 0 : hw, 2) + Math.pow(doW ? 0 : hh, 2));
 
     let cos = Math.cos(rotatedTopLeftAngle),
         sin = Math.sin(rotatedTopLeftAngle);

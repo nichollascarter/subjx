@@ -69,7 +69,7 @@ export default class DraggableSVG extends Subject {
             ['x', cx],
             ['y', cy],
             ['fill', themeColor],
-            ['fill-opacity', 0.2],
+            ['fill-opacity', 0.1],
             ['stroke', themeColor],
             ['stroke-dasharray', '3 3'],
             ['vector-effect', 'non-scaling-stroke'],
@@ -207,25 +207,22 @@ export default class DraggableSVG extends Subject {
 
         const handle = helper(e.target);
 
-        //reverse axis
-        const revX = handle.is(handles.tl) ||
-            handle.is(handles.ml) ||
-            handle.is(handles.bl) ||
-            handle.is(handles.tc);
-
-        const revY = handle.is(handles.tl) ||
-            handle.is(handles.tr) ||
-            handle.is(handles.tc) ||
-            handle.is(handles.ml);
-
-        const onTopEdge = handle.is(handles.tl) || handle.is(handles.tc) || handle.is(handles.tr),
-            onLeftEdge = handle.is(handles.tl) || handle.is(handles.ml) || handle.is(handles.bl),
-            onRightEdge = handle.is(handles.tr) || handle.is(handles.mr) || handle.is(handles.br),
-            onBottomEdge = handle.is(handles.br) || handle.is(handles.bc) || handle.is(handles.bl);
+        const {
+            revX,
+            revY,
+            onTopEdge,
+            onLeftEdge,
+            onRightEdge,
+            onBottomEdge,
+            doW,
+            doH
+        } = this._checkHandles(handle, handles);
 
         const _computed = this._getState({
             revX,
-            revY
+            revY,
+            doW,
+            doH
         });
 
         const {
@@ -238,14 +235,17 @@ export default class DraggableSVG extends Subject {
             clientX - _computed.center.x
         );
 
-        _computed.onTopEdge = onTopEdge;
-        _computed.onLeftEdge = onLeftEdge;
-        _computed.onRightEdge = onRightEdge;
-        _computed.onBottomEdge = onBottomEdge;
-        _computed.handle = handle;
-        _computed.pressang = pressang;
-
-        return _computed;
+        return {
+            ..._computed,
+            doW,
+            doH,
+            onTopEdge,
+            onLeftEdge,
+            onRightEdge,
+            onBottomEdge,
+            handle,
+            pressang
+        };
     }
 
     _cursorPoint(e) {
@@ -509,7 +509,9 @@ export default class DraggableSVG extends Subject {
             ch,
             transform,
             revX,
-            revY
+            revY,
+            doW,
+            doH
         } = this.storage;
 
         const {
@@ -525,7 +527,9 @@ export default class DraggableSVG extends Subject {
             height: newHeight
         } = box.getBBox();
 
-        const ratio = (cw + dx) / cw;
+        const ratio = doW || (!doW && !doH)
+            ? (cw + dx) / cw
+            : (ch + dy) / ch;
 
         newWidth = proportions ? cw * ratio : cw + dx;
         newHeight = proportions ? ch * ratio : ch + dy;
@@ -564,11 +568,17 @@ export default class DraggableSVG extends Subject {
             scaleY
         };
 
+        const deltaW = newWidth - cw,
+            deltaH = newHeight - ch;
+
+        const newX = left - deltaW * (doH ? 0.5 : (revX ? 1 : 0)),
+            newY = top - deltaH * (doW ? 0.5 : (revY ? 1 : 0));
+
         applyTransformToHandles(
             storage,
             {
-                x: revX ? left - (newWidth - cw) : left,
-                y: revY ? top - (newHeight - ch) : top,
+                x: newX,
+                y: newY,
                 width: newWidth,
                 height: newHeight,
             },
@@ -703,7 +713,9 @@ export default class DraggableSVG extends Subject {
     _getState(params) {
         const {
             revX,
-            revY
+            revY,
+            doW,
+            doH
         } = params;
 
         const {
@@ -745,10 +757,12 @@ export default class DraggableSVG extends Subject {
 
         const elMatrix = getTransformToElement(element, parent),
             ctm = getTransformToElement(element, container),
-            boxGroup = box.parentNode,
-            boxCTM = getTransformToElement(boxGroup, container);
+            boxCTM = getTransformToElement(box.parentNode, container);
         
         const parentMatrix = getTransformToElement(parent, container);
+
+        const scaleX = el_x + el_w * (doH ? 0.5 : revX ? 1 : 0),
+            scaleY = el_y + el_h * (doW ? 0.5 : revY ? 1 : 0);
 
         const transform = {
             matrix: elMatrix,
@@ -759,8 +773,8 @@ export default class DraggableSVG extends Subject {
             trMatrix: createSVGMatrix(),
             scMatrix: createSVGMatrix(),
             rotMatrix: createSVGMatrix(),
-            scaleX: revX ? el_w + el_x : el_x,
-            scaleY: revY ? el_h + el_y : el_y,
+            scaleX,
+            scaleY,
             scX: Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b),
             scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d),
             bBox: eBBox
@@ -828,7 +842,9 @@ export default class DraggableSVG extends Subject {
             left: c_left,
             top: c_top,
             revX,
-            revY
+            revY,
+            doW,
+            doH
         };
     }
 
@@ -1325,12 +1341,12 @@ function createHandler(l, t, color) {
     const items = {
         cx: l,
         cy: t,
-        r: 5,
+        r: 5.5,
         fill: color,
-        stroke: color,
-        'fill-opacity': 0.2,
+        stroke: '#fff',
+        'fill-opacity': 1,
         'vector-effect': 'non-scaling-stroke',
-        'stroke-width': 2
+        'stroke-width': 1
     };
 
     Object.keys(items).map(key => {

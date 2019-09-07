@@ -67,7 +67,7 @@ export default class Draggable extends Subject {
         const controls = document.createElement('div');
 
         const handles = {
-            normal: ['sjx-hdl', 'sjx-normal'],
+            normal: ['sjx-normal'],
             tl: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-l', 'sjx-hdl-tl'],
             tr: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-r', 'sjx-hdl-tr'],
             br: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-r', 'sjx-hdl-br'],
@@ -93,9 +93,7 @@ export default class Draggable extends Subject {
             const cHandle = helper(handles.center);
             cHandle.css({
                 left: `${el.getAttribute('data-cx')}px`,
-                top: `${el.getAttribute('data-cy')}px`,
-                'border-color': 'rgb(254, 50, 50)',
-                'background-color': 'rgb(254, 50, 50, 0.2)'
+                top: `${el.getAttribute('data-cy')}px`
             });
         }
 
@@ -140,21 +138,16 @@ export default class Draggable extends Subject {
 
         const handle = helper(e.target);
 
-        //reverse axis
-        const revX = handle.is(handles.tl) ||
-            handle.is(handles.ml) ||
-            handle.is(handles.bl) ||
-            handle.is(handles.tc);
-
-        const revY = handle.is(handles.tl) ||
-            handle.is(handles.tr) ||
-            handle.is(handles.tc) ||
-            handle.is(handles.ml);
-
-        const onTopEdge = handle.is(handles.tl) || handle.is(handles.tc) || handle.is(handles.tr),
-            onLeftEdge = handle.is(handles.tl) || handle.is(handles.ml) || handle.is(handles.bl),
-            onRightEdge = handle.is(handles.tr) || handle.is(handles.mr) || handle.is(handles.br),
-            onBottomEdge = handle.is(handles.br) || handle.is(handles.bc) || handle.is(handles.bl);
+        const {
+            revX,
+            revY,
+            onTopEdge,
+            onLeftEdge,
+            onRightEdge,
+            onBottomEdge,
+            doW,
+            doH
+        } = this._checkHandles(handle, handles);
 
         //reverse angle
         const factor = handle.is(handles.tr) ||
@@ -165,7 +158,9 @@ export default class Draggable extends Subject {
         const _computed = this._getState({
             factor,
             revX,
-            revY
+            revY,
+            doW,
+            doH
         });
 
         const {
@@ -178,14 +173,15 @@ export default class Draggable extends Subject {
             clientX - _computed.center.x
         );
 
-        _computed.onTopEdge = onTopEdge;
-        _computed.onLeftEdge = onLeftEdge;
-        _computed.onRightEdge = onRightEdge;
-        _computed.onBottomEdge = onBottomEdge;
-        _computed.handle = handle;
-        _computed.pressang = pressang;
-
-        return _computed;
+        return {
+            ..._computed,
+            onTopEdge,
+            onLeftEdge,
+            onRightEdge,
+            onBottomEdge,
+            handle,
+            pressang
+        };
     }
 
     _pointToElement(data) {
@@ -272,11 +268,11 @@ export default class Draggable extends Subject {
         const isDefCenter = isDef(cHandle);
 
         const centerX = isDefCenter
-                ? parseFloat(helper(cHandle).css('left'))
-                : hW,
-            centerY = isDefCenter
-                ? parseFloat(helper(cHandle).css('top'))
-                : hH;
+            ? parseFloat(helper(cHandle).css('left'))
+            : hW;
+        const centerY = isDefCenter
+            ? parseFloat(helper(cHandle).css('top'))
+            : hH;
 
         el.setAttribute('data-cx', centerX);
         el.setAttribute('data-cy', centerY);
@@ -323,10 +319,14 @@ export default class Draggable extends Subject {
             transform,
             refang,
             revX,
-            revY
+            revY,
+            doW,
+            doH
         } = storage;
 
-        const ratio = (cw + dx) / cw;
+        const ratio = doW || (!doW && !doH)
+            ? (cw + dx) / cw
+            : (ch + dy) / ch;
 
         const newWidth = proportions ? cw * ratio : cw + dx,
             newHeight = proportions ? ch * ratio : ch + dy;
@@ -342,7 +342,9 @@ export default class Draggable extends Subject {
             newHeight,
             refang,
             revX,
-            revY
+            revY,
+            doW,
+            doH
         );
 
         const nx = coords.left - newCoords.left,
@@ -463,7 +465,9 @@ export default class Draggable extends Subject {
         const {
             factor,
             revX,
-            revY
+            revY,
+            doW,
+            doH
         } = params;
 
         const {
@@ -527,15 +531,17 @@ export default class Draggable extends Subject {
         const cw = parseFloat($controls.css('width')),
             ch = parseFloat($controls.css('height'));
 
-        //getting current coordinates considering rotation angle                                                                                                  
+        // getting current coordinates considering rotation angle                                                                                                  
         const coords = rotatedTopLeft(
-            transform.matrix[4],
-            transform.matrix[5],
+            matrix[4],
+            matrix[5],
             cw,
             ch,
             refang,
             revX,
-            revY
+            revY,
+            doW,
+            doH
         );
 
         const hW = cw / 2,
@@ -545,12 +551,12 @@ export default class Draggable extends Subject {
             isDefCenter = isDef(cHandle);
 
         const centerX = isDefCenter
-                ? parseFloat(helper(cHandle).css('left'))
-                : hW,
-            centerY = isDefCenter
-                ? parseFloat(helper(cHandle).css('top'))
-                : hH;
-        
+            ? parseFloat(helper(cHandle).css('left'))
+            : hW;
+        const centerY = isDefCenter
+            ? parseFloat(helper(cHandle).css('top'))
+            : hH;
+
         const cDelta = isDefCenter ? CENTER_DELTA : 0;
 
         return {
@@ -569,7 +575,9 @@ export default class Draggable extends Subject {
             factor,
             refang,
             revX,
-            revY
+            revY,
+            doW,
+            doH
         };
     }
 
@@ -590,7 +598,7 @@ export default class Draggable extends Subject {
 
     resetCenterPoint() {
         const { storage } = this;
-        const { 
+        const {
             handles,
         } = storage;
 

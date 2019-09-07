@@ -256,7 +256,8 @@ export default class Subject {
             doRotate,
             doSetCenter,
             revX,
-            revY
+            revY,
+            handle
         } = storage;
 
         const {
@@ -298,15 +299,18 @@ export default class Subject {
 
             self._resize(
                 dx,
-                dy
+                dy,
+                handle[0]
             );
 
             if (resizeEach) {
-                observable.notify('onresize',
+                observable.notify(
+                    'onresize',
                     self,
                     {
                         dx,
-                        dy
+                        dy,
+                        handle: handle[0]
                     }
                 );
             }
@@ -330,11 +334,11 @@ export default class Subject {
                 }
             }
 
-            let dx = dox
+            const dx = dox
                 ? snapToGrid(clientX - nx, snap.x)
                 : 0;
 
-            let dy = doy
+            const dy = doy
                 ? snapToGrid(clientY - ny, snap.y)
                 : 0;
 
@@ -380,9 +384,9 @@ export default class Subject {
         }
 
         if (doSetCenter) {
-            const { 
-                bx, 
-                by 
+            const {
+                bx,
+                by
             } = storage;
 
             const { x, y } = this._pointToControls(
@@ -425,7 +429,9 @@ export default class Subject {
             handle,
             factor,
             revX,
-            revY
+            revY,
+            doW,
+            doH
         } = computed;
 
         const doResize =
@@ -434,14 +440,14 @@ export default class Subject {
             onTopEdge ||
             onLeftEdge;
 
-        const { 
-            handles, 
-            radius 
+        const {
+            handles,
+            radius
         } = storage;
-        
-        const { 
-            axis, 
-            restrict 
+
+        const {
+            axis,
+            restrict
         } = options;
 
         if (isDef(radius)) {
@@ -473,9 +479,9 @@ export default class Subject {
             y: ny
         } = this._pointToElement({ x, y });
 
-        const { 
-            x: bx, 
-            y: by 
+        const {
+            x: bx,
+            y: by
         } = this._pointToControls({ x, y });
 
         const newStorageValues = {
@@ -528,7 +534,9 @@ export default class Subject {
             {
                 factor,
                 revX,
-                revY
+                revY,
+                doW,
+                doH
             }
         );
 
@@ -592,7 +600,7 @@ export default class Subject {
             el
         } = this;
 
-        const action = storage.doResize
+        const actionName = storage.doResize
             ? 'resize'
             : (storage.doDrag ? 'drag' : 'rotate');
 
@@ -604,21 +612,58 @@ export default class Subject {
         storage.onExecution = false;
         storage.cursor = null;
 
-        this._apply(action);
+        this._apply(actionName);
+        proxyMethods.onDrop.call(this, e, el);
 
         observable.notify(
             'onapply',
             this,
-            action
+            {
+                actionName,
+                e
+            }
         );
 
         cancelAnimFrame(storage.frame);
-        proxyMethods.onDrop.call(this, e, el);
 
         helper(document.body).css({ cursor: 'auto' });
         if (isDef(storage.radius)) {
             addClass(storage.radius, 'sjx-hidden');
         }
+    }
+
+    _checkHandles(handle, handles) {
+        const isTL = handle.is(handles.tl),
+            isTC = handle.is(handles.tc),
+            isTR = handle.is(handles.tr),
+            isBL = handle.is(handles.bl),
+            isBC = handle.is(handles.bc),
+            isBR = handle.is(handles.br),
+            isML = handle.is(handles.ml),
+            isMR = handle.is(handles.mr);
+
+        //reverse axis
+        const revX = isTL || isML || isBL || isTC,
+            revY = isTL || isTR || isTC || isML;
+
+        const onTopEdge = isTC || isTR || isTL,
+            onLeftEdge = isTL || isML || isBL,
+            onRightEdge = isTR || isMR || isBR,
+            onBottomEdge = isBR || isBC || isBL;
+
+        const doW = isML || isMR,
+            doH = isTC || isBC;
+
+        return {
+            revX,
+            revY,
+            onTopEdge,
+            onLeftEdge,
+            onRightEdge,
+            onBottomEdge,
+            doW,
+            doH
+        };
     }
 
     _onMouseDown(e) {
@@ -698,20 +743,22 @@ export default class Subject {
     notifyResize(data) {
         const {
             dx,
-            dy,
-            dox,
-            doy
+            dy
         } = data;
 
         this._resize(
             dx,
-            dy,
-            dox,
-            doy
+            dy
         );
     }
 
-    notifyApply(actionName) {
+    notifyApply(data) {
+        const {
+            actionName,
+            e
+        } = data;
+
+        this.proxyMethods.onDrop.call(this, e, this.el);
         this._apply(actionName);
     }
 

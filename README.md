@@ -102,7 +102,7 @@ subjx('.draggable').drag({
     onMove(dx, dy) {
         // fires on moving
     },
-    onResize(dx, dy) {
+    onResize(dx, dy, handle) {
         // fires on resizing
     },
     onRotate(rad) {

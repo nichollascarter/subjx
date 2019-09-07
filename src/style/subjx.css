@@ -13,21 +13,16 @@
     top: 0;
     left: 0;
     z-index: 2147483647;
-    border: 1px dashed;
+    border: 1px dashed #32B5FE;
+    background-color:rgba(0, 168, 255, 0.1);
 }
 
 .sjx-hdl {
     border-radius: 50%;
     width: 12px;
     height: 12px;
-    border: 2px solid;
-}
-
-.sjx-controls, .sjx-hdl {
-    position: absolute;
-    border-color: #32B5FE;
-    box-sizing: border-box;
-    background-color:rgba(0, 168, 255, 0.2);
+    border: 1px solid #fff;
+    background-color:rgb(0, 168, 255);
 }
 
 .sjx-hdl-t {
@@ -54,19 +49,26 @@
     left: calc(100% - 6px);
 }
 
+.sjx-hdl-mc {
+    background-color: rgb(254, 50, 50);
+}
+
 .sjx-rotator {
     left: calc(100% + 45px);
 }
 
 .sjx-normal {
     display: inline-block;
-    box-sizing: border-box;
-    border-width: 0.5px;
-    border-style: dashed;
+    border: 0.5px dashed rgb(0, 168, 255);
     top: 50%;
     left: 100%;
     width: 50px;
     height: 0;
+}
+
+.sjx-controls, .sjx-hdl, .sjx-normal {
+    position: absolute;
+    box-sizing: border-box;
 }
 
 .sjx-hidden {

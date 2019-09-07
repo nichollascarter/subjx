@@ -195,8 +195,8 @@
         onMove() {
             //console.log('is moving');
         },
-        onResize(dx, dy) {
-            //console.log('is resizing');
+        onResize(dx, dy, handle) {
+            //console.log(handle);
         },
         onRotate(rad) {
             //console.log('is rotating');
@@ -212,16 +212,17 @@
     const svgOptions = {
         container: '#svg-container',
         restrict: '#svg-container',
-        //proportions: true,
+        proportions: true,
         //rotationPoint: true,
         //themeColor: 'white',
         each: {
-            //move: true,
-            rotate: true
+            resize: true,
+            // move: true,
+            // rotate: true
         },
         snap: {
-            x: 0,
-            y: 0,
+            x: 20,
+            y: 20,
             angle: 25
         },
         cursorMove: 'move',
@@ -253,7 +254,7 @@
     const options = {
         container: '#container',
         restrict: '#container',
-        //rotationPoint: true,
+       // rotationPoint: true,
         proportions: true,
         each: {
             move: true,
