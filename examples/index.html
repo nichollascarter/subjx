@@ -27,6 +27,16 @@
             background-color: #ffff007a;
         }
 
+        .draggable-text {
+            position: relative;
+            display: block;
+            font-size: large;
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
         .clonable {
             position: absolute;
             width: 50px;
@@ -139,8 +149,12 @@
             style="overflow: auto; box-sizing: border-box; width:100%; height:100%;position: relative; border-top: #32B5FE 1px dashed">
             <div id="container" style="box-sizing: border-box; width:100%; height:100%;position: relative;">
                 <div id='wrapper'>
-                    <div class='draggable' style='top:150px; left:100px;'></div>
-                    <div class='draggable' style='top:150px; left:400px;'></div>
+                    <div class='draggable' style='top:150px; left:100px;'>
+                        <span class="draggable-text"></span>
+                    </div>
+                    <div class='draggable' style='top:150px; left:400px;'>
+                        <span class="draggable-text"></span>
+                    </div>
                 </div>
             </div>
             <div class='clone clonable' style='background-color:yellow;top:0;'></div>
@@ -251,6 +265,27 @@
         });
     });
 
+    const htmlMethods = {
+        onInit(el) {
+            //console.log('init');
+        },
+        onMove() {
+            this.el.childNodes[1].innerHTML = 'Draggable';
+        },
+        onResize(dx, dy, handle) {
+            this.el.childNodes[1].innerHTML = 'Resizable';
+        },
+        onRotate(rad) {
+            this.el.childNodes[1].innerHTML = 'Rotatable';
+        },
+        onDrop(e, el) {
+            //console.log('is dropped');
+        },
+        onDestroy(el) {
+            //console.log('is destroyed');
+        }
+    };
+
     const options = {
         container: '#container',
         restrict: '#container',
@@ -268,7 +303,7 @@
         cursorMove: 'move',
         cursorRotate: 'crosshair',
         cursorResize: 'pointer',
-        ...methods
+        ...htmlMethods
     };
 
     const Draggables = subjx('.draggable').drag(options);
