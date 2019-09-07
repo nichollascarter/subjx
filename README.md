@@ -1,8 +1,16 @@
-# Drag/Resize/Rotate library
+<h2 align="middle">
+    Drag/Resize/Rotate library
+</h2>
 
-Touch-enabled draggable, resizable, rotatable library for creating drag-n-drop applications.
+<p align="center">
+    <img src="https://raw.githubusercontent.com/nichollascarter/subjx/master/examples/demo.gif">
+</p>
 
-# Usage
+<h3 align="middle">
+    Touch-enabled draggable, resizable, rotatable library for creating drag-n-drop applications.
+</h3>
+
+## Usage
 
 Library provides dragging/resizing/rotating SVG/HTML Elements.
 
