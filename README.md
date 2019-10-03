@@ -1,5 +1,5 @@
 <h2 align="middle">
-    Drag/Resize/Rotate library
+    Subjx(dragging/resizing/rotating)
 </h2>
 
 <p align="center">
@@ -12,7 +12,7 @@
 
 ## Usage
 
-Library provides dragging/resizing/rotating SVG/HTML Elements.
+Library provides dragging/resizing/rotating/snapping SVG/HTML Elements.
 
 ## [Demo](http://jsfiddle.net/nichollascarter/qgwzch0v/)
 
@@ -35,6 +35,7 @@ Including via a `<script>` tag:
 
 ```javascript
 import subjx from 'subjx';
+import 'subjx/dist/style/subjx.css';
 
 // possible parameters
 const xElem = subjx( 'selector' ) |
@@ -79,7 +80,7 @@ subjx('.draggable').drag({
     // keep aspect ratio when resizing
     proportions: true,
     // ----- experimental options ------
-    // show rotation point
+    // show/manipulate rotation point(not tested with HTML elements)
     rotationPoint: true,
     // restrict moving
     // spreads to dragging one element 
@@ -99,7 +100,8 @@ const createDraggableAndSubscribe = e => {
 Allowed SVG elements:
 `path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `circle`, `g`
 
-#### Warning: group resizing in experimental mode
+#### Notice: In most cases, it is recommended to use 'proportions' options
+
 
 Avaliable methods:
 ```javascript
