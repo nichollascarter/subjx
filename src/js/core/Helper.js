@@ -105,22 +105,22 @@ export default class Helper {
 
     on() {
         let len = this.length;
-
+ 
         while (len--) {
             if (!this[len].events) {
                 this[len].events = {};
                 this[len].events[arguments[0]] = [];
             }
 
-            if (arguments.length === 2) {
+            if (typeof (arguments[1]) !== 'string') {
                 if (document.addEventListener) {
-                    this[len].addEventListener(arguments[0], arguments[1], false);
+                    this[len].addEventListener(arguments[0], arguments[1], arguments[2]);
                 } else if (document.attachEvent) {
                     this[len].attachEvent(`on${arguments[0]}`, arguments[1]);
                 } else {
                     this[len][`on${arguments[0]}`] = arguments[1];
                 }
-            } else if (arguments.length === 3 && typeof (arguments[1]) === 'string') {
+            } else {
                 listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], arguments[3], true);
             }
         }
@@ -136,15 +136,15 @@ export default class Helper {
                 this[len].events[arguments[0]] = [];
             }
 
-            if (arguments.length === 2) {
+            if (typeof (arguments[1]) !== 'string') {
                 if (document.removeEventListener) {
-                    this[len].removeEventListener(arguments[0], arguments[1], false);
+                    this[len].removeEventListener(arguments[0], arguments[1], arguments[2]);
                 } else if (document.detachEvent) {
                     this[len].detachEvent(`on${arguments[0]}`, arguments[1]);
                 } else {
                     this[len][`on${arguments[0]}`] = null;
                 }
-            } else if (arguments.length === 3 && typeof (arguments[1]) === 'string') {
+            } else {
                 listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], arguments[3], false);
             }
         }

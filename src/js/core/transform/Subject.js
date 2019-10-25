@@ -6,7 +6,8 @@ import {
     isDef,
     isUndef,
     isFunc,
-    warn
+    warn,
+    eventOptions
 } from '../util/util';
 
 import {
@@ -65,8 +66,8 @@ export default class Subject {
             helper(document)
                 .off('mousemove', this._onMouseMove)
                 .off('mouseup', this._onMouseUp)
-                .off('touchmove', this._onTouchMove)
-                .off('touchend', this._onTouchEnd);
+                .off('touchmove', this._onTouchMove, eventOptions)
+                .off('touchend', this._onTouchEnd, eventOptions);
         }
 
         removeClass(el, 'sjx-drag');
@@ -78,11 +79,17 @@ export default class Subject {
         delete this.storage;
     }
 
-    _init() { }
+    _init() {
+        throw Error(`'_init()' method not implemented`);
+    }
 
-    _destroy() { }
+    _destroy() {
+        throw Error(`'_destroy()' method not implemented`);
+    }
 
-    _cursorPoint() { }
+    _cursorPoint() {
+        throw Error(`'_cursorPoint()' method not implemented`);
+    }
 
     _drag() {
         this._processMove(...arguments);
@@ -404,10 +411,6 @@ export default class Subject {
     }
 
     _start(e) {
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
-
         const {
             observable,
             storage,
@@ -544,10 +547,6 @@ export default class Subject {
     }
 
     _moving(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-
         const {
             storage,
             options
@@ -589,10 +588,6 @@ export default class Subject {
     }
 
     _end(e) {
-        if (isDef(e) && e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
-
         const {
             observable,
             storage,
@@ -667,6 +662,9 @@ export default class Subject {
     }
 
     _onMouseDown(e) {
+        if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+        }
         this._start(e);
         helper(document)
             .on('mousemove', this._onMouseMove)
@@ -674,13 +672,19 @@ export default class Subject {
     }
 
     _onTouchStart(e) {
+        if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+        }
         this._start(e.touches[0]);
         helper(document)
-            .on('touchmove', this._onTouchMove)
-            .on('touchend', this._onTouchEnd);
+            .on('touchmove', this._onTouchMove, eventOptions)
+            .on('touchend', this._onTouchEnd, eventOptions);
     }
 
     _onMouseMove(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
         this._moving(
             e,
             this.el
@@ -688,6 +692,9 @@ export default class Subject {
     }
 
     _onTouchMove(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
         this._moving(
             e.touches[0],
             this.el
@@ -695,6 +702,9 @@ export default class Subject {
     }
 
     _onMouseUp(e) {
+        if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+        }
         helper(document)
             .off('mousemove', this._onMouseMove)
             .off('mouseup', this._onMouseUp);
@@ -706,6 +716,9 @@ export default class Subject {
     }
 
     _onTouchEnd(e) {
+        if (isDef(e) && e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+        }
         helper(document)
             .off('touchmove', this._onTouchMove)
             .off('touchend', this._onTouchEnd);
@@ -718,46 +731,31 @@ export default class Subject {
         }
     }
 
-    notifyMove(data) {
-        const {
-            dx,
-            dy
-        } = data;
-
+    notifyMove({ dx, dy }) {
         this._drag(
             dx,
             dy
         );
     }
 
-    notifyRotate(data) {
+    notifyRotate({ radians }) {
         const {
             snap
         } = this.options;
 
         this._rotate(
-            snapToGrid(data.radians, snap.angle)
+            snapToGrid(radians, snap.angle)
         );
     }
 
-    notifyResize(data) {
-        const {
-            dx,
-            dy
-        } = data;
-
+    notifyResize({ dx, dy }) {
         this._resize(
             dx,
             dy
         );
     }
 
-    notifyApply(data) {
-        const {
-            actionName,
-            e
-        } = data;
-
+    notifyApply({ e, actionName }) {
         this.proxyMethods.onDrop.call(this, e, this.el);
         this._apply(actionName);
     }

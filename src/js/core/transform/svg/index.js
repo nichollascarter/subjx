@@ -248,7 +248,7 @@ export default class DraggableSVG extends Subject {
         };
     }
 
-    _cursorPoint(e) {
+    _cursorPoint({ clientX, clientY }) {
         const {
             container
         } = this.options;
@@ -256,20 +256,15 @@ export default class DraggableSVG extends Subject {
         return pointTo(
             container.getScreenCTM().inverse(),
             container,
-            e.clientX,
-            e.clientY
+            clientX,
+            clientY
         );
     }
 
-    _pointToElement(data) {
+    _pointToElement({ x, y }) {
         const {
             transform
         } = this.storage;
-
-        const {
-            x,
-            y
-        } = data;
 
         const { ctm } = transform;
         const matrix = ctm.inverse();
@@ -283,15 +278,10 @@ export default class DraggableSVG extends Subject {
         );
     }
 
-    _pointToControls(data) {
+    _pointToControls({ x, y }) {
         const {
             transform
         } = this.storage;
-
-        const {
-            x,
-            y
-        } = data;
 
         const { boxCTM } = transform;
         const matrix = boxCTM.inverse();
@@ -710,14 +700,7 @@ export default class DraggableSVG extends Subject {
         );
     }
 
-    _getState(params) {
-        const {
-            revX,
-            revY,
-            doW,
-            doH
-        } = params;
-
+    _getState({ revX, revY, doW, doH }) {
         const {
             el: element,
             storage,
@@ -849,13 +832,11 @@ export default class DraggableSVG extends Subject {
     }
 
     _moveCenterHandle(x, y) {
-        const { storage } = this;
-
         const { 
             handles, 
             center, 
             radius 
-        } = storage;
+        } = this.storage;
 
         if (isUndef(handles.center)) return;
 
@@ -911,12 +892,7 @@ export default class DraggableSVG extends Subject {
 
 }
 
-function applyTranslate(element, data) {
-    const {
-        x,
-        y
-    } = data;
-
+function applyTranslate(element, { x, y }) {
     const attrs = [];
 
     switch (element.tagName.toLowerCase()) {

@@ -6,7 +6,8 @@ import {
     warn,
     isDef,
     isUndef,
-    isFunc
+    isFunc,
+    eventOptions
 } from '../util/util';
 
 import {
@@ -101,10 +102,6 @@ export default class Clone {
     }
 
     _start(e) {
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
-        
         const { 
             storage,
             el
@@ -138,11 +135,7 @@ export default class Clone {
         this._draw();
     }
 
-    _move(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-    
+    _move(e) {    
         const { storage } = this;
     
         storage.clientX = e.clientX;
@@ -151,11 +144,7 @@ export default class Clone {
         storage.doMove = true;
     }
     
-    _end(e) {
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
-    
+    _end(e) {    
         const { 
             storage
         } = this;
@@ -218,6 +207,9 @@ export default class Clone {
     }
 
     _onMouseDown(e) {
+        if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+        }
         this._start(e);
         helper(document)
             .on('mousemove', this._onMouseMove)
@@ -225,10 +217,16 @@ export default class Clone {
     }
 
     _onMouseMove(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
         this._move(e);
     }
 
     _onMouseUp(e) {
+        if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+        }
         this._end(e);
         helper(document)
             .off('mousemove', this._onMouseMove)
@@ -236,23 +234,32 @@ export default class Clone {
     }
 
     _onTouchStart(e) {
+        if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+        }
         this._start(e.touches[0]);
         helper(document)
-            .on('touchmove', this._onTouchMove)
-            .on('touchend', this._onTouchEnd);
+            .on('touchmove', this._onTouchMove, eventOptions)
+            .on('touchend', this._onTouchEnd, eventOptions);
     }
 
     _onTouchMove(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
         this._move(e.touches[0]);
     }
 
     _onTouchEnd(e) {
+        if (e.stopImmediatePropagation) {
+            e.stopImmediatePropagation();
+        }
         if (e.touches.length === 0) {
             this._end(e.changedTouches[0]);
         }
         helper(document)
-            .off('touchmove', this._onTouchMove)
-            .off('touchend', this._onTouchEnd);
+            .off('touchmove', this._onTouchMove, eventOptions)
+            .off('touchend', this._onTouchEnd, eventOptions);
     }
 
 }

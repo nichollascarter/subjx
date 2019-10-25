@@ -184,15 +184,10 @@ export default class Draggable extends Subject {
         };
     }
 
-    _pointToElement(data) {
+    _pointToElement({ x, y }) {
         const {
             transform,
         } = this.storage;
-
-        const {
-            x,
-            y
-        } = data;
 
         const ctm = [...transform.matrix];
         ctm[4] = ctm[5] = 0;
@@ -218,7 +213,7 @@ export default class Draggable extends Subject {
         );
     }
 
-    _cursorPoint(e) {
+    _cursorPoint({ clientX, clientY }) {
         const {
             container
         } = this.options;
@@ -229,8 +224,8 @@ export default class Draggable extends Subject {
 
         return multiplyMatrixAndPoint(
             {
-                x: e.clientX,
-                y: e.clientY
+                x: clientX,
+                y: clientY
             },
             matrixInvert(
                 globalMatrix
@@ -597,10 +592,9 @@ export default class Draggable extends Subject {
     }
 
     resetCenterPoint() {
-        const { storage } = this;
         const {
             handles,
-        } = storage;
+        } = this.storage;
 
         helper(handles.center).css(
             {

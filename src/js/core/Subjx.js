@@ -1,6 +1,6 @@
 import Helper from './Helper';
-import drag from './transform/index';
-import clone from './clone/index';
+import drag from './transform';
+import clone from './clone';
 
 export default class Subjx extends Helper {
 

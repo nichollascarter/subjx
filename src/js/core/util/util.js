@@ -1,3 +1,7 @@
+export const eventOptions = {
+    passive: false
+};
+
 export const requestAnimFrame = 
     window.requestAnimationFrame ||
     window.mozRequestAnimationFrame ||
