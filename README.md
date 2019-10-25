@@ -151,3 +151,6 @@ xCloneable.forEach(item => {
     item.disable();
 });
 ```
+
+## Licence
+MIT (c) Karen Sarksyan
