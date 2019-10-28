@@ -1,291 +1,3604 @@
-(function webpackUniversalModuleDefinition(root, factory) {
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory();
-	else if(typeof define === 'function' && define.amd)
-		define([], factory);
-	else if(typeof exports === 'object')
-		exports["subjx"] = factory();
-	else
-		root["subjx"] = factory();
-})(window, function() {
-return /******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// define __esModule on exports
-/******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 		}
-/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 	};
-/******/
-/******/ 	// create a fake namespace object
-/******/ 	// mode & 1: value is a module id, require it
-/******/ 	// mode & 2: merge all properties of value into the ns
-/******/ 	// mode & 4: return value when already ns object
-/******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
-/******/ 		return ns;
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/js/index.js");
-/******/ })
-/************************************************************************/
-/******/ ({
+(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    (global = global || self, global.subjx = factory());
+}(this, (function () { 'use strict';
 
-/***/ "./src/js/core/Helper.js":
-/*!*******************************!*\
-  !*** ./src/js/core/Helper.js ***!
-  \*******************************/
-/*! exports provided: default, helper */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+    function _typeof(obj) {
+      if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+        _typeof = function (obj) {
+          return typeof obj;
+        };
+      } else {
+        _typeof = function (obj) {
+          return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+        };
+      }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"default\", function() { return Helper; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"helper\", function() { return helper; });\n/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./util/util */ \"./src/js/core/util/util.js\");\nfunction _typeof(obj) { if (typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol && obj !== Symbol.prototype ? \"symbol\" : typeof obj; }; } return _typeof(obj); }\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\n\n\nvar Helper =\n/*#__PURE__*/\nfunction () {\n  function Helper(params) {\n    _classCallCheck(this, Helper);\n\n    if (Object(_util_util__WEBPACK_IMPORTED_MODULE_0__[\"isDef\"])(params)) {\n      if (typeof params === 'string') {\n        var selector = document.querySelectorAll(params);\n        this.length = selector.length;\n\n        for (var count = 0; count < this.length; count++) {\n          this[count] = selector[count];\n        }\n      } else if (params.nodeType === 1 || params === document) {\n        this[0] = params;\n        this.length = 1;\n      } else if (params instanceof Helper || _typeof(params) === 'object') {\n        this.length = params.length;\n\n        for (var _count = 0; _count < this.length; _count++) {\n          this[_count] = params[_count];\n        }\n      } else if (Array.isArray(params)) {\n        this.length = 0;\n\n        for (var _count2 = 0; _count2 < this.length; _count2++) {\n          if (params.nodeType === 1) {\n            this[_count2] = params[_count2];\n            this.length++;\n          }\n        }\n      }\n    } else {\n      throw new Error(\"Passed parameter must be selector/element/elementArray\");\n    }\n  }\n\n  _createClass(Helper, [{\n    key: \"css\",\n    value: function css(prop) {\n      var _getStyle = function _getStyle(obj) {\n        var len = obj.length;\n\n        while (len--) {\n          if (obj[len].currentStyle) {\n            return obj[len].currentStyle[prop];\n          } else if (document.defaultView && document.defaultView.getComputedStyle) {\n            return document.defaultView.getComputedStyle(obj[len], '')[prop];\n          } else {\n            return obj[len].style[prop];\n          }\n        }\n      };\n\n      var _setStyle = function _setStyle(obj, options) {\n        var len = obj.length;\n\n        while (len--) {\n          for (var property in options) {\n            obj[len].style[property] = options[property];\n          }\n        }\n\n        return obj.style;\n      };\n\n      var methods = {\n        setStyle: function setStyle(options) {\n          return _setStyle(this, options);\n        },\n        getStyle: function getStyle() {\n          return _getStyle(this);\n        }\n      };\n\n      if (typeof prop === 'string') {\n        return methods.getStyle.apply(this, _util_util__WEBPACK_IMPORTED_MODULE_0__[\"arrSlice\"].call(arguments, 1));\n      } else if (_typeof(prop) === 'object' || !prop) {\n        return methods.setStyle.apply(this, arguments);\n      } else {\n        Object(_util_util__WEBPACK_IMPORTED_MODULE_0__[\"warn\"])(\"Method \".concat(prop, \" does not exist\"));\n      }\n\n      return false;\n    }\n  }, {\n    key: \"find\",\n    value: function find(sel) {\n      var len = this.length,\n          selector;\n\n      while (len--) {\n        selector = this[len].querySelectorAll(sel);\n        return helper(selector);\n      }\n    }\n  }, {\n    key: \"each\",\n    value: function each(fn) {\n      var arr = _util_util__WEBPACK_IMPORTED_MODULE_0__[\"arrSlice\"].call(this, 0);\n\n      var _loop = function _loop(index) {\n        var func = function func() {\n          return arr[index];\n        };\n\n        fn.call(func());\n      };\n\n      for (var index = arr.length - 1; index >= 0; --index) {\n        _loop(index);\n      }\n\n      return this;\n    }\n  }, {\n    key: \"on\",\n    value: function on() {\n      var len = this.length;\n\n      while (len--) {\n        if (!this[len].events) {\n          this[len].events = {};\n          this[len].events[arguments[0]] = [];\n        }\n\n        if (typeof arguments[1] !== 'string') {\n          if (document.addEventListener) {\n            this[len].addEventListener(arguments[0], arguments[1], arguments[2]);\n          } else if (document.attachEvent) {\n            this[len].attachEvent(\"on\".concat(arguments[0]), arguments[1]);\n          } else {\n            this[len][\"on\".concat(arguments[0])] = arguments[1];\n          }\n        } else {\n          listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], arguments[3], true);\n        }\n      }\n\n      return this;\n    }\n  }, {\n    key: \"off\",\n    value: function off() {\n      var len = this.length;\n\n      while (len--) {\n        if (!this[len].events) {\n          this[len].events = {};\n          this[len].events[arguments[0]] = [];\n        }\n\n        if (typeof arguments[1] !== 'string') {\n          if (document.removeEventListener) {\n            this[len].removeEventListener(arguments[0], arguments[1], arguments[2]);\n          } else if (document.detachEvent) {\n            this[len].detachEvent(\"on\".concat(arguments[0]), arguments[1]);\n          } else {\n            this[len][\"on\".concat(arguments[0])] = null;\n          }\n        } else {\n          listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], arguments[3], false);\n        }\n      }\n\n      return this;\n    }\n  }, {\n    key: \"is\",\n    value: function is(selector) {\n      var _sel = helper(selector);\n\n      var len = this.length;\n\n      while (len--) {\n        if (this[len] === _sel[len]) return true;\n      }\n\n      return false;\n    }\n  }]);\n\n  return Helper;\n}();\n\n\n\nfunction listenerDelegate(el, evt, sel, handler, options, act) {\n  var doit = function doit(event) {\n    var t = event.target;\n\n    while (t && t !== this) {\n      if (t.matches(sel)) {\n        handler.call(t, event);\n      }\n\n      t = t.parentNode;\n    }\n  };\n\n  if (act === true) {\n    if (document.addEventListener) {\n      el.addEventListener(evt, doit, options || false);\n    } else if (document.attachEvent) {\n      el.attachEvent(\"on\".concat(evt), doit);\n    } else {\n      el[\"on\".concat(evt)] = doit;\n    }\n  } else {\n    if (document.removeEventListener) {\n      el.removeEventListener(evt, doit, options || false);\n    } else if (document.detachEvent) {\n      el.detachEvent(\"on\".concat(evt), doit);\n    } else {\n      el[\"on\".concat(evt)] = null;\n    }\n  }\n}\n\nfunction helper(params) {\n  return new Helper(params);\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/Helper.js?");
+      return _typeof(obj);
+    }
 
-/***/ }),
+    function _classCallCheck(instance, Constructor) {
+      if (!(instance instanceof Constructor)) {
+        throw new TypeError("Cannot call a class as a function");
+      }
+    }
 
-/***/ "./src/js/core/Subjx.js":
-/*!******************************!*\
-  !*** ./src/js/core/Subjx.js ***!
-  \******************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+    function _defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
+    }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"default\", function() { return Subjx; });\n/* harmony import */ var _Helper__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Helper */ \"./src/js/core/Helper.js\");\n/* harmony import */ var _transform__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./transform */ \"./src/js/core/transform/index.js\");\n/* harmony import */ var _clone__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./clone */ \"./src/js/core/clone/index.js\");\nfunction _typeof(obj) { if (typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol && obj !== Symbol.prototype ? \"symbol\" : typeof obj; }; } return _typeof(obj); }\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\nfunction _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === \"object\" || typeof call === \"function\")) { return call; } return _assertThisInitialized(self); }\n\nfunction _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError(\"this hasn't been initialised - super() hasn't been called\"); } return self; }\n\nfunction _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }\n\nfunction _inherits(subClass, superClass) { if (typeof superClass !== \"function\" && superClass !== null) { throw new TypeError(\"Super expression must either be null or a function\"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }\n\nfunction _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }\n\n\n\n\n\nvar Subjx =\n/*#__PURE__*/\nfunction (_Helper) {\n  _inherits(Subjx, _Helper);\n\n  function Subjx(params) {\n    _classCallCheck(this, Subjx);\n\n    return _possibleConstructorReturn(this, _getPrototypeOf(Subjx).call(this, params));\n  }\n\n  _createClass(Subjx, [{\n    key: \"drag\",\n    value: function drag() {\n      return _transform__WEBPACK_IMPORTED_MODULE_1__[\"default\"].call.apply(_transform__WEBPACK_IMPORTED_MODULE_1__[\"default\"], [this].concat(Array.prototype.slice.call(arguments)));\n    }\n  }, {\n    key: \"clone\",\n    value: function clone() {\n      return _clone__WEBPACK_IMPORTED_MODULE_2__[\"default\"].call.apply(_clone__WEBPACK_IMPORTED_MODULE_2__[\"default\"], [this].concat(Array.prototype.slice.call(arguments)));\n    }\n  }]);\n\n  return Subjx;\n}(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"default\"]);\n\n\n\n//# sourceURL=webpack://subjx/./src/js/core/Subjx.js?");
+    function _createClass(Constructor, protoProps, staticProps) {
+      if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) _defineProperties(Constructor, staticProps);
+      return Constructor;
+    }
 
-/***/ }),
+    function _defineProperty(obj, key, value) {
+      if (key in obj) {
+        Object.defineProperty(obj, key, {
+          value: value,
+          enumerable: true,
+          configurable: true,
+          writable: true
+        });
+      } else {
+        obj[key] = value;
+      }
 
-/***/ "./src/js/core/clone/clone.js":
-/*!************************************!*\
-  !*** ./src/js/core/clone/clone.js ***!
-  \************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+      return obj;
+    }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"default\", function() { return Clone; });\n/* harmony import */ var _Helper__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Helper */ \"./src/js/core/Helper.js\");\n/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../util/util */ \"./src/js/core/util/util.js\");\n/* harmony import */ var _util_css_util__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../util/css-util */ \"./src/js/core/util/css-util.js\");\nfunction _typeof(obj) { if (typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol && obj !== Symbol.prototype ? \"symbol\" : typeof obj; }; } return _typeof(obj); }\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\n\n\n\n\nvar Clone =\n/*#__PURE__*/\nfunction () {\n  function Clone(el, options) {\n    _classCallCheck(this, Clone);\n\n    this.el = el;\n    this.options = options || {};\n    this.storage = null;\n    this._onMouseDown = this._onMouseDown.bind(this);\n    this._onTouchStart = this._onTouchStart.bind(this);\n    this._onMouseMove = this._onMouseMove.bind(this);\n    this._onTouchMove = this._onTouchMove.bind(this);\n    this._onMouseUp = this._onMouseUp.bind(this);\n    this._onTouchEnd = this._onTouchEnd.bind(this);\n    this._animate = this._animate.bind(this);\n    this.enable();\n  }\n\n  _createClass(Clone, [{\n    key: \"enable\",\n    value: function enable() {\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isUndef\"])(this.storage)) {\n        this._init();\n      } else {\n        Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"warn\"])('Already enabled');\n      }\n    }\n  }, {\n    key: \"disable\",\n    value: function disable() {\n      this._destroy();\n    }\n  }, {\n    key: \"_init\",\n    value: function _init() {\n      var self = this;\n      var el = self.el,\n          options = self.options;\n      var $el = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(el);\n      var style = options.style,\n          onDrop = options.onDrop,\n          appendTo = options.appendTo,\n          stack = options.stack;\n      var css = {\n        position: 'absolute',\n        'z-index': '2147483647',\n        style: Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(style) && _typeof(style) === 'object' ? style : undefined //...((isDef(style) && typeof style === 'object') && style)\n\n      };\n      var dropZone = Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(stack) ? Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(stack)[0] : document;\n\n      var _onDrop = Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isFunc\"])(onDrop) ? function (evt) {\n        var clone = this.storage.clone;\n        var result = Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"objectsCollide\"])(clone, dropZone);\n\n        if (result) {\n          onDrop.call(this, evt, this.el, clone);\n        }\n      } : function () {};\n\n      self.storage = {\n        onDrop: _onDrop,\n        options: options,\n        css: css,\n        parent: Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(appendTo) ? Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(appendTo)[0] : document.body,\n        stack: dropZone\n      };\n      $el.on('mousedown', self._onMouseDown).on('touchstart', self._onTouchStart);\n    }\n  }, {\n    key: \"_start\",\n    value: function _start(e) {\n      var storage = this.storage,\n          el = this.el;\n      var parent = storage.parent,\n          css = storage.css;\n      var offset = Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getOffset\"])(parent);\n      var clientX = e.clientX,\n          clientY = e.clientY;\n      css.left = \"\".concat(clientX - offset.left, \"px\");\n      css.top = \"\".concat(clientY - offset.top, \"px\");\n      var clone = el.cloneNode(true);\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(clone).css(css);\n      storage.clientX = clientX;\n      storage.clientY = clientY;\n      storage.cx = clientX;\n      storage.cy = clientY;\n      storage.clone = clone;\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(parent)[0].appendChild(clone);\n\n      this._draw();\n    }\n  }, {\n    key: \"_move\",\n    value: function _move(e) {\n      var storage = this.storage;\n      storage.clientX = e.clientX;\n      storage.clientY = e.clientY;\n      storage.doDraw = true;\n      storage.doMove = true;\n    }\n  }, {\n    key: \"_end\",\n    value: function _end(e) {\n      var storage = this.storage;\n      var clone = storage.clone,\n          frameId = storage.frameId,\n          onDrop = storage.onDrop;\n      storage.doDraw = false;\n      Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"cancelAnimFrame\"])(frameId);\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isUndef\"])(clone)) return;\n      onDrop.call(this, e);\n      clone.parentNode.removeChild(clone);\n      delete storage.clone;\n    }\n  }, {\n    key: \"_draw\",\n    value: function _draw() {\n      this._animate();\n    }\n  }, {\n    key: \"_animate\",\n    value: function _animate() {\n      var storage = this.storage;\n      storage.frameId = Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"requestAnimFrame\"])(this._animate);\n      var doDraw = storage.doDraw,\n          clientX = storage.clientX,\n          clientY = storage.clientY,\n          cx = storage.cx,\n          cy = storage.cy,\n          clone = storage.clone;\n      if (!doDraw) return;\n      storage.doDraw = false;\n      var translate = \"translate(\".concat(clientX - cx, \"px, \").concat(clientY - cy, \"px)\");\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(clone).css({\n        transform: translate,\n        webkitTranform: translate,\n        mozTransform: translate,\n        msTransform: translate,\n        otransform: translate\n      });\n    }\n  }, {\n    key: \"_destroy\",\n    value: function _destroy() {\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isUndef\"])(this.storage)) return;\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(this.el).off('mousedown', this._onMouseDown).off('touchstart', this._onTouchStart);\n      delete this.storage;\n    }\n  }, {\n    key: \"_onMouseDown\",\n    value: function _onMouseDown(e) {\n      if (e.stopImmediatePropagation) {\n        e.stopImmediatePropagation();\n      }\n\n      this._start(e);\n\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document).on('mousemove', this._onMouseMove).on('mouseup', this._onMouseUp);\n    }\n  }, {\n    key: \"_onMouseMove\",\n    value: function _onMouseMove(e) {\n      if (e.preventDefault) {\n        e.preventDefault();\n      }\n\n      this._move(e);\n    }\n  }, {\n    key: \"_onMouseUp\",\n    value: function _onMouseUp(e) {\n      if (e.stopImmediatePropagation) {\n        e.stopImmediatePropagation();\n      }\n\n      this._end(e);\n\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document).off('mousemove', this._onMouseMove).off('mouseup', this._onMouseUp);\n    }\n  }, {\n    key: \"_onTouchStart\",\n    value: function _onTouchStart(e) {\n      if (e.stopImmediatePropagation) {\n        e.stopImmediatePropagation();\n      }\n\n      this._start(e.touches[0]);\n\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document).on('touchmove', this._onTouchMove, _util_util__WEBPACK_IMPORTED_MODULE_1__[\"eventOptions\"]).on('touchend', this._onTouchEnd, _util_util__WEBPACK_IMPORTED_MODULE_1__[\"eventOptions\"]);\n    }\n  }, {\n    key: \"_onTouchMove\",\n    value: function _onTouchMove(e) {\n      if (e.preventDefault) {\n        e.preventDefault();\n      }\n\n      this._move(e.touches[0]);\n    }\n  }, {\n    key: \"_onTouchEnd\",\n    value: function _onTouchEnd(e) {\n      if (e.stopImmediatePropagation) {\n        e.stopImmediatePropagation();\n      }\n\n      if (e.touches.length === 0) {\n        this._end(e.changedTouches[0]);\n      }\n\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document).off('touchmove', this._onTouchMove, _util_util__WEBPACK_IMPORTED_MODULE_1__[\"eventOptions\"]).off('touchend', this._onTouchEnd, _util_util__WEBPACK_IMPORTED_MODULE_1__[\"eventOptions\"]);\n    }\n  }]);\n\n  return Clone;\n}();\n\n\n\n//# sourceURL=webpack://subjx/./src/js/core/clone/clone.js?");
+    function ownKeys(object, enumerableOnly) {
+      var keys = Object.keys(object);
 
-/***/ }),
+      if (Object.getOwnPropertySymbols) {
+        var symbols = Object.getOwnPropertySymbols(object);
+        if (enumerableOnly) symbols = symbols.filter(function (sym) {
+          return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+        });
+        keys.push.apply(keys, symbols);
+      }
 
-/***/ "./src/js/core/clone/index.js":
-/*!************************************!*\
-  !*** ./src/js/core/clone/index.js ***!
-  \************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+      return keys;
+    }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"default\", function() { return clone; });\n/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/util */ \"./src/js/core/util/util.js\");\n/* harmony import */ var _clone__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./clone */ \"./src/js/core/clone/clone.js\");\n\n\nfunction clone(options) {\n  if (this.length) {\n    return _util_util__WEBPACK_IMPORTED_MODULE_0__[\"arrMap\"].call(this, function (item) {\n      return new _clone__WEBPACK_IMPORTED_MODULE_1__[\"default\"](item, options);\n    });\n  }\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/clone/index.js?");
+    function _objectSpread2(target) {
+      for (var i = 1; i < arguments.length; i++) {
+        var source = arguments[i] != null ? arguments[i] : {};
 
-/***/ }),
+        if (i % 2) {
+          ownKeys(source, true).forEach(function (key) {
+            _defineProperty(target, key, source[key]);
+          });
+        } else if (Object.getOwnPropertyDescriptors) {
+          Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+        } else {
+          ownKeys(source).forEach(function (key) {
+            Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+          });
+        }
+      }
 
-/***/ "./src/js/core/observable/Observable.js":
-/*!**********************************************!*\
-  !*** ./src/js/core/observable/Observable.js ***!
-  \**********************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+      return target;
+    }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"default\", function() { return Observable; });\n/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/util */ \"./src/js/core/util/util.js\");\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\n\n\nvar Observable =\n/*#__PURE__*/\nfunction () {\n  function Observable() {\n    _classCallCheck(this, Observable);\n\n    this.observers = {};\n  }\n\n  _createClass(Observable, [{\n    key: \"subscribe\",\n    value: function subscribe(eventName, sub) {\n      var obs = this.observers;\n\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_0__[\"isUndef\"])(obs[eventName])) {\n        Object.defineProperty(obs, eventName, {\n          value: []\n        });\n      }\n\n      obs[eventName].push(sub);\n      return this;\n    }\n  }, {\n    key: \"unsubscribe\",\n    value: function unsubscribe(eventName, f) {\n      var obs = this.observers;\n\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_0__[\"isDef\"])(obs[eventName])) {\n        var index = obs[eventName].indexOf(f);\n        obs[eventName].splice(index, 1);\n      }\n\n      return this;\n    }\n  }, {\n    key: \"notify\",\n    value: function notify(eventName, source, data) {\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_0__[\"isUndef\"])(this.observers[eventName])) return;\n      this.observers[eventName].forEach(function (observer) {\n        if (source === observer) return;\n\n        switch (eventName) {\n          case 'onmove':\n            observer.notifyMove(data);\n            break;\n\n          case 'onrotate':\n            observer.notifyRotate(data);\n            break;\n\n          case 'onresize':\n            observer.notifyResize(data);\n            break;\n\n          case 'onapply':\n            observer.notifyApply(data);\n            break;\n\n          case 'ongetstate':\n            observer.notifyGetState(data);\n            break;\n\n          default:\n            break;\n        }\n      });\n    }\n  }]);\n\n  return Observable;\n}();\n\n\n\n//# sourceURL=webpack://subjx/./src/js/core/observable/Observable.js?");
+    function _inherits(subClass, superClass) {
+      if (typeof superClass !== "function" && superClass !== null) {
+        throw new TypeError("Super expression must either be null or a function");
+      }
 
-/***/ }),
+      subClass.prototype = Object.create(superClass && superClass.prototype, {
+        constructor: {
+          value: subClass,
+          writable: true,
+          configurable: true
+        }
+      });
+      if (superClass) _setPrototypeOf(subClass, superClass);
+    }
 
-/***/ "./src/js/core/transform/Subject.js":
-/*!******************************************!*\
-  !*** ./src/js/core/transform/Subject.js ***!
-  \******************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+    function _getPrototypeOf(o) {
+      _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+        return o.__proto__ || Object.getPrototypeOf(o);
+      };
+      return _getPrototypeOf(o);
+    }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"default\", function() { return Subject; });\n/* harmony import */ var _Helper__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Helper */ \"./src/js/core/Helper.js\");\n/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../util/util */ \"./src/js/core/util/util.js\");\n/* harmony import */ var _util_css_util__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../util/css-util */ \"./src/js/core/util/css-util.js\");\n/* harmony import */ var _common__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./common */ \"./src/js/core/transform/common.js\");\nfunction _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }\n\nfunction _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\n\n\n\n\n\nvar Subject =\n/*#__PURE__*/\nfunction () {\n  function Subject(el, observable) {\n    _classCallCheck(this, Subject);\n\n    if (this.constructor === Subject) {\n      throw new TypeError('Cannot construct Subject instances directly');\n    }\n\n    this.el = el;\n    this.storage = null;\n    this.proxyMethods = null;\n    this.observable = observable;\n    this._onMouseDown = this._onMouseDown.bind(this);\n    this._onTouchStart = this._onTouchStart.bind(this);\n    this._onMouseMove = this._onMouseMove.bind(this);\n    this._onTouchMove = this._onTouchMove.bind(this);\n    this._onMouseUp = this._onMouseUp.bind(this);\n    this._onTouchEnd = this._onTouchEnd.bind(this);\n    this._animate = this._animate.bind(this);\n  }\n\n  _createClass(Subject, [{\n    key: \"enable\",\n    value: function enable(options) {\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isUndef\"])(this.storage)) {\n        this._processOptions(options);\n\n        this._init(this.el);\n      } else {\n        Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"warn\"])('Already enabled');\n      }\n    }\n  }, {\n    key: \"disable\",\n    value: function disable() {\n      var storage = this.storage,\n          proxyMethods = this.proxyMethods,\n          el = this.el;\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isUndef\"])(storage)) return; // unexpected case\n\n      if (storage.onExecution) {\n        this._end();\n\n        Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document).off('mousemove', this._onMouseMove).off('mouseup', this._onMouseUp).off('touchmove', this._onTouchMove, _util_util__WEBPACK_IMPORTED_MODULE_1__[\"eventOptions\"]).off('touchend', this._onTouchEnd, _util_util__WEBPACK_IMPORTED_MODULE_1__[\"eventOptions\"]);\n      }\n\n      Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"removeClass\"])(el, 'sjx-drag');\n\n      this._destroy();\n\n      this.unsubscribe();\n      proxyMethods.onDestroy.call(this, el);\n      delete this.storage;\n    }\n  }, {\n    key: \"_init\",\n    value: function _init() {\n      throw Error(\"'_init()' method not implemented\");\n    }\n  }, {\n    key: \"_destroy\",\n    value: function _destroy() {\n      throw Error(\"'_destroy()' method not implemented\");\n    }\n  }, {\n    key: \"_cursorPoint\",\n    value: function _cursorPoint() {\n      throw Error(\"'_cursorPoint()' method not implemented\");\n    }\n  }, {\n    key: \"_drag\",\n    value: function _drag() {\n      var _this$proxyMethods$on;\n\n      this._processMove.apply(this, arguments);\n\n      (_this$proxyMethods$on = this.proxyMethods.onMove).call.apply(_this$proxyMethods$on, [this].concat(Array.prototype.slice.call(arguments)));\n    }\n  }, {\n    key: \"_rotate\",\n    value: function _rotate() {\n      var _this$proxyMethods$on2;\n\n      this._processRotate.apply(this, arguments);\n\n      (_this$proxyMethods$on2 = this.proxyMethods.onRotate).call.apply(_this$proxyMethods$on2, [this].concat(Array.prototype.slice.call(arguments)));\n    }\n  }, {\n    key: \"_resize\",\n    value: function _resize() {\n      var _this$proxyMethods$on3;\n\n      this._processResize.apply(this, arguments);\n\n      (_this$proxyMethods$on3 = this.proxyMethods.onResize).call.apply(_this$proxyMethods$on3, [this].concat(Array.prototype.slice.call(arguments)));\n    }\n  }, {\n    key: \"_processOptions\",\n    value: function _processOptions(options) {\n      var el = this.el;\n      Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"addClass\"])(el, 'sjx-drag');\n      var _snap = {\n        x: 10,\n        y: 10,\n        angle: 10 * _common__WEBPACK_IMPORTED_MODULE_3__[\"RAD\"]\n      };\n      var _each = {\n        move: false,\n        resize: false,\n        rotate: false\n      };\n\n      var _restrict = null,\n          _proportions = false,\n          _axis = 'xy',\n          _cursorMove = 'auto',\n          _cursorResize = 'auto',\n          _cursorRotate = 'auto',\n          _themeColor = '#00a8ff',\n          _rotationPoint = false,\n          _onInit = function _onInit() {},\n          _onMove = function _onMove() {},\n          _onRotate = function _onRotate() {},\n          _onResize = function _onResize() {},\n          _onDrop = function _onDrop() {},\n          _onDestroy = function _onDestroy() {};\n\n      var _container = el.parentNode;\n\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(options)) {\n        var snap = options.snap,\n            each = options.each,\n            axis = options.axis,\n            cursorMove = options.cursorMove,\n            cursorResize = options.cursorResize,\n            cursorRotate = options.cursorRotate,\n            rotationPoint = options.rotationPoint,\n            restrict = options.restrict,\n            onInit = options.onInit,\n            onDrop = options.onDrop,\n            onMove = options.onMove,\n            onResize = options.onResize,\n            onRotate = options.onRotate,\n            onDestroy = options.onDestroy,\n            container = options.container,\n            proportions = options.proportions,\n            themeColor = options.themeColor;\n\n        if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(snap)) {\n          var x = snap.x,\n              y = snap.y,\n              angle = snap.angle;\n          _snap.x = Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isUndef\"])(x) ? 10 : x;\n          _snap.y = Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isUndef\"])(y) ? 10 : y;\n          _snap.angle = Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isUndef\"])(angle) ? _snap.angle : angle * _common__WEBPACK_IMPORTED_MODULE_3__[\"RAD\"];\n        }\n\n        if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(each)) {\n          var move = each.move,\n              resize = each.resize,\n              rotate = each.rotate;\n          _each.move = move || false;\n          _each.resize = resize || false;\n          _each.rotate = rotate || false;\n        }\n\n        if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(restrict)) {\n          _restrict = restrict === 'parent' ? el.parentNode : Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(restrict)[0] || document;\n        }\n\n        _themeColor = themeColor || '#00a8ff';\n        _cursorMove = cursorMove || 'auto';\n        _cursorResize = cursorResize || 'auto';\n        _cursorRotate = cursorRotate || 'auto';\n        _axis = axis || 'xy';\n        _container = Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(container) && Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(container)[0] ? Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(container)[0] : _container;\n        _rotationPoint = rotationPoint || false;\n        _proportions = proportions || false;\n        _onInit = createEvent(onInit);\n        _onDrop = createEvent(onDrop);\n        _onMove = createEvent(onMove);\n        _onResize = createEvent(onResize);\n        _onRotate = createEvent(onRotate);\n        _onDestroy = createEvent(onDestroy);\n\n        _onInit.call(this, el);\n      }\n\n      this.options = {\n        axis: _axis,\n        themeColor: _themeColor,\n        cursorMove: _cursorMove,\n        cursorRotate: _cursorRotate,\n        cursorResize: _cursorResize,\n        rotationPoint: _rotationPoint,\n        restrict: _restrict,\n        container: _container,\n        snap: _snap,\n        each: _each,\n        proportions: _proportions\n      };\n      this.proxyMethods = {\n        onInit: _onInit,\n        onDrop: _onDrop,\n        onMove: _onMove,\n        onResize: _onResize,\n        onRotate: _onRotate,\n        onDestroy: _onDestroy\n      };\n      this.subscribe(_each);\n    }\n  }, {\n    key: \"_draw\",\n    value: function _draw() {\n      this._animate();\n    }\n  }, {\n    key: \"_animate\",\n    value: function _animate() {\n      var self = this;\n      var observable = self.observable,\n          storage = self.storage,\n          options = self.options;\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isUndef\"])(storage)) return;\n      storage.frame = Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"requestAnimFrame\"])(self._animate);\n      if (!storage.doDraw) return;\n      storage.doDraw = false;\n      var dox = storage.dox,\n          doy = storage.doy,\n          clientX = storage.clientX,\n          clientY = storage.clientY,\n          doDrag = storage.doDrag,\n          doResize = storage.doResize,\n          doRotate = storage.doRotate,\n          doSetCenter = storage.doSetCenter,\n          revX = storage.revX,\n          revY = storage.revY,\n          handle = storage.handle;\n      var snap = options.snap,\n          each = options.each,\n          restrict = options.restrict;\n      var moveEach = each.move,\n          resizeEach = each.resize,\n          rotateEach = each.rotate;\n\n      if (doResize) {\n        var transform = storage.transform,\n            cx = storage.cx,\n            cy = storage.cy;\n\n        var _this$_pointToElement = this._pointToElement({\n          x: clientX,\n          y: clientY\n        }),\n            x = _this$_pointToElement.x,\n            y = _this$_pointToElement.y;\n\n        var dx = dox ? Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"snapToGrid\"])(x - cx, snap.x / transform.scX) : 0;\n        var dy = doy ? Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"snapToGrid\"])(y - cy, snap.y / transform.scY) : 0;\n        dx = dox ? revX ? -dx : dx : 0, dy = doy ? revY ? -dy : dy : 0;\n\n        self._resize(dx, dy, handle[0]);\n\n        if (resizeEach) {\n          observable.notify('onresize', self, {\n            dx: dx,\n            dy: dy,\n            handle: handle[0]\n          });\n        }\n      }\n\n      if (doDrag) {\n        var restrictOffset = storage.restrictOffset,\n            elementOffset = storage.elementOffset,\n            nx = storage.nx,\n            ny = storage.ny;\n\n        if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(restrict)) {\n          if (clientX - restrictOffset.left < nx - elementOffset.left) {\n            clientX = nx - elementOffset.left + restrictOffset.left;\n          }\n\n          if (clientY - restrictOffset.top < ny - elementOffset.top) {\n            clientY = ny - elementOffset.top + restrictOffset.top;\n          }\n        }\n\n        var _dx = dox ? Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"snapToGrid\"])(clientX - nx, snap.x) : 0;\n\n        var _dy = doy ? Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"snapToGrid\"])(clientY - ny, snap.y) : 0;\n\n        self._drag(_dx, _dy);\n\n        if (moveEach) {\n          observable.notify('onmove', self, {\n            dx: _dx,\n            dy: _dy\n          });\n        }\n      }\n\n      if (doRotate) {\n        var pressang = storage.pressang,\n            center = storage.center;\n        var radians = Math.atan2(clientY - center.y, clientX - center.x) - pressang;\n\n        self._rotate(Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"snapToGrid\"])(radians, snap.angle));\n\n        if (rotateEach) {\n          observable.notify('onrotate', self, {\n            radians: radians\n          });\n        }\n      }\n\n      if (doSetCenter) {\n        var bx = storage.bx,\n            by = storage.by;\n\n        var _this$_pointToControl = this._pointToControls({\n          x: clientX,\n          y: clientY\n        }),\n            _x = _this$_pointToControl.x,\n            _y = _this$_pointToControl.y;\n\n        self._moveCenterHandle(_x - bx, _y - by);\n      }\n    }\n  }, {\n    key: \"_start\",\n    value: function _start(e) {\n      var observable = this.observable,\n          storage = this.storage,\n          options = this.options,\n          el = this.el;\n\n      var computed = this._compute(e);\n\n      Object.keys(computed).forEach(function (prop) {\n        storage[prop] = computed[prop];\n      });\n      var onRightEdge = computed.onRightEdge,\n          onBottomEdge = computed.onBottomEdge,\n          onTopEdge = computed.onTopEdge,\n          onLeftEdge = computed.onLeftEdge,\n          handle = computed.handle,\n          factor = computed.factor,\n          revX = computed.revX,\n          revY = computed.revY,\n          doW = computed.doW,\n          doH = computed.doH;\n      var doResize = onRightEdge || onBottomEdge || onTopEdge || onLeftEdge;\n      var handles = storage.handles,\n          radius = storage.radius;\n      var axis = options.axis,\n          restrict = options.restrict;\n\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(radius)) {\n        Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"removeClass\"])(radius, 'sjx-hidden');\n      }\n\n      var doRotate = handle.is(handles.rotator),\n          doSetCenter = Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(handles.center) ? handle.is(handles.center) : false;\n      var clientX = e.clientX,\n          clientY = e.clientY;\n\n      var _this$_cursorPoint = this._cursorPoint({\n        clientX: clientX,\n        clientY: clientY\n      }),\n          x = _this$_cursorPoint.x,\n          y = _this$_cursorPoint.y;\n\n      var _this$_pointToElement2 = this._pointToElement({\n        x: x,\n        y: y\n      }),\n          nx = _this$_pointToElement2.x,\n          ny = _this$_pointToElement2.y;\n\n      var _this$_pointToControl2 = this._pointToControls({\n        x: x,\n        y: y\n      }),\n          bx = _this$_pointToControl2.x,\n          by = _this$_pointToControl2.y;\n\n      var newStorageValues = {\n        clientX: clientX,\n        clientY: clientY,\n        nx: x,\n        ny: y,\n        cx: nx,\n        cy: ny,\n        bx: bx,\n        by: by,\n        doResize: doResize,\n        doDrag: !(doRotate || doResize || doSetCenter),\n        doRotate: doRotate,\n        doSetCenter: doSetCenter,\n        onExecution: true,\n        cursor: null,\n        elementOffset: Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getOffset\"])(el),\n        restrictOffset: Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(restrict) ? Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getOffset\"])(restrict) : null,\n        dox: /\\x/.test(axis) && (doResize ? handle.is(handles.ml) || handle.is(handles.mr) || handle.is(handles.tl) || handle.is(handles.tr) || handle.is(handles.bl) || handle.is(handles.br) : true),\n        doy: /\\y/.test(axis) && (doResize ? handle.is(handles.br) || handle.is(handles.bl) || handle.is(handles.bc) || handle.is(handles.tr) || handle.is(handles.tl) || handle.is(handles.tc) : true)\n      };\n      this.storage = _objectSpread({}, storage, newStorageValues);\n      observable.notify('ongetstate', this, {\n        factor: factor,\n        revX: revX,\n        revY: revY,\n        doW: doW,\n        doH: doH\n      });\n\n      this._draw();\n    }\n  }, {\n    key: \"_moving\",\n    value: function _moving(e) {\n      var storage = this.storage,\n          options = this.options;\n\n      var _this$_cursorPoint2 = this._cursorPoint(e),\n          x = _this$_cursorPoint2.x,\n          y = _this$_cursorPoint2.y;\n\n      storage.e = e;\n      storage.clientX = x;\n      storage.clientY = y;\n      storage.doDraw = true;\n      var doRotate = storage.doRotate,\n          doDrag = storage.doDrag,\n          doResize = storage.doResize,\n          cursor = storage.cursor;\n      var cursorMove = options.cursorMove,\n          cursorResize = options.cursorResize,\n          cursorRotate = options.cursorRotate;\n\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isUndef\"])(cursor)) {\n        if (doDrag) {\n          cursor = cursorMove;\n        } else if (doRotate) {\n          cursor = cursorRotate;\n        } else if (doResize) {\n          cursor = cursorResize;\n        }\n\n        Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document.body).css({\n          cursor: cursor\n        });\n      }\n    }\n  }, {\n    key: \"_end\",\n    value: function _end(e) {\n      var observable = this.observable,\n          storage = this.storage,\n          proxyMethods = this.proxyMethods,\n          el = this.el;\n      var actionName = storage.doResize ? 'resize' : storage.doDrag ? 'drag' : 'rotate';\n      storage.doResize = false;\n      storage.doDrag = false;\n      storage.doRotate = false;\n      storage.doSetCenter = false;\n      storage.doDraw = false;\n      storage.onExecution = false;\n      storage.cursor = null;\n\n      this._apply(actionName);\n\n      proxyMethods.onDrop.call(this, e, el);\n      observable.notify('onapply', this, {\n        actionName: actionName,\n        e: e\n      });\n      Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"cancelAnimFrame\"])(storage.frame);\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document.body).css({\n        cursor: 'auto'\n      });\n\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(storage.radius)) {\n        Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"addClass\"])(storage.radius, 'sjx-hidden');\n      }\n    }\n  }, {\n    key: \"_checkHandles\",\n    value: function _checkHandles(handle, handles) {\n      var isTL = handle.is(handles.tl),\n          isTC = handle.is(handles.tc),\n          isTR = handle.is(handles.tr),\n          isBL = handle.is(handles.bl),\n          isBC = handle.is(handles.bc),\n          isBR = handle.is(handles.br),\n          isML = handle.is(handles.ml),\n          isMR = handle.is(handles.mr); //reverse axis\n\n      var revX = isTL || isML || isBL || isTC,\n          revY = isTL || isTR || isTC || isML;\n      var onTopEdge = isTC || isTR || isTL,\n          onLeftEdge = isTL || isML || isBL,\n          onRightEdge = isTR || isMR || isBR,\n          onBottomEdge = isBR || isBC || isBL;\n      var doW = isML || isMR,\n          doH = isTC || isBC;\n      return {\n        revX: revX,\n        revY: revY,\n        onTopEdge: onTopEdge,\n        onLeftEdge: onLeftEdge,\n        onRightEdge: onRightEdge,\n        onBottomEdge: onBottomEdge,\n        doW: doW,\n        doH: doH\n      };\n    }\n  }, {\n    key: \"_onMouseDown\",\n    value: function _onMouseDown(e) {\n      if (e.stopImmediatePropagation) {\n        e.stopImmediatePropagation();\n      }\n\n      this._start(e);\n\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document).on('mousemove', this._onMouseMove).on('mouseup', this._onMouseUp);\n    }\n  }, {\n    key: \"_onTouchStart\",\n    value: function _onTouchStart(e) {\n      if (e.stopImmediatePropagation) {\n        e.stopImmediatePropagation();\n      }\n\n      this._start(e.touches[0]);\n\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document).on('touchmove', this._onTouchMove, _util_util__WEBPACK_IMPORTED_MODULE_1__[\"eventOptions\"]).on('touchend', this._onTouchEnd, _util_util__WEBPACK_IMPORTED_MODULE_1__[\"eventOptions\"]);\n    }\n  }, {\n    key: \"_onMouseMove\",\n    value: function _onMouseMove(e) {\n      if (e.preventDefault) {\n        e.preventDefault();\n      }\n\n      this._moving(e, this.el);\n    }\n  }, {\n    key: \"_onTouchMove\",\n    value: function _onTouchMove(e) {\n      if (e.preventDefault) {\n        e.preventDefault();\n      }\n\n      this._moving(e.touches[0], this.el);\n    }\n  }, {\n    key: \"_onMouseUp\",\n    value: function _onMouseUp(e) {\n      if (e.stopImmediatePropagation) {\n        e.stopImmediatePropagation();\n      }\n\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document).off('mousemove', this._onMouseMove).off('mouseup', this._onMouseUp);\n\n      this._end(e, this.el);\n    }\n  }, {\n    key: \"_onTouchEnd\",\n    value: function _onTouchEnd(e) {\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isDef\"])(e) && e.stopImmediatePropagation) {\n        e.stopImmediatePropagation();\n      }\n\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(document).off('touchmove', this._onTouchMove).off('touchend', this._onTouchEnd);\n\n      if (e.touches.length === 0) {\n        this._end(e.changedTouches[0], this.el);\n      }\n    }\n  }, {\n    key: \"notifyMove\",\n    value: function notifyMove(_ref) {\n      var dx = _ref.dx,\n          dy = _ref.dy;\n\n      this._drag(dx, dy);\n    }\n  }, {\n    key: \"notifyRotate\",\n    value: function notifyRotate(_ref2) {\n      var radians = _ref2.radians;\n      var snap = this.options.snap;\n\n      this._rotate(Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"snapToGrid\"])(radians, snap.angle));\n    }\n  }, {\n    key: \"notifyResize\",\n    value: function notifyResize(_ref3) {\n      var dx = _ref3.dx,\n          dy = _ref3.dy;\n\n      this._resize(dx, dy);\n    }\n  }, {\n    key: \"notifyApply\",\n    value: function notifyApply(_ref4) {\n      var e = _ref4.e,\n          actionName = _ref4.actionName;\n      this.proxyMethods.onDrop.call(this, e, this.el);\n\n      this._apply(actionName);\n    }\n  }, {\n    key: \"notifyGetState\",\n    value: function notifyGetState(data) {\n      var storage = this.storage;\n\n      var recalc = this._getState(data);\n\n      this.storage = _objectSpread({}, storage, recalc);\n    }\n  }, {\n    key: \"subscribe\",\n    value: function subscribe(events) {\n      var ob = this.observable;\n      var resize = events.resize,\n          move = events.move,\n          rotate = events.rotate;\n\n      if (move || resize || rotate) {\n        ob.subscribe('ongetstate', this).subscribe('onapply', this);\n      }\n\n      if (move) {\n        ob.subscribe('onmove', this);\n      }\n\n      if (resize) {\n        ob.subscribe('onresize', this);\n      }\n\n      if (rotate) {\n        ob.subscribe('onrotate', this);\n      }\n    }\n  }, {\n    key: \"unsubscribe\",\n    value: function unsubscribe() {\n      var ob = this.observable;\n      ob.unsubscribe('ongetstate', this).unsubscribe('onapply', this).unsubscribe('onmove', this).unsubscribe('onresize', this).unsubscribe('onrotate', this);\n    }\n  }]);\n\n  return Subject;\n}();\n\n\n\nfunction createEvent(fn) {\n  return Object(_util_util__WEBPACK_IMPORTED_MODULE_1__[\"isFunc\"])(fn) ? function () {\n    fn.call.apply(fn, [this].concat(Array.prototype.slice.call(arguments)));\n  } : function () {};\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/transform/Subject.js?");
+    function _setPrototypeOf(o, p) {
+      _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+        o.__proto__ = p;
+        return o;
+      };
 
-/***/ }),
+      return _setPrototypeOf(o, p);
+    }
 
-/***/ "./src/js/core/transform/common.js":
-/*!*****************************************!*\
-  !*** ./src/js/core/transform/common.js ***!
-  \*****************************************/
-/*! exports provided: RAD, DEG, snapToGrid, snapCandidate, rotatedTopLeft, floatToFixed */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+    function _assertThisInitialized(self) {
+      if (self === void 0) {
+        throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+      }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"RAD\", function() { return RAD; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"DEG\", function() { return DEG; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"snapToGrid\", function() { return snapToGrid; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"snapCandidate\", function() { return snapCandidate; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"rotatedTopLeft\", function() { return rotatedTopLeft; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"floatToFixed\", function() { return floatToFixed; });\nvar RAD = Math.PI / 180;\nvar DEG = 180 / Math.PI;\nfunction snapToGrid(value, snap) {\n  if (snap === 0) {\n    return value;\n  } else {\n    var result = snapCandidate(value, snap);\n\n    if (result - value < snap) {\n      return result;\n    }\n  }\n}\nfunction snapCandidate(value, gridSize) {\n  if (gridSize === 0) return value;\n  return Math.round(value / gridSize) * gridSize;\n}\nfunction rotatedTopLeft(x, y, width, height, rotationAngle, revX, revY, doW, doH) {\n  var hw = parseFloat(width) / 2,\n      hh = parseFloat(height) / 2;\n  var cx = x + hw,\n      cy = y + hh;\n  var dx = x - cx,\n      dy = y - cy;\n  var originalTopLeftAngle = Math.atan2(doW ? 0 : dy, doH ? 0 : dx);\n  var rotatedTopLeftAngle = originalTopLeftAngle + rotationAngle;\n  var radius = Math.sqrt(Math.pow(doH ? 0 : hw, 2) + Math.pow(doW ? 0 : hh, 2));\n  var cos = Math.cos(rotatedTopLeftAngle),\n      sin = Math.sin(rotatedTopLeftAngle);\n  cos = revX === true ? -cos : cos;\n  sin = revY === true ? -sin : sin;\n  var rx = cx + radius * cos,\n      ry = cy + radius * sin;\n  return {\n    left: floatToFixed(rx),\n    top: floatToFixed(ry)\n  };\n}\nfunction floatToFixed(val) {\n  var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 6;\n  return Number(val.toFixed(size));\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/transform/common.js?");
+      return self;
+    }
 
-/***/ }),
+    function _possibleConstructorReturn(self, call) {
+      if (call && (typeof call === "object" || typeof call === "function")) {
+        return call;
+      }
 
-/***/ "./src/js/core/transform/html.js":
-/*!***************************************!*\
-  !*** ./src/js/core/transform/html.js ***!
-  \***************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+      return _assertThisInitialized(self);
+    }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"default\", function() { return Draggable; });\n/* harmony import */ var _Helper__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Helper */ \"./src/js/core/Helper.js\");\n/* harmony import */ var _Subject__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Subject */ \"./src/js/core/transform/Subject.js\");\n/* harmony import */ var _util_css_util__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../util/css-util */ \"./src/js/core/util/css-util.js\");\n/* harmony import */ var _common__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./common */ \"./src/js/core/transform/common.js\");\n/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../util/util */ \"./src/js/core/util/util.js\");\nfunction _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }\n\nfunction _nonIterableRest() { throw new TypeError(\"Invalid attempt to destructure non-iterable instance\"); }\n\nfunction _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i[\"return\"] != null) _i[\"return\"](); } finally { if (_d) throw _e; } } return _arr; }\n\nfunction _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }\n\nfunction _typeof(obj) { if (typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol && obj !== Symbol.prototype ? \"symbol\" : typeof obj; }; } return _typeof(obj); }\n\nfunction _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }\n\nfunction _nonIterableSpread() { throw new TypeError(\"Invalid attempt to spread non-iterable instance\"); }\n\nfunction _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === \"[object Arguments]\") return Array.from(iter); }\n\nfunction _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }\n\nfunction _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }\n\nfunction _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\nfunction _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === \"object\" || typeof call === \"function\")) { return call; } return _assertThisInitialized(self); }\n\nfunction _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError(\"this hasn't been initialised - super() hasn't been called\"); } return self; }\n\nfunction _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }\n\nfunction _inherits(subClass, superClass) { if (typeof superClass !== \"function\" && superClass !== null) { throw new TypeError(\"Super expression must either be null or a function\"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }\n\nfunction _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }\n\n\n\n\n\n\nvar MIN_SIZE = 2;\nvar CENTER_DELTA = 7;\n\nvar Draggable =\n/*#__PURE__*/\nfunction (_Subject) {\n  _inherits(Draggable, _Subject);\n\n  function Draggable(el, options, Observable) {\n    var _this;\n\n    _classCallCheck(this, Draggable);\n\n    _this = _possibleConstructorReturn(this, _getPrototypeOf(Draggable).call(this, el, Observable));\n\n    _this.enable(options);\n\n    return _this;\n  }\n\n  _createClass(Draggable, [{\n    key: \"_init\",\n    value: function _init(el) {\n      var container = document.createElement('div');\n      Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"addClass\"])(container, 'sjx-wrapper');\n      el.parentNode.insertBefore(container, el);\n      var $el = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(el);\n      var options = this.options;\n      var rotationPoint = options.rotationPoint;\n      var _el$style = el.style,\n          left = _el$style.left,\n          top = _el$style.top,\n          width = _el$style.width,\n          height = _el$style.height;\n      var w = width || $el.css('width'),\n          h = height || $el.css('height'),\n          t = top || $el.css('top'),\n          l = left || $el.css('left');\n      var $parent = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(container.parentNode);\n      var css = {\n        top: t,\n        left: l,\n        width: w,\n        height: h,\n        transform: Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getTransform\"])($el)\n      };\n      var controls = document.createElement('div');\n      var handles = {\n        normal: ['sjx-normal'],\n        tl: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-l', 'sjx-hdl-tl'],\n        tr: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-r', 'sjx-hdl-tr'],\n        br: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-r', 'sjx-hdl-br'],\n        bl: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-l', 'sjx-hdl-bl'],\n        tc: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-c', 'sjx-hdl-tc'],\n        bc: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-c', 'sjx-hdl-bc'],\n        ml: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-l', 'sjx-hdl-ml'],\n        mr: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-r', 'sjx-hdl-mr'],\n        center: rotationPoint ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined,\n        //...(rotationPoint && { center: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc']}), IE11 not supports\n        rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator']\n      };\n      Object.keys(handles).forEach(function (key) {\n        var data = handles[key];\n        if (Object(_util_util__WEBPACK_IMPORTED_MODULE_4__[\"isUndef\"])(data)) return;\n        var handler = createHandler(data);\n        handles[key] = handler;\n        controls.appendChild(handler);\n      });\n\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_4__[\"isDef\"])(handles.center)) {\n        var cHandle = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(handles.center);\n        cHandle.css({\n          left: \"\".concat(el.getAttribute('data-cx'), \"px\"),\n          top: \"\".concat(el.getAttribute('data-cy'), \"px\")\n        });\n      }\n\n      Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"addClass\"])(controls, 'sjx-controls');\n      container.appendChild(controls);\n      var $controls = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(controls);\n      $controls.css(css);\n      var $container = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(container);\n      this.storage = {\n        controls: controls,\n        handles: handles,\n        radius: $container.find('.sjx-radius'),\n        parent: $parent\n      };\n      $controls.on('mousedown', this._onMouseDown).on('touchstart', this._onTouchStart);\n    }\n  }, {\n    key: \"_destroy\",\n    value: function _destroy() {\n      var controls = this.storage.controls;\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(controls).off('mousedown', this._onMouseDown).off('touchstart', this._onTouchStart);\n      var wrapper = controls.parentNode;\n      wrapper.parentNode.removeChild(wrapper);\n    }\n  }, {\n    key: \"_compute\",\n    value: function _compute(e) {\n      var handles = this.storage.handles;\n      var handle = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(e.target);\n\n      var _this$_checkHandles = this._checkHandles(handle, handles),\n          revX = _this$_checkHandles.revX,\n          revY = _this$_checkHandles.revY,\n          onTopEdge = _this$_checkHandles.onTopEdge,\n          onLeftEdge = _this$_checkHandles.onLeftEdge,\n          onRightEdge = _this$_checkHandles.onRightEdge,\n          onBottomEdge = _this$_checkHandles.onBottomEdge,\n          doW = _this$_checkHandles.doW,\n          doH = _this$_checkHandles.doH; //reverse angle\n\n\n      var factor = handle.is(handles.tr) || handle.is(handles.bl) ? -1 : 1;\n\n      var _computed = this._getState({\n        factor: factor,\n        revX: revX,\n        revY: revY,\n        doW: doW,\n        doH: doH\n      });\n\n      var _this$_cursorPoint = this._cursorPoint(e),\n          clientX = _this$_cursorPoint.x,\n          clientY = _this$_cursorPoint.y;\n\n      var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);\n      return _objectSpread({}, _computed, {\n        onTopEdge: onTopEdge,\n        onLeftEdge: onLeftEdge,\n        onRightEdge: onRightEdge,\n        onBottomEdge: onBottomEdge,\n        handle: handle,\n        pressang: pressang\n      });\n    }\n  }, {\n    key: \"_pointToElement\",\n    value: function _pointToElement(_ref) {\n      var x = _ref.x,\n          y = _ref.y;\n      var transform = this.storage.transform;\n\n      var ctm = _toConsumableArray(transform.matrix);\n\n      ctm[4] = ctm[5] = 0;\n      return this._applyMatrixToPoint(matrixInvert(ctm), x, y);\n    }\n  }, {\n    key: \"_pointToControls\",\n    value: function _pointToControls(data) {\n      return this._pointToElement(data);\n    }\n  }, {\n    key: \"_applyMatrixToPoint\",\n    value: function _applyMatrixToPoint(matrix, x, y) {\n      return multiplyMatrixAndPoint({\n        x: x,\n        y: y\n      }, matrix);\n    }\n  }, {\n    key: \"_cursorPoint\",\n    value: function _cursorPoint(_ref2) {\n      var clientX = _ref2.clientX,\n          clientY = _ref2.clientY;\n      var container = this.options.container;\n      var globalMatrix = Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"parseMatrix\"])(Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getTransform\"])(Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(container)));\n      return multiplyMatrixAndPoint({\n        x: clientX,\n        y: clientY\n      }, matrixInvert(globalMatrix));\n    }\n  }, {\n    key: \"_apply\",\n    value: function _apply() {\n      var el = this.el,\n          storage = this.storage;\n      var $el = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(el);\n      var cached = storage.cached,\n          controls = storage.controls,\n          transform = storage.transform,\n          handles = storage.handles;\n      var $controls = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(controls);\n      var cw = parseFloat($controls.css('width')),\n          ch = parseFloat($controls.css('height'));\n      var hW = cw / 2,\n          hH = ch / 2;\n      var cHandle = handles.center;\n      var isDefCenter = Object(_util_util__WEBPACK_IMPORTED_MODULE_4__[\"isDef\"])(cHandle);\n      var centerX = isDefCenter ? parseFloat(Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(cHandle).css('left')) : hW;\n      var centerY = isDefCenter ? parseFloat(Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(cHandle).css('top')) : hH;\n      el.setAttribute('data-cx', centerX);\n      el.setAttribute('data-cy', centerY);\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_4__[\"isUndef\"])(cached)) return;\n      var dx = cached.dx,\n          dy = cached.dy;\n      var css = matrixToCSS(transform.matrix);\n      var left = parseFloat(el.style.left || $el.css('left'));\n      var top = parseFloat(el.style.top || $el.css('top'));\n      css.left = \"\".concat(left + dx, \"px\");\n      css.top = \"\".concat(top + dy, \"px\");\n      $el.css(css);\n      $controls.css(css);\n      this.storage.cached = null;\n    }\n  }, {\n    key: \"_processResize\",\n    value: function _processResize(dx, dy) {\n      var el = this.el,\n          storage = this.storage,\n          options = this.options;\n      var proportions = options.proportions;\n      var controls = storage.controls,\n          coords = storage.coords,\n          cw = storage.cw,\n          ch = storage.ch,\n          transform = storage.transform,\n          refang = storage.refang,\n          revX = storage.revX,\n          revY = storage.revY,\n          doW = storage.doW,\n          doH = storage.doH;\n      var ratio = doW || !doW && !doH ? (cw + dx) / cw : (ch + dy) / ch;\n      var newWidth = proportions ? cw * ratio : cw + dx,\n          newHeight = proportions ? ch * ratio : ch + dy;\n      if (newWidth < MIN_SIZE || newHeight < MIN_SIZE) return;\n\n      var matrix = _toConsumableArray(transform.matrix);\n\n      var newCoords = Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"rotatedTopLeft\"])(matrix[4], matrix[5], newWidth, newHeight, refang, revX, revY, doW, doH);\n      var nx = coords.left - newCoords.left,\n          ny = coords.top - newCoords.top;\n      matrix[4] += nx;\n      matrix[5] += ny;\n      var css = matrixToCSS(matrix);\n      css.width = \"\".concat(newWidth, \"px\");\n      css.height = \"\".concat(newHeight, \"px\");\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(controls).css(css);\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(el).css(css);\n      storage.cached = {\n        dx: nx,\n        dy: ny\n      };\n    }\n  }, {\n    key: \"_processMove\",\n    value: function _processMove(dx, dy) {\n      var el = this.el,\n          storage = this.storage;\n      var controls = storage.controls,\n          transform = storage.transform;\n      var matrix = transform.matrix,\n          parentMatrix = transform.parentMatrix;\n\n      var pctm = _toConsumableArray(parentMatrix);\n\n      pctm[4] = pctm[5] = 0;\n\n      var n_matrix = _toConsumableArray(matrix);\n\n      n_matrix[4] = matrix[4] + dx;\n      n_matrix[5] = matrix[5] + dy;\n      var css = matrixToCSS(n_matrix);\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(controls).css(css);\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(el).css(css);\n      storage.cached = {\n        dx: dx,\n        dy: dy\n      };\n    }\n  }, {\n    key: \"_processRotate\",\n    value: function _processRotate(radians) {\n      var el = this.el,\n          storage = this.storage;\n      var controls = storage.controls,\n          transform = storage.transform,\n          center = storage.center;\n      var matrix = transform.matrix,\n          parentMatrix = transform.parentMatrix;\n      var cos = Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"floatToFixed\"])(Math.cos(radians)),\n          sin = Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"floatToFixed\"])(Math.sin(radians));\n      var translateMatrix = [1, 0, 0, 1, center.cx, center.cy];\n      var rotMatrix = [cos, sin, -sin, cos, 0, 0];\n\n      var pctm = _toConsumableArray(parentMatrix);\n\n      pctm[4] = pctm[5] = 0;\n      var resRotMatrix = multiplyMatrix(matrixInvert(pctm), multiplyMatrix(rotMatrix, pctm));\n      var nMatrix = multiplyMatrix(multiplyMatrix(translateMatrix, resRotMatrix), matrixInvert(translateMatrix));\n      var resMatrix = multiplyMatrix(nMatrix, matrix);\n      var css = matrixToCSS(resMatrix);\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(controls).css(css);\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(el).css(css);\n    }\n  }, {\n    key: \"_getState\",\n    value: function _getState(params) {\n      var factor = params.factor,\n          revX = params.revX,\n          revY = params.revY,\n          doW = params.doW,\n          doH = params.doH;\n      var el = this.el,\n          storage = this.storage,\n          options = this.options;\n      var container = options.container;\n      var handles = storage.handles,\n          controls = storage.controls,\n          parent = storage.parent;\n      var cHandle = handles.center,\n          tl = handles.tl,\n          tr = handles.tr;\n      var tl_off = Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getOffset\"])(tl),\n          tr_off = Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getOffset\"])(tr);\n      var refang = Math.atan2(tr_off.top - tl_off.top, tr_off.left - tl_off.left) * factor;\n      var $controls = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(controls);\n      var containerMatrix = Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"parseMatrix\"])(Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getTransform\"])(Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(container)));\n      var matrix = Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"parseMatrix\"])(Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getTransform\"])(Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(controls)));\n      var pMatrix = Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"parseMatrix\"])(Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getTransform\"])(parent));\n      var parentMatrix = parent === container ? multiplyMatrix(pMatrix, containerMatrix) : containerMatrix;\n      var transform = {\n        matrix: matrix,\n        parentMatrix: parentMatrix,\n        scX: Math.sqrt(matrix[0] * matrix[0] + matrix[1] * matrix[1]),\n        scY: Math.sqrt(matrix[2] * matrix[2] + matrix[3] * matrix[3])\n      };\n      var cw = parseFloat($controls.css('width')),\n          ch = parseFloat($controls.css('height')); // getting current coordinates considering rotation angle                                                                                                  \n\n      var coords = Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"rotatedTopLeft\"])(matrix[4], matrix[5], cw, ch, refang, revX, revY, doW, doH);\n      var hW = cw / 2,\n          hH = ch / 2;\n      var offset_ = Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"getOffset\"])(el),\n          isDefCenter = Object(_util_util__WEBPACK_IMPORTED_MODULE_4__[\"isDef\"])(cHandle);\n      var centerX = isDefCenter ? parseFloat(Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(cHandle).css('left')) : hW;\n      var centerY = isDefCenter ? parseFloat(Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(cHandle).css('top')) : hH;\n      var cDelta = isDefCenter ? CENTER_DELTA : 0;\n      return {\n        transform: transform,\n        cw: cw,\n        ch: ch,\n        coords: coords,\n        center: {\n          x: offset_.left + centerX - cDelta,\n          y: offset_.top + centerY - cDelta,\n          cx: -centerX + hW - cDelta,\n          cy: -centerY + hH - cDelta,\n          hx: centerX,\n          hy: centerY\n        },\n        factor: factor,\n        refang: refang,\n        revX: revX,\n        revY: revY,\n        doW: doW,\n        doH: doH\n      };\n    }\n  }, {\n    key: \"_moveCenterHandle\",\n    value: function _moveCenterHandle(x, y) {\n      var storage = this.storage;\n      var handles = storage.handles,\n          center = storage.center;\n      var left = \"\".concat(center.hx + x, \"px\"),\n          top = \"\".concat(center.hy + y, \"px\");\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(handles.center).css({\n        left: left,\n        top: top\n      });\n    }\n  }, {\n    key: \"resetCenterPoint\",\n    value: function resetCenterPoint() {\n      var handles = this.storage.handles;\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(handles.center).css({\n        left: null,\n        top: null\n      });\n    }\n  }, {\n    key: \"controls\",\n    get: function get() {\n      return this.storage.controls;\n    }\n  }]);\n\n  return Draggable;\n}(_Subject__WEBPACK_IMPORTED_MODULE_1__[\"default\"]);\n\n\n\nfunction matrixToCSS(arr) {\n  var style = \"matrix(\".concat(arr.join(), \")\");\n  return {\n    transform: style,\n    webkitTranform: style,\n    mozTransform: style,\n    msTransform: style,\n    otransform: style\n  };\n}\n\nfunction multiplyMatrixAndPoint(point, matrix) {\n  var x = point.x,\n      y = point.y;\n\n  var _matrix = _slicedToArray(matrix, 6),\n      a = _matrix[0],\n      b = _matrix[1],\n      c = _matrix[2],\n      d = _matrix[3],\n      e = _matrix[4],\n      f = _matrix[5];\n\n  return {\n    x: a * x + c * y + e,\n    y: b * x + d * y + f\n  };\n} //http://blog.acipo.com/matrix-inversion-in-javascript/\n\n\nfunction matrixInvert(ctm) {\n  // I use Guassian Elimination to calculate the inverse:\n  // (1) 'augment' the matrix (left) by the identity (on the right)\n  // (2) Turn the matrix on the left into the identity by elemetry row ops\n  // (3) The matrix on the right is the inverse (was the identity matrix)\n  // There are 3 elemtary row ops: (I combine b and c in my code)\n  // (a) Swap 2 rows\n  // (b) Multiply a row by a scalar\n  // (c) Add 2 rows\n  var M = [[ctm[0], ctm[2], ctm[4]], [ctm[1], ctm[3], ctm[5]], [0, 0, 1]]; //if the matrix isn't square: exit (error)\n\n  if (M.length !== M[0].length) {\n    return;\n  } //create the identity matrix (I), and a copy (C) of the original\n\n\n  var dim = M.length;\n  var I = [],\n      C = [];\n\n  for (var i = 0; i < dim; i += 1) {\n    // Create the row\n    I[I.length] = [];\n    C[C.length] = [];\n\n    for (var j = 0; j < dim; j += 1) {\n      //if we're on the diagonal, put a 1 (for identity)\n      if (i == j) {\n        I[i][j] = 1;\n      } else {\n        I[i][j] = 0;\n      } // Also, make the copy of the original\n\n\n      C[i][j] = M[i][j];\n    }\n  } // Perform elementary row operations\n\n\n  for (var _i2 = 0; _i2 < dim; _i2 += 1) {\n    // get the element e on the diagonal\n    var e = C[_i2][_i2]; // if we have a 0 on the diagonal (we'll need to swap with a lower row)\n\n    if (e === 0) {\n      //look through every row below the i'th row\n      for (var ii = _i2 + 1; ii < dim; ii += 1) {\n        //if the ii'th row has a non-0 in the i'th col\n        if (C[ii][_i2] !== 0) {\n          //it would make the diagonal have a non-0 so swap it\n          for (var _j = 0; _j < dim; _j++) {\n            e = C[_i2][_j]; //temp store i'th row\n\n            C[_i2][_j] = C[ii][_j]; //replace i'th row by ii'th\n\n            C[ii][_j] = e; //repace ii'th by temp\n\n            e = I[_i2][_j]; //temp store i'th row\n\n            I[_i2][_j] = I[ii][_j]; //replace i'th row by ii'th\n\n            I[ii][_j] = e; //repace ii'th by temp\n          } //don't bother checking other rows since we've swapped\n\n\n          break;\n        }\n      } //get the new diagonal\n\n\n      e = C[_i2][_i2]; //if it's still 0, not invertable (error)\n\n      if (e === 0) {\n        return;\n      }\n    } // Scale this row down by e (so we have a 1 on the diagonal)\n\n\n    for (var _j2 = 0; _j2 < dim; _j2++) {\n      C[_i2][_j2] = C[_i2][_j2] / e; //apply to original matrix\n\n      I[_i2][_j2] = I[_i2][_j2] / e; //apply to identity\n    } // Subtract this row (scaled appropriately for each row) from ALL of\n    // the other rows so that there will be 0's in this column in the\n    // rows above and below this one\n\n\n    for (var _ii = 0; _ii < dim; _ii++) {\n      // Only apply to other rows (we want a 1 on the diagonal)\n      if (_ii == _i2) {\n        continue;\n      } // We want to change this element to 0\n\n\n      e = C[_ii][_i2]; // Subtract (the row above(or below) scaled by e) from (the\n      // current row) but start at the i'th column and assume all the\n      // stuff left of diagonal is 0 (which it should be if we made this\n      // algorithm correctly)\n\n      for (var _j3 = 0; _j3 < dim; _j3++) {\n        C[_ii][_j3] -= e * C[_i2][_j3]; //apply to original matrix\n\n        I[_ii][_j3] -= e * I[_i2][_j3]; //apply to identity\n      }\n    }\n  } //we've done all operations, C should be the identity\n  //matrix I should be the inverse:\n\n\n  return [I[0][0], I[1][0], I[0][1], I[1][1], I[0][2], I[1][2]];\n}\n\nfunction multiplyMatrix(mtrx1, mtrx2) {\n  var m1 = [[mtrx1[0], mtrx1[2], mtrx1[4]], [mtrx1[1], mtrx1[3], mtrx1[5]], [0, 0, 1]];\n  var m2 = [[mtrx2[0], mtrx2[2], mtrx2[4]], [mtrx2[1], mtrx2[3], mtrx2[5]], [0, 0, 1]];\n  var result = [];\n\n  for (var j = 0; j < m2.length; j++) {\n    result[j] = [];\n\n    for (var k = 0; k < m1[0].length; k++) {\n      var sum = 0;\n\n      for (var i = 0; i < m1.length; i++) {\n        sum += m1[i][k] * m2[j][i];\n      }\n\n      result[j].push(sum);\n    }\n  }\n\n  return [result[0][0], result[1][0], result[0][1], result[1][1], result[0][2], result[1][2]];\n}\n\nfunction createHandler(classList) {\n  var element = document.createElement('div');\n  classList.forEach(function (cls) {\n    Object(_util_css_util__WEBPACK_IMPORTED_MODULE_2__[\"addClass\"])(element, cls);\n  });\n  return element;\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/transform/html.js?");
+    function _slicedToArray(arr, i) {
+      return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest();
+    }
 
-/***/ }),
+    function _toConsumableArray(arr) {
+      return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+    }
 
-/***/ "./src/js/core/transform/index.js":
-/*!****************************************!*\
-  !*** ./src/js/core/transform/index.js ***!
-  \****************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+    function _arrayWithoutHoles(arr) {
+      if (Array.isArray(arr)) {
+        for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"default\", function() { return drag; });\n/* harmony import */ var _observable_Observable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../observable/Observable */ \"./src/js/core/observable/Observable.js\");\n/* harmony import */ var _html__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./html */ \"./src/js/core/transform/html.js\");\n/* harmony import */ var _svg_index__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./svg/index */ \"./src/js/core/transform/svg/index.js\");\n/* harmony import */ var _svg_util__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./svg/util */ \"./src/js/core/transform/svg/util.js\");\n/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../util/util */ \"./src/js/core/util/util.js\");\n\n\n\n\n // factory method for creating draggable elements\n\nfunction drag(options, obInstance) {\n  if (this.length) {\n    var Ob = Object(_util_util__WEBPACK_IMPORTED_MODULE_4__[\"isDef\"])(obInstance) && obInstance instanceof _observable_Observable__WEBPACK_IMPORTED_MODULE_0__[\"default\"] ? obInstance : new _observable_Observable__WEBPACK_IMPORTED_MODULE_0__[\"default\"]();\n    return _util_util__WEBPACK_IMPORTED_MODULE_4__[\"arrReduce\"].call(this, function (result, item) {\n      if (!(item instanceof SVGElement)) {\n        result.push(new _html__WEBPACK_IMPORTED_MODULE_1__[\"default\"](item, options, Ob));\n      } else {\n        if (Object(_svg_util__WEBPACK_IMPORTED_MODULE_3__[\"checkElement\"])(item)) {\n          result.push(new _svg_index__WEBPACK_IMPORTED_MODULE_2__[\"default\"](item, options, Ob));\n        }\n      }\n\n      return result;\n    }, []);\n  }\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/transform/index.js?");
+        return arr2;
+      }
+    }
 
-/***/ }),
+    function _arrayWithHoles(arr) {
+      if (Array.isArray(arr)) return arr;
+    }
 
-/***/ "./src/js/core/transform/svg/index.js":
-/*!********************************************!*\
-  !*** ./src/js/core/transform/svg/index.js ***!
-  \********************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+    function _iterableToArray(iter) {
+      if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+    }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"default\", function() { return DraggableSVG; });\n/* harmony import */ var _Helper__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../Helper */ \"./src/js/core/Helper.js\");\n/* harmony import */ var _Subject__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../Subject */ \"./src/js/core/transform/Subject.js\");\n/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../util/util */ \"./src/js/core/util/util.js\");\n/* harmony import */ var _common__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../common */ \"./src/js/core/transform/common.js\");\n/* harmony import */ var _path__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./path */ \"./src/js/core/transform/svg/path.js\");\n/* harmony import */ var _util_css_util__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../util/css-util */ \"./src/js/core/util/css-util.js\");\n/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./util */ \"./src/js/core/transform/svg/util.js\");\nfunction _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }\n\nfunction _nonIterableSpread() { throw new TypeError(\"Invalid attempt to spread non-iterable instance\"); }\n\nfunction _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === \"[object Arguments]\") return Array.from(iter); }\n\nfunction _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }\n\nfunction _typeof(obj) { if (typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol && obj !== Symbol.prototype ? \"symbol\" : typeof obj; }; } return _typeof(obj); }\n\nfunction _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }\n\nfunction _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\nfunction _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === \"object\" || typeof call === \"function\")) { return call; } return _assertThisInitialized(self); }\n\nfunction _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError(\"this hasn't been initialised - super() hasn't been called\"); } return self; }\n\nfunction _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }\n\nfunction _inherits(subClass, superClass) { if (typeof superClass !== \"function\" && superClass !== null) { throw new TypeError(\"Super expression must either be null or a function\"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }\n\nfunction _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }\n\n\n\n\n\n\n\n\nvar MIN_SIZE = 5;\nvar ROT_OFFSET = 50;\nvar floatRE = /[+-]?\\d+(\\.\\d+)?/g;\n\nvar DraggableSVG =\n/*#__PURE__*/\nfunction (_Subject) {\n  _inherits(DraggableSVG, _Subject);\n\n  function DraggableSVG(el, options, observable) {\n    var _this;\n\n    _classCallCheck(this, DraggableSVG);\n\n    _this = _possibleConstructorReturn(this, _getPrototypeOf(DraggableSVG).call(this, el, observable));\n\n    _this.enable(options);\n\n    return _this;\n  }\n\n  _createClass(DraggableSVG, [{\n    key: \"_init\",\n    value: function _init(el) {\n      var options = this.options;\n      var rotationPoint = options.rotationPoint,\n          container = options.container,\n          themeColor = options.themeColor;\n      var wrapper = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGElement\"])('g');\n      container.appendChild(wrapper);\n\n      var _el$getBBox = el.getBBox(),\n          cw = _el$getBBox.width,\n          ch = _el$getBBox.height,\n          cx = _el$getBBox.x,\n          cy = _el$getBBox.y;\n\n      var elCTM = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(el, container);\n      var box = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGElement\"])('rect');\n      var attrs = [['width', cw], ['height', ch], ['x', cx], ['y', cy], ['fill', themeColor], ['fill-opacity', 0.1], ['stroke', themeColor], ['stroke-dasharray', '3 3'], ['vector-effect', 'non-scaling-stroke'], ['transform', Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"matrixToString\"])(elCTM)]];\n      attrs.forEach(function (item) {\n        box.setAttribute(item[0], item[1]);\n      });\n      var handlesGroup = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGElement\"])('g'),\n          normalLineGroup = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGElement\"])('g'),\n          group = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGElement\"])('g');\n      group.appendChild(box);\n      wrapper.appendChild(group);\n      wrapper.appendChild(normalLineGroup);\n      wrapper.appendChild(handlesGroup);\n\n      var _box$getBBox = box.getBBox(),\n          bX = _box$getBBox.x,\n          bY = _box$getBBox.y,\n          bW = _box$getBBox.width,\n          bH = _box$getBBox.height;\n\n      var centerX = el.getAttribute('data-cx'),\n          centerY = el.getAttribute('data-cy');\n      var boxCTM = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(box, box.parentNode),\n          boxCenter = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, bX + bW / 2, bY + bH / 2);\n      var handles = {\n        tl: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, bX, bY),\n        tr: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, bX + bW, bY),\n        br: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, bX + bW, bY + bH),\n        bl: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, bX, bY + bH),\n        tc: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, bX + bW / 2, bY),\n        bc: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, bX + bW / 2, bY + bH),\n        ml: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, bX, bY + bH / 2),\n        mr: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, bX + bW, bY + bH / 2),\n        center: rotationPoint ? createPoint(container, centerX, centerY) || boxCenter : undefined,\n        //...(rotationPoint ? { center: createPoint(container, centerX, centerY) || boxCenter }),\n        rotator: {}\n      };\n      var theta = Math.atan2(handles.tl.y - handles.tr.y, handles.tl.x - handles.tr.x);\n      handles.rotator.x = handles.mr.x - ROT_OFFSET * Math.cos(theta);\n      handles.rotator.y = handles.mr.y - ROT_OFFSET * Math.sin(theta);\n      var normalLine = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGElement\"])('line');\n      normalLine.x1.baseVal.value = handles.mr.x;\n      normalLine.y1.baseVal.value = handles.mr.y;\n      normalLine.x2.baseVal.value = handles.rotator.x;\n      normalLine.y2.baseVal.value = handles.rotator.y;\n      setLineStyle(normalLine, themeColor);\n      normalLineGroup.appendChild(normalLine);\n      var radius = null;\n\n      if (rotationPoint) {\n        radius = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGElement\"])('line');\n        Object(_util_css_util__WEBPACK_IMPORTED_MODULE_5__[\"addClass\"])(radius, 'sjx-hidden');\n        radius.x1.baseVal.value = boxCenter.x;\n        radius.y1.baseVal.value = boxCenter.y;\n        radius.x2.baseVal.value = centerX || boxCenter.x;\n        radius.y2.baseVal.value = centerY || boxCenter.y;\n        setLineStyle(radius, '#fe3232');\n        radius.setAttribute('opacity', 0.5);\n        normalLineGroup.appendChild(radius);\n      }\n\n      Object.keys(handles).forEach(function (key) {\n        var data = handles[key];\n        if (Object(_util_util__WEBPACK_IMPORTED_MODULE_2__[\"isUndef\"])(data)) return;\n        var x = data.x,\n            y = data.y;\n        var color = key === 'center' ? '#fe3232' : themeColor;\n        handles[key] = createHandler(x, y, color);\n        handlesGroup.appendChild(handles[key]);\n      });\n      this.storage = {\n        wrapper: wrapper,\n        box: box,\n        handles: handles,\n        normalLine: normalLine,\n        radius: rotationPoint ? radius : undefined,\n        //...(rotationPoint && { radius }),\n        parent: el.parentNode\n      };\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(wrapper).on('mousedown', this._onMouseDown).on('touchstart', this._onTouchStart);\n    }\n  }, {\n    key: \"_destroy\",\n    value: function _destroy() {\n      var wrapper = this.storage.wrapper;\n      Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(wrapper).off('mousedown', this._onMouseDown).off('touchstart', this._onTouchStart);\n      wrapper.parentNode.removeChild(wrapper);\n    }\n  }, {\n    key: \"_compute\",\n    value: function _compute(e) {\n      var storage = this.storage;\n      var handles = storage.handles;\n      var handle = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(e.target);\n\n      var _this$_checkHandles = this._checkHandles(handle, handles),\n          revX = _this$_checkHandles.revX,\n          revY = _this$_checkHandles.revY,\n          onTopEdge = _this$_checkHandles.onTopEdge,\n          onLeftEdge = _this$_checkHandles.onLeftEdge,\n          onRightEdge = _this$_checkHandles.onRightEdge,\n          onBottomEdge = _this$_checkHandles.onBottomEdge,\n          doW = _this$_checkHandles.doW,\n          doH = _this$_checkHandles.doH;\n\n      var _computed = this._getState({\n        revX: revX,\n        revY: revY,\n        doW: doW,\n        doH: doH\n      });\n\n      var _this$_cursorPoint = this._cursorPoint(e),\n          clientX = _this$_cursorPoint.x,\n          clientY = _this$_cursorPoint.y;\n\n      var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);\n      return _objectSpread({}, _computed, {\n        doW: doW,\n        doH: doH,\n        onTopEdge: onTopEdge,\n        onLeftEdge: onLeftEdge,\n        onRightEdge: onRightEdge,\n        onBottomEdge: onBottomEdge,\n        handle: handle,\n        pressang: pressang\n      });\n    }\n  }, {\n    key: \"_cursorPoint\",\n    value: function _cursorPoint(_ref) {\n      var clientX = _ref.clientX,\n          clientY = _ref.clientY;\n      var container = this.options.container;\n      return Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(container.getScreenCTM().inverse(), container, clientX, clientY);\n    }\n  }, {\n    key: \"_pointToElement\",\n    value: function _pointToElement(_ref2) {\n      var x = _ref2.x,\n          y = _ref2.y;\n      var transform = this.storage.transform;\n      var ctm = transform.ctm;\n      var matrix = ctm.inverse();\n      matrix.e = matrix.f = 0;\n      return this._applyMatrixToPoint(matrix, x, y);\n    }\n  }, {\n    key: \"_pointToControls\",\n    value: function _pointToControls(_ref3) {\n      var x = _ref3.x,\n          y = _ref3.y;\n      var transform = this.storage.transform;\n      var boxCTM = transform.boxCTM;\n      var matrix = boxCTM.inverse();\n      matrix.e = matrix.f = 0;\n      return this._applyMatrixToPoint(matrix, x, y);\n    }\n  }, {\n    key: \"_applyMatrixToPoint\",\n    value: function _applyMatrixToPoint(matrix, x, y) {\n      var container = this.options.container;\n      var pt = container.createSVGPoint();\n      pt.x = x;\n      pt.y = y;\n      return pt.matrixTransform(matrix);\n    }\n  }, {\n    key: \"_apply\",\n    value: function _apply(actionName) {\n      var element = this.el,\n          storage = this.storage,\n          options = this.options;\n      var container = options.container;\n      var box = storage.box,\n          handles = storage.handles,\n          cached = storage.cached,\n          transform = storage.transform;\n      var matrix = transform.matrix;\n      var eBBox = element.getBBox();\n      var elX = eBBox.x,\n          elY = eBBox.y,\n          elW = eBBox.width,\n          elH = eBBox.height;\n      var rotationPoint = Object(_util_util__WEBPACK_IMPORTED_MODULE_2__[\"isDef\"])(handles.center) ? Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(transform.boxCTM, container, handles.center.cx.baseVal.value, handles.center.cy.baseVal.value) : Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(matrix, container, elX + elW / 2, elY + elH / 2);\n      element.setAttribute('data-cx', rotationPoint.x);\n      element.setAttribute('data-cy', rotationPoint.y);\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_2__[\"isUndef\"])(cached)) return;\n      var scaleX = cached.scaleX,\n          scaleY = cached.scaleY,\n          dx = cached.dx,\n          dy = cached.dy,\n          ox = cached.ox,\n          oy = cached.oy;\n\n      if (actionName === 'drag') {\n        if (dx === 0 && dy === 0) return; // create translate matrix for an element\n\n        var eM = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGMatrix\"])();\n        eM.e = dx;\n        eM.f = dy;\n        var translateMatrix = eM.multiply(matrix).multiply(eM.inverse());\n        element.setAttribute('transform', Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"matrixToString\"])(translateMatrix));\n\n        if (isGroup(element)) {\n          var els = checkChildElements(element);\n          els.forEach(function (child) {\n            var pt = container.createSVGPoint();\n            var ctm = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(element.parentNode, container).inverse();\n            pt.x = ox;\n            pt.y = oy;\n            ctm.e = ctm.f = 0;\n            var newPT = pt.matrixTransform(ctm); // create translate matrix for an element\n\n            var eM = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGMatrix\"])();\n            eM.e = dx;\n            eM.f = dy;\n            var translateMatrix = eM.multiply(Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(child, child.parentNode)).multiply(eM.inverse());\n\n            if (!Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"isIdentity\"])(translateMatrix)) {\n              child.setAttribute('transform', Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"matrixToString\"])(translateMatrix));\n            }\n\n            if (!isGroup(child)) {\n              applyTranslate(child, {\n                x: newPT.x,\n                y: newPT.y\n              });\n            }\n          });\n        } else {\n          applyTranslate(element, {\n            x: dx,\n            y: dy\n          });\n        }\n      }\n\n      if (actionName === 'resize') {\n        var _box$getBBox2 = box.getBBox(),\n            x = _box$getBBox2.x,\n            y = _box$getBBox2.y,\n            newWidth = _box$getBBox2.width,\n            newHeight = _box$getBBox2.height;\n\n        applyTransformToHandles(storage, {\n          x: x,\n          y: y,\n          width: newWidth,\n          height: newHeight\n        }, container);\n\n        if (isGroup(element)) {\n          var _els = checkChildElements(element);\n\n          _els.forEach(function (child) {\n            if (!isGroup(child)) {\n              applyResize(child, {\n                scaleX: scaleX,\n                scaleY: scaleY,\n                defaultCTM: child.__ctm__,\n                bBox: transform.bBox,\n                container: container,\n                storage: storage\n              });\n            }\n          });\n        } else {\n          applyResize(element, {\n            scaleX: scaleX,\n            scaleY: scaleY,\n            defaultCTM: transform.ctm,\n            bBox: transform.bBox,\n            container: container,\n            storage: storage\n          });\n        }\n\n        element.setAttribute('transform', Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"matrixToString\"])(matrix));\n      }\n\n      this.storage.cached = null;\n    }\n  }, {\n    key: \"_processResize\",\n    value: function _processResize(dx, dy) {\n      var el = this.el,\n          storage = this.storage,\n          options = this.options;\n      var container = options.container,\n          proportions = options.proportions;\n      var _this$storage = this.storage,\n          box = _this$storage.box,\n          left = _this$storage.left,\n          top = _this$storage.top,\n          cw = _this$storage.cw,\n          ch = _this$storage.ch,\n          transform = _this$storage.transform,\n          revX = _this$storage.revX,\n          revY = _this$storage.revY,\n          doW = _this$storage.doW,\n          doH = _this$storage.doH;\n      var matrix = transform.matrix,\n          scMatrix = transform.scMatrix,\n          trMatrix = transform.trMatrix,\n          ptX = transform.scaleX,\n          ptY = transform.scaleY;\n\n      var _box$getBBox3 = box.getBBox(),\n          newWidth = _box$getBBox3.width,\n          newHeight = _box$getBBox3.height;\n\n      var ratio = doW || !doW && !doH ? (cw + dx) / cw : (ch + dy) / ch;\n      newWidth = proportions ? cw * ratio : cw + dx;\n      newHeight = proportions ? ch * ratio : ch + dy;\n      if (Math.abs(newWidth) < MIN_SIZE || Math.abs(newHeight) < MIN_SIZE) return;\n      var scaleX = newWidth / cw,\n          scaleY = newHeight / ch; // setup scale matrix\n\n      scMatrix.a = scaleX;\n      scMatrix.b = 0;\n      scMatrix.c = 0;\n      scMatrix.d = scaleY;\n      scMatrix.e = 0;\n      scMatrix.f = 0; // translate compensation matrix\n\n      trMatrix.e = ptX;\n      trMatrix.f = ptY; //now must to do: translate(x y) scale(sx sy) translate(-x -y)\n\n      var scaleMatrix = trMatrix.multiply(scMatrix).multiply(trMatrix.inverse());\n      var res = matrix.multiply(scaleMatrix);\n      el.setAttribute('transform', Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"matrixToString\"])(res));\n      this.storage.cached = {\n        scaleX: scaleX,\n        scaleY: scaleY\n      };\n      var deltaW = newWidth - cw,\n          deltaH = newHeight - ch;\n      var newX = left - deltaW * (doH ? 0.5 : revX ? 1 : 0),\n          newY = top - deltaH * (doW ? 0.5 : revY ? 1 : 0);\n      applyTransformToHandles(storage, {\n        x: newX,\n        y: newY,\n        width: newWidth,\n        height: newHeight\n      }, container);\n    }\n  }, {\n    key: \"_processMove\",\n    value: function _processMove(dx, dy) {\n      var container = this.options.container;\n      var _this$storage2 = this.storage,\n          transform = _this$storage2.transform,\n          wrapper = _this$storage2.wrapper,\n          center = _this$storage2.center;\n      var matrix = transform.matrix,\n          trMatrix = transform.trMatrix,\n          scMatrix = transform.scMatrix,\n          wrapperMatrix = transform.wrapperMatrix,\n          parentMatrix = transform.parentMatrix;\n      scMatrix.e = dx;\n      scMatrix.f = dy;\n      var moveWrapper = scMatrix.multiply(wrapperMatrix);\n      wrapper.setAttribute('transform', Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"matrixToString\"])(moveWrapper));\n      parentMatrix.e = parentMatrix.f = 0;\n\n      var _pointTo = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(parentMatrix.inverse(), container, dx, dy),\n          x = _pointTo.x,\n          y = _pointTo.y;\n\n      trMatrix.e = x;\n      trMatrix.f = y;\n      var moveElement = trMatrix.multiply(matrix);\n      this.el.setAttribute('transform', Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"matrixToString\"])(moveElement));\n      this.storage.cached = {\n        dx: x,\n        dy: y,\n        ox: dx,\n        oy: dy\n      };\n      if (!center.isShifted) return;\n      var radiusMatrix = wrapperMatrix.inverse();\n      radiusMatrix.e = radiusMatrix.f = 0;\n\n      var _pointTo2 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(radiusMatrix, container, dx, dy),\n          nx = _pointTo2.x,\n          ny = _pointTo2.y;\n\n      this._moveCenterHandle(-nx, -ny);\n    }\n  }, {\n    key: \"_processRotate\",\n    value: function _processRotate(radians) {\n      var _this$storage3 = this.storage,\n          center = _this$storage3.center,\n          transform = _this$storage3.transform,\n          wrapper = _this$storage3.wrapper;\n      var matrix = transform.matrix,\n          wrapperMatrix = transform.wrapperMatrix,\n          parentMatrix = transform.parentMatrix,\n          trMatrix = transform.trMatrix,\n          scMatrix = transform.scMatrix,\n          rotMatrix = transform.rotMatrix;\n      var cos = Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"floatToFixed\"])(Math.cos(radians)),\n          sin = Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"floatToFixed\"])(Math.sin(radians)); // rotate(a cx cy) is equivalent to translate(cx cy) rotate(a) translate(-cx -cy)\n\n      trMatrix.e = center.x;\n      trMatrix.f = center.y;\n      rotMatrix.a = cos;\n      rotMatrix.b = sin;\n      rotMatrix.c = -sin;\n      rotMatrix.d = cos;\n      var wrapMatrix = trMatrix.multiply(rotMatrix).multiply(trMatrix.inverse()).multiply(wrapperMatrix);\n      wrapper.setAttribute('transform', Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"matrixToString\"])(wrapMatrix));\n      scMatrix.e = center.el_x;\n      scMatrix.f = center.el_y;\n      parentMatrix.e = parentMatrix.f = 0;\n      var resRotMatrix = parentMatrix.inverse().multiply(rotMatrix).multiply(parentMatrix);\n      var rotateMatrix = scMatrix.multiply(resRotMatrix).multiply(scMatrix.inverse());\n      var elMatrix = rotateMatrix.multiply(matrix);\n      this.el.setAttribute('transform', Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"matrixToString\"])(elMatrix));\n    }\n  }, {\n    key: \"_getState\",\n    value: function _getState(_ref4) {\n      var revX = _ref4.revX,\n          revY = _ref4.revY,\n          doW = _ref4.doW,\n          doH = _ref4.doH;\n      var element = this.el,\n          storage = this.storage,\n          options = this.options;\n      var container = options.container;\n      var box = storage.box,\n          wrapper = storage.wrapper,\n          parent = storage.parent,\n          handles = storage.handles;\n      var cHandle = handles.center;\n      var eBBox = element.getBBox();\n      var el_x = eBBox.x,\n          el_y = eBBox.y,\n          el_w = eBBox.width,\n          el_h = eBBox.height;\n\n      var _box$getBBox4 = box.getBBox(),\n          cw = _box$getBBox4.width,\n          ch = _box$getBBox4.height,\n          c_left = _box$getBBox4.x,\n          c_top = _box$getBBox4.y;\n\n      var elMatrix = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(element, parent),\n          ctm = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(element, container),\n          boxCTM = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(box.parentNode, container);\n      var parentMatrix = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(parent, container);\n      var scaleX = el_x + el_w * (doH ? 0.5 : revX ? 1 : 0),\n          scaleY = el_y + el_h * (doW ? 0.5 : revY ? 1 : 0);\n      var transform = {\n        matrix: elMatrix,\n        ctm: ctm,\n        boxCTM: boxCTM,\n        parentMatrix: parentMatrix,\n        wrapperMatrix: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(wrapper, wrapper.parentNode),\n        trMatrix: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGMatrix\"])(),\n        scMatrix: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGMatrix\"])(),\n        rotMatrix: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGMatrix\"])(),\n        scaleX: scaleX,\n        scaleY: scaleY,\n        scX: Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b),\n        scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d),\n        bBox: eBBox\n      };\n      var boxCenterX = c_left + cw / 2,\n          boxCenterY = c_top + ch / 2;\n      var centerX = cHandle ? cHandle.cx.baseVal.value : boxCenterX,\n          centerY = cHandle ? cHandle.cy.baseVal.value : boxCenterY; // c-handler's coordinates\n\n      var _pointTo3 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, centerX, centerY),\n          bcx = _pointTo3.x,\n          bcy = _pointTo3.y; // element's center coordinates\n\n\n      var _ref5 = Object(_util_util__WEBPACK_IMPORTED_MODULE_2__[\"isDef\"])(cHandle) ? Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(parentMatrix.inverse(), container, bcx, bcy) : Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(elMatrix, container, el_x + el_w / 2, el_y + el_h / 2),\n          elcx = _ref5.x,\n          elcy = _ref5.y; // box's center coordinates\n\n\n      var _pointTo4 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(box, container), container, boxCenterX, boxCenterY),\n          rcx = _pointTo4.x,\n          rcy = _pointTo4.y;\n\n      checkChildElements(element).forEach(function (child) {\n        child.__ctm__ = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(child, container);\n      });\n      return {\n        transform: transform,\n        cw: cw,\n        ch: ch,\n        center: {\n          x: cHandle ? bcx : rcx,\n          y: cHandle ? bcy : rcy,\n          el_x: elcx,\n          el_y: elcy,\n          hx: cHandle ? cHandle.cx.baseVal.value : null,\n          hy: cHandle ? cHandle.cy.baseVal.value : null,\n          isShifted: Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"floatToFixed\"])(rcx, 3) !== Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"floatToFixed\"])(bcx, 3) && Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"floatToFixed\"])(rcy, 3) !== Object(_common__WEBPACK_IMPORTED_MODULE_3__[\"floatToFixed\"])(bcy, 3)\n        },\n        left: c_left,\n        top: c_top,\n        revX: revX,\n        revY: revY,\n        doW: doW,\n        doH: doH\n      };\n    }\n  }, {\n    key: \"_moveCenterHandle\",\n    value: function _moveCenterHandle(x, y) {\n      var _this$storage4 = this.storage,\n          handles = _this$storage4.handles,\n          center = _this$storage4.center,\n          radius = _this$storage4.radius;\n      if (Object(_util_util__WEBPACK_IMPORTED_MODULE_2__[\"isUndef\"])(handles.center)) return;\n      handles.center.cx.baseVal.value = center.hx + x;\n      handles.center.cy.baseVal.value = center.hy + y;\n      radius.x2.baseVal.value = center.hx + x;\n      radius.y2.baseVal.value = center.hy + y;\n    }\n  }, {\n    key: \"resetCenterPoint\",\n    value: function resetCenterPoint() {\n      var _this$storage5 = this.storage,\n          box = _this$storage5.box,\n          handles = _this$storage5.handles,\n          radius = _this$storage5.radius;\n      var center = handles.center;\n      var container = this.options.container;\n\n      var _box$getBBox5 = box.getBBox(),\n          cw = _box$getBBox5.width,\n          ch = _box$getBBox5.height,\n          c_left = _box$getBBox5.x,\n          c_top = _box$getBBox5.y;\n\n      var matrix = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(box, box.parentNode);\n\n      var _pointTo5 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(matrix, container, c_left + cw / 2, c_top + ch / 2),\n          cx = _pointTo5.x,\n          cy = _pointTo5.y;\n\n      center.cx.baseVal.value = cx;\n      center.cy.baseVal.value = cy;\n      center.isShifted = false;\n      radius.x2.baseVal.value = cx;\n      radius.y2.baseVal.value = cy;\n    }\n  }, {\n    key: \"controls\",\n    get: function get() {\n      return this.storage.wrapper;\n    }\n  }]);\n\n  return DraggableSVG;\n}(_Subject__WEBPACK_IMPORTED_MODULE_1__[\"default\"]);\n\n\n\nfunction applyTranslate(element, _ref6) {\n  var x = _ref6.x,\n      y = _ref6.y;\n  var attrs = [];\n\n  switch (element.tagName.toLowerCase()) {\n    case 'use':\n    case 'image':\n    case 'text':\n    case 'rect':\n      {\n        var resX = element.x.baseVal.value + x,\n            resY = element.y.baseVal.value + y;\n        attrs.push(['x', resX], ['y', resY]);\n        break;\n      }\n\n    case 'circle':\n    case 'ellipse':\n      {\n        var _resX = element.cx.baseVal.value + x,\n            _resY = element.cy.baseVal.value + y;\n\n        attrs.push(['cx', _resX], ['cy', _resY]);\n        break;\n      }\n\n    case 'line':\n      {\n        var resX1 = element.x1.baseVal.value + x,\n            resY1 = element.y1.baseVal.value + y,\n            resX2 = element.x2.baseVal.value + x,\n            resY2 = element.y2.baseVal.value + y;\n        attrs.push(['x1', resX1], ['y1', resY1], ['x2', resX2], ['y2', resY2]);\n        break;\n      }\n\n    case 'polygon':\n    case 'polyline':\n      {\n        var points = parsePoints(element.getAttribute('points'));\n        var result = points.map(function (item) {\n          item[0] = Number(item[0]) + x;\n          item[1] = Number(item[1]) + y;\n          return item.join(' ');\n        }).join(' ');\n        attrs.push(['points', result]);\n        break;\n      }\n\n    case 'path':\n      {\n        var path = element.getAttribute('d');\n        attrs.push(['d', Object(_path__WEBPACK_IMPORTED_MODULE_4__[\"movePath\"])({\n          path: path,\n          dx: x,\n          dy: y\n        })]);\n        break;\n      }\n\n    default:\n      break;\n  }\n\n  attrs.forEach(function (item) {\n    element.setAttribute(item[0], item[1]);\n  });\n}\n\nfunction applyResize(element, data) {\n  var scaleX = data.scaleX,\n      scaleY = data.scaleY,\n      bBox = data.bBox,\n      defaultCTM = data.defaultCTM,\n      container = data.container;\n  var boxW = bBox.width,\n      boxH = bBox.height;\n  var attrs = [];\n  var ctm = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(element, container);\n  var localCTM = defaultCTM.inverse().multiply(ctm);\n\n  switch (element.tagName.toLowerCase()) {\n    case 'text':\n      {\n        var x = element.x.baseVal.value,\n            y = element.y.baseVal.value;\n\n        var _pointTo6 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(localCTM, container, x, y),\n            resX = _pointTo6.x,\n            resY = _pointTo6.y;\n\n        attrs.push(['x', resX + (scaleX < 0 ? boxW : 0)], ['y', resY + (scaleY < 0 ? boxH : 0)]);\n        break;\n      }\n\n    case 'circle':\n      {\n        var r = element.r.baseVal.value,\n            cx = element.cx.baseVal.value,\n            cy = element.cy.baseVal.value,\n            newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;\n\n        var _pointTo7 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(localCTM, container, cx, cy),\n            _resX2 = _pointTo7.x,\n            _resY2 = _pointTo7.y;\n\n        attrs.push(['r', newR], ['cx', _resX2], ['cy', _resY2]);\n        break;\n      }\n\n    case 'image':\n    case 'rect':\n      {\n        var width = element.width.baseVal.value,\n            height = element.height.baseVal.value,\n            _x = element.x.baseVal.value,\n            _y = element.y.baseVal.value;\n\n        var _pointTo8 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(localCTM, container, _x, _y),\n            _resX3 = _pointTo8.x,\n            _resY3 = _pointTo8.y;\n\n        var newWidth = Math.abs(width * scaleX),\n            newHeight = Math.abs(height * scaleY);\n        attrs.push(['x', _resX3 - (scaleX < 0 ? newWidth : 0)], ['y', _resY3 - (scaleY < 0 ? newHeight : 0)], ['width', newWidth], ['height', newHeight]);\n        break;\n      }\n\n    case 'ellipse':\n      {\n        var rx = element.rx.baseVal.value,\n            ry = element.ry.baseVal.value,\n            _cx = element.cx.baseVal.value,\n            _cy = element.cy.baseVal.value;\n\n        var _pointTo9 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(localCTM, container, _cx, _cy),\n            cx1 = _pointTo9.x,\n            cy1 = _pointTo9.y;\n\n        var scaleMatrix = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGMatrix\"])();\n        scaleMatrix.a = scaleX;\n        scaleMatrix.d = scaleY;\n\n        var _pointTo10 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(scaleMatrix, container, rx, ry),\n            nRx = _pointTo10.x,\n            nRy = _pointTo10.y;\n\n        attrs.push(['rx', Math.abs(nRx)], ['ry', Math.abs(nRy)], ['cx', cx1], ['cy', cy1]);\n        break;\n      }\n\n    case 'line':\n      {\n        var resX1 = element.x1.baseVal.value,\n            resY1 = element.y1.baseVal.value,\n            resX2 = element.x2.baseVal.value,\n            resY2 = element.y2.baseVal.value;\n\n        var _pointTo11 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(localCTM, container, resX1, resY1),\n            resX1_ = _pointTo11.x,\n            resY1_ = _pointTo11.y;\n\n        var _pointTo12 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(localCTM, container, resX2, resY2),\n            resX2_ = _pointTo12.x,\n            resY2_ = _pointTo12.y;\n\n        attrs.push(['x1', resX1_], ['y1', resY1_], ['x2', resX2_], ['y2', resY2_]);\n        break;\n      }\n\n    case 'polygon':\n    case 'polyline':\n      {\n        var points = parsePoints(element.getAttribute('points'));\n        var result = points.map(function (item) {\n          var _pointTo13 = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(localCTM, container, Number(item[0]), Number(item[1])),\n              x = _pointTo13.x,\n              y = _pointTo13.y;\n\n          item[0] = x;\n          item[1] = y;\n          return item.join(' ');\n        }).join(' ');\n        attrs.push(['points', result]);\n        break;\n      }\n\n    case 'path':\n      {\n        var path = element.getAttribute('d');\n        attrs.push(['d', Object(_path__WEBPACK_IMPORTED_MODULE_4__[\"resizePath\"])({\n          path: path,\n          localCTM: localCTM,\n          container: container\n        })]);\n        break;\n      }\n\n    default:\n      break;\n  }\n\n  attrs.forEach(function (attr) {\n    element.setAttribute(attr[0], attr[1]);\n  });\n}\n\nfunction applyTransformToHandles(storage, data, container) {\n  var box = storage.box,\n      handles = storage.handles,\n      normalLine = storage.normalLine,\n      radius = storage.radius,\n      center = storage.center;\n  var x = data.x,\n      y = data.y,\n      width = data.width,\n      height = data.height;\n  var hW = width / 2,\n      hH = height / 2;\n  var boxCTM = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"getTransformToElement\"])(box, box.parentNode);\n  var boxCenter = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, x + hW, y + hH);\n  var attrs = {\n    tl: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, x, y),\n    tr: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, x + width, y),\n    br: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, x + width, y + height),\n    bl: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, x, y + height),\n    tc: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, x + hW, y),\n    bc: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, x + hW, y + height),\n    ml: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, x, y + hH),\n    mr: Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"pointTo\"])(boxCTM, container, x + width, y + hH),\n    rotator: {},\n    center: !center.isShifted && Object(_util_util__WEBPACK_IMPORTED_MODULE_2__[\"isDef\"])(handles.center) ? boxCenter : undefined //...(!center.isShifted && isDef(handles.center) && { center: boxCenter })\n\n  };\n  var theta = Math.atan2(attrs.tl.y - attrs.tr.y, attrs.tl.x - attrs.tr.x);\n  attrs.rotator.x = attrs.mr.x - ROT_OFFSET * Math.cos(theta);\n  attrs.rotator.y = attrs.mr.y - ROT_OFFSET * Math.sin(theta);\n  normalLine.x1.baseVal.value = attrs.mr.x;\n  normalLine.y1.baseVal.value = attrs.mr.y;\n  normalLine.x2.baseVal.value = attrs.rotator.x;\n  normalLine.y2.baseVal.value = attrs.rotator.y;\n\n  if (Object(_util_util__WEBPACK_IMPORTED_MODULE_2__[\"isDef\"])(radius)) {\n    radius.x1.baseVal.value = boxCenter.x;\n    radius.y1.baseVal.value = boxCenter.y;\n\n    if (!center.isShifted) {\n      radius.x2.baseVal.value = boxCenter.x;\n      radius.y2.baseVal.value = boxCenter.y;\n    }\n  }\n\n  x += width < 0 ? width : 0;\n  y += height < 0 ? height : 0;\n  var boxAttrs = {\n    x: x,\n    y: y,\n    width: Math.abs(width),\n    height: Math.abs(height)\n  };\n  Object.keys(boxAttrs).forEach(function (attr) {\n    box.setAttribute(attr, boxAttrs[attr]);\n  });\n  Object.keys(attrs).forEach(function (key) {\n    var hdl = handles[key];\n    var attr = attrs[key];\n    if (Object(_util_util__WEBPACK_IMPORTED_MODULE_2__[\"isUndef\"])(attr)) return;\n    hdl.setAttribute('cx', attr.x);\n    hdl.setAttribute('cy', attr.y);\n  });\n}\n\nfunction isGroup(element) {\n  return element.tagName.toLowerCase() === 'g';\n}\n\nfunction checkChildElements(element) {\n  var arrOfElements = [];\n\n  if (isGroup(element)) {\n    _util_util__WEBPACK_IMPORTED_MODULE_2__[\"forEach\"].call(element.childNodes, function (item) {\n      if (item.nodeType === 1) {\n        var tagName = item.tagName.toLowerCase();\n\n        if (_util__WEBPACK_IMPORTED_MODULE_6__[\"ALLOWED_ELEMENTS\"].indexOf(tagName) !== -1) {\n          if (tagName === 'g') {\n            arrOfElements.push.apply(arrOfElements, _toConsumableArray(checkChildElements(item)));\n          }\n\n          arrOfElements.push(item);\n        }\n      }\n    });\n  } else {\n    arrOfElements.push(element);\n  }\n\n  return arrOfElements;\n}\n\nfunction parsePoints(pts) {\n  return pts.match(floatRE).reduce(function (result, value, index, array) {\n    if (index % 2 === 0) {\n      result.push(array.slice(index, index + 2));\n    }\n\n    return result;\n  }, []);\n}\n\nfunction createHandler(l, t, color) {\n  var handler = Object(_util__WEBPACK_IMPORTED_MODULE_6__[\"createSVGElement\"])('circle');\n  Object(_util_css_util__WEBPACK_IMPORTED_MODULE_5__[\"addClass\"])(handler, 'sjx-svg-hdl');\n  var items = {\n    cx: l,\n    cy: t,\n    r: 5.5,\n    fill: color,\n    stroke: '#fff',\n    'fill-opacity': 1,\n    'vector-effect': 'non-scaling-stroke',\n    'stroke-width': 1\n  };\n  Object.keys(items).map(function (key) {\n    handler.setAttribute(key, items[key]);\n  });\n  return handler;\n}\n\nfunction setLineStyle(line, color) {\n  line.setAttribute('stroke', color);\n  line.setAttribute('stroke-dasharray', '3 3');\n  line.setAttribute('vector-effect', 'non-scaling-stroke');\n}\n\nfunction createPoint(svg, x, y) {\n  if (Object(_util_util__WEBPACK_IMPORTED_MODULE_2__[\"isUndef\"])(x) || Object(_util_util__WEBPACK_IMPORTED_MODULE_2__[\"isUndef\"])(y)) {\n    return null;\n  }\n\n  var pt = svg.createSVGPoint();\n  pt.x = x;\n  pt.y = y;\n  return pt;\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/transform/svg/index.js?");
+    function _iterableToArrayLimit(arr, i) {
+      if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) {
+        return;
+      }
 
-/***/ }),
+      var _arr = [];
+      var _n = true;
+      var _d = false;
+      var _e = undefined;
 
-/***/ "./src/js/core/transform/svg/path.js":
-/*!*******************************************!*\
-  !*** ./src/js/core/transform/svg/path.js ***!
-  \*******************************************/
-/*! exports provided: movePath, resizePath */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+      try {
+        for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+          _arr.push(_s.value);
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"movePath\", function() { return movePath; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"resizePath\", function() { return resizePath; });\n/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../../util/util */ \"./src/js/core/util/util.js\");\n/* harmony import */ var _common__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../common */ \"./src/js/core/transform/common.js\");\n/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./util */ \"./src/js/core/transform/svg/util.js\");\nfunction _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }\n\nfunction _nonIterableSpread() { throw new TypeError(\"Invalid attempt to spread non-iterable instance\"); }\n\nfunction _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === \"[object Arguments]\") return Array.from(iter); }\n\nfunction _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }\n\nfunction _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }\n\nfunction _nonIterableRest() { throw new TypeError(\"Invalid attempt to destructure non-iterable instance\"); }\n\nfunction _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i[\"return\"] != null) _i[\"return\"](); } finally { if (_d) throw _e; } } return _arr; }\n\nfunction _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }\n\n\n\n\nvar dRE = /\\s*([achlmqstvz])([^achlmqstvz]*)\\s*/gi;\nvar sepRE = /\\s*,\\s*|\\s+/g;\n\nfunction parsePath(path) {\n  var match = dRE.lastIndex = 0;\n  var serialized = [];\n\n  while (match = dRE.exec(path)) {\n    var cmd = match[1];\n    var upCmd = cmd.toUpperCase(); // normalize the data\n\n    var data = match[2].replace(/([^e])-/g, '$1 -').replace(/ +/g, ' ');\n    serialized.push({\n      relative: cmd !== upCmd,\n      key: upCmd,\n      cmd: cmd,\n      values: data.trim().split(sepRE).map(function (val) {\n        if (!isNaN(val)) {\n          return Number(val);\n        }\n      })\n    });\n  }\n\n  return serialized;\n}\n\nfunction movePath(params) {\n  var path = params.path,\n      dx = params.dx,\n      dy = params.dy;\n\n  try {\n    var serialized = parsePath(path);\n    var str = '';\n    var space = ' ';\n    var firstCommand = true;\n\n    for (var i = 0, len = serialized.length; i < len; i++) {\n      var item = serialized[i];\n      var values = item.values,\n          cmd = item.key,\n          relative = item.relative;\n      var coordinates = [];\n\n      switch (cmd) {\n        case 'M':\n          {\n            for (var k = 0, _len = values.length; k < _len; k += 2) {\n              var _values$slice = values.slice(k, k + 2),\n                  _values$slice2 = _slicedToArray(_values$slice, 2),\n                  x = _values$slice2[0],\n                  y = _values$slice2[1];\n\n              if (!(relative && !firstCommand)) {\n                x += dx;\n                y += dy;\n              }\n\n              coordinates.push(x, y);\n              firstCommand = false;\n            }\n\n            break;\n          }\n\n        case 'A':\n          {\n            for (var _k = 0, _len2 = values.length; _k < _len2; _k += 7) {\n              var set = values.slice(_k, _k + 7);\n\n              if (!relative) {\n                set[5] += dx;\n                set[6] += dy;\n              }\n\n              coordinates.push.apply(coordinates, _toConsumableArray(set));\n            }\n\n            break;\n          }\n\n        case 'C':\n          {\n            for (var _k2 = 0, _len3 = values.length; _k2 < _len3; _k2 += 6) {\n              var _set = values.slice(_k2, _k2 + 6);\n\n              if (!relative) {\n                _set[0] += dx;\n                _set[1] += dy;\n                _set[2] += dx;\n                _set[3] += dy;\n                _set[4] += dx;\n                _set[5] += dy;\n              }\n\n              coordinates.push.apply(coordinates, _toConsumableArray(_set));\n            }\n\n            break;\n          }\n\n        case 'H':\n          {\n            for (var _k3 = 0, _len4 = values.length; _k3 < _len4; _k3 += 1) {\n              var _set2 = values.slice(_k3, _k3 + 1);\n\n              if (!relative) {\n                _set2[0] += dx;\n              }\n\n              coordinates.push(_set2[0]);\n            }\n\n            break;\n          }\n\n        case 'V':\n          {\n            for (var _k4 = 0, _len5 = values.length; _k4 < _len5; _k4 += 1) {\n              var _set3 = values.slice(_k4, _k4 + 1);\n\n              if (!relative) {\n                _set3[0] += dy;\n              }\n\n              coordinates.push(_set3[0]);\n            }\n\n            break;\n          }\n\n        case 'L':\n        case 'T':\n          {\n            for (var _k5 = 0, _len6 = values.length; _k5 < _len6; _k5 += 2) {\n              var _values$slice3 = values.slice(_k5, _k5 + 2),\n                  _values$slice4 = _slicedToArray(_values$slice3, 2),\n                  x = _values$slice4[0],\n                  y = _values$slice4[1];\n\n              if (!relative) {\n                x += dx;\n                y += dy;\n              }\n\n              coordinates.push(x, y);\n            }\n\n            break;\n          }\n\n        case 'Q':\n        case 'S':\n          {\n            for (var _k6 = 0, _len7 = values.length; _k6 < _len7; _k6 += 4) {\n              var _values$slice5 = values.slice(_k6, _k6 + 4),\n                  _values$slice6 = _slicedToArray(_values$slice5, 4),\n                  x1 = _values$slice6[0],\n                  y1 = _values$slice6[1],\n                  x2 = _values$slice6[2],\n                  y2 = _values$slice6[3];\n\n              if (!relative) {\n                x1 += dx;\n                y1 += dy;\n                x2 += dx;\n                y2 += dy;\n              }\n\n              coordinates.push(x1, y1, x2, y2);\n            }\n\n            break;\n          }\n\n        case 'Z':\n          {\n            values[0] = '';\n            space = '';\n            break;\n          }\n      }\n\n      str += item.cmd + coordinates.join(',') + space;\n    }\n\n    return str;\n  } catch (err) {\n    Object(_util_util__WEBPACK_IMPORTED_MODULE_0__[\"warn\"])('Path parsing error: ' + err);\n  }\n}\nfunction resizePath(params) {\n  var path = params.path,\n      localCTM = params.localCTM,\n      container = params.container;\n\n  try {\n    var serialized = parsePath(path);\n    var str = '';\n    var space = ' ';\n    var res = [];\n    var firstCommand = true;\n\n    for (var i = 0, len = serialized.length; i < len; i++) {\n      var item = serialized[i];\n      var values = item.values,\n          cmd = item.key,\n          relative = item.relative;\n\n      switch (cmd) {\n        case 'A':\n          {\n            //A rx ry x-axis-rotation large-arc-flag sweep-flag x y\n            var coordinates = [];\n\n            for (var k = 0, _len8 = values.length; k < _len8; k += 7) {\n              var _values$slice7 = values.slice(k, k + 7),\n                  _values$slice8 = _slicedToArray(_values$slice7, 7),\n                  rx = _values$slice8[0],\n                  ry = _values$slice8[1],\n                  x_axis_rot = _values$slice8[2],\n                  large_arc_flag = _values$slice8[3],\n                  sweep_flag = _values$slice8[4],\n                  x = _values$slice8[5],\n                  y = _values$slice8[6];\n\n              var mtrx = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"cloneMatrix\"])(localCTM);\n\n              if (relative) {\n                mtrx.e = mtrx.f = 0;\n              }\n\n              var _pointTo = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(mtrx, container, x, y),\n                  resX = _pointTo.x,\n                  resY = _pointTo.y;\n\n              coordinates.push(Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY));\n              mtrx.e = mtrx.f = 0;\n\n              var _pointTo2 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(mtrx, container, rx, ry),\n                  newRx = _pointTo2.x,\n                  newRy = _pointTo2.y;\n\n              coordinates.unshift(Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(newRx), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(newRy), x_axis_rot, large_arc_flag, sweep_flag);\n            }\n\n            res.push(coordinates);\n            break;\n          }\n\n        case 'C':\n          {\n            //C x1 y1, x2 y2, x y (or c dx1 dy1, dx2 dy2, dx dy)\n            var _coordinates = [];\n\n            for (var _k7 = 0, _len9 = values.length; _k7 < _len9; _k7 += 6) {\n              var _values$slice9 = values.slice(_k7, _k7 + 6),\n                  _values$slice10 = _slicedToArray(_values$slice9, 6),\n                  x1 = _values$slice10[0],\n                  y1 = _values$slice10[1],\n                  x2 = _values$slice10[2],\n                  y2 = _values$slice10[3],\n                  x = _values$slice10[4],\n                  y = _values$slice10[5];\n\n              var _mtrx = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"cloneMatrix\"])(localCTM);\n\n              if (relative) {\n                _mtrx.e = _mtrx.f = 0;\n              }\n\n              var _pointTo3 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx, container, x1, y1),\n                  resX1 = _pointTo3.x,\n                  resY1 = _pointTo3.y;\n\n              var _pointTo4 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx, container, x2, y2),\n                  resX2 = _pointTo4.x,\n                  resY2 = _pointTo4.y;\n\n              var _pointTo5 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx, container, x, y),\n                  resX = _pointTo5.x,\n                  resY = _pointTo5.y;\n\n              _coordinates.push(Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX1), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY1), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX2), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY2), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY));\n            }\n\n            res.push(_coordinates);\n            break;\n          }\n        // this command makes impossible free transform within group\n        // todo: use proportional resizing only or need to be converted to L\n\n        case 'H':\n          {\n            // H x (or h dx)\n            var _coordinates2 = [];\n\n            for (var _k8 = 0, _len10 = values.length; _k8 < _len10; _k8 += 1) {\n              var _values$slice11 = values.slice(_k8, _k8 + 1),\n                  _values$slice12 = _slicedToArray(_values$slice11, 1),\n                  x = _values$slice12[0];\n\n              var _mtrx2 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"cloneMatrix\"])(localCTM);\n\n              if (relative) {\n                _mtrx2.e = _mtrx2.f = 0;\n              }\n\n              var _pointTo6 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx2, container, x, 0),\n                  resX = _pointTo6.x;\n\n              _coordinates2.push(Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX));\n            }\n\n            res.push(_coordinates2);\n            break;\n          }\n        // this command makes impossible free transform within group\n        // todo: use proportional resizing only or need to be converted to L\n\n        case 'V':\n          {\n            // V y (or v dy)\n            var _coordinates3 = [];\n\n            for (var _k9 = 0, _len11 = values.length; _k9 < _len11; _k9 += 1) {\n              var _values$slice13 = values.slice(_k9, _k9 + 1),\n                  _values$slice14 = _slicedToArray(_values$slice13, 1),\n                  y = _values$slice14[0];\n\n              var _mtrx3 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"cloneMatrix\"])(localCTM);\n\n              if (relative) {\n                _mtrx3.e = _mtrx3.f = 0;\n              }\n\n              var _pointTo7 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx3, container, 0, y),\n                  resY = _pointTo7.y;\n\n              _coordinates3.push(Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY));\n            }\n\n            res.push(_coordinates3);\n            break;\n          }\n\n        case 'T':\n        case 'L':\n          {\n            // T x y (or t dx dy)\n            // L x y (or l dx dy)\n            var _coordinates4 = [];\n\n            for (var _k10 = 0, _len12 = values.length; _k10 < _len12; _k10 += 2) {\n              var _values$slice15 = values.slice(_k10, _k10 + 2),\n                  _values$slice16 = _slicedToArray(_values$slice15, 2),\n                  x = _values$slice16[0],\n                  y = _values$slice16[1];\n\n              var _mtrx4 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"cloneMatrix\"])(localCTM);\n\n              if (relative) {\n                _mtrx4.e = _mtrx4.f = 0;\n              }\n\n              var _pointTo8 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx4, container, x, y),\n                  resX = _pointTo8.x,\n                  resY = _pointTo8.y;\n\n              _coordinates4.push(Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY));\n            }\n\n            res.push(_coordinates4);\n            break;\n          }\n\n        case 'M':\n          {\n            // M x y (or dx dy)\n            var _coordinates5 = [];\n\n            for (var _k11 = 0, _len13 = values.length; _k11 < _len13; _k11 += 2) {\n              var _values$slice17 = values.slice(_k11, _k11 + 2),\n                  _values$slice18 = _slicedToArray(_values$slice17, 2),\n                  x = _values$slice18[0],\n                  y = _values$slice18[1];\n\n              var _mtrx5 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"cloneMatrix\"])(localCTM);\n\n              if (relative && !firstCommand) {\n                _mtrx5.e = _mtrx5.f = 0;\n              }\n\n              var _pointTo9 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx5, container, x, y),\n                  resX = _pointTo9.x,\n                  resY = _pointTo9.y;\n\n              _coordinates5.push(Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY));\n\n              firstCommand = false;\n            }\n\n            res.push(_coordinates5);\n            break;\n          }\n\n        case 'Q':\n          {\n            //Q x1 y1, x y (or q dx1 dy1, dx dy)\n            var _coordinates6 = [];\n\n            for (var _k12 = 0, _len14 = values.length; _k12 < _len14; _k12 += 4) {\n              var _values$slice19 = values.slice(_k12, _k12 + 4),\n                  _values$slice20 = _slicedToArray(_values$slice19, 4),\n                  x1 = _values$slice20[0],\n                  y1 = _values$slice20[1],\n                  x = _values$slice20[2],\n                  y = _values$slice20[3];\n\n              var _mtrx6 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"cloneMatrix\"])(localCTM);\n\n              if (relative) {\n                _mtrx6.e = _mtrx6.f = 0;\n              }\n\n              var _pointTo10 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx6, container, x1, y1),\n                  resX1 = _pointTo10.x,\n                  resY1 = _pointTo10.y;\n\n              var _pointTo11 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx6, container, x, y),\n                  resX = _pointTo11.x,\n                  resY = _pointTo11.y;\n\n              _coordinates6.push(Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX1), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY1), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY));\n            }\n\n            res.push(_coordinates6);\n            break;\n          }\n\n        case 'S':\n          {\n            //S x2 y2, x y (or s dx2 dy2, dx dy)\n            var _coordinates7 = [];\n\n            for (var _k13 = 0, _len15 = values.length; _k13 < _len15; _k13 += 4) {\n              var _values$slice21 = values.slice(_k13, _k13 + 4),\n                  _values$slice22 = _slicedToArray(_values$slice21, 4),\n                  x2 = _values$slice22[0],\n                  y2 = _values$slice22[1],\n                  x = _values$slice22[2],\n                  y = _values$slice22[3];\n\n              var _mtrx7 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"cloneMatrix\"])(localCTM);\n\n              if (relative) {\n                _mtrx7.e = _mtrx7.f = 0;\n              }\n\n              var _pointTo12 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx7, container, x2, y2),\n                  resX2 = _pointTo12.x,\n                  resY2 = _pointTo12.y;\n\n              var _pointTo13 = Object(_util__WEBPACK_IMPORTED_MODULE_2__[\"pointTo\"])(_mtrx7, container, x, y),\n                  resX = _pointTo13.x,\n                  resY = _pointTo13.y;\n\n              _coordinates7.push(Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX2), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY2), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resX), Object(_common__WEBPACK_IMPORTED_MODULE_1__[\"floatToFixed\"])(resY));\n            }\n\n            res.push(_coordinates7);\n            break;\n          }\n\n        case 'Z':\n          {\n            res.push(['']);\n            space = '';\n            break;\n          }\n      }\n\n      str += item.cmd + res[i].join(',') + space;\n    }\n\n    return str;\n  } catch (err) {\n    Object(_util_util__WEBPACK_IMPORTED_MODULE_0__[\"warn\"])('Path parsing error: ' + err);\n  }\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/transform/svg/path.js?");
+          if (i && _arr.length === i) break;
+        }
+      } catch (err) {
+        _d = true;
+        _e = err;
+      } finally {
+        try {
+          if (!_n && _i["return"] != null) _i["return"]();
+        } finally {
+          if (_d) throw _e;
+        }
+      }
 
-/***/ }),
+      return _arr;
+    }
 
-/***/ "./src/js/core/transform/svg/util.js":
-/*!*******************************************!*\
-  !*** ./src/js/core/transform/svg/util.js ***!
-  \*******************************************/
-/*! exports provided: ALLOWED_ELEMENTS, createSVGElement, createSVGMatrix, getTransformToElement, matrixToString, pointTo, cloneMatrix, checkElement, isIdentity */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+    function _nonIterableSpread() {
+      throw new TypeError("Invalid attempt to spread non-iterable instance");
+    }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"ALLOWED_ELEMENTS\", function() { return ALLOWED_ELEMENTS; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"createSVGElement\", function() { return createSVGElement; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"createSVGMatrix\", function() { return createSVGMatrix; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"getTransformToElement\", function() { return getTransformToElement; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"matrixToString\", function() { return matrixToString; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"pointTo\", function() { return pointTo; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"cloneMatrix\", function() { return cloneMatrix; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"checkElement\", function() { return checkElement; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"isIdentity\", function() { return isIdentity; });\n/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../../util/util */ \"./src/js/core/util/util.js\");\n\nvar ALLOWED_ELEMENTS = ['circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text', 'g'];\nfunction createSVGElement(name) {\n  return document.createElementNS('http://www.w3.org/2000/svg', name);\n}\nfunction createSVGMatrix() {\n  return createSVGElement('svg').createSVGMatrix();\n}\nfunction getTransformToElement(toElement, g) {\n  var gTransform = g.getScreenCTM() || createSVGMatrix();\n  return gTransform.inverse().multiply(toElement.getScreenCTM() || createSVGMatrix());\n}\nfunction matrixToString(m) {\n  return \"matrix(\".concat(m.a, \",\").concat(m.b, \",\").concat(m.c, \",\").concat(m.d, \",\").concat(m.e, \",\").concat(m.f, \")\");\n}\nfunction pointTo(ctm, svg, x, y) {\n  var pt = svg.createSVGPoint();\n  pt.x = x;\n  pt.y = y;\n  return pt.matrixTransform(ctm);\n}\nfunction cloneMatrix(b) {\n  var a = createSVGMatrix();\n  a.a = b.a;\n  a.b = b.b;\n  a.c = b.c;\n  a.d = b.d;\n  a.e = b.e;\n  a.f = b.f;\n  return a;\n}\nfunction checkElement(el) {\n  var tagName = el.tagName.toLowerCase();\n\n  if (ALLOWED_ELEMENTS.indexOf(tagName) === -1) {\n    Object(_util_util__WEBPACK_IMPORTED_MODULE_0__[\"warn\"])('Selected element is not allowed to transform. Allowed elements:\\n' + 'circle, ellipse, image, line, path, polygon, polyline, rect, text, g');\n    return false;\n  } else {\n    return true;\n  }\n}\nfunction isIdentity(matrix) {\n  return matrix.a === 1 && matrix.b === 0 && matrix.c === 0 && matrix.d === 1 && matrix.e === 0 && matrix.f === 0;\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/transform/svg/util.js?");
+    function _nonIterableRest() {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
 
-/***/ }),
+    var eventOptions = {
+      passive: false
+    };
+    var requestAnimFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (f) {
+      return setTimeout(f, 1000 / 60);
+    };
+    var cancelAnimFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || function (requestID) {
+      clearTimeout(requestID);
+    };
+    /* eslint-disable no-console */
 
-/***/ "./src/js/core/util/css-util.js":
-/*!**************************************!*\
-  !*** ./src/js/core/util/css-util.js ***!
-  \**************************************/
-/*! exports provided: getOffset, getTransform, parseMatrix, addClass, removeClass, objectsCollide */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+    var forEach = Array.prototype.forEach,
+        arrSlice = Array.prototype.slice,
+        arrMap = Array.prototype.map,
+        arrReduce = Array.prototype.reduce,
+        warn = console.warn;
+    /* eslint-disable no-console */
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"getOffset\", function() { return getOffset; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"getTransform\", function() { return getTransform; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"parseMatrix\", function() { return parseMatrix; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"addClass\", function() { return addClass; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"removeClass\", function() { return removeClass; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"objectsCollide\", function() { return objectsCollide; });\n/* harmony import */ var _Helper__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Helper */ \"./src/js/core/Helper.js\");\n\nfunction getOffset(node) {\n  return node.getBoundingClientRect();\n}\nfunction getTransform(el) {\n  var transform = el.css('-webkit-transform') || el.css('-moz-transform') || el.css('-ms-transform') || el.css('-o-transform') || el.css('transform') || 'none';\n  return transform;\n}\nfunction parseMatrix(value) {\n  var transform = value.match(/-?\\d+\\.?\\d+|-?\\d+/g);\n\n  if (transform) {\n    return transform.map(function (item) {\n      return parseFloat(item);\n    });\n  } else {\n    return [1, 0, 0, 1, 0, 0];\n  }\n}\nfunction addClass(node, cls) {\n  if (!cls) return;\n\n  if (node.classList) {\n    if (cls.indexOf(' ') > -1) {\n      cls.split(/\\s+/).forEach(function (cl) {\n        return node.classList.add(cl);\n      });\n    } else {\n      return node.classList.add(cls);\n    }\n  }\n\n  return node;\n}\nfunction removeClass(node, cls) {\n  if (!cls) return;\n\n  if (node.classList) {\n    if (cls.indexOf(' ') > -1) {\n      cls.split(/\\s+/).forEach(function (cl) {\n        return node.classList.remove(cl);\n      });\n    } else {\n      return node.classList.remove(cls);\n    }\n  }\n\n  return node;\n}\nfunction objectsCollide(a, b) {\n  var _getOffset = getOffset(a),\n      aTop = _getOffset.top,\n      aLeft = _getOffset.left,\n      _getOffset2 = getOffset(b),\n      bTop = _getOffset2.top,\n      bLeft = _getOffset2.left,\n      _a = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(a),\n      _b = Object(_Helper__WEBPACK_IMPORTED_MODULE_0__[\"helper\"])(b);\n\n  return !(aTop < bTop || aTop + parseFloat(_a.css('height')) > bTop + parseFloat(_b.css('height')) || aLeft < bLeft || aLeft + parseFloat(_a.css('width')) > bLeft + parseFloat(_b.css('width')));\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/util/css-util.js?");
+    function isDef(val) {
+      return val !== undefined && val !== null;
+    }
+    function isUndef(val) {
+      return val === undefined || val === null;
+    }
+    function isFunc(val) {
+      return typeof val === 'function';
+    }
 
-/***/ }),
+    var Helper =
+    /*#__PURE__*/
+    function () {
+      function Helper(params) {
+        _classCallCheck(this, Helper);
 
-/***/ "./src/js/core/util/util.js":
-/*!**********************************!*\
-  !*** ./src/js/core/util/util.js ***!
-  \**********************************/
-/*! exports provided: eventOptions, requestAnimFrame, cancelAnimFrame, forEach, arrSlice, arrMap, arrReduce, warn, isDef, isUndef, isFunc */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+        if (typeof params === 'string') {
+          var selector = document.querySelectorAll(params);
+          this.length = selector.length;
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"eventOptions\", function() { return eventOptions; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"requestAnimFrame\", function() { return requestAnimFrame; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"cancelAnimFrame\", function() { return cancelAnimFrame; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"forEach\", function() { return forEach; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"arrSlice\", function() { return arrSlice; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"arrMap\", function() { return arrMap; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"arrReduce\", function() { return arrReduce; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"warn\", function() { return warn; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"isDef\", function() { return isDef; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"isUndef\", function() { return isUndef; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"isFunc\", function() { return isFunc; });\nvar eventOptions = {\n  passive: false\n};\nvar requestAnimFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (f) {\n  return setTimeout(f, 1000 / 60);\n};\nvar cancelAnimFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || function (requestID) {\n  clearTimeout(requestID);\n};\n/* eslint-disable no-console */\n\nvar forEach = Array.prototype.forEach,\n    arrSlice = Array.prototype.slice,\n    arrMap = Array.prototype.map,\n    arrReduce = Array.prototype.reduce,\n    warn = console.warn;\n/* eslint-disable no-console */\n\nfunction isDef(val) {\n  return val !== undefined && val !== null;\n}\nfunction isUndef(val) {\n  return val === undefined || val === null;\n}\nfunction isFunc(val) {\n  return typeof val === 'function';\n}\n\n//# sourceURL=webpack://subjx/./src/js/core/util/util.js?");
+          for (var count = 0; count < this.length; count++) {
+            this[count] = selector[count];
+          }
+        } else if (_typeof(params) === 'object' && (params.nodeType === 1 || params === document)) {
+          this[0] = params;
+          this.length = 1;
+        } else if (params instanceof Helper) {
+          this.length = params.length;
 
-/***/ }),
+          for (var _count = 0; _count < this.length; _count++) {
+            this[_count] = params[_count];
+          }
+        } else if (isIterable(params)) {
+          this.length = 0;
 
-/***/ "./src/js/index.js":
-/*!*************************!*\
-  !*** ./src/js/index.js ***!
-  \*************************/
-/*! exports provided: Subjx, Observable, default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+          for (var _count2 = 0; _count2 < this.length; _count2++) {
+            if (params.nodeType === 1) {
+              this[_count2] = params[_count2];
+              this.length++;
+            }
+          }
+        } else {
+          throw new Error("Passed parameter must be selector/element/elementArray");
+        }
+      }
 
-"use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"default\", function() { return subjx; });\n/* harmony import */ var _style_subjx_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../style/subjx.css */ \"./src/style/subjx.css\");\n/* harmony import */ var _style_subjx_css__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_style_subjx_css__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _core_Subjx__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./core/Subjx */ \"./src/js/core/Subjx.js\");\n/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, \"Subjx\", function() { return _core_Subjx__WEBPACK_IMPORTED_MODULE_1__[\"default\"]; });\n\n/* harmony import */ var _core_observable_Observable__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./core/observable/Observable */ \"./src/js/core/observable/Observable.js\");\n/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, \"Observable\", function() { return _core_observable_Observable__WEBPACK_IMPORTED_MODULE_2__[\"default\"]; });\n\n/* @license\r\n * Move/Rotate/Resize tool\r\n * Released under the MIT license, 2018-2019\r\n * Karen Sarksyan\r\n * nichollascarter@gmail.com\r\n*/\n\n\n\n\nfunction subjx(params) {\n  return new _core_Subjx__WEBPACK_IMPORTED_MODULE_1__[\"default\"](params);\n}\nObject.defineProperty(subjx, 'createObservable', {\n  value: function value() {\n    return new _core_observable_Observable__WEBPACK_IMPORTED_MODULE_2__[\"default\"]();\n  }\n});\n\n//# sourceURL=webpack://subjx/./src/js/index.js?");
+      _createClass(Helper, [{
+        key: "css",
+        value: function css(prop) {
+          var _getStyle = function _getStyle(obj) {
+            var len = obj.length;
 
-/***/ }),
+            while (len--) {
+              if (obj[len].currentStyle) {
+                return obj[len].currentStyle[prop];
+              } else if (document.defaultView && document.defaultView.getComputedStyle) {
+                return document.defaultView.getComputedStyle(obj[len], '')[prop];
+              } else {
+                return obj[len].style[prop];
+              }
+            }
+          };
 
-/***/ "./src/style/subjx.css":
-/*!*****************************!*\
-  !*** ./src/style/subjx.css ***!
-  \*****************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+          var _setStyle = function _setStyle(obj, options) {
+            var len = obj.length;
 
-eval("// extracted by mini-css-extract-plugin\n\n//# sourceURL=webpack://subjx/./src/style/subjx.css?");
+            while (len--) {
+              for (var property in options) {
+                obj[len].style[property] = options[property];
+              }
+            }
 
-/***/ })
+            return obj.style;
+          };
 
-/******/ })["default"];
-});
+          var methods = {
+            setStyle: function setStyle(options) {
+              return _setStyle(this, options);
+            },
+            getStyle: function getStyle() {
+              return _getStyle(this);
+            }
+          };
+
+          if (typeof prop === 'string') {
+            return methods.getStyle.apply(this, arrSlice.call(arguments, 1));
+          } else if (_typeof(prop) === 'object' || !prop) {
+            return methods.setStyle.apply(this, arguments);
+          } else {
+            warn("Method ".concat(prop, " does not exist"));
+          }
+
+          return false;
+        }
+      }, {
+        key: "find",
+        value: function find(sel) {
+          var len = this.length,
+              selector;
+
+          while (len--) {
+            selector = this[len].querySelectorAll(sel);
+            return helper(selector);
+          }
+        }
+      }, {
+        key: "each",
+        value: function each(fn) {
+          var arr = arrSlice.call(this, 0);
+
+          var _loop = function _loop(index) {
+            var func = function func() {
+              return arr[index];
+            };
+
+            fn.call(func());
+          };
+
+          for (var index = arr.length - 1; index >= 0; --index) {
+            _loop(index);
+          }
+
+          return this;
+        }
+      }, {
+        key: "on",
+        value: function on() {
+          var len = this.length;
+
+          while (len--) {
+            if (!this[len].events) {
+              this[len].events = {};
+              this[len].events[arguments[0]] = [];
+            }
+
+            if (typeof arguments[1] !== 'string') {
+              if (document.addEventListener) {
+                this[len].addEventListener(arguments[0], arguments[1], arguments[2]);
+              } else if (document.attachEvent) {
+                this[len].attachEvent("on".concat(arguments[0]), arguments[1]);
+              } else {
+                this[len]["on".concat(arguments[0])] = arguments[1];
+              }
+            } else {
+              listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], arguments[3], true);
+            }
+          }
+
+          return this;
+        }
+      }, {
+        key: "off",
+        value: function off() {
+          var len = this.length;
+
+          while (len--) {
+            if (!this[len].events) {
+              this[len].events = {};
+              this[len].events[arguments[0]] = [];
+            }
+
+            if (typeof arguments[1] !== 'string') {
+              if (document.removeEventListener) {
+                this[len].removeEventListener(arguments[0], arguments[1], arguments[2]);
+              } else if (document.detachEvent) {
+                this[len].detachEvent("on".concat(arguments[0]), arguments[1]);
+              } else {
+                this[len]["on".concat(arguments[0])] = null;
+              }
+            } else {
+              listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], arguments[3], false);
+            }
+          }
+
+          return this;
+        }
+      }, {
+        key: "is",
+        value: function is(selector) {
+          var _sel = helper(selector);
+
+          var len = this.length;
+
+          while (len--) {
+            if (this[len] === _sel[len]) return true;
+          }
+
+          return false;
+        }
+      }]);
+
+      return Helper;
+    }();
+
+    function listenerDelegate(el, evt, sel, handler, options, act) {
+      var doit = function doit(event) {
+        var t = event.target;
+
+        while (t && t !== this) {
+          if (t.matches(sel)) {
+            handler.call(t, event);
+          }
+
+          t = t.parentNode;
+        }
+      };
+
+      if (act === true) {
+        if (document.addEventListener) {
+          el.addEventListener(evt, doit, options || false);
+        } else if (document.attachEvent) {
+          el.attachEvent("on".concat(evt), doit);
+        } else {
+          el["on".concat(evt)] = doit;
+        }
+      } else {
+        if (document.removeEventListener) {
+          el.removeEventListener(evt, doit, options || false);
+        } else if (document.detachEvent) {
+          el.detachEvent("on".concat(evt), doit);
+        } else {
+          el["on".concat(evt)] = null;
+        }
+      }
+    }
+
+    function isIterable(obj) {
+      return isDef(obj) && _typeof(obj) === 'object' && (Array.isArray(obj) || isDef(window.Symbol) && typeof obj[window.Symbol.iterator] === 'function' || isDef(obj.forEach) || typeof obj.length === "number" && (obj.length === 0 || obj.length > 0 && obj.length - 1 in obj));
+    }
+
+    function helper(params) {
+      return new Helper(params);
+    }
+
+    var Observable =
+    /*#__PURE__*/
+    function () {
+      function Observable() {
+        _classCallCheck(this, Observable);
+
+        this.observers = {};
+      }
+
+      _createClass(Observable, [{
+        key: "subscribe",
+        value: function subscribe(eventName, sub) {
+          var obs = this.observers;
+
+          if (isUndef(obs[eventName])) {
+            Object.defineProperty(obs, eventName, {
+              value: []
+            });
+          }
+
+          obs[eventName].push(sub);
+          return this;
+        }
+      }, {
+        key: "unsubscribe",
+        value: function unsubscribe(eventName, f) {
+          var obs = this.observers;
+
+          if (isDef(obs[eventName])) {
+            var index = obs[eventName].indexOf(f);
+            obs[eventName].splice(index, 1);
+          }
+
+          return this;
+        }
+      }, {
+        key: "notify",
+        value: function notify(eventName, source, data) {
+          if (isUndef(this.observers[eventName])) return;
+          this.observers[eventName].forEach(function (observer) {
+            if (source === observer) return;
+
+            switch (eventName) {
+              case 'onmove':
+                observer.notifyMove(data);
+                break;
+
+              case 'onrotate':
+                observer.notifyRotate(data);
+                break;
+
+              case 'onresize':
+                observer.notifyResize(data);
+                break;
+
+              case 'onapply':
+                observer.notifyApply(data);
+                break;
+
+              case 'ongetstate':
+                observer.notifyGetState(data);
+                break;
+            }
+          });
+        }
+      }]);
+
+      return Observable;
+    }();
+
+    function getOffset(node) {
+      return node.getBoundingClientRect();
+    }
+    function getTransform(el) {
+      var transform = el.css('-webkit-transform') || el.css('-moz-transform') || el.css('-ms-transform') || el.css('-o-transform') || el.css('transform') || 'none';
+      return transform;
+    }
+    function parseMatrix(value) {
+      var transform = value.match(/-?\d+\.?\d+|-?\d+/g);
+
+      if (transform) {
+        return transform.map(function (item) {
+          return parseFloat(item);
+        });
+      } else {
+        return [1, 0, 0, 1, 0, 0];
+      }
+    }
+    function addClass(node, cls) {
+      if (!cls) return;
+
+      if (node.classList) {
+        if (cls.indexOf(' ') > -1) {
+          cls.split(/\s+/).forEach(function (cl) {
+            return node.classList.add(cl);
+          });
+        } else {
+          return node.classList.add(cls);
+        }
+      }
+
+      return node;
+    }
+    function removeClass(node, cls) {
+      if (!cls) return;
+
+      if (node.classList) {
+        if (cls.indexOf(' ') > -1) {
+          cls.split(/\s+/).forEach(function (cl) {
+            return node.classList.remove(cl);
+          });
+        } else {
+          return node.classList.remove(cls);
+        }
+      }
+
+      return node;
+    }
+    function objectsCollide(a, b) {
+      var _getOffset = getOffset(a),
+          aTop = _getOffset.top,
+          aLeft = _getOffset.left,
+          _getOffset2 = getOffset(b),
+          bTop = _getOffset2.top,
+          bLeft = _getOffset2.left,
+          _a = helper(a),
+          _b = helper(b);
+
+      return !(aTop < bTop || aTop + parseFloat(_a.css('height')) > bTop + parseFloat(_b.css('height')) || aLeft < bLeft || aLeft + parseFloat(_a.css('width')) > bLeft + parseFloat(_b.css('width')));
+    }
+
+    var RAD = Math.PI / 180;
+    function snapToGrid(value, snap) {
+      if (snap === 0) {
+        return value;
+      } else {
+        var result = snapCandidate(value, snap);
+
+        if (result - value < snap) {
+          return result;
+        }
+      }
+    }
+    function snapCandidate(value, gridSize) {
+      if (gridSize === 0) return value;
+      return Math.round(value / gridSize) * gridSize;
+    }
+    function rotatedTopLeft(x, y, width, height, rotationAngle, revX, revY, doW, doH) {
+      var hw = parseFloat(width) / 2,
+          hh = parseFloat(height) / 2;
+      var cx = x + hw,
+          cy = y + hh;
+      var dx = x - cx,
+          dy = y - cy;
+      var originalTopLeftAngle = Math.atan2(doW ? 0 : dy, doH ? 0 : dx);
+      var rotatedTopLeftAngle = originalTopLeftAngle + rotationAngle;
+      var radius = Math.sqrt(Math.pow(doH ? 0 : hw, 2) + Math.pow(doW ? 0 : hh, 2));
+      var cos = Math.cos(rotatedTopLeftAngle),
+          sin = Math.sin(rotatedTopLeftAngle);
+      cos = revX === true ? -cos : cos;
+      sin = revY === true ? -sin : sin;
+      var rx = cx + radius * cos,
+          ry = cy + radius * sin;
+      return {
+        left: floatToFixed(rx),
+        top: floatToFixed(ry)
+      };
+    }
+    function floatToFixed(val) {
+      var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 6;
+      return Number(val.toFixed(size));
+    }
+
+    var Subject =
+    /*#__PURE__*/
+    function () {
+      function Subject(el, observable) {
+        _classCallCheck(this, Subject);
+
+        if (this.constructor === Subject) {
+          throw new TypeError('Cannot construct Subject instances directly');
+        }
+
+        this.el = el;
+        this.storage = null;
+        this.proxyMethods = null;
+        this.observable = observable;
+        this._onMouseDown = this._onMouseDown.bind(this);
+        this._onTouchStart = this._onTouchStart.bind(this);
+        this._onMouseMove = this._onMouseMove.bind(this);
+        this._onTouchMove = this._onTouchMove.bind(this);
+        this._onMouseUp = this._onMouseUp.bind(this);
+        this._onTouchEnd = this._onTouchEnd.bind(this);
+        this._animate = this._animate.bind(this);
+      }
+
+      _createClass(Subject, [{
+        key: "enable",
+        value: function enable(options) {
+          if (isUndef(this.storage)) {
+            this._processOptions(options);
+
+            this._init(this.el);
+          } else {
+            warn('Already enabled');
+          }
+        }
+      }, {
+        key: "disable",
+        value: function disable() {
+          var storage = this.storage,
+              proxyMethods = this.proxyMethods,
+              el = this.el;
+          if (isUndef(storage)) return; // unexpected case
+
+          if (storage.onExecution) {
+            this._end();
+
+            helper(document).off('mousemove', this._onMouseMove).off('mouseup', this._onMouseUp).off('touchmove', this._onTouchMove, eventOptions).off('touchend', this._onTouchEnd, eventOptions);
+          }
+
+          removeClass(el, 'sjx-drag');
+
+          this._destroy();
+
+          this.unsubscribe();
+          proxyMethods.onDestroy.call(this, el);
+          delete this.storage;
+        }
+      }, {
+        key: "_init",
+        value: function _init() {
+          throw Error("'_init()' method not implemented");
+        }
+      }, {
+        key: "_destroy",
+        value: function _destroy() {
+          throw Error("'_destroy()' method not implemented");
+        }
+      }, {
+        key: "_cursorPoint",
+        value: function _cursorPoint() {
+          throw Error("'_cursorPoint()' method not implemented");
+        }
+      }, {
+        key: "_drag",
+        value: function _drag() {
+          var _this$proxyMethods$on;
+
+          this._processMove.apply(this, arguments);
+
+          (_this$proxyMethods$on = this.proxyMethods.onMove).call.apply(_this$proxyMethods$on, [this].concat(Array.prototype.slice.call(arguments)));
+        }
+      }, {
+        key: "_rotate",
+        value: function _rotate() {
+          var _this$proxyMethods$on2;
+
+          this._processRotate.apply(this, arguments);
+
+          (_this$proxyMethods$on2 = this.proxyMethods.onRotate).call.apply(_this$proxyMethods$on2, [this].concat(Array.prototype.slice.call(arguments)));
+        }
+      }, {
+        key: "_resize",
+        value: function _resize() {
+          var _this$proxyMethods$on3;
+
+          this._processResize.apply(this, arguments);
+
+          (_this$proxyMethods$on3 = this.proxyMethods.onResize).call.apply(_this$proxyMethods$on3, [this].concat(Array.prototype.slice.call(arguments)));
+        }
+      }, {
+        key: "_processOptions",
+        value: function _processOptions(options) {
+          var el = this.el;
+          addClass(el, 'sjx-drag');
+          var _snap = {
+            x: 10,
+            y: 10,
+            angle: 10 * RAD
+          };
+          var _each = {
+            move: false,
+            resize: false,
+            rotate: false
+          };
+
+          var _restrict = null,
+              _proportions = false,
+              _axis = 'xy',
+              _cursorMove = 'auto',
+              _cursorResize = 'auto',
+              _cursorRotate = 'auto',
+              _themeColor = '#00a8ff',
+              _rotationPoint = false,
+              _onInit = function _onInit() {},
+              _onMove = function _onMove() {},
+              _onRotate = function _onRotate() {},
+              _onResize = function _onResize() {},
+              _onDrop = function _onDrop() {},
+              _onDestroy = function _onDestroy() {};
+
+          var _container = el.parentNode;
+
+          if (isDef(options)) {
+            var snap = options.snap,
+                each = options.each,
+                axis = options.axis,
+                cursorMove = options.cursorMove,
+                cursorResize = options.cursorResize,
+                cursorRotate = options.cursorRotate,
+                rotationPoint = options.rotationPoint,
+                restrict = options.restrict,
+                onInit = options.onInit,
+                onDrop = options.onDrop,
+                onMove = options.onMove,
+                onResize = options.onResize,
+                onRotate = options.onRotate,
+                onDestroy = options.onDestroy,
+                container = options.container,
+                proportions = options.proportions,
+                themeColor = options.themeColor;
+
+            if (isDef(snap)) {
+              var x = snap.x,
+                  y = snap.y,
+                  angle = snap.angle;
+              _snap.x = isUndef(x) ? 10 : x;
+              _snap.y = isUndef(y) ? 10 : y;
+              _snap.angle = isUndef(angle) ? _snap.angle : angle * RAD;
+            }
+
+            if (isDef(each)) {
+              var move = each.move,
+                  resize = each.resize,
+                  rotate = each.rotate;
+              _each.move = move || false;
+              _each.resize = resize || false;
+              _each.rotate = rotate || false;
+            }
+
+            if (isDef(restrict)) {
+              _restrict = restrict === 'parent' ? el.parentNode : helper(restrict)[0] || document;
+            }
+
+            _themeColor = themeColor || '#00a8ff';
+            _cursorMove = cursorMove || 'auto';
+            _cursorResize = cursorResize || 'auto';
+            _cursorRotate = cursorRotate || 'auto';
+            _axis = axis || 'xy';
+            _container = isDef(container) && helper(container)[0] ? helper(container)[0] : _container;
+            _rotationPoint = rotationPoint || false;
+            _proportions = proportions || false;
+            _onInit = createEvent(onInit);
+            _onDrop = createEvent(onDrop);
+            _onMove = createEvent(onMove);
+            _onResize = createEvent(onResize);
+            _onRotate = createEvent(onRotate);
+            _onDestroy = createEvent(onDestroy);
+
+            _onInit.call(this, el);
+          }
+
+          this.options = {
+            axis: _axis,
+            themeColor: _themeColor,
+            cursorMove: _cursorMove,
+            cursorRotate: _cursorRotate,
+            cursorResize: _cursorResize,
+            rotationPoint: _rotationPoint,
+            restrict: _restrict,
+            container: _container,
+            snap: _snap,
+            each: _each,
+            proportions: _proportions
+          };
+          this.proxyMethods = {
+            onInit: _onInit,
+            onDrop: _onDrop,
+            onMove: _onMove,
+            onResize: _onResize,
+            onRotate: _onRotate,
+            onDestroy: _onDestroy
+          };
+          this.subscribe(_each);
+        }
+      }, {
+        key: "_draw",
+        value: function _draw() {
+          this._animate();
+        }
+      }, {
+        key: "_animate",
+        value: function _animate() {
+          var self = this;
+          var observable = self.observable,
+              storage = self.storage,
+              options = self.options;
+          if (isUndef(storage)) return;
+          storage.frame = requestAnimFrame(self._animate);
+          if (!storage.doDraw) return;
+          storage.doDraw = false;
+          var dox = storage.dox,
+              doy = storage.doy,
+              clientX = storage.clientX,
+              clientY = storage.clientY,
+              doDrag = storage.doDrag,
+              doResize = storage.doResize,
+              doRotate = storage.doRotate,
+              doSetCenter = storage.doSetCenter,
+              revX = storage.revX,
+              revY = storage.revY,
+              handle = storage.handle;
+          var snap = options.snap,
+              each = options.each,
+              restrict = options.restrict;
+          var moveEach = each.move,
+              resizeEach = each.resize,
+              rotateEach = each.rotate;
+
+          if (doResize) {
+            var transform = storage.transform,
+                cx = storage.cx,
+                cy = storage.cy;
+
+            var _this$_pointToElement = this._pointToElement({
+              x: clientX,
+              y: clientY
+            }),
+                x = _this$_pointToElement.x,
+                y = _this$_pointToElement.y;
+
+            var dx = dox ? snapToGrid(x - cx, snap.x / transform.scX) : 0;
+            var dy = doy ? snapToGrid(y - cy, snap.y / transform.scY) : 0;
+            dx = dox ? revX ? -dx : dx : 0, dy = doy ? revY ? -dy : dy : 0;
+
+            self._resize(dx, dy, handle[0]);
+
+            if (resizeEach) {
+              observable.notify('onresize', self, {
+                dx: dx,
+                dy: dy,
+                handle: handle[0]
+              });
+            }
+          }
+
+          if (doDrag) {
+            var restrictOffset = storage.restrictOffset,
+                elementOffset = storage.elementOffset,
+                nx = storage.nx,
+                ny = storage.ny;
+
+            if (isDef(restrict)) {
+              if (clientX - restrictOffset.left < nx - elementOffset.left) {
+                clientX = nx - elementOffset.left + restrictOffset.left;
+              }
+
+              if (clientY - restrictOffset.top < ny - elementOffset.top) {
+                clientY = ny - elementOffset.top + restrictOffset.top;
+              }
+            }
+
+            var _dx = dox ? snapToGrid(clientX - nx, snap.x) : 0;
+
+            var _dy = doy ? snapToGrid(clientY - ny, snap.y) : 0;
+
+            self._drag(_dx, _dy);
+
+            if (moveEach) {
+              observable.notify('onmove', self, {
+                dx: _dx,
+                dy: _dy
+              });
+            }
+          }
+
+          if (doRotate) {
+            var pressang = storage.pressang,
+                center = storage.center;
+            var radians = Math.atan2(clientY - center.y, clientX - center.x) - pressang;
+
+            self._rotate(snapToGrid(radians, snap.angle));
+
+            if (rotateEach) {
+              observable.notify('onrotate', self, {
+                radians: radians
+              });
+            }
+          }
+
+          if (doSetCenter) {
+            var bx = storage.bx,
+                by = storage.by;
+
+            var _this$_pointToControl = this._pointToControls({
+              x: clientX,
+              y: clientY
+            }),
+                _x = _this$_pointToControl.x,
+                _y = _this$_pointToControl.y;
+
+            self._moveCenterHandle(_x - bx, _y - by);
+          }
+        }
+      }, {
+        key: "_start",
+        value: function _start(e) {
+          var observable = this.observable,
+              storage = this.storage,
+              options = this.options,
+              el = this.el;
+
+          var computed = this._compute(e);
+
+          Object.keys(computed).forEach(function (prop) {
+            storage[prop] = computed[prop];
+          });
+          var onRightEdge = computed.onRightEdge,
+              onBottomEdge = computed.onBottomEdge,
+              onTopEdge = computed.onTopEdge,
+              onLeftEdge = computed.onLeftEdge,
+              handle = computed.handle,
+              factor = computed.factor,
+              revX = computed.revX,
+              revY = computed.revY,
+              doW = computed.doW,
+              doH = computed.doH;
+          var doResize = onRightEdge || onBottomEdge || onTopEdge || onLeftEdge;
+          var handles = storage.handles,
+              radius = storage.radius;
+          var axis = options.axis,
+              restrict = options.restrict;
+
+          if (isDef(radius)) {
+            removeClass(radius, 'sjx-hidden');
+          }
+
+          var doRotate = handle.is(handles.rotator),
+              doSetCenter = isDef(handles.center) ? handle.is(handles.center) : false;
+          var clientX = e.clientX,
+              clientY = e.clientY;
+
+          var _this$_cursorPoint = this._cursorPoint({
+            clientX: clientX,
+            clientY: clientY
+          }),
+              x = _this$_cursorPoint.x,
+              y = _this$_cursorPoint.y;
+
+          var _this$_pointToElement2 = this._pointToElement({
+            x: x,
+            y: y
+          }),
+              nx = _this$_pointToElement2.x,
+              ny = _this$_pointToElement2.y;
+
+          var _this$_pointToControl2 = this._pointToControls({
+            x: x,
+            y: y
+          }),
+              bx = _this$_pointToControl2.x,
+              by = _this$_pointToControl2.y;
+
+          var newStorageValues = {
+            clientX: clientX,
+            clientY: clientY,
+            nx: x,
+            ny: y,
+            cx: nx,
+            cy: ny,
+            bx: bx,
+            by: by,
+            doResize: doResize,
+            doDrag: !(doRotate || doResize || doSetCenter),
+            doRotate: doRotate,
+            doSetCenter: doSetCenter,
+            onExecution: true,
+            cursor: null,
+            elementOffset: getOffset(el),
+            restrictOffset: isDef(restrict) ? getOffset(restrict) : null,
+            dox: /\x/.test(axis) && (doResize ? handle.is(handles.ml) || handle.is(handles.mr) || handle.is(handles.tl) || handle.is(handles.tr) || handle.is(handles.bl) || handle.is(handles.br) : true),
+            doy: /\y/.test(axis) && (doResize ? handle.is(handles.br) || handle.is(handles.bl) || handle.is(handles.bc) || handle.is(handles.tr) || handle.is(handles.tl) || handle.is(handles.tc) : true)
+          };
+          this.storage = _objectSpread2({}, storage, {}, newStorageValues);
+          observable.notify('ongetstate', this, {
+            factor: factor,
+            revX: revX,
+            revY: revY,
+            doW: doW,
+            doH: doH
+          });
+
+          this._draw();
+        }
+      }, {
+        key: "_moving",
+        value: function _moving(e) {
+          var storage = this.storage,
+              options = this.options;
+
+          var _this$_cursorPoint2 = this._cursorPoint(e),
+              x = _this$_cursorPoint2.x,
+              y = _this$_cursorPoint2.y;
+
+          storage.e = e;
+          storage.clientX = x;
+          storage.clientY = y;
+          storage.doDraw = true;
+          var doRotate = storage.doRotate,
+              doDrag = storage.doDrag,
+              doResize = storage.doResize,
+              cursor = storage.cursor;
+          var cursorMove = options.cursorMove,
+              cursorResize = options.cursorResize,
+              cursorRotate = options.cursorRotate;
+
+          if (isUndef(cursor)) {
+            if (doDrag) {
+              cursor = cursorMove;
+            } else if (doRotate) {
+              cursor = cursorRotate;
+            } else if (doResize) {
+              cursor = cursorResize;
+            }
+
+            helper(document.body).css({
+              cursor: cursor
+            });
+          }
+        }
+      }, {
+        key: "_end",
+        value: function _end(e) {
+          var observable = this.observable,
+              storage = this.storage,
+              proxyMethods = this.proxyMethods,
+              el = this.el;
+          var doResize = storage.doResize,
+              doDrag = storage.doDrag,
+              frame = storage.frame,
+              radius = storage.radius;
+          var actionName = doResize ? 'resize' : doDrag ? 'drag' : 'rotate';
+          storage.doResize = false;
+          storage.doDrag = false;
+          storage.doRotate = false;
+          storage.doSetCenter = false;
+          storage.doDraw = false;
+          storage.onExecution = false;
+          storage.cursor = null;
+
+          this._apply(actionName);
+
+          proxyMethods.onDrop.call(this, e, el);
+          observable.notify('onapply', this, {
+            actionName: actionName,
+            e: e
+          });
+          cancelAnimFrame(frame);
+          helper(document.body).css({
+            cursor: 'auto'
+          });
+
+          if (isDef(radius)) {
+            addClass(radius, 'sjx-hidden');
+          }
+        }
+      }, {
+        key: "_checkHandles",
+        value: function _checkHandles(handle, handles) {
+          var isTL = handle.is(handles.tl),
+              isTC = handle.is(handles.tc),
+              isTR = handle.is(handles.tr),
+              isBL = handle.is(handles.bl),
+              isBC = handle.is(handles.bc),
+              isBR = handle.is(handles.br),
+              isML = handle.is(handles.ml),
+              isMR = handle.is(handles.mr); //reverse axis
+
+          var revX = isTL || isML || isBL || isTC,
+              revY = isTL || isTR || isTC || isML;
+          var onTopEdge = isTC || isTR || isTL,
+              onLeftEdge = isTL || isML || isBL,
+              onRightEdge = isTR || isMR || isBR,
+              onBottomEdge = isBR || isBC || isBL;
+          var doW = isML || isMR,
+              doH = isTC || isBC;
+          return {
+            revX: revX,
+            revY: revY,
+            onTopEdge: onTopEdge,
+            onLeftEdge: onLeftEdge,
+            onRightEdge: onRightEdge,
+            onBottomEdge: onBottomEdge,
+            doW: doW,
+            doH: doH
+          };
+        }
+      }, {
+        key: "_onMouseDown",
+        value: function _onMouseDown(e) {
+          this._start(e);
+
+          helper(document).on('mousemove', this._onMouseMove).on('mouseup', this._onMouseUp);
+        }
+      }, {
+        key: "_onTouchStart",
+        value: function _onTouchStart(e) {
+          this._start(e.touches[0]);
+
+          helper(document).on('touchmove', this._onTouchMove, eventOptions).on('touchend', this._onTouchEnd, eventOptions);
+        }
+      }, {
+        key: "_onMouseMove",
+        value: function _onMouseMove(e) {
+          if (e.preventDefault) {
+            e.preventDefault();
+          }
+
+          this._moving(e, this.el);
+        }
+      }, {
+        key: "_onTouchMove",
+        value: function _onTouchMove(e) {
+          if (e.preventDefault) {
+            e.preventDefault();
+          }
+
+          this._moving(e.touches[0], this.el);
+        }
+      }, {
+        key: "_onMouseUp",
+        value: function _onMouseUp(e) {
+          helper(document).off('mousemove', this._onMouseMove).off('mouseup', this._onMouseUp);
+
+          this._end(e, this.el);
+        }
+      }, {
+        key: "_onTouchEnd",
+        value: function _onTouchEnd(e) {
+          helper(document).off('touchmove', this._onTouchMove).off('touchend', this._onTouchEnd);
+
+          if (e.touches.length === 0) {
+            this._end(e.changedTouches[0], this.el);
+          }
+        }
+      }, {
+        key: "notifyMove",
+        value: function notifyMove(_ref) {
+          var dx = _ref.dx,
+              dy = _ref.dy;
+
+          this._drag(dx, dy);
+        }
+      }, {
+        key: "notifyRotate",
+        value: function notifyRotate(_ref2) {
+          var radians = _ref2.radians;
+          var snap = this.options.snap;
+
+          this._rotate(snapToGrid(radians, snap.angle));
+        }
+      }, {
+        key: "notifyResize",
+        value: function notifyResize(_ref3) {
+          var dx = _ref3.dx,
+              dy = _ref3.dy;
+
+          this._resize(dx, dy);
+        }
+      }, {
+        key: "notifyApply",
+        value: function notifyApply(_ref4) {
+          var e = _ref4.e,
+              actionName = _ref4.actionName;
+          this.proxyMethods.onDrop.call(this, e, this.el);
+
+          this._apply(actionName);
+        }
+      }, {
+        key: "notifyGetState",
+        value: function notifyGetState(data) {
+          var storage = this.storage;
+
+          var recalc = this._getState(data);
+
+          this.storage = _objectSpread2({}, storage, {}, recalc);
+        }
+      }, {
+        key: "subscribe",
+        value: function subscribe(events) {
+          var ob = this.observable;
+          var resize = events.resize,
+              move = events.move,
+              rotate = events.rotate;
+
+          if (move || resize || rotate) {
+            ob.subscribe('ongetstate', this).subscribe('onapply', this);
+          }
+
+          if (move) {
+            ob.subscribe('onmove', this);
+          }
+
+          if (resize) {
+            ob.subscribe('onresize', this);
+          }
+
+          if (rotate) {
+            ob.subscribe('onrotate', this);
+          }
+        }
+      }, {
+        key: "unsubscribe",
+        value: function unsubscribe() {
+          var ob = this.observable;
+          ob.unsubscribe('ongetstate', this).unsubscribe('onapply', this).unsubscribe('onmove', this).unsubscribe('onresize', this).unsubscribe('onrotate', this);
+        }
+      }]);
+
+      return Subject;
+    }();
+
+    function createEvent(fn) {
+      return isFunc(fn) ? function () {
+        fn.call.apply(fn, [this].concat(Array.prototype.slice.call(arguments)));
+      } : function () {};
+    }
+
+    var MIN_SIZE = 2;
+    var CENTER_DELTA = 7;
+
+    var Draggable =
+    /*#__PURE__*/
+    function (_Subject) {
+      _inherits(Draggable, _Subject);
+
+      function Draggable(el, options, Observable) {
+        var _this;
+
+        _classCallCheck(this, Draggable);
+
+        _this = _possibleConstructorReturn(this, _getPrototypeOf(Draggable).call(this, el, Observable));
+
+        _this.enable(options);
+
+        return _this;
+      }
+
+      _createClass(Draggable, [{
+        key: "_init",
+        value: function _init(el) {
+          var container = document.createElement('div');
+          addClass(container, 'sjx-wrapper');
+          el.parentNode.insertBefore(container, el);
+          var $el = helper(el);
+          var options = this.options;
+          var rotationPoint = options.rotationPoint;
+          var _el$style = el.style,
+              left = _el$style.left,
+              top = _el$style.top,
+              width = _el$style.width,
+              height = _el$style.height;
+          var w = width || $el.css('width'),
+              h = height || $el.css('height'),
+              t = top || $el.css('top'),
+              l = left || $el.css('left');
+          var $parent = helper(container.parentNode);
+          var css = {
+            top: t,
+            left: l,
+            width: w,
+            height: h,
+            transform: getTransform($el)
+          };
+          var controls = document.createElement('div');
+          var handles = {
+            normal: ['sjx-normal'],
+            tl: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-l', 'sjx-hdl-tl'],
+            tr: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-r', 'sjx-hdl-tr'],
+            br: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-r', 'sjx-hdl-br'],
+            bl: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-l', 'sjx-hdl-bl'],
+            tc: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-c', 'sjx-hdl-tc'],
+            bc: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-c', 'sjx-hdl-bc'],
+            ml: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-l', 'sjx-hdl-ml'],
+            mr: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-r', 'sjx-hdl-mr'],
+            center: rotationPoint ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined,
+            //...(rotationPoint && { center: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc']}), IE11 not supports
+            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator']
+          };
+          Object.keys(handles).forEach(function (key) {
+            var data = handles[key];
+            if (isUndef(data)) return;
+            var handler = createHandler(data);
+            handles[key] = handler;
+            controls.appendChild(handler);
+          });
+
+          if (isDef(handles.center)) {
+            var cHandle = helper(handles.center);
+            cHandle.css({
+              left: "".concat(el.getAttribute('data-cx'), "px"),
+              top: "".concat(el.getAttribute('data-cy'), "px")
+            });
+          }
+
+          addClass(controls, 'sjx-controls');
+          container.appendChild(controls);
+          var $controls = helper(controls);
+          $controls.css(css);
+          var $container = helper(container);
+          this.storage = {
+            controls: controls,
+            handles: handles,
+            radius: $container.find('.sjx-radius'),
+            parent: $parent
+          };
+          $controls.on('mousedown', this._onMouseDown).on('touchstart', this._onTouchStart);
+        }
+      }, {
+        key: "_destroy",
+        value: function _destroy() {
+          var controls = this.storage.controls;
+          helper(controls).off('mousedown', this._onMouseDown).off('touchstart', this._onTouchStart);
+          var wrapper = controls.parentNode;
+          wrapper.parentNode.removeChild(wrapper);
+        }
+      }, {
+        key: "_compute",
+        value: function _compute(e) {
+          var handles = this.storage.handles;
+          var handle = helper(e.target);
+
+          var _this$_checkHandles = this._checkHandles(handle, handles),
+              revX = _this$_checkHandles.revX,
+              revY = _this$_checkHandles.revY,
+              onTopEdge = _this$_checkHandles.onTopEdge,
+              onLeftEdge = _this$_checkHandles.onLeftEdge,
+              onRightEdge = _this$_checkHandles.onRightEdge,
+              onBottomEdge = _this$_checkHandles.onBottomEdge,
+              doW = _this$_checkHandles.doW,
+              doH = _this$_checkHandles.doH; //reverse angle
+
+
+          var factor = handle.is(handles.tr) || handle.is(handles.bl) ? -1 : 1;
+
+          var _computed = this._getState({
+            factor: factor,
+            revX: revX,
+            revY: revY,
+            doW: doW,
+            doH: doH
+          });
+
+          var _this$_cursorPoint = this._cursorPoint(e),
+              clientX = _this$_cursorPoint.x,
+              clientY = _this$_cursorPoint.y;
+
+          var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);
+          return _objectSpread2({}, _computed, {
+            onTopEdge: onTopEdge,
+            onLeftEdge: onLeftEdge,
+            onRightEdge: onRightEdge,
+            onBottomEdge: onBottomEdge,
+            handle: handle,
+            pressang: pressang
+          });
+        }
+      }, {
+        key: "_pointToElement",
+        value: function _pointToElement(_ref) {
+          var x = _ref.x,
+              y = _ref.y;
+          var transform = this.storage.transform;
+
+          var ctm = _toConsumableArray(transform.matrix);
+
+          ctm[4] = ctm[5] = 0;
+          return this._applyMatrixToPoint(matrixInvert(ctm), x, y);
+        }
+      }, {
+        key: "_pointToControls",
+        value: function _pointToControls(data) {
+          return this._pointToElement(data);
+        }
+      }, {
+        key: "_applyMatrixToPoint",
+        value: function _applyMatrixToPoint(matrix, x, y) {
+          return multiplyMatrixAndPoint({
+            x: x,
+            y: y
+          }, matrix);
+        }
+      }, {
+        key: "_cursorPoint",
+        value: function _cursorPoint(_ref2) {
+          var clientX = _ref2.clientX,
+              clientY = _ref2.clientY;
+          var container = this.options.container;
+          var globalMatrix = parseMatrix(getTransform(helper(container)));
+          return multiplyMatrixAndPoint({
+            x: clientX,
+            y: clientY
+          }, matrixInvert(globalMatrix));
+        }
+      }, {
+        key: "_apply",
+        value: function _apply() {
+          var el = this.el,
+              storage = this.storage;
+          var $el = helper(el);
+          var cached = storage.cached,
+              controls = storage.controls,
+              transform = storage.transform,
+              handles = storage.handles;
+          var $controls = helper(controls);
+          var cw = parseFloat($controls.css('width')),
+              ch = parseFloat($controls.css('height'));
+          var hW = cw / 2,
+              hH = ch / 2;
+          var cHandle = handles.center;
+          var isDefCenter = isDef(cHandle);
+          var centerX = isDefCenter ? parseFloat(helper(cHandle).css('left')) : hW;
+          var centerY = isDefCenter ? parseFloat(helper(cHandle).css('top')) : hH;
+          el.setAttribute('data-cx', centerX);
+          el.setAttribute('data-cy', centerY);
+          if (isUndef(cached)) return;
+          var dx = cached.dx,
+              dy = cached.dy;
+          var css = matrixToCSS(transform.matrix);
+          var left = parseFloat(el.style.left || $el.css('left'));
+          var top = parseFloat(el.style.top || $el.css('top'));
+          css.left = "".concat(left + dx, "px");
+          css.top = "".concat(top + dy, "px");
+          $el.css(css);
+          $controls.css(css);
+          this.storage.cached = null;
+        }
+      }, {
+        key: "_processResize",
+        value: function _processResize(dx, dy) {
+          var el = this.el,
+              storage = this.storage,
+              options = this.options;
+          var proportions = options.proportions;
+          var controls = storage.controls,
+              coords = storage.coords,
+              cw = storage.cw,
+              ch = storage.ch,
+              transform = storage.transform,
+              refang = storage.refang,
+              revX = storage.revX,
+              revY = storage.revY,
+              doW = storage.doW,
+              doH = storage.doH;
+          var ratio = doW || !doW && !doH ? (cw + dx) / cw : (ch + dy) / ch;
+          var newWidth = proportions ? cw * ratio : cw + dx,
+              newHeight = proportions ? ch * ratio : ch + dy;
+          if (newWidth < MIN_SIZE || newHeight < MIN_SIZE) return;
+
+          var matrix = _toConsumableArray(transform.matrix);
+
+          var newCoords = rotatedTopLeft(matrix[4], matrix[5], newWidth, newHeight, refang, revX, revY, doW, doH);
+          var nx = coords.left - newCoords.left,
+              ny = coords.top - newCoords.top;
+          matrix[4] += nx;
+          matrix[5] += ny;
+          var css = matrixToCSS(matrix);
+          css.width = "".concat(newWidth, "px");
+          css.height = "".concat(newHeight, "px");
+          helper(controls).css(css);
+          helper(el).css(css);
+          storage.cached = {
+            dx: nx,
+            dy: ny
+          };
+        }
+      }, {
+        key: "_processMove",
+        value: function _processMove(dx, dy) {
+          var el = this.el,
+              storage = this.storage;
+          var controls = storage.controls,
+              transform = storage.transform;
+          var matrix = transform.matrix,
+              parentMatrix = transform.parentMatrix;
+
+          var pctm = _toConsumableArray(parentMatrix);
+
+          pctm[4] = pctm[5] = 0;
+
+          var n_matrix = _toConsumableArray(matrix);
+
+          n_matrix[4] = matrix[4] + dx;
+          n_matrix[5] = matrix[5] + dy;
+          var css = matrixToCSS(n_matrix);
+          helper(controls).css(css);
+          helper(el).css(css);
+          storage.cached = {
+            dx: dx,
+            dy: dy
+          };
+        }
+      }, {
+        key: "_processRotate",
+        value: function _processRotate(radians) {
+          var el = this.el,
+              storage = this.storage;
+          var controls = storage.controls,
+              transform = storage.transform,
+              center = storage.center;
+          var matrix = transform.matrix,
+              parentMatrix = transform.parentMatrix;
+          var cos = floatToFixed(Math.cos(radians)),
+              sin = floatToFixed(Math.sin(radians));
+          var translateMatrix = [1, 0, 0, 1, center.cx, center.cy];
+          var rotMatrix = [cos, sin, -sin, cos, 0, 0];
+
+          var pctm = _toConsumableArray(parentMatrix);
+
+          pctm[4] = pctm[5] = 0;
+          var resRotMatrix = multiplyMatrix(matrixInvert(pctm), multiplyMatrix(rotMatrix, pctm));
+          var nMatrix = multiplyMatrix(multiplyMatrix(translateMatrix, resRotMatrix), matrixInvert(translateMatrix));
+          var resMatrix = multiplyMatrix(nMatrix, matrix);
+          var css = matrixToCSS(resMatrix);
+          helper(controls).css(css);
+          helper(el).css(css);
+        }
+      }, {
+        key: "_getState",
+        value: function _getState(params) {
+          var factor = params.factor,
+              revX = params.revX,
+              revY = params.revY,
+              doW = params.doW,
+              doH = params.doH;
+          var el = this.el,
+              storage = this.storage,
+              options = this.options;
+          var container = options.container;
+          var handles = storage.handles,
+              controls = storage.controls,
+              parent = storage.parent;
+          var cHandle = handles.center,
+              tl = handles.tl,
+              tr = handles.tr;
+          var tl_off = getOffset(tl),
+              tr_off = getOffset(tr);
+          var refang = Math.atan2(tr_off.top - tl_off.top, tr_off.left - tl_off.left) * factor;
+          var $controls = helper(controls);
+          var containerMatrix = parseMatrix(getTransform(helper(container)));
+          var matrix = parseMatrix(getTransform(helper(controls)));
+          var pMatrix = parseMatrix(getTransform(parent));
+          var parentMatrix = parent === container ? multiplyMatrix(pMatrix, containerMatrix) : containerMatrix;
+          var transform = {
+            matrix: matrix,
+            parentMatrix: parentMatrix,
+            scX: Math.sqrt(matrix[0] * matrix[0] + matrix[1] * matrix[1]),
+            scY: Math.sqrt(matrix[2] * matrix[2] + matrix[3] * matrix[3])
+          };
+          var cw = parseFloat($controls.css('width')),
+              ch = parseFloat($controls.css('height')); // getting current coordinates considering rotation angle                                                                                                  
+
+          var coords = rotatedTopLeft(matrix[4], matrix[5], cw, ch, refang, revX, revY, doW, doH);
+          var hW = cw / 2,
+              hH = ch / 2;
+          var offset_ = getOffset(el),
+              isDefCenter = isDef(cHandle);
+          var centerX = isDefCenter ? parseFloat(helper(cHandle).css('left')) : hW;
+          var centerY = isDefCenter ? parseFloat(helper(cHandle).css('top')) : hH;
+          var cDelta = isDefCenter ? CENTER_DELTA : 0;
+          return {
+            transform: transform,
+            cw: cw,
+            ch: ch,
+            coords: coords,
+            center: {
+              x: offset_.left + centerX - cDelta,
+              y: offset_.top + centerY - cDelta,
+              cx: -centerX + hW - cDelta,
+              cy: -centerY + hH - cDelta,
+              hx: centerX,
+              hy: centerY
+            },
+            factor: factor,
+            refang: refang,
+            revX: revX,
+            revY: revY,
+            doW: doW,
+            doH: doH
+          };
+        }
+      }, {
+        key: "_moveCenterHandle",
+        value: function _moveCenterHandle(x, y) {
+          var storage = this.storage;
+          var handles = storage.handles,
+              center = storage.center;
+          var left = "".concat(center.hx + x, "px"),
+              top = "".concat(center.hy + y, "px");
+          helper(handles.center).css({
+            left: left,
+            top: top
+          });
+        }
+      }, {
+        key: "resetCenterPoint",
+        value: function resetCenterPoint() {
+          var handles = this.storage.handles;
+          helper(handles.center).css({
+            left: null,
+            top: null
+          });
+        }
+      }, {
+        key: "controls",
+        get: function get() {
+          return this.storage.controls;
+        }
+      }]);
+
+      return Draggable;
+    }(Subject);
+
+    function matrixToCSS(arr) {
+      var style = "matrix(".concat(arr.join(), ")");
+      return {
+        transform: style,
+        webkitTranform: style,
+        mozTransform: style,
+        msTransform: style,
+        otransform: style
+      };
+    }
+
+    function multiplyMatrixAndPoint(point, matrix) {
+      var x = point.x,
+          y = point.y;
+
+      var _matrix = _slicedToArray(matrix, 6),
+          a = _matrix[0],
+          b = _matrix[1],
+          c = _matrix[2],
+          d = _matrix[3],
+          e = _matrix[4],
+          f = _matrix[5];
+
+      return {
+        x: a * x + c * y + e,
+        y: b * x + d * y + f
+      };
+    } //http://blog.acipo.com/matrix-inversion-in-javascript/
+
+
+    function matrixInvert(ctm) {
+      // I use Guassian Elimination to calculate the inverse:
+      // (1) 'augment' the matrix (left) by the identity (on the right)
+      // (2) Turn the matrix on the left into the identity by elemetry row ops
+      // (3) The matrix on the right is the inverse (was the identity matrix)
+      // There are 3 elemtary row ops: (I combine b and c in my code)
+      // (a) Swap 2 rows
+      // (b) Multiply a row by a scalar
+      // (c) Add 2 rows
+      var M = [[ctm[0], ctm[2], ctm[4]], [ctm[1], ctm[3], ctm[5]], [0, 0, 1]]; //if the matrix isn't square: exit (error)
+
+      if (M.length !== M[0].length) {
+        return;
+      } //create the identity matrix (I), and a copy (C) of the original
+
+
+      var dim = M.length;
+      var I = [],
+          C = [];
+
+      for (var i = 0; i < dim; i += 1) {
+        // Create the row
+        I[I.length] = [];
+        C[C.length] = [];
+
+        for (var j = 0; j < dim; j += 1) {
+          //if we're on the diagonal, put a 1 (for identity)
+          if (i == j) {
+            I[i][j] = 1;
+          } else {
+            I[i][j] = 0;
+          } // Also, make the copy of the original
+
+
+          C[i][j] = M[i][j];
+        }
+      } // Perform elementary row operations
+
+
+      for (var _i = 0; _i < dim; _i += 1) {
+        // get the element e on the diagonal
+        var e = C[_i][_i]; // if we have a 0 on the diagonal (we'll need to swap with a lower row)
+
+        if (e === 0) {
+          //look through every row below the i'th row
+          for (var ii = _i + 1; ii < dim; ii += 1) {
+            //if the ii'th row has a non-0 in the i'th col
+            if (C[ii][_i] !== 0) {
+              //it would make the diagonal have a non-0 so swap it
+              for (var _j = 0; _j < dim; _j++) {
+                e = C[_i][_j]; //temp store i'th row
+
+                C[_i][_j] = C[ii][_j]; //replace i'th row by ii'th
+
+                C[ii][_j] = e; //repace ii'th by temp
+
+                e = I[_i][_j]; //temp store i'th row
+
+                I[_i][_j] = I[ii][_j]; //replace i'th row by ii'th
+
+                I[ii][_j] = e; //repace ii'th by temp
+              } //don't bother checking other rows since we've swapped
+
+
+              break;
+            }
+          } //get the new diagonal
+
+
+          e = C[_i][_i]; //if it's still 0, not invertable (error)
+
+          if (e === 0) {
+            return;
+          }
+        } // Scale this row down by e (so we have a 1 on the diagonal)
+
+
+        for (var _j2 = 0; _j2 < dim; _j2++) {
+          C[_i][_j2] = C[_i][_j2] / e; //apply to original matrix
+
+          I[_i][_j2] = I[_i][_j2] / e; //apply to identity
+        } // Subtract this row (scaled appropriately for each row) from ALL of
+        // the other rows so that there will be 0's in this column in the
+        // rows above and below this one
+
+
+        for (var _ii = 0; _ii < dim; _ii++) {
+          // Only apply to other rows (we want a 1 on the diagonal)
+          if (_ii == _i) {
+            continue;
+          } // We want to change this element to 0
+
+
+          e = C[_ii][_i]; // Subtract (the row above(or below) scaled by e) from (the
+          // current row) but start at the i'th column and assume all the
+          // stuff left of diagonal is 0 (which it should be if we made this
+          // algorithm correctly)
+
+          for (var _j3 = 0; _j3 < dim; _j3++) {
+            C[_ii][_j3] -= e * C[_i][_j3]; //apply to original matrix
+
+            I[_ii][_j3] -= e * I[_i][_j3]; //apply to identity
+          }
+        }
+      } //we've done all operations, C should be the identity
+      //matrix I should be the inverse:
+
+
+      return [I[0][0], I[1][0], I[0][1], I[1][1], I[0][2], I[1][2]];
+    }
+
+    function multiplyMatrix(mtrx1, mtrx2) {
+      var m1 = [[mtrx1[0], mtrx1[2], mtrx1[4]], [mtrx1[1], mtrx1[3], mtrx1[5]], [0, 0, 1]];
+      var m2 = [[mtrx2[0], mtrx2[2], mtrx2[4]], [mtrx2[1], mtrx2[3], mtrx2[5]], [0, 0, 1]];
+      var result = [];
+
+      for (var j = 0; j < m2.length; j++) {
+        result[j] = [];
+
+        for (var k = 0; k < m1[0].length; k++) {
+          var sum = 0;
+
+          for (var i = 0; i < m1.length; i++) {
+            sum += m1[i][k] * m2[j][i];
+          }
+
+          result[j].push(sum);
+        }
+      }
+
+      return [result[0][0], result[1][0], result[0][1], result[1][1], result[0][2], result[1][2]];
+    }
+
+    function createHandler(classList) {
+      var element = document.createElement('div');
+      classList.forEach(function (cls) {
+        addClass(element, cls);
+      });
+      return element;
+    }
+
+    var ALLOWED_ELEMENTS = ['circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text', 'g'];
+    function createSVGElement(name) {
+      return document.createElementNS('http://www.w3.org/2000/svg', name);
+    }
+    function createSVGMatrix() {
+      return createSVGElement('svg').createSVGMatrix();
+    }
+    function getTransformToElement(toElement, g) {
+      var gTransform = g.getScreenCTM() || createSVGMatrix();
+      return gTransform.inverse().multiply(toElement.getScreenCTM() || createSVGMatrix());
+    }
+    function matrixToString(m) {
+      return "matrix(".concat(m.a, ",").concat(m.b, ",").concat(m.c, ",").concat(m.d, ",").concat(m.e, ",").concat(m.f, ")");
+    }
+    function pointTo(ctm, svg, x, y) {
+      var pt = svg.createSVGPoint();
+      pt.x = x;
+      pt.y = y;
+      return pt.matrixTransform(ctm);
+    }
+    function cloneMatrix(b) {
+      var a = createSVGMatrix();
+      a.a = b.a;
+      a.b = b.b;
+      a.c = b.c;
+      a.d = b.d;
+      a.e = b.e;
+      a.f = b.f;
+      return a;
+    }
+    function checkElement(el) {
+      var tagName = el.tagName.toLowerCase();
+
+      if (ALLOWED_ELEMENTS.indexOf(tagName) === -1) {
+        warn('Selected element is not allowed to transform. Allowed elements:\n' + 'circle, ellipse, image, line, path, polygon, polyline, rect, text, g');
+        return false;
+      } else {
+        return true;
+      }
+    }
+    function isIdentity(matrix) {
+      return matrix.a === 1 && matrix.b === 0 && matrix.c === 0 && matrix.d === 1 && matrix.e === 0 && matrix.f === 0;
+    }
+
+    var dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
+    var sepRE = /\s*,\s*|\s+/g;
+
+    function parsePath(path) {
+      var match = dRE.lastIndex = 0;
+      var serialized = [];
+
+      while (match = dRE.exec(path)) {
+        var cmd = match[1];
+        var upCmd = cmd.toUpperCase(); // normalize the data
+
+        var data = match[2].replace(/([^e])-/g, '$1 -').replace(/ +/g, ' ');
+        serialized.push({
+          relative: cmd !== upCmd,
+          key: upCmd,
+          cmd: cmd,
+          values: data.trim().split(sepRE).map(function (val) {
+            if (!isNaN(val)) {
+              return Number(val);
+            }
+          })
+        });
+      }
+
+      return serialized;
+    }
+
+    function movePath(params) {
+      var path = params.path,
+          dx = params.dx,
+          dy = params.dy;
+
+      try {
+        var serialized = parsePath(path);
+        var str = '';
+        var space = ' ';
+        var firstCommand = true;
+
+        for (var i = 0, len = serialized.length; i < len; i++) {
+          var item = serialized[i];
+          var values = item.values,
+              cmd = item.key,
+              relative = item.relative;
+          var coordinates = [];
+
+          switch (cmd) {
+            case 'M':
+              {
+                for (var k = 0, _len = values.length; k < _len; k += 2) {
+                  var _values$slice = values.slice(k, k + 2),
+                      _values$slice2 = _slicedToArray(_values$slice, 2),
+                      x = _values$slice2[0],
+                      y = _values$slice2[1];
+
+                  if (!(relative && !firstCommand)) {
+                    x += dx;
+                    y += dy;
+                  }
+
+                  coordinates.push(x, y);
+                  firstCommand = false;
+                }
+
+                break;
+              }
+
+            case 'A':
+              {
+                for (var _k = 0, _len2 = values.length; _k < _len2; _k += 7) {
+                  var set = values.slice(_k, _k + 7);
+
+                  if (!relative) {
+                    set[5] += dx;
+                    set[6] += dy;
+                  }
+
+                  coordinates.push.apply(coordinates, _toConsumableArray(set));
+                }
+
+                break;
+              }
+
+            case 'C':
+              {
+                for (var _k2 = 0, _len3 = values.length; _k2 < _len3; _k2 += 6) {
+                  var _set = values.slice(_k2, _k2 + 6);
+
+                  if (!relative) {
+                    _set[0] += dx;
+                    _set[1] += dy;
+                    _set[2] += dx;
+                    _set[3] += dy;
+                    _set[4] += dx;
+                    _set[5] += dy;
+                  }
+
+                  coordinates.push.apply(coordinates, _toConsumableArray(_set));
+                }
+
+                break;
+              }
+
+            case 'H':
+              {
+                for (var _k3 = 0, _len4 = values.length; _k3 < _len4; _k3 += 1) {
+                  var _set2 = values.slice(_k3, _k3 + 1);
+
+                  if (!relative) {
+                    _set2[0] += dx;
+                  }
+
+                  coordinates.push(_set2[0]);
+                }
+
+                break;
+              }
+
+            case 'V':
+              {
+                for (var _k4 = 0, _len5 = values.length; _k4 < _len5; _k4 += 1) {
+                  var _set3 = values.slice(_k4, _k4 + 1);
+
+                  if (!relative) {
+                    _set3[0] += dy;
+                  }
+
+                  coordinates.push(_set3[0]);
+                }
+
+                break;
+              }
+
+            case 'L':
+            case 'T':
+              {
+                for (var _k5 = 0, _len6 = values.length; _k5 < _len6; _k5 += 2) {
+                  var _values$slice3 = values.slice(_k5, _k5 + 2),
+                      _values$slice4 = _slicedToArray(_values$slice3, 2),
+                      _x = _values$slice4[0],
+                      _y = _values$slice4[1];
+
+                  if (!relative) {
+                    _x += dx;
+                    _y += dy;
+                  }
+
+                  coordinates.push(_x, _y);
+                }
+
+                break;
+              }
+
+            case 'Q':
+            case 'S':
+              {
+                for (var _k6 = 0, _len7 = values.length; _k6 < _len7; _k6 += 4) {
+                  var _values$slice5 = values.slice(_k6, _k6 + 4),
+                      _values$slice6 = _slicedToArray(_values$slice5, 4),
+                      x1 = _values$slice6[0],
+                      y1 = _values$slice6[1],
+                      x2 = _values$slice6[2],
+                      y2 = _values$slice6[3];
+
+                  if (!relative) {
+                    x1 += dx;
+                    y1 += dy;
+                    x2 += dx;
+                    y2 += dy;
+                  }
+
+                  coordinates.push(x1, y1, x2, y2);
+                }
+
+                break;
+              }
+
+            case 'Z':
+              {
+                values[0] = '';
+                space = '';
+                break;
+              }
+          }
+
+          str += item.cmd + coordinates.join(',') + space;
+        }
+
+        return str;
+      } catch (err) {
+        warn('Path parsing error: ' + err);
+      }
+    }
+    function resizePath(params) {
+      var path = params.path,
+          localCTM = params.localCTM,
+          container = params.container;
+
+      try {
+        var serialized = parsePath(path);
+        var str = '';
+        var space = ' ';
+        var res = [];
+        var firstCommand = true;
+
+        for (var i = 0, len = serialized.length; i < len; i++) {
+          var item = serialized[i];
+          var values = item.values,
+              cmd = item.key,
+              relative = item.relative;
+
+          switch (cmd) {
+            case 'A':
+              {
+                //A rx ry x-axis-rotation large-arc-flag sweep-flag x y
+                var coordinates = [];
+
+                for (var k = 0, _len8 = values.length; k < _len8; k += 7) {
+                  var _values$slice7 = values.slice(k, k + 7),
+                      _values$slice8 = _slicedToArray(_values$slice7, 7),
+                      rx = _values$slice8[0],
+                      ry = _values$slice8[1],
+                      x_axis_rot = _values$slice8[2],
+                      large_arc_flag = _values$slice8[3],
+                      sweep_flag = _values$slice8[4],
+                      x = _values$slice8[5],
+                      y = _values$slice8[6];
+
+                  var mtrx = cloneMatrix(localCTM);
+
+                  if (relative) {
+                    mtrx.e = mtrx.f = 0;
+                  }
+
+                  var _pointTo = pointTo(mtrx, container, x, y),
+                      resX = _pointTo.x,
+                      resY = _pointTo.y;
+
+                  coordinates.push(floatToFixed(resX), floatToFixed(resY));
+                  mtrx.e = mtrx.f = 0;
+
+                  var _pointTo2 = pointTo(mtrx, container, rx, ry),
+                      newRx = _pointTo2.x,
+                      newRy = _pointTo2.y;
+
+                  coordinates.unshift(floatToFixed(newRx), floatToFixed(newRy), x_axis_rot, large_arc_flag, sweep_flag);
+                }
+
+                res.push(coordinates);
+                break;
+              }
+
+            case 'C':
+              {
+                //C x1 y1, x2 y2, x y (or c dx1 dy1, dx2 dy2, dx dy)
+                var _coordinates = [];
+
+                for (var _k7 = 0, _len9 = values.length; _k7 < _len9; _k7 += 6) {
+                  var _values$slice9 = values.slice(_k7, _k7 + 6),
+                      _values$slice10 = _slicedToArray(_values$slice9, 6),
+                      x1 = _values$slice10[0],
+                      y1 = _values$slice10[1],
+                      x2 = _values$slice10[2],
+                      y2 = _values$slice10[3],
+                      _x2 = _values$slice10[4],
+                      _y2 = _values$slice10[5];
+
+                  var _mtrx = cloneMatrix(localCTM);
+
+                  if (relative) {
+                    _mtrx.e = _mtrx.f = 0;
+                  }
+
+                  var _pointTo3 = pointTo(_mtrx, container, x1, y1),
+                      resX1 = _pointTo3.x,
+                      resY1 = _pointTo3.y;
+
+                  var _pointTo4 = pointTo(_mtrx, container, x2, y2),
+                      resX2 = _pointTo4.x,
+                      resY2 = _pointTo4.y;
+
+                  var _pointTo5 = pointTo(_mtrx, container, _x2, _y2),
+                      _resX = _pointTo5.x,
+                      _resY = _pointTo5.y;
+
+                  _coordinates.push(floatToFixed(resX1), floatToFixed(resY1), floatToFixed(resX2), floatToFixed(resY2), floatToFixed(_resX), floatToFixed(_resY));
+                }
+
+                res.push(_coordinates);
+                break;
+              }
+            // this command makes impossible free transform within group
+            // todo: use proportional resizing only or need to be converted to L
+
+            case 'H':
+              {
+                // H x (or h dx)
+                var _coordinates2 = [];
+
+                for (var _k8 = 0, _len10 = values.length; _k8 < _len10; _k8 += 1) {
+                  var _values$slice11 = values.slice(_k8, _k8 + 1),
+                      _values$slice12 = _slicedToArray(_values$slice11, 1),
+                      _x3 = _values$slice12[0];
+
+                  var _mtrx2 = cloneMatrix(localCTM);
+
+                  if (relative) {
+                    _mtrx2.e = _mtrx2.f = 0;
+                  }
+
+                  var _pointTo6 = pointTo(_mtrx2, container, _x3, 0),
+                      _resX2 = _pointTo6.x;
+
+                  _coordinates2.push(floatToFixed(_resX2));
+                }
+
+                res.push(_coordinates2);
+                break;
+              }
+            // this command makes impossible free transform within group
+            // todo: use proportional resizing only or need to be converted to L
+
+            case 'V':
+              {
+                // V y (or v dy)
+                var _coordinates3 = [];
+
+                for (var _k9 = 0, _len11 = values.length; _k9 < _len11; _k9 += 1) {
+                  var _values$slice13 = values.slice(_k9, _k9 + 1),
+                      _values$slice14 = _slicedToArray(_values$slice13, 1),
+                      _y3 = _values$slice14[0];
+
+                  var _mtrx3 = cloneMatrix(localCTM);
+
+                  if (relative) {
+                    _mtrx3.e = _mtrx3.f = 0;
+                  }
+
+                  var _pointTo7 = pointTo(_mtrx3, container, 0, _y3),
+                      _resY2 = _pointTo7.y;
+
+                  _coordinates3.push(floatToFixed(_resY2));
+                }
+
+                res.push(_coordinates3);
+                break;
+              }
+
+            case 'T':
+            case 'L':
+              {
+                // T x y (or t dx dy)
+                // L x y (or l dx dy)
+                var _coordinates4 = [];
+
+                for (var _k10 = 0, _len12 = values.length; _k10 < _len12; _k10 += 2) {
+                  var _values$slice15 = values.slice(_k10, _k10 + 2),
+                      _values$slice16 = _slicedToArray(_values$slice15, 2),
+                      _x4 = _values$slice16[0],
+                      _y4 = _values$slice16[1];
+
+                  var _mtrx4 = cloneMatrix(localCTM);
+
+                  if (relative) {
+                    _mtrx4.e = _mtrx4.f = 0;
+                  }
+
+                  var _pointTo8 = pointTo(_mtrx4, container, _x4, _y4),
+                      _resX3 = _pointTo8.x,
+                      _resY3 = _pointTo8.y;
+
+                  _coordinates4.push(floatToFixed(_resX3), floatToFixed(_resY3));
+                }
+
+                res.push(_coordinates4);
+                break;
+              }
+
+            case 'M':
+              {
+                // M x y (or dx dy)
+                var _coordinates5 = [];
+
+                for (var _k11 = 0, _len13 = values.length; _k11 < _len13; _k11 += 2) {
+                  var _values$slice17 = values.slice(_k11, _k11 + 2),
+                      _values$slice18 = _slicedToArray(_values$slice17, 2),
+                      _x5 = _values$slice18[0],
+                      _y5 = _values$slice18[1];
+
+                  var _mtrx5 = cloneMatrix(localCTM);
+
+                  if (relative && !firstCommand) {
+                    _mtrx5.e = _mtrx5.f = 0;
+                  }
+
+                  var _pointTo9 = pointTo(_mtrx5, container, _x5, _y5),
+                      _resX4 = _pointTo9.x,
+                      _resY4 = _pointTo9.y;
+
+                  _coordinates5.push(floatToFixed(_resX4), floatToFixed(_resY4));
+
+                  firstCommand = false;
+                }
+
+                res.push(_coordinates5);
+                break;
+              }
+
+            case 'Q':
+              {
+                //Q x1 y1, x y (or q dx1 dy1, dx dy)
+                var _coordinates6 = [];
+
+                for (var _k12 = 0, _len14 = values.length; _k12 < _len14; _k12 += 4) {
+                  var _values$slice19 = values.slice(_k12, _k12 + 4),
+                      _values$slice20 = _slicedToArray(_values$slice19, 4),
+                      _x6 = _values$slice20[0],
+                      _y6 = _values$slice20[1],
+                      _x7 = _values$slice20[2],
+                      _y7 = _values$slice20[3];
+
+                  var _mtrx6 = cloneMatrix(localCTM);
+
+                  if (relative) {
+                    _mtrx6.e = _mtrx6.f = 0;
+                  }
+
+                  var _pointTo10 = pointTo(_mtrx6, container, _x6, _y6),
+                      _resX5 = _pointTo10.x,
+                      _resY5 = _pointTo10.y;
+
+                  var _pointTo11 = pointTo(_mtrx6, container, _x7, _y7),
+                      _resX6 = _pointTo11.x,
+                      _resY6 = _pointTo11.y;
+
+                  _coordinates6.push(floatToFixed(_resX5), floatToFixed(_resY5), floatToFixed(_resX6), floatToFixed(_resY6));
+                }
+
+                res.push(_coordinates6);
+                break;
+              }
+
+            case 'S':
+              {
+                //S x2 y2, x y (or s dx2 dy2, dx dy)
+                var _coordinates7 = [];
+
+                for (var _k13 = 0, _len15 = values.length; _k13 < _len15; _k13 += 4) {
+                  var _values$slice21 = values.slice(_k13, _k13 + 4),
+                      _values$slice22 = _slicedToArray(_values$slice21, 4),
+                      _x8 = _values$slice22[0],
+                      _y8 = _values$slice22[1],
+                      _x9 = _values$slice22[2],
+                      _y9 = _values$slice22[3];
+
+                  var _mtrx7 = cloneMatrix(localCTM);
+
+                  if (relative) {
+                    _mtrx7.e = _mtrx7.f = 0;
+                  }
+
+                  var _pointTo12 = pointTo(_mtrx7, container, _x8, _y8),
+                      _resX7 = _pointTo12.x,
+                      _resY7 = _pointTo12.y;
+
+                  var _pointTo13 = pointTo(_mtrx7, container, _x9, _y9),
+                      _resX8 = _pointTo13.x,
+                      _resY8 = _pointTo13.y;
+
+                  _coordinates7.push(floatToFixed(_resX7), floatToFixed(_resY7), floatToFixed(_resX8), floatToFixed(_resY8));
+                }
+
+                res.push(_coordinates7);
+                break;
+              }
+
+            case 'Z':
+              {
+                res.push(['']);
+                space = '';
+                break;
+              }
+          }
+
+          str += item.cmd + res[i].join(',') + space;
+        }
+
+        return str;
+      } catch (err) {
+        warn('Path parsing error: ' + err);
+      }
+    }
+
+    var MIN_SIZE$1 = 5;
+    var ROT_OFFSET = 50;
+    var floatRE = /[+-]?\d+(\.\d+)?/g;
+
+    var DraggableSVG =
+    /*#__PURE__*/
+    function (_Subject) {
+      _inherits(DraggableSVG, _Subject);
+
+      function DraggableSVG(el, options, observable) {
+        var _this;
+
+        _classCallCheck(this, DraggableSVG);
+
+        _this = _possibleConstructorReturn(this, _getPrototypeOf(DraggableSVG).call(this, el, observable));
+
+        _this.enable(options);
+
+        return _this;
+      }
+
+      _createClass(DraggableSVG, [{
+        key: "_init",
+        value: function _init(el) {
+          var options = this.options;
+          var rotationPoint = options.rotationPoint,
+              container = options.container,
+              themeColor = options.themeColor;
+          var wrapper = createSVGElement('g');
+          container.appendChild(wrapper);
+
+          var _el$getBBox = el.getBBox(),
+              cw = _el$getBBox.width,
+              ch = _el$getBBox.height,
+              cx = _el$getBBox.x,
+              cy = _el$getBBox.y;
+
+          var elCTM = getTransformToElement(el, container);
+          var box = createSVGElement('rect');
+          var attrs = [['width', cw], ['height', ch], ['x', cx], ['y', cy], ['fill', themeColor], ['fill-opacity', 0.1], ['stroke', themeColor], ['stroke-dasharray', '3 3'], ['vector-effect', 'non-scaling-stroke'], ['transform', matrixToString(elCTM)]];
+          attrs.forEach(function (item) {
+            box.setAttribute(item[0], item[1]);
+          });
+          var handlesGroup = createSVGElement('g'),
+              normalLineGroup = createSVGElement('g'),
+              group = createSVGElement('g');
+          group.appendChild(box);
+          wrapper.appendChild(group);
+          wrapper.appendChild(normalLineGroup);
+          wrapper.appendChild(handlesGroup);
+
+          var _box$getBBox = box.getBBox(),
+              bX = _box$getBBox.x,
+              bY = _box$getBBox.y,
+              bW = _box$getBBox.width,
+              bH = _box$getBBox.height;
+
+          var centerX = el.getAttribute('data-cx'),
+              centerY = el.getAttribute('data-cy');
+          var boxCTM = getTransformToElement(box, box.parentNode),
+              boxCenter = pointTo(boxCTM, container, bX + bW / 2, bY + bH / 2);
+          var handles = {
+            tl: pointTo(boxCTM, container, bX, bY),
+            tr: pointTo(boxCTM, container, bX + bW, bY),
+            br: pointTo(boxCTM, container, bX + bW, bY + bH),
+            bl: pointTo(boxCTM, container, bX, bY + bH),
+            tc: pointTo(boxCTM, container, bX + bW / 2, bY),
+            bc: pointTo(boxCTM, container, bX + bW / 2, bY + bH),
+            ml: pointTo(boxCTM, container, bX, bY + bH / 2),
+            mr: pointTo(boxCTM, container, bX + bW, bY + bH / 2),
+            center: rotationPoint ? createPoint(container, centerX, centerY) || boxCenter : undefined,
+            //...(rotationPoint ? { center: createPoint(container, centerX, centerY) || boxCenter }),
+            rotator: {}
+          };
+          var theta = Math.atan2(handles.tl.y - handles.tr.y, handles.tl.x - handles.tr.x);
+          handles.rotator.x = handles.mr.x - ROT_OFFSET * Math.cos(theta);
+          handles.rotator.y = handles.mr.y - ROT_OFFSET * Math.sin(theta);
+          var normalLine = createSVGElement('line');
+          normalLine.x1.baseVal.value = handles.mr.x;
+          normalLine.y1.baseVal.value = handles.mr.y;
+          normalLine.x2.baseVal.value = handles.rotator.x;
+          normalLine.y2.baseVal.value = handles.rotator.y;
+          setLineStyle(normalLine, themeColor);
+          normalLineGroup.appendChild(normalLine);
+          var radius = null;
+
+          if (rotationPoint) {
+            radius = createSVGElement('line');
+            addClass(radius, 'sjx-hidden');
+            radius.x1.baseVal.value = boxCenter.x;
+            radius.y1.baseVal.value = boxCenter.y;
+            radius.x2.baseVal.value = centerX || boxCenter.x;
+            radius.y2.baseVal.value = centerY || boxCenter.y;
+            setLineStyle(radius, '#fe3232');
+            radius.setAttribute('opacity', 0.5);
+            normalLineGroup.appendChild(radius);
+          }
+
+          Object.keys(handles).forEach(function (key) {
+            var data = handles[key];
+            if (isUndef(data)) return;
+            var x = data.x,
+                y = data.y;
+            var color = key === 'center' ? '#fe3232' : themeColor;
+            handles[key] = createHandler$1(x, y, color, key);
+            handlesGroup.appendChild(handles[key]);
+          });
+          this.storage = {
+            wrapper: wrapper,
+            box: box,
+            handles: handles,
+            normalLine: normalLine,
+            radius: rotationPoint ? radius : undefined,
+            //...(rotationPoint && { radius }),
+            parent: el.parentNode
+          };
+          helper(wrapper).on('mousedown', this._onMouseDown).on('touchstart', this._onTouchStart);
+        }
+      }, {
+        key: "_destroy",
+        value: function _destroy() {
+          var wrapper = this.storage.wrapper;
+          helper(wrapper).off('mousedown', this._onMouseDown).off('touchstart', this._onTouchStart);
+          wrapper.parentNode.removeChild(wrapper);
+        }
+      }, {
+        key: "_compute",
+        value: function _compute(e) {
+          var storage = this.storage;
+          var handles = storage.handles;
+          var handle = helper(e.target);
+
+          var _this$_checkHandles = this._checkHandles(handle, handles),
+              revX = _this$_checkHandles.revX,
+              revY = _this$_checkHandles.revY,
+              onTopEdge = _this$_checkHandles.onTopEdge,
+              onLeftEdge = _this$_checkHandles.onLeftEdge,
+              onRightEdge = _this$_checkHandles.onRightEdge,
+              onBottomEdge = _this$_checkHandles.onBottomEdge,
+              doW = _this$_checkHandles.doW,
+              doH = _this$_checkHandles.doH;
+
+          var _computed = this._getState({
+            revX: revX,
+            revY: revY,
+            doW: doW,
+            doH: doH
+          });
+
+          var _this$_cursorPoint = this._cursorPoint(e),
+              clientX = _this$_cursorPoint.x,
+              clientY = _this$_cursorPoint.y;
+
+          var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);
+          return _objectSpread2({}, _computed, {
+            doW: doW,
+            doH: doH,
+            onTopEdge: onTopEdge,
+            onLeftEdge: onLeftEdge,
+            onRightEdge: onRightEdge,
+            onBottomEdge: onBottomEdge,
+            handle: handle,
+            pressang: pressang
+          });
+        }
+      }, {
+        key: "_cursorPoint",
+        value: function _cursorPoint(_ref) {
+          var clientX = _ref.clientX,
+              clientY = _ref.clientY;
+          var container = this.options.container;
+          return pointTo(container.getScreenCTM().inverse(), container, clientX, clientY);
+        }
+      }, {
+        key: "_pointToElement",
+        value: function _pointToElement(_ref2) {
+          var x = _ref2.x,
+              y = _ref2.y;
+          var transform = this.storage.transform;
+          var ctm = transform.ctm;
+          var matrix = ctm.inverse();
+          matrix.e = matrix.f = 0;
+          return this._applyMatrixToPoint(matrix, x, y);
+        }
+      }, {
+        key: "_pointToControls",
+        value: function _pointToControls(_ref3) {
+          var x = _ref3.x,
+              y = _ref3.y;
+          var transform = this.storage.transform;
+          var boxCTM = transform.boxCTM;
+          var matrix = boxCTM.inverse();
+          matrix.e = matrix.f = 0;
+          return this._applyMatrixToPoint(matrix, x, y);
+        }
+      }, {
+        key: "_applyMatrixToPoint",
+        value: function _applyMatrixToPoint(matrix, x, y) {
+          var container = this.options.container;
+          var pt = container.createSVGPoint();
+          pt.x = x;
+          pt.y = y;
+          return pt.matrixTransform(matrix);
+        }
+      }, {
+        key: "_apply",
+        value: function _apply(actionName) {
+          var element = this.el,
+              storage = this.storage,
+              options = this.options;
+          var container = options.container;
+          var box = storage.box,
+              handles = storage.handles,
+              cached = storage.cached,
+              transform = storage.transform;
+          var matrix = transform.matrix;
+          var eBBox = element.getBBox();
+          var elX = eBBox.x,
+              elY = eBBox.y,
+              elW = eBBox.width,
+              elH = eBBox.height;
+          var rotationPoint = isDef(handles.center) ? pointTo(transform.boxCTM, container, handles.center.cx.baseVal.value, handles.center.cy.baseVal.value) : pointTo(matrix, container, elX + elW / 2, elY + elH / 2);
+          element.setAttribute('data-cx', rotationPoint.x);
+          element.setAttribute('data-cy', rotationPoint.y);
+          if (isUndef(cached)) return;
+          var scaleX = cached.scaleX,
+              scaleY = cached.scaleY,
+              dx = cached.dx,
+              dy = cached.dy,
+              ox = cached.ox,
+              oy = cached.oy;
+
+          if (actionName === 'drag') {
+            if (dx === 0 && dy === 0) return; // create translate matrix for an element
+
+            var eM = createSVGMatrix();
+            eM.e = dx;
+            eM.f = dy;
+            var translateMatrix = eM.multiply(matrix).multiply(eM.inverse());
+            element.setAttribute('transform', matrixToString(translateMatrix));
+
+            if (isGroup(element)) {
+              var els = checkChildElements(element);
+              els.forEach(function (child) {
+                var pt = container.createSVGPoint();
+                var ctm = getTransformToElement(element.parentNode, container).inverse();
+                pt.x = ox;
+                pt.y = oy;
+                ctm.e = ctm.f = 0;
+                var newPT = pt.matrixTransform(ctm); // create translate matrix for an element
+
+                var eM = createSVGMatrix();
+                eM.e = dx;
+                eM.f = dy;
+                var translateMatrix = eM.multiply(getTransformToElement(child, child.parentNode)).multiply(eM.inverse());
+
+                if (!isIdentity(translateMatrix)) {
+                  child.setAttribute('transform', matrixToString(translateMatrix));
+                }
+
+                if (!isGroup(child)) {
+                  applyTranslate(child, {
+                    x: newPT.x,
+                    y: newPT.y
+                  });
+                }
+              });
+            } else {
+              applyTranslate(element, {
+                x: dx,
+                y: dy
+              });
+            }
+          }
+
+          if (actionName === 'resize') {
+            var _box$getBBox2 = box.getBBox(),
+                x = _box$getBBox2.x,
+                y = _box$getBBox2.y,
+                newWidth = _box$getBBox2.width,
+                newHeight = _box$getBBox2.height;
+
+            applyTransformToHandles(storage, {
+              x: x,
+              y: y,
+              width: newWidth,
+              height: newHeight
+            }, container);
+
+            if (isGroup(element)) {
+              var _els = checkChildElements(element);
+
+              _els.forEach(function (child) {
+                if (!isGroup(child)) {
+                  applyResize(child, {
+                    scaleX: scaleX,
+                    scaleY: scaleY,
+                    defaultCTM: child.__ctm__,
+                    bBox: transform.bBox,
+                    container: container,
+                    storage: storage
+                  });
+                }
+              });
+            } else {
+              applyResize(element, {
+                scaleX: scaleX,
+                scaleY: scaleY,
+                defaultCTM: transform.ctm,
+                bBox: transform.bBox,
+                container: container,
+                storage: storage
+              });
+            }
+
+            element.setAttribute('transform', matrixToString(matrix));
+          }
+
+          this.storage.cached = null;
+        }
+      }, {
+        key: "_processResize",
+        value: function _processResize(dx, dy) {
+          var el = this.el,
+              storage = this.storage,
+              options = this.options;
+          var container = options.container,
+              proportions = options.proportions;
+          var _this$storage = this.storage,
+              box = _this$storage.box,
+              left = _this$storage.left,
+              top = _this$storage.top,
+              cw = _this$storage.cw,
+              ch = _this$storage.ch,
+              transform = _this$storage.transform,
+              revX = _this$storage.revX,
+              revY = _this$storage.revY,
+              doW = _this$storage.doW,
+              doH = _this$storage.doH;
+          var matrix = transform.matrix,
+              scMatrix = transform.scMatrix,
+              trMatrix = transform.trMatrix,
+              ptX = transform.scaleX,
+              ptY = transform.scaleY;
+
+          var _box$getBBox3 = box.getBBox(),
+              newWidth = _box$getBBox3.width,
+              newHeight = _box$getBBox3.height;
+
+          var ratio = doW || !doW && !doH ? (cw + dx) / cw : (ch + dy) / ch;
+          newWidth = proportions ? cw * ratio : cw + dx;
+          newHeight = proportions ? ch * ratio : ch + dy;
+          if (Math.abs(newWidth) < MIN_SIZE$1 || Math.abs(newHeight) < MIN_SIZE$1) return;
+          var scaleX = newWidth / cw,
+              scaleY = newHeight / ch; // setup scale matrix
+
+          scMatrix.a = scaleX;
+          scMatrix.b = 0;
+          scMatrix.c = 0;
+          scMatrix.d = scaleY;
+          scMatrix.e = 0;
+          scMatrix.f = 0; // translate compensation matrix
+
+          trMatrix.e = ptX;
+          trMatrix.f = ptY; //now must to do: translate(x y) scale(sx sy) translate(-x -y)
+
+          var scaleMatrix = trMatrix.multiply(scMatrix).multiply(trMatrix.inverse());
+          var res = matrix.multiply(scaleMatrix);
+          el.setAttribute('transform', matrixToString(res));
+          this.storage.cached = {
+            scaleX: scaleX,
+            scaleY: scaleY
+          };
+          var deltaW = newWidth - cw,
+              deltaH = newHeight - ch;
+          var newX = left - deltaW * (doH ? 0.5 : revX ? 1 : 0),
+              newY = top - deltaH * (doW ? 0.5 : revY ? 1 : 0);
+          applyTransformToHandles(storage, {
+            x: newX,
+            y: newY,
+            width: newWidth,
+            height: newHeight
+          }, container);
+        }
+      }, {
+        key: "_processMove",
+        value: function _processMove(dx, dy) {
+          var container = this.options.container;
+          var _this$storage2 = this.storage,
+              transform = _this$storage2.transform,
+              wrapper = _this$storage2.wrapper,
+              center = _this$storage2.center;
+          var matrix = transform.matrix,
+              trMatrix = transform.trMatrix,
+              scMatrix = transform.scMatrix,
+              wrapperMatrix = transform.wrapperMatrix,
+              parentMatrix = transform.parentMatrix;
+          scMatrix.e = dx;
+          scMatrix.f = dy;
+          var moveWrapper = scMatrix.multiply(wrapperMatrix);
+          wrapper.setAttribute('transform', matrixToString(moveWrapper));
+          parentMatrix.e = parentMatrix.f = 0;
+
+          var _pointTo = pointTo(parentMatrix.inverse(), container, dx, dy),
+              x = _pointTo.x,
+              y = _pointTo.y;
+
+          trMatrix.e = x;
+          trMatrix.f = y;
+          var moveElement = trMatrix.multiply(matrix);
+          this.el.setAttribute('transform', matrixToString(moveElement));
+          this.storage.cached = {
+            dx: x,
+            dy: y,
+            ox: dx,
+            oy: dy
+          };
+          if (!center.isShifted) return;
+          var radiusMatrix = wrapperMatrix.inverse();
+          radiusMatrix.e = radiusMatrix.f = 0;
+
+          var _pointTo2 = pointTo(radiusMatrix, container, dx, dy),
+              nx = _pointTo2.x,
+              ny = _pointTo2.y;
+
+          this._moveCenterHandle(-nx, -ny);
+        }
+      }, {
+        key: "_processRotate",
+        value: function _processRotate(radians) {
+          var _this$storage3 = this.storage,
+              center = _this$storage3.center,
+              transform = _this$storage3.transform,
+              wrapper = _this$storage3.wrapper;
+          var matrix = transform.matrix,
+              wrapperMatrix = transform.wrapperMatrix,
+              parentMatrix = transform.parentMatrix,
+              trMatrix = transform.trMatrix,
+              scMatrix = transform.scMatrix,
+              rotMatrix = transform.rotMatrix;
+          var cos = floatToFixed(Math.cos(radians)),
+              sin = floatToFixed(Math.sin(radians)); // rotate(a cx cy) is equivalent to translate(cx cy) rotate(a) translate(-cx -cy)
+
+          trMatrix.e = center.x;
+          trMatrix.f = center.y;
+          rotMatrix.a = cos;
+          rotMatrix.b = sin;
+          rotMatrix.c = -sin;
+          rotMatrix.d = cos;
+          var wrapMatrix = trMatrix.multiply(rotMatrix).multiply(trMatrix.inverse()).multiply(wrapperMatrix);
+          wrapper.setAttribute('transform', matrixToString(wrapMatrix));
+          scMatrix.e = center.el_x;
+          scMatrix.f = center.el_y;
+          parentMatrix.e = parentMatrix.f = 0;
+          var resRotMatrix = parentMatrix.inverse().multiply(rotMatrix).multiply(parentMatrix);
+          var rotateMatrix = scMatrix.multiply(resRotMatrix).multiply(scMatrix.inverse());
+          var elMatrix = rotateMatrix.multiply(matrix);
+          this.el.setAttribute('transform', matrixToString(elMatrix));
+        }
+      }, {
+        key: "_getState",
+        value: function _getState(_ref4) {
+          var revX = _ref4.revX,
+              revY = _ref4.revY,
+              doW = _ref4.doW,
+              doH = _ref4.doH;
+          var element = this.el,
+              storage = this.storage,
+              options = this.options;
+          var container = options.container;
+          var box = storage.box,
+              wrapper = storage.wrapper,
+              parent = storage.parent,
+              handles = storage.handles;
+          var cHandle = handles.center;
+          var eBBox = element.getBBox();
+          var el_x = eBBox.x,
+              el_y = eBBox.y,
+              el_w = eBBox.width,
+              el_h = eBBox.height;
+
+          var _box$getBBox4 = box.getBBox(),
+              cw = _box$getBBox4.width,
+              ch = _box$getBBox4.height,
+              c_left = _box$getBBox4.x,
+              c_top = _box$getBBox4.y;
+
+          var elMatrix = getTransformToElement(element, parent),
+              ctm = getTransformToElement(element, container),
+              boxCTM = getTransformToElement(box.parentNode, container);
+          var parentMatrix = getTransformToElement(parent, container);
+          var scaleX = el_x + el_w * (doH ? 0.5 : revX ? 1 : 0),
+              scaleY = el_y + el_h * (doW ? 0.5 : revY ? 1 : 0);
+          var transform = {
+            matrix: elMatrix,
+            ctm: ctm,
+            boxCTM: boxCTM,
+            parentMatrix: parentMatrix,
+            wrapperMatrix: getTransformToElement(wrapper, wrapper.parentNode),
+            trMatrix: createSVGMatrix(),
+            scMatrix: createSVGMatrix(),
+            rotMatrix: createSVGMatrix(),
+            scaleX: scaleX,
+            scaleY: scaleY,
+            scX: Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b),
+            scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d),
+            bBox: eBBox
+          };
+          var boxCenterX = c_left + cw / 2,
+              boxCenterY = c_top + ch / 2;
+          var centerX = cHandle ? cHandle.cx.baseVal.value : boxCenterX,
+              centerY = cHandle ? cHandle.cy.baseVal.value : boxCenterY; // c-handler's coordinates
+
+          var _pointTo3 = pointTo(boxCTM, container, centerX, centerY),
+              bcx = _pointTo3.x,
+              bcy = _pointTo3.y; // element's center coordinates
+
+
+          var _ref5 = isDef(cHandle) ? pointTo(parentMatrix.inverse(), container, bcx, bcy) : pointTo(elMatrix, container, el_x + el_w / 2, el_y + el_h / 2),
+              elcx = _ref5.x,
+              elcy = _ref5.y; // box's center coordinates
+
+
+          var _pointTo4 = pointTo(getTransformToElement(box, container), container, boxCenterX, boxCenterY),
+              rcx = _pointTo4.x,
+              rcy = _pointTo4.y;
+
+          checkChildElements(element).forEach(function (child) {
+            child.__ctm__ = getTransformToElement(child, container);
+          });
+          return {
+            transform: transform,
+            cw: cw,
+            ch: ch,
+            center: {
+              x: cHandle ? bcx : rcx,
+              y: cHandle ? bcy : rcy,
+              el_x: elcx,
+              el_y: elcy,
+              hx: cHandle ? cHandle.cx.baseVal.value : null,
+              hy: cHandle ? cHandle.cy.baseVal.value : null,
+              isShifted: floatToFixed(rcx, 3) !== floatToFixed(bcx, 3) && floatToFixed(rcy, 3) !== floatToFixed(bcy, 3)
+            },
+            left: c_left,
+            top: c_top,
+            revX: revX,
+            revY: revY,
+            doW: doW,
+            doH: doH
+          };
+        }
+      }, {
+        key: "_moveCenterHandle",
+        value: function _moveCenterHandle(x, y) {
+          var _this$storage4 = this.storage,
+              handles = _this$storage4.handles,
+              center = _this$storage4.center,
+              radius = _this$storage4.radius;
+          if (isUndef(handles.center)) return;
+          handles.center.cx.baseVal.value = center.hx + x;
+          handles.center.cy.baseVal.value = center.hy + y;
+          radius.x2.baseVal.value = center.hx + x;
+          radius.y2.baseVal.value = center.hy + y;
+        }
+      }, {
+        key: "resetCenterPoint",
+        value: function resetCenterPoint() {
+          var _this$storage5 = this.storage,
+              box = _this$storage5.box,
+              handles = _this$storage5.handles,
+              radius = _this$storage5.radius;
+          var center = handles.center;
+          var container = this.options.container;
+
+          var _box$getBBox5 = box.getBBox(),
+              cw = _box$getBBox5.width,
+              ch = _box$getBBox5.height,
+              c_left = _box$getBBox5.x,
+              c_top = _box$getBBox5.y;
+
+          var matrix = getTransformToElement(box, box.parentNode);
+
+          var _pointTo5 = pointTo(matrix, container, c_left + cw / 2, c_top + ch / 2),
+              cx = _pointTo5.x,
+              cy = _pointTo5.y;
+
+          center.cx.baseVal.value = cx;
+          center.cy.baseVal.value = cy;
+          center.isShifted = false;
+          radius.x2.baseVal.value = cx;
+          radius.y2.baseVal.value = cy;
+        }
+      }, {
+        key: "controls",
+        get: function get() {
+          return this.storage.wrapper;
+        }
+      }]);
+
+      return DraggableSVG;
+    }(Subject);
+
+    function applyTranslate(element, _ref6) {
+      var x = _ref6.x,
+          y = _ref6.y;
+      var attrs = [];
+
+      switch (element.tagName.toLowerCase()) {
+        case 'use':
+        case 'image':
+        case 'text':
+        case 'rect':
+          {
+            var resX = isDef(element.x.baseVal.value) ? element.x.baseVal.value + x : (Number(element.getAttribute('x')) || 0) + x;
+            var resY = isDef(element.y.baseVal.value) ? element.y.baseVal.value + y : (Number(element.getAttribute('y')) || 0) + y;
+            attrs.push(['x', resX], ['y', resY]);
+            break;
+          }
+
+        case 'circle':
+        case 'ellipse':
+          {
+            var _resX = element.cx.baseVal.value + x,
+                _resY = element.cy.baseVal.value + y;
+
+            attrs.push(['cx', _resX], ['cy', _resY]);
+            break;
+          }
+
+        case 'line':
+          {
+            var resX1 = element.x1.baseVal.value + x,
+                resY1 = element.y1.baseVal.value + y,
+                resX2 = element.x2.baseVal.value + x,
+                resY2 = element.y2.baseVal.value + y;
+            attrs.push(['x1', resX1], ['y1', resY1], ['x2', resX2], ['y2', resY2]);
+            break;
+          }
+
+        case 'polygon':
+        case 'polyline':
+          {
+            var points = parsePoints(element.getAttribute('points'));
+            var result = points.map(function (item) {
+              item[0] = Number(item[0]) + x;
+              item[1] = Number(item[1]) + y;
+              return item.join(' ');
+            }).join(' ');
+            attrs.push(['points', result]);
+            break;
+          }
+
+        case 'path':
+          {
+            var path = element.getAttribute('d');
+            attrs.push(['d', movePath({
+              path: path,
+              dx: x,
+              dy: y
+            })]);
+            break;
+          }
+      }
+
+      attrs.forEach(function (item) {
+        element.setAttribute(item[0], item[1]);
+      });
+    }
+
+    function applyResize(element, data) {
+      var scaleX = data.scaleX,
+          scaleY = data.scaleY,
+          bBox = data.bBox,
+          defaultCTM = data.defaultCTM,
+          container = data.container;
+      var boxW = bBox.width,
+          boxH = bBox.height;
+      var attrs = [];
+      var ctm = getTransformToElement(element, container);
+      var localCTM = defaultCTM.inverse().multiply(ctm);
+
+      switch (element.tagName.toLowerCase()) {
+        case 'text':
+          {
+            var x = element.x.baseVal.value || Number(element.getAttribute('x'));
+            var y = element.y.baseVal.value || Number(element.getAttribute('y'));
+
+            var _pointTo6 = pointTo(localCTM, container, x, y),
+                resX = _pointTo6.x,
+                resY = _pointTo6.y;
+
+            attrs.push(['x', resX + (scaleX < 0 ? boxW : 0)], ['y', resY + (scaleY < 0 ? boxH : 0)]);
+            break;
+          }
+
+        case 'circle':
+          {
+            var r = element.r.baseVal.value,
+                cx = element.cx.baseVal.value,
+                cy = element.cy.baseVal.value,
+                newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
+
+            var _pointTo7 = pointTo(localCTM, container, cx, cy),
+                _resX2 = _pointTo7.x,
+                _resY2 = _pointTo7.y;
+
+            attrs.push(['r', newR], ['cx', _resX2], ['cy', _resY2]);
+            break;
+          }
+
+        case 'image':
+        case 'rect':
+          {
+            var width = element.width.baseVal.value,
+                height = element.height.baseVal.value,
+                _x = element.x.baseVal.value,
+                _y = element.y.baseVal.value;
+
+            var _pointTo8 = pointTo(localCTM, container, _x, _y),
+                _resX3 = _pointTo8.x,
+                _resY3 = _pointTo8.y;
+
+            var newWidth = Math.abs(width * scaleX),
+                newHeight = Math.abs(height * scaleY);
+            attrs.push(['x', _resX3 - (scaleX < 0 ? newWidth : 0)], ['y', _resY3 - (scaleY < 0 ? newHeight : 0)], ['width', newWidth], ['height', newHeight]);
+            break;
+          }
+
+        case 'ellipse':
+          {
+            var rx = element.rx.baseVal.value,
+                ry = element.ry.baseVal.value,
+                _cx = element.cx.baseVal.value,
+                _cy = element.cy.baseVal.value;
+
+            var _pointTo9 = pointTo(localCTM, container, _cx, _cy),
+                cx1 = _pointTo9.x,
+                cy1 = _pointTo9.y;
+
+            var scaleMatrix = createSVGMatrix();
+            scaleMatrix.a = scaleX;
+            scaleMatrix.d = scaleY;
+
+            var _pointTo10 = pointTo(scaleMatrix, container, rx, ry),
+                nRx = _pointTo10.x,
+                nRy = _pointTo10.y;
+
+            attrs.push(['rx', Math.abs(nRx)], ['ry', Math.abs(nRy)], ['cx', cx1], ['cy', cy1]);
+            break;
+          }
+
+        case 'line':
+          {
+            var resX1 = element.x1.baseVal.value,
+                resY1 = element.y1.baseVal.value,
+                resX2 = element.x2.baseVal.value,
+                resY2 = element.y2.baseVal.value;
+
+            var _pointTo11 = pointTo(localCTM, container, resX1, resY1),
+                resX1_ = _pointTo11.x,
+                resY1_ = _pointTo11.y;
+
+            var _pointTo12 = pointTo(localCTM, container, resX2, resY2),
+                resX2_ = _pointTo12.x,
+                resY2_ = _pointTo12.y;
+
+            attrs.push(['x1', resX1_], ['y1', resY1_], ['x2', resX2_], ['y2', resY2_]);
+            break;
+          }
+
+        case 'polygon':
+        case 'polyline':
+          {
+            var points = parsePoints(element.getAttribute('points'));
+            var result = points.map(function (item) {
+              var _pointTo13 = pointTo(localCTM, container, Number(item[0]), Number(item[1])),
+                  x = _pointTo13.x,
+                  y = _pointTo13.y;
+
+              item[0] = x;
+              item[1] = y;
+              return item.join(' ');
+            }).join(' ');
+            attrs.push(['points', result]);
+            break;
+          }
+
+        case 'path':
+          {
+            var path = element.getAttribute('d');
+            attrs.push(['d', resizePath({
+              path: path,
+              localCTM: localCTM,
+              container: container
+            })]);
+            break;
+          }
+      }
+
+      attrs.forEach(function (attr) {
+        element.setAttribute(attr[0], attr[1]);
+      });
+    }
+
+    function applyTransformToHandles(storage, data, container) {
+      var box = storage.box,
+          handles = storage.handles,
+          normalLine = storage.normalLine,
+          radius = storage.radius,
+          center = storage.center;
+      var x = data.x,
+          y = data.y,
+          width = data.width,
+          height = data.height;
+      var hW = width / 2,
+          hH = height / 2;
+      var boxCTM = getTransformToElement(box, box.parentNode);
+      var boxCenter = pointTo(boxCTM, container, x + hW, y + hH);
+      var attrs = {
+        tl: pointTo(boxCTM, container, x, y),
+        tr: pointTo(boxCTM, container, x + width, y),
+        br: pointTo(boxCTM, container, x + width, y + height),
+        bl: pointTo(boxCTM, container, x, y + height),
+        tc: pointTo(boxCTM, container, x + hW, y),
+        bc: pointTo(boxCTM, container, x + hW, y + height),
+        ml: pointTo(boxCTM, container, x, y + hH),
+        mr: pointTo(boxCTM, container, x + width, y + hH),
+        rotator: {},
+        center: !center.isShifted && isDef(handles.center) ? boxCenter : undefined //...(!center.isShifted && isDef(handles.center) && { center: boxCenter })
+
+      };
+      var theta = Math.atan2(attrs.tl.y - attrs.tr.y, attrs.tl.x - attrs.tr.x);
+      attrs.rotator.x = attrs.mr.x - ROT_OFFSET * Math.cos(theta);
+      attrs.rotator.y = attrs.mr.y - ROT_OFFSET * Math.sin(theta);
+      normalLine.x1.baseVal.value = attrs.mr.x;
+      normalLine.y1.baseVal.value = attrs.mr.y;
+      normalLine.x2.baseVal.value = attrs.rotator.x;
+      normalLine.y2.baseVal.value = attrs.rotator.y;
+
+      if (isDef(radius)) {
+        radius.x1.baseVal.value = boxCenter.x;
+        radius.y1.baseVal.value = boxCenter.y;
+
+        if (!center.isShifted) {
+          radius.x2.baseVal.value = boxCenter.x;
+          radius.y2.baseVal.value = boxCenter.y;
+        }
+      }
+
+      x += width < 0 ? width : 0;
+      y += height < 0 ? height : 0;
+      var boxAttrs = {
+        x: x,
+        y: y,
+        width: Math.abs(width),
+        height: Math.abs(height)
+      };
+      Object.keys(boxAttrs).forEach(function (attr) {
+        box.setAttribute(attr, boxAttrs[attr]);
+      });
+      Object.keys(attrs).forEach(function (key) {
+        var hdl = handles[key];
+        var attr = attrs[key];
+        if (isUndef(attr)) return;
+        hdl.setAttribute('cx', attr.x);
+        hdl.setAttribute('cy', attr.y);
+      });
+    }
+
+    function isGroup(element) {
+      return element.tagName.toLowerCase() === 'g';
+    }
+
+    function checkChildElements(element) {
+      var arrOfElements = [];
+
+      if (isGroup(element)) {
+        forEach.call(element.childNodes, function (item) {
+          if (item.nodeType === 1) {
+            var tagName = item.tagName.toLowerCase();
+
+            if (ALLOWED_ELEMENTS.indexOf(tagName) !== -1) {
+              if (tagName === 'g') {
+                arrOfElements.push.apply(arrOfElements, _toConsumableArray(checkChildElements(item)));
+              }
+
+              arrOfElements.push(item);
+            }
+          }
+        });
+      } else {
+        arrOfElements.push(element);
+      }
+
+      return arrOfElements;
+    }
+
+    function parsePoints(pts) {
+      return pts.match(floatRE).reduce(function (result, value, index, array) {
+        if (index % 2 === 0) {
+          result.push(array.slice(index, index + 2));
+        }
+
+        return result;
+      }, []);
+    }
+
+    function createHandler$1(l, t, color, key) {
+      var handler = createSVGElement('circle');
+      addClass(handler, "sjx-svg-hdl-".concat(key));
+      var items = {
+        cx: l,
+        cy: t,
+        r: 5.5,
+        fill: color,
+        stroke: '#fff',
+        'fill-opacity': 1,
+        'vector-effect': 'non-scaling-stroke',
+        'stroke-width': 1
+      };
+      Object.keys(items).map(function (key) {
+        handler.setAttribute(key, items[key]);
+      });
+      return handler;
+    }
+
+    function setLineStyle(line, color) {
+      line.setAttribute('stroke', color);
+      line.setAttribute('stroke-dasharray', '3 3');
+      line.setAttribute('vector-effect', 'non-scaling-stroke');
+    }
+
+    function createPoint(svg, x, y) {
+      if (isUndef(x) || isUndef(y)) {
+        return null;
+      }
+
+      var pt = svg.createSVGPoint();
+      pt.x = x;
+      pt.y = y;
+      return pt;
+    }
+
+    function drag(options, obInstance) {
+      if (this.length) {
+        var Ob = isDef(obInstance) && obInstance instanceof Observable ? obInstance : new Observable();
+        return arrReduce.call(this, function (result, item) {
+          if (!(item instanceof SVGElement)) {
+            result.push(new Draggable(item, options, Ob));
+          } else {
+            if (checkElement(item)) {
+              result.push(new DraggableSVG(item, options, Ob));
+            }
+          }
+
+          return result;
+        }, []);
+      }
+    }
+
+    var Clone =
+    /*#__PURE__*/
+    function () {
+      function Clone(el, options) {
+        _classCallCheck(this, Clone);
+
+        this.el = el;
+        this.options = options || {};
+        this.storage = null;
+        this._onMouseDown = this._onMouseDown.bind(this);
+        this._onTouchStart = this._onTouchStart.bind(this);
+        this._onMouseMove = this._onMouseMove.bind(this);
+        this._onTouchMove = this._onTouchMove.bind(this);
+        this._onMouseUp = this._onMouseUp.bind(this);
+        this._onTouchEnd = this._onTouchEnd.bind(this);
+        this._animate = this._animate.bind(this);
+        this.enable();
+      }
+
+      _createClass(Clone, [{
+        key: "enable",
+        value: function enable() {
+          if (isUndef(this.storage)) {
+            this._init();
+          } else {
+            warn('Already enabled');
+          }
+        }
+      }, {
+        key: "disable",
+        value: function disable() {
+          this._destroy();
+        }
+      }, {
+        key: "_init",
+        value: function _init() {
+          var self = this;
+          var el = self.el,
+              options = self.options;
+          var $el = helper(el);
+          var style = options.style,
+              onDrop = options.onDrop,
+              appendTo = options.appendTo,
+              stack = options.stack;
+          var css = {
+            position: 'absolute',
+            'z-index': '2147483647',
+            style: isDef(style) && _typeof(style) === 'object' ? style : undefined //...((isDef(style) && typeof style === 'object') && style)
+
+          };
+          var dropZone = isDef(stack) ? helper(stack)[0] : document;
+
+          var _onDrop = isFunc(onDrop) ? function (evt) {
+            var clone = this.storage.clone;
+            var result = objectsCollide(clone, dropZone);
+
+            if (result) {
+              onDrop.call(this, evt, this.el, clone);
+            }
+          } : function () {};
+
+          self.storage = {
+            onDrop: _onDrop,
+            options: options,
+            css: css,
+            parent: isDef(appendTo) ? helper(appendTo)[0] : document.body,
+            stack: dropZone
+          };
+          $el.on('mousedown', self._onMouseDown).on('touchstart', self._onTouchStart);
+        }
+      }, {
+        key: "_start",
+        value: function _start(e) {
+          var storage = this.storage,
+              el = this.el;
+          var parent = storage.parent,
+              css = storage.css;
+          var offset = getOffset(parent);
+          var clientX = e.clientX,
+              clientY = e.clientY;
+          css.left = "".concat(clientX - offset.left, "px");
+          css.top = "".concat(clientY - offset.top, "px");
+          var clone = el.cloneNode(true);
+          helper(clone).css(css);
+          storage.clientX = clientX;
+          storage.clientY = clientY;
+          storage.cx = clientX;
+          storage.cy = clientY;
+          storage.clone = clone;
+          helper(parent)[0].appendChild(clone);
+
+          this._draw();
+        }
+      }, {
+        key: "_move",
+        value: function _move(e) {
+          var storage = this.storage;
+          storage.clientX = e.clientX;
+          storage.clientY = e.clientY;
+          storage.doDraw = true;
+          storage.doMove = true;
+        }
+      }, {
+        key: "_end",
+        value: function _end(e) {
+          var storage = this.storage;
+          var clone = storage.clone,
+              frameId = storage.frameId,
+              onDrop = storage.onDrop;
+          storage.doDraw = false;
+          cancelAnimFrame(frameId);
+          if (isUndef(clone)) return;
+          onDrop.call(this, e);
+          clone.parentNode.removeChild(clone);
+          delete storage.clone;
+        }
+      }, {
+        key: "_draw",
+        value: function _draw() {
+          this._animate();
+        }
+      }, {
+        key: "_animate",
+        value: function _animate() {
+          var storage = this.storage;
+          storage.frameId = requestAnimFrame(this._animate);
+          var doDraw = storage.doDraw,
+              clientX = storage.clientX,
+              clientY = storage.clientY,
+              cx = storage.cx,
+              cy = storage.cy,
+              clone = storage.clone;
+          if (!doDraw) return;
+          storage.doDraw = false;
+          var translate = "translate(".concat(clientX - cx, "px, ").concat(clientY - cy, "px)");
+          helper(clone).css({
+            transform: translate,
+            webkitTranform: translate,
+            mozTransform: translate,
+            msTransform: translate,
+            otransform: translate
+          });
+        }
+      }, {
+        key: "_destroy",
+        value: function _destroy() {
+          if (isUndef(this.storage)) return;
+          helper(this.el).off('mousedown', this._onMouseDown).off('touchstart', this._onTouchStart);
+          delete this.storage;
+        }
+      }, {
+        key: "_onMouseDown",
+        value: function _onMouseDown(e) {
+          this._start(e);
+
+          helper(document).on('mousemove', this._onMouseMove).on('mouseup', this._onMouseUp);
+        }
+      }, {
+        key: "_onMouseMove",
+        value: function _onMouseMove(e) {
+          if (e.preventDefault) {
+            e.preventDefault();
+          }
+
+          this._move(e);
+        }
+      }, {
+        key: "_onMouseUp",
+        value: function _onMouseUp(e) {
+          this._end(e);
+
+          helper(document).off('mousemove', this._onMouseMove).off('mouseup', this._onMouseUp);
+        }
+      }, {
+        key: "_onTouchStart",
+        value: function _onTouchStart(e) {
+          this._start(e.touches[0]);
+
+          helper(document).on('touchmove', this._onTouchMove, eventOptions).on('touchend', this._onTouchEnd, eventOptions);
+        }
+      }, {
+        key: "_onTouchMove",
+        value: function _onTouchMove(e) {
+          if (e.preventDefault) {
+            e.preventDefault();
+          }
+
+          this._move(e.touches[0]);
+        }
+      }, {
+        key: "_onTouchEnd",
+        value: function _onTouchEnd(e) {
+          if (e.touches.length === 0) {
+            this._end(e.changedTouches[0]);
+          }
+
+          helper(document).off('touchmove', this._onTouchMove, eventOptions).off('touchend', this._onTouchEnd, eventOptions);
+        }
+      }]);
+
+      return Clone;
+    }();
+
+    function clone(options) {
+      if (this.length) {
+        return arrMap.call(this, function (item) {
+          return new Clone(item, options);
+        });
+      }
+    }
+
+    var Subjx =
+    /*#__PURE__*/
+    function (_Helper) {
+      _inherits(Subjx, _Helper);
+
+      function Subjx(params) {
+        _classCallCheck(this, Subjx);
+
+        return _possibleConstructorReturn(this, _getPrototypeOf(Subjx).call(this, params));
+      }
+
+      _createClass(Subjx, [{
+        key: "drag",
+        value: function drag$1() {
+          return drag.call.apply(drag, [this].concat(Array.prototype.slice.call(arguments)));
+        }
+      }, {
+        key: "clone",
+        value: function clone$1() {
+          return clone.call.apply(clone, [this].concat(Array.prototype.slice.call(arguments)));
+        }
+      }]);
+
+      return Subjx;
+    }(Helper);
+
+    /* @license
+     * Move/Rotate/Resize tool
+     * Released under the MIT license, 2018-2019
+     * Karen Sarksyan
+     * nichollascarter@gmail.com
+    */
+    function subjx(params) {
+      return new Subjx(params);
+    }
+    Object.defineProperty(subjx, 'createObservable', {
+      value: function value() {
+        return new Observable();
+      }
+    });
+    Object.defineProperty(subjx, 'Subjx', {
+      value: Subjx
+    });
+    Object.defineProperty(subjx, 'Observable', {
+      value: Observable
+    });
+
+    return subjx;
+
+})));

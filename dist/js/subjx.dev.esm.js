@@ -1,5 +1,3 @@
-'use strict';
-
 const eventOptions = {
     passive: false
 };
@@ -4280,4 +4278,4 @@ Object.defineProperty(subjx, 'Observable', {
     value: Observable
 });
 
-module.exports = subjx;
+export default subjx;
