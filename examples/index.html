@@ -72,7 +72,8 @@
                 fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></polygon>
 
             <path class="drag-svg" d="M691,331 Q711,306,721,331 T761,331 " fill="none" stroke="blue" stroke-width="5"
-                transform="matrix(1,0,0,1,0,0)"></path>
+            >
+            </path>
 
             <g class="drag-svg"
                 transform="matrix(1.000000238418579,-1.1155867696288624e-7,1.1155867696288624e-7,1.000000238418579,-34.7901159798937,49.92775203772618)"
@@ -245,8 +246,10 @@
         ...methods
     };
 
-    const svgs = subjx('.drag-svg')
-        .drag(svgOptions, obs);
+    const svgs = [
+        ...subjx('.drag-svg')
+            .drag(svgOptions, obs)
+    ];
 
     svgs.forEach(item => {
         subjx(item.controls).on('dblclick', () => {
@@ -257,7 +260,7 @@
     // double click activating/deactivating the drag method
     subjx('.drag-svg').on('dblclick', e => {
         if (e.currentTarget.classList.contains('sjx-drag')) return;
-        const xDraggable = subjx(e.currentTarget).drag(svgOptions, obs)[0];
+        const [xDraggable] = subjx(e.currentTarget).drag(svgOptions, obs);
         // adding event to controls
         const controls = xDraggable.controls;
         subjx(controls).on('dblclick', () => {
@@ -318,7 +321,7 @@
 
     subjx('.draggable').on('dblclick', e => {
         if (e.currentTarget.classList.contains('sjx-drag')) return;
-        const xDraggable = subjx(e.currentTarget).drag(options)[0];
+        const [xDraggable] = subjx(e.currentTarget).drag(options);
         Draggables.push(xDraggable);
         // adding event to controls
         const controls = xDraggable.controls;
@@ -328,7 +331,6 @@
     });
 
     const onDrop = (e, el, clone) => {
-
         const stack = subjx('#container')[0],
             offset = stack.getBoundingClientRect(),
             div = document.createElement('div');
@@ -360,7 +362,6 @@
     });
 
     subjx('.clone-clear').on('click', () => {
-
         Draggables.forEach(item => {
             item.disable();
             item.el.parentNode.removeChild(item.el);

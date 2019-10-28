@@ -1,0 +1,74 @@
+
+import resolve from 'rollup-plugin-node-resolve';
+import babel from 'rollup-plugin-babel';
+import postcss from 'rollup-plugin-postcss';
+import { terser } from "rollup-plugin-terser";
+import { uglify } from 'rollup-plugin-uglify';
+import { eslint } from 'rollup-plugin-eslint';
+
+const env = process.env.NODE_ENV || 'production';
+const prod = env === 'production';
+let libraryName = "subjx";
+
+const plugins = [
+    postcss({
+        minimize: true,
+        extract: "dist/style/subjx.css"
+    }),
+    eslint({
+        exclude: 'node_modules/**',
+        throwOnError: true
+    }),
+    resolve()
+];
+
+if (!prod) {
+    libraryName += '.dev';
+}
+
+const uglifyPlugin = () => {
+    return uglify({
+        compress:
+        {
+            evaluate: false
+        }
+    })
+};
+
+const uglifyESMPlugin = () => {
+    return terser();
+};
+
+export default [
+    {
+        input: './src/js/index.js',
+        output: [{
+            file: `dist/js/${libraryName}.esm.js`,
+            format: 'esm'
+        },
+        {
+            file: `dist/js/${libraryName}.common.js`,
+            format: 'cjs'
+        }],
+        plugins: [
+            ...plugins,
+            prod && uglifyESMPlugin()
+        ]
+    },
+    {
+        input: './src/js/index.js',
+        output: [{
+            name: 'subjx',
+            file: `dist/js/${libraryName}.js`,
+            format: 'umd'
+        }],
+        plugins: [
+            ...plugins,
+            babel({
+                exclude: 'node_modules/**',
+                presets: ["@babel/preset-env"]
+            }),
+            prod && uglifyPlugin()
+        ]
+    }
+];
