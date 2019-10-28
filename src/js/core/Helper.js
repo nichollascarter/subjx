@@ -7,28 +7,27 @@ import {
 export default class Helper {
 
     constructor(params) {
-        if (isDef(params)) {
-            if (typeof params === 'string') {
-                let selector = document.querySelectorAll(params);
-                this.length = selector.length;
-                for (let count = 0; count < this.length; count++) {
-                    this[count] = selector[count];
-                }
-            } else if (params.nodeType === 1 || params === document) {
-                this[0] = params;
-                this.length = 1;
-            } else if (params instanceof Helper || typeof params === 'object') {
-                this.length = params.length;
-                for (let count = 0; count < this.length; count++) {
+        if (typeof params === 'string') {
+            let selector = document.querySelectorAll(params);
+            this.length = selector.length;
+            for (let count = 0; count < this.length; count++) {
+                this[count] = selector[count];
+            }
+        } else if (typeof params === 'object' &&
+            (params.nodeType === 1 || params === document)) {
+            this[0] = params;
+            this.length = 1;
+        } else if (params instanceof Helper) {
+            this.length = params.length;
+            for (let count = 0; count < this.length; count++) {
+                this[count] = params[count];
+            }
+        } else if (isIterable(params)) {
+            this.length = 0;
+            for (let count = 0; count < this.length; count++) {
+                if (params.nodeType === 1) {
                     this[count] = params[count];
-                }
-            } else if (Array.isArray(params)) {
-                this.length = 0;
-                for (let count = 0; count < this.length; count++) {
-                    if (params.nodeType === 1) {
-                        this[count] = params[count];
-                        this.length++;
-                    }
+                    this.length++;
                 }
             }
         } else {
@@ -105,7 +104,7 @@ export default class Helper {
 
     on() {
         let len = this.length;
- 
+
         while (len--) {
             if (!this[len].events) {
                 this[len].events = {};
@@ -192,6 +191,26 @@ function listenerDelegate(el, evt, sel, handler, options, act) {
             el[`on${evt}`] = null;
         }
     }
+}
+
+function isIterable(obj) {
+    return isDef(obj) &&
+        typeof obj === 'object' &&
+        (
+            Array.isArray(obj) ||
+            (
+                isDef(window.Symbol) &&
+                typeof obj[window.Symbol.iterator] === 'function'
+            ) ||
+            isDef(obj.forEach) ||
+            (
+                typeof (obj.length) === "number" &&
+                (obj.length === 0 ||
+                    (obj.length > 0 &&
+                        (obj.length - 1) in obj)
+                )
+            )
+        );
 }
 
 export function helper(params) {

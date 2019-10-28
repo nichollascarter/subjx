@@ -207,9 +207,6 @@ export default class Clone {
     }
 
     _onMouseDown(e) {
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
         this._start(e);
         helper(document)
             .on('mousemove', this._onMouseMove)
@@ -224,9 +221,6 @@ export default class Clone {
     }
 
     _onMouseUp(e) {
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
         this._end(e);
         helper(document)
             .off('mousemove', this._onMouseMove)
@@ -234,9 +228,6 @@ export default class Clone {
     }
 
     _onTouchStart(e) {
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
         this._start(e.touches[0]);
         helper(document)
             .on('touchmove', this._onTouchMove, eventOptions)
@@ -251,9 +242,6 @@ export default class Clone {
     }
 
     _onTouchEnd(e) {
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
         if (e.touches.length === 0) {
             this._end(e.changedTouches[0]);
         }

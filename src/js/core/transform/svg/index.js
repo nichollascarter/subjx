@@ -141,7 +141,7 @@ export default class DraggableSVG extends Subject {
             radius = createSVGElement('line');
 
             addClass(radius, 'sjx-hidden');
-            
+
             radius.x1.baseVal.value = boxCenter.x;
             radius.y1.baseVal.value = boxCenter.y;
             radius.x2.baseVal.value = centerX || boxCenter.x;
@@ -162,9 +162,10 @@ export default class DraggableSVG extends Subject {
                 : themeColor;
 
             handles[key] = createHandler(
-                x, 
-                y, 
-                color
+                x,
+                y,
+                color,
+                key
             );
             handlesGroup.appendChild(handles[key]);
         });
@@ -337,7 +338,7 @@ export default class DraggableSVG extends Subject {
             height: elH
         } = eBBox;
 
-        const rotationPoint = isDef(handles.center) 
+        const rotationPoint = isDef(handles.center)
             ? pointTo(
                 transform.boxCTM,
                 container,
@@ -480,7 +481,7 @@ export default class DraggableSVG extends Subject {
     }
 
     _processResize(dx, dy) {
-        const { 
+        const {
             el,
             storage,
             options
@@ -641,7 +642,7 @@ export default class DraggableSVG extends Subject {
             dy
         );
 
-        this._moveCenterHandle(-nx,-ny);
+        this._moveCenterHandle(-nx, -ny);
     }
 
     _processRotate(radians) {
@@ -741,7 +742,7 @@ export default class DraggableSVG extends Subject {
         const elMatrix = getTransformToElement(element, parent),
             ctm = getTransformToElement(element, container),
             boxCTM = getTransformToElement(box.parentNode, container);
-        
+
         const parentMatrix = getTransformToElement(parent, container);
 
         const scaleX = el_x + el_w * (doH ? 0.5 : revX ? 1 : 0),
@@ -763,10 +764,10 @@ export default class DraggableSVG extends Subject {
             bBox: eBBox
         };
 
-        const boxCenterX =  c_left + cw / 2,
+        const boxCenterX = c_left + cw / 2,
             boxCenterY = c_top + ch / 2;
 
-        const centerX = cHandle 
+        const centerX = cHandle
                 ? cHandle.cx.baseVal.value
                 : boxCenterX,
             centerY = cHandle
@@ -820,7 +821,7 @@ export default class DraggableSVG extends Subject {
                 hx: cHandle ? cHandle.cx.baseVal.value : null,
                 hy: cHandle ? cHandle.cy.baseVal.value : null,
                 isShifted: (floatToFixed(rcx, 3) !== floatToFixed(bcx, 3)) &&
-                            (floatToFixed(rcy, 3) !== floatToFixed(bcy, 3))
+                    (floatToFixed(rcy, 3) !== floatToFixed(bcy, 3))
             },
             left: c_left,
             top: c_top,
@@ -832,10 +833,10 @@ export default class DraggableSVG extends Subject {
     }
 
     _moveCenterHandle(x, y) {
-        const { 
-            handles, 
-            center, 
-            radius 
+        const {
+            handles,
+            center,
+            radius
         } = this.storage;
 
         if (isUndef(handles.center)) return;
@@ -870,7 +871,7 @@ export default class DraggableSVG extends Subject {
         } = box.getBBox();
 
         const matrix = getTransformToElement(box, box.parentNode);
-        
+
         const { x: cx, y: cy } = pointTo(
             matrix,
             container,
@@ -901,15 +902,19 @@ function applyTranslate(element, { x, y }) {
         case 'image':
         case 'text':
         case 'rect': {
-            const resX = element.x.baseVal.value + x,
-                resY = element.y.baseVal.value + y;
+            const resX = isDef(element.x.baseVal.value)
+                ? element.x.baseVal.value + x
+                : (Number(element.getAttribute('x')) || 0) + x;
+            const resY = isDef(element.y.baseVal.value)
+                ? element.y.baseVal.value + y
+                : (Number(element.getAttribute('y')) || 0) + y;
 
             attrs.push(
                 ['x', resX],
                 ['y', resY]
             );
             break;
-        }      
+        }
         case 'circle':
         case 'ellipse': {
             const resX = element.cx.baseVal.value + x,
@@ -920,7 +925,7 @@ function applyTranslate(element, { x, y }) {
                 ['cy', resY]
             );
             break;
-        }   
+        }
         case 'line': {
             const resX1 = element.x1.baseVal.value + x,
                 resY1 = element.y1.baseVal.value + y,
@@ -964,7 +969,7 @@ function applyTranslate(element, { x, y }) {
         }
         default:
             break;
-    
+
     }
 
     attrs.forEach(item => {
@@ -994,8 +999,11 @@ function applyResize(element, data) {
     switch (element.tagName.toLowerCase()) {
 
         case 'text': {
-            const x = element.x.baseVal.value,
-                y = element.y.baseVal.value;
+            const x = element.x.baseVal.value || 
+                Number(element.getAttribute('x'));
+
+            const y = element.y.baseVal.value ||
+                Number(element.getAttribute('y'));
 
             const {
                 x: resX,
@@ -1174,7 +1182,7 @@ function applyResize(element, data) {
         }
         default:
             break;
-    
+
     }
 
     attrs.forEach(attr => {
@@ -1310,9 +1318,9 @@ function parsePoints(pts) {
     );
 }
 
-function createHandler(l, t, color) {
+function createHandler(l, t, color, key) {
     const handler = createSVGElement('circle');
-    addClass(handler, 'sjx-svg-hdl');
+    addClass(handler, `sjx-svg-hdl-${key}`);
 
     const items = {
         cx: l,
@@ -1343,7 +1351,7 @@ function createPoint(svg, x, y) {
         return null;
     }
     const pt = svg.createSVGPoint();
-    pt.x = x; 
+    pt.x = x;
     pt.y = y;
     return pt;
 }

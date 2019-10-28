@@ -595,9 +595,16 @@ export default class Subject {
             el
         } = this;
 
-        const actionName = storage.doResize
+        const {
+            doResize,
+            doDrag,
+            frame,
+            radius
+        } = storage;
+
+        const actionName = doResize
             ? 'resize'
-            : (storage.doDrag ? 'drag' : 'rotate');
+            : (doDrag ? 'drag' : 'rotate');
 
         storage.doResize = false;
         storage.doDrag = false;
@@ -619,11 +626,11 @@ export default class Subject {
             }
         );
 
-        cancelAnimFrame(storage.frame);
+        cancelAnimFrame(frame);
 
         helper(document.body).css({ cursor: 'auto' });
-        if (isDef(storage.radius)) {
-            addClass(storage.radius, 'sjx-hidden');
+        if (isDef(radius)) {
+            addClass(radius, 'sjx-hidden');
         }
     }
 
@@ -662,9 +669,6 @@ export default class Subject {
     }
 
     _onMouseDown(e) {
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
         this._start(e);
         helper(document)
             .on('mousemove', this._onMouseMove)
@@ -672,9 +676,6 @@ export default class Subject {
     }
 
     _onTouchStart(e) {
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
         this._start(e.touches[0]);
         helper(document)
             .on('touchmove', this._onTouchMove, eventOptions)
@@ -702,9 +703,6 @@ export default class Subject {
     }
 
     _onMouseUp(e) {
-        if (e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
         helper(document)
             .off('mousemove', this._onMouseMove)
             .off('mouseup', this._onMouseUp);
@@ -716,9 +714,6 @@ export default class Subject {
     }
 
     _onTouchEnd(e) {
-        if (isDef(e) && e.stopImmediatePropagation) {
-            e.stopImmediatePropagation();
-        }
         helper(document)
             .off('touchmove', this._onTouchMove)
             .off('touchend', this._onTouchEnd);
