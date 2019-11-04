@@ -2,12 +2,12 @@ import {
     arrMap
 } from '../util/util';
 
-import Clone from './clone';
+import Cloneable from './Cloneable';
 
 export default function clone(options) {
     if (this.length) {
         return arrMap.call(this, item => {
-            return new Clone(item, options);
+            return new Cloneable(item, options);
         });
     }
 }

@@ -1,12 +1,12 @@
 import { helper } from '../Helper';
+import SubjectModel from '../SubjectModel';
 
 import {
     requestAnimFrame,
     cancelAnimFrame,
     isDef,
     isUndef,
-    isFunc,
-    warn,
+    createMethod,
     eventOptions
 } from '../util/util';
 
@@ -21,80 +21,22 @@ import {
     RAD
 } from './common';
 
-export default class Subject {
+export default class Transformable extends SubjectModel {
 
-    constructor(el, observable) {
-        if (this.constructor === Subject) {
-            throw new TypeError('Cannot construct Subject instances directly');
+    constructor(el, options, observable) {
+        super(el);
+        if (this.constructor === Transformable) {
+            throw new TypeError('Cannot construct Transformable instances directly');
         }
-
-        this.el = el;
-        this.storage = null;
-        this.proxyMethods = null;
         this.observable = observable;
-
-        this._onMouseDown = this._onMouseDown.bind(this);
-        this._onTouchStart = this._onTouchStart.bind(this);
-        this._onMouseMove = this._onMouseMove.bind(this);
-        this._onTouchMove = this._onTouchMove.bind(this);
-        this._onMouseUp = this._onMouseUp.bind(this);
-        this._onTouchEnd = this._onTouchEnd.bind(this);
-        this._animate = this._animate.bind(this);
-    }
-
-    enable(options) {
-        if (isUndef(this.storage)) {
-            this._processOptions(options);
-            this._init(this.el);
-        } else {
-            warn('Already enabled');
-        }
-    }
-
-    disable() {
-        const {
-            storage,
-            proxyMethods,
-            el
-        } = this;
-
-        if (isUndef(storage)) return;
-
-        // unexpected case
-        if (storage.onExecution) {
-            this._end();
-            helper(document)
-                .off('mousemove', this._onMouseMove)
-                .off('mouseup', this._onMouseUp)
-                .off('touchmove', this._onTouchMove, eventOptions)
-                .off('touchend', this._onTouchEnd, eventOptions);
-        }
-
-        removeClass(el, 'sjx-drag');
-
-        this._destroy();
-        this.unsubscribe();
-
-        proxyMethods.onDestroy.call(this, el);
-        delete this.storage;
-    }
-
-    _init() {
-        throw Error(`'_init()' method not implemented`);
-    }
-
-    _destroy() {
-        throw Error(`'_destroy()' method not implemented`);
+        this.enable(options);
     }
 
     _cursorPoint() {
         throw Error(`'_cursorPoint()' method not implemented`);
     }
 
-    _drag() {
-        this._processMove(...arguments);
-        this.proxyMethods.onMove.call(this, ...arguments);
-    }
+    
 
     _rotate() {
         this._processRotate(...arguments);
@@ -198,14 +140,12 @@ export default class Subject {
             _rotationPoint = rotationPoint || false;
             _proportions = proportions || false;
 
-            _onInit = createEvent(onInit);
-            _onDrop = createEvent(onDrop);
-            _onMove = createEvent(onMove);
-            _onResize = createEvent(onResize);
-            _onRotate = createEvent(onRotate);
-            _onDestroy = createEvent(onDestroy);
-
-            _onInit.call(this, el);
+            _onInit = createMethod(onInit);
+            _onDrop = createMethod(onDrop);
+            _onMove = createMethod(onMove);
+            _onResize = createMethod(onResize);
+            _onRotate = createMethod(onRotate);
+            _onDestroy = createMethod(onDestroy);
         }
 
         this.options = {
@@ -232,10 +172,6 @@ export default class Subject {
         };
 
         this.subscribe(_each);
-    }
-
-    _draw() {
-        this._animate();
     }
 
     _animate() {
@@ -668,64 +604,6 @@ export default class Subject {
         };
     }
 
-    _onMouseDown(e) {
-        this._start(e);
-        helper(document)
-            .on('mousemove', this._onMouseMove)
-            .on('mouseup', this._onMouseUp);
-    }
-
-    _onTouchStart(e) {
-        this._start(e.touches[0]);
-        helper(document)
-            .on('touchmove', this._onTouchMove, eventOptions)
-            .on('touchend', this._onTouchEnd, eventOptions);
-    }
-
-    _onMouseMove(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-        this._moving(
-            e,
-            this.el
-        );
-    }
-
-    _onTouchMove(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-        this._moving(
-            e.touches[0],
-            this.el
-        );
-    }
-
-    _onMouseUp(e) {
-        helper(document)
-            .off('mousemove', this._onMouseMove)
-            .off('mouseup', this._onMouseUp);
-
-        this._end(
-            e,
-            this.el
-        );
-    }
-
-    _onTouchEnd(e) {
-        helper(document)
-            .off('touchmove', this._onTouchMove)
-            .off('touchend', this._onTouchEnd);
-
-        if (e.touches.length === 0) {
-            this._end(
-                e.changedTouches[0],
-                this.el
-            );
-        }
-    }
-
     notifyMove({ dx, dy }) {
         this._drag(
             dx,
@@ -803,12 +681,32 @@ export default class Subject {
             .unsubscribe('onrotate', this);
     }
 
-}
+    disable() {
+        const {
+            storage,
+            proxyMethods,
+            el
+        } = this;
 
-function createEvent(fn) {
-    return isFunc(fn)
-        ? function () {
-            fn.call(this, ...arguments);
+        if (isUndef(storage)) return;
+
+        // unexpected case
+        if (storage.onExecution) {
+            this._end();
+            helper(document)
+                .off('mousemove', this._onMouseMove)
+                .off('mouseup', this._onMouseUp)
+                .off('touchmove', this._onTouchMove, eventOptions)
+                .off('touchend', this._onTouchEnd, eventOptions);
         }
-        : () => { };
+
+        removeClass(el, 'sjx-drag');
+
+        this._destroy();
+        this.unsubscribe();
+
+        proxyMethods.onDestroy.call(this, el);
+        delete this.storage;
+    }
+
 }

@@ -139,14 +139,30 @@ const xCloneable = xElem.clone({
     style: {
         border: '1px dashed green',
         background: 'transparent'
-    },
-    // call function on drop to area event 
-    onDrop(e, el) {
-        console.log(el);
     }
 });
+```
 
-// disabling
+Avaliable methods:
+```javascript
+subjx('.cloneable').drag({
+    onInit(el) {
+        // fires on tool activation
+    },
+    onMove(dx, dy) {
+        // fires on moving
+    },
+    onDrop(e) {
+        // fires on drop
+    },
+    onDestroy() {
+        // fires on tool deactivation
+    }
+});
+```
+
+Disabling
+```javascript
 xCloneable.forEach(item => {
     item.disable();
 });

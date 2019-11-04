@@ -1,3 +1,9 @@
+/*@license
+* Drag/Rotate/Resize Library
+* Released under the MIT license, 2018-2019
+* Karen Sarksyan
+* nichollascarter@gmail.com
+*/
 const eventOptions = {
     passive: false
 };
@@ -35,6 +41,14 @@ function isUndef(val) {
 
 function isFunc(val) {
     return typeof val === 'function';
+}
+
+function createMethod(fn) {
+    return isFunc(fn)
+        ? function () {
+            fn.call(this, ...arguments);
+        }
+        : () => { };
 }
 
 class Helper {
@@ -111,28 +125,6 @@ class Helper {
             warn(`Method ${prop} does not exist`);
         }
         return false;
-    }
-
-    find(sel) {
-        let len = this.length,
-            selector;
-
-        while (len--) {
-            selector = this[len].querySelectorAll(sel);
-            return helper(selector);
-        }
-    }
-
-    each(fn) {
-        const arr = arrSlice.call(this, 0);
-
-        for (let index = arr.length - 1; index >= 0; --index) {
-            const func = () => {
-                return arr[index];
-            };
-            fn.call(func());
-        }
-        return this;
     }
 
     on() {
@@ -310,6 +302,133 @@ class Observable {
 
 }
 
+class SubjectModel {
+
+    constructor(el) {
+        this.el = el;
+        this.storage = null;
+        this.proxyMethods = null;
+
+        this._onMouseDown = this._onMouseDown.bind(this);
+        this._onTouchStart = this._onTouchStart.bind(this);
+        this._onMouseMove = this._onMouseMove.bind(this);
+        this._onTouchMove = this._onTouchMove.bind(this);
+        this._onMouseUp = this._onMouseUp.bind(this);
+        this._onTouchEnd = this._onTouchEnd.bind(this);
+        this._animate = this._animate.bind(this);
+    }
+
+    enable(options) {
+        this._processOptions(options);
+        this._init(this.el);
+        this.proxyMethods.onInit.call(this, this.el);
+    }
+
+    disable() {
+        throwNotImplementedError();
+    }
+
+    _init() {
+        throwNotImplementedError();
+    }
+
+    _destroy() {
+        throwNotImplementedError();
+    }
+    
+    _processOptions() {
+        throwNotImplementedError();
+    }
+
+    _start() {
+        throwNotImplementedError();
+    }
+
+    _moving() {
+        throwNotImplementedError();
+    }
+
+    _end() {
+        throwNotImplementedError();
+    }
+
+    _animate() {
+        throwNotImplementedError();
+    }
+
+    _drag() {
+        this._processMove(...arguments);
+        this.proxyMethods.onMove.call(this, ...arguments);
+    }
+
+    _draw() {
+        this._animate();
+    }
+
+    _onMouseDown(e) {
+        this._start(e);
+        helper(document)
+            .on('mousemove', this._onMouseMove)
+            .on('mouseup', this._onMouseUp);
+    }
+
+    _onTouchStart(e) {
+        this._start(e.touches[0]);
+        helper(document)
+            .on('touchmove', this._onTouchMove, eventOptions)
+            .on('touchend', this._onTouchEnd, eventOptions);
+    }
+
+    _onMouseMove(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        this._moving(
+            e,
+            this.el
+        );
+    }
+
+    _onTouchMove(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        this._moving(
+            e.touches[0],
+            this.el
+        );
+    }
+
+    _onMouseUp(e) {
+        helper(document)
+            .off('mousemove', this._onMouseMove)
+            .off('mouseup', this._onMouseUp);
+
+        this._end(
+            e,
+            this.el
+        );
+    }
+
+    _onTouchEnd(e) {
+        helper(document)
+            .off('touchmove', this._onTouchMove)
+            .off('touchend', this._onTouchEnd);
+
+        if (e.touches.length === 0) {
+            this._end(
+                e.changedTouches[0],
+                this.el
+            );
+        }
+    }
+
+}
+
+function throwNotImplementedError() {
+    throw Error(`Method not implemented`);
+}
+
 function getOffset(node) {
     return node.getBoundingClientRect();
 }
@@ -449,80 +568,22 @@ function floatToFixed(val, size = 6) {
     return Number(val.toFixed(size));
 }
 
-class Subject {
+class Transformable extends SubjectModel {
 
-    constructor(el, observable) {
-        if (this.constructor === Subject) {
-            throw new TypeError('Cannot construct Subject instances directly');
+    constructor(el, options, observable) {
+        super(el);
+        if (this.constructor === Transformable) {
+            throw new TypeError('Cannot construct Transformable instances directly');
         }
-
-        this.el = el;
-        this.storage = null;
-        this.proxyMethods = null;
         this.observable = observable;
-
-        this._onMouseDown = this._onMouseDown.bind(this);
-        this._onTouchStart = this._onTouchStart.bind(this);
-        this._onMouseMove = this._onMouseMove.bind(this);
-        this._onTouchMove = this._onTouchMove.bind(this);
-        this._onMouseUp = this._onMouseUp.bind(this);
-        this._onTouchEnd = this._onTouchEnd.bind(this);
-        this._animate = this._animate.bind(this);
-    }
-
-    enable(options) {
-        if (isUndef(this.storage)) {
-            this._processOptions(options);
-            this._init(this.el);
-        } else {
-            warn('Already enabled');
-        }
-    }
-
-    disable() {
-        const {
-            storage,
-            proxyMethods,
-            el
-        } = this;
-
-        if (isUndef(storage)) return;
-
-        // unexpected case
-        if (storage.onExecution) {
-            this._end();
-            helper(document)
-                .off('mousemove', this._onMouseMove)
-                .off('mouseup', this._onMouseUp)
-                .off('touchmove', this._onTouchMove, eventOptions)
-                .off('touchend', this._onTouchEnd, eventOptions);
-        }
-
-        removeClass(el, 'sjx-drag');
-
-        this._destroy();
-        this.unsubscribe();
-
-        proxyMethods.onDestroy.call(this, el);
-        delete this.storage;
-    }
-
-    _init() {
-        throw Error(`'_init()' method not implemented`);
-    }
-
-    _destroy() {
-        throw Error(`'_destroy()' method not implemented`);
+        this.enable(options);
     }
 
     _cursorPoint() {
         throw Error(`'_cursorPoint()' method not implemented`);
     }
 
-    _drag() {
-        this._processMove(...arguments);
-        this.proxyMethods.onMove.call(this, ...arguments);
-    }
+    
 
     _rotate() {
         this._processRotate(...arguments);
@@ -626,14 +687,12 @@ class Subject {
             _rotationPoint = rotationPoint || false;
             _proportions = proportions || false;
 
-            _onInit = createEvent(onInit);
-            _onDrop = createEvent(onDrop);
-            _onMove = createEvent(onMove);
-            _onResize = createEvent(onResize);
-            _onRotate = createEvent(onRotate);
-            _onDestroy = createEvent(onDestroy);
-
-            _onInit.call(this, el);
+            _onInit = createMethod(onInit);
+            _onDrop = createMethod(onDrop);
+            _onMove = createMethod(onMove);
+            _onResize = createMethod(onResize);
+            _onRotate = createMethod(onRotate);
+            _onDestroy = createMethod(onDestroy);
         }
 
         this.options = {
@@ -660,10 +719,6 @@ class Subject {
         };
 
         this.subscribe(_each);
-    }
-
-    _draw() {
-        this._animate();
     }
 
     _animate() {
@@ -1096,64 +1151,6 @@ class Subject {
         };
     }
 
-    _onMouseDown(e) {
-        this._start(e);
-        helper(document)
-            .on('mousemove', this._onMouseMove)
-            .on('mouseup', this._onMouseUp);
-    }
-
-    _onTouchStart(e) {
-        this._start(e.touches[0]);
-        helper(document)
-            .on('touchmove', this._onTouchMove, eventOptions)
-            .on('touchend', this._onTouchEnd, eventOptions);
-    }
-
-    _onMouseMove(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-        this._moving(
-            e,
-            this.el
-        );
-    }
-
-    _onTouchMove(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-        this._moving(
-            e.touches[0],
-            this.el
-        );
-    }
-
-    _onMouseUp(e) {
-        helper(document)
-            .off('mousemove', this._onMouseMove)
-            .off('mouseup', this._onMouseUp);
-
-        this._end(
-            e,
-            this.el
-        );
-    }
-
-    _onTouchEnd(e) {
-        helper(document)
-            .off('touchmove', this._onTouchMove)
-            .off('touchend', this._onTouchEnd);
-
-        if (e.touches.length === 0) {
-            this._end(
-                e.changedTouches[0],
-                this.el
-            );
-        }
-    }
-
     notifyMove({ dx, dy }) {
         this._drag(
             dx,
@@ -1231,33 +1228,50 @@ class Subject {
             .unsubscribe('onrotate', this);
     }
 
-}
+    disable() {
+        const {
+            storage,
+            proxyMethods,
+            el
+        } = this;
 
-function createEvent(fn) {
-    return isFunc(fn)
-        ? function () {
-            fn.call(this, ...arguments);
+        if (isUndef(storage)) return;
+
+        // unexpected case
+        if (storage.onExecution) {
+            this._end();
+            helper(document)
+                .off('mousemove', this._onMouseMove)
+                .off('mouseup', this._onMouseUp)
+                .off('touchmove', this._onTouchMove, eventOptions)
+                .off('touchend', this._onTouchEnd, eventOptions);
         }
-        : () => { };
+
+        removeClass(el, 'sjx-drag');
+
+        this._destroy();
+        this.unsubscribe();
+
+        proxyMethods.onDestroy.call(this, el);
+        delete this.storage;
+    }
+
 }
 
 const MIN_SIZE = 2;
 const CENTER_DELTA = 7;
 
-class Draggable extends Subject {
+class Draggable extends Transformable {
 
     constructor(el, options, Observable) {
-        super(el, Observable);
-        this.enable(options);
+        super(el, options, Observable);
     }
 
     _init(el) {
         const container = document.createElement('div');
-
         addClass(container, 'sjx-wrapper');
-        el.parentNode.insertBefore(container, el);
 
-        const $el = helper(el);
+        el.parentNode.insertBefore(container, el);
 
         const { options } = this;
 
@@ -1272,12 +1286,12 @@ class Draggable extends Subject {
             height
         } = el.style;
 
+        const $el = helper(el);
+
         const w = width || $el.css('width'),
             h = height || $el.css('height'),
             t = top || $el.css('top'),
             l = left || $el.css('left');
-
-        const $parent = helper(container.parentNode);
 
         const css = {
             top: t,
@@ -1288,6 +1302,7 @@ class Draggable extends Subject {
         };
 
         const controls = document.createElement('div');
+        addClass(controls, 'sjx-controls');
 
         const handles = {
             normal: ['sjx-normal'],
@@ -1320,20 +1335,16 @@ class Draggable extends Subject {
             });
         }
 
-        addClass(controls, 'sjx-controls');
-
         container.appendChild(controls);
 
         const $controls = helper(controls);
         $controls.css(css);
 
-        const $container = helper(container);
-
         this.storage = {
             controls,
             handles,
-            radius: $container.find('.sjx-radius'),
-            parent: $parent
+            radius: undefined,
+            parent: el.parentNode
         };
 
         $controls
@@ -1729,7 +1740,7 @@ class Draggable extends Subject {
         );
 
         const pMatrix = parseMatrix(
-            getTransform(parent)
+            getTransform(helper(parent))
         );
 
         const parentMatrix = parent === container
@@ -2650,11 +2661,10 @@ const MIN_SIZE$1 = 5;
 const ROT_OFFSET = 50;
 const floatRE = /[+-]?\d+(\.\d+)?/g;
 
-class DraggableSVG extends Subject {
+class DraggableSVG extends Transformable {
 
     constructor(el, options, observable) {
-        super(el, observable);
-        this.enable(options);
+        super(el, options, observable);
     }
 
     _init(el) {
@@ -2667,6 +2677,7 @@ class DraggableSVG extends Subject {
         } = options;
 
         const wrapper = createSVGElement('g');
+        addClass(wrapper, 'sjx-svg-wrapper');
         container.appendChild(wrapper);
 
         const {
@@ -2692,13 +2703,17 @@ class DraggableSVG extends Subject {
             ['transform', matrixToString(elCTM)]
         ];
 
-        attrs.forEach(item => {
-            box.setAttribute(item[0], item[1]);
+        attrs.forEach(([key, value]) => {
+            box.setAttribute(key, value);
         });
 
         const handlesGroup = createSVGElement('g'),
             normalLineGroup = createSVGElement('g'),
             group = createSVGElement('g');
+
+        addClass(group, 'sjx-svg-box-group');
+        addClass(handlesGroup, 'sjx-svg-handles');
+        addClass(normalLineGroup, 'sjx-svg-normal-group');
 
         group.appendChild(box);
         wrapper.appendChild(group);
@@ -3514,9 +3529,22 @@ function applyTranslate(element, { x, y }) {
 
     switch (element.tagName.toLowerCase()) {
 
+        case 'text': {
+            const resX = isDef(element.x.baseVal[0])
+                ? element.x.baseVal[0].value + x
+                : (Number(element.getAttribute('x')) || 0) + x;
+            const resY = isDef(element.y.baseVal[0])
+                ? element.y.baseVal[0].value + y
+                : (Number(element.getAttribute('y')) || 0) + y;
+
+            attrs.push(
+                ['x', resX],
+                ['y', resY]
+            );
+            break;
+        }
         case 'use':
         case 'image':
-        case 'text':
         case 'rect': {
             const resX = isDef(element.x.baseVal.value)
                 ? element.x.baseVal.value + x
@@ -3613,11 +3641,12 @@ function applyResize(element, data) {
     switch (element.tagName.toLowerCase()) {
 
         case 'text': {
-            const x = element.x.baseVal.value || 
-                Number(element.getAttribute('x'));
-
-            const y = element.y.baseVal.value ||
-                Number(element.getAttribute('y'));
+            const x = isDef(element.x.baseVal[0])
+                ? element.x.baseVal[0].value
+                : (Number(element.getAttribute('x')) || 0);
+            const y = isDef(element.y.baseVal[0])
+                ? element.y.baseVal[0].value
+                : (Number(element.getAttribute('y')) || 0);
 
             const {
                 x: resX,
@@ -3797,8 +3826,8 @@ function applyResize(element, data) {
 
     }
 
-    attrs.forEach(attr => {
-        element.setAttribute(attr[0], attr[1]);
+    attrs.forEach(([key, value]) => {
+        element.setAttribute(key, value);
     });
 }
 
@@ -3992,93 +4021,104 @@ function drag(options, obInstance) {
     }
 }
 
-class Clone {
+class Cloneable extends SubjectModel {
 
     constructor(el, options) {
-        this.el = el;
-        this.options = options || {};
-        this.storage = null;
-
-        this._onMouseDown = this._onMouseDown.bind(this);
-        this._onTouchStart = this._onTouchStart.bind(this);
-        this._onMouseMove = this._onMouseMove.bind(this);
-        this._onTouchMove = this._onTouchMove.bind(this);
-        this._onMouseUp = this._onMouseUp.bind(this);
-        this._onTouchEnd = this._onTouchEnd.bind(this);
-        this._animate = this._animate.bind(this);
-
-        this.enable();
-    }
-
-    enable() {
-        if (isUndef(this.storage)) {
-            this._init();
-        }  else {
-            warn('Already enabled');
-        }
-    }
-
-    disable() {
-        this._destroy();
+        super(el);
+        this.enable(options);
     }
 
     _init() {
-        const self = this;
-
         const { 
             el, 
             options 
-        } = self;
+        } = this;
         const $el = helper(el);
 
         const {
             style,
-            onDrop,
-            appendTo,
-            stack
+            appendTo
         } = options;
 
         const css = {
             position: 'absolute',
             'z-index': '2147483647',
-            style: (isDef(style) && typeof style === 'object') ? style : undefined
+            ...style
             //...((isDef(style) && typeof style === 'object') && style)
         };
 
-        const dropZone = isDef(stack) 
-            ? helper(stack)[0] 
-            : document;
-
-        const _onDrop = isFunc(onDrop)
-            ? function(evt) {
-                const {
-                    clone
-                } = this.storage;
-
-                const result = objectsCollide(
-                    clone,
-                    dropZone
-                );
-
-                if (result) {
-                    onDrop.call(this, evt, this.el, clone);
-                }
-            }
-            : () => {};
-
-        self.storage = {
-            onDrop: _onDrop,
-            options,
+        this.storage = {
             css,
             parent: isDef(appendTo) ? helper(appendTo)[0] : document.body,
-            stack: dropZone
         };
 
-        $el.on('mousedown', self._onMouseDown)
-            .on('touchstart', self._onTouchStart);
+        $el.on('mousedown', this._onMouseDown)
+            .on('touchstart', this._onTouchStart);
     }
 
-    _start(e) {
+    _processOptions(options) {
+        let _style = {},
+            _appendTo = null,
+            _stack = document,
+            _onInit = () => {},
+            _onMove = () => {},
+            _onDrop = () => {},
+            _onDestroy = () => {};
+        
+        if (isDef(options)) {
+            const {
+                style,
+                appendTo,
+                stack,
+                onInit,
+                onMove,
+                onDrop,
+                onDestroy
+            } = options;
+
+            _style = (isDef(style) && typeof style === 'object') ? style : _style;
+            _appendTo = appendTo || null;
+    
+            const dropZone = isDef(stack) 
+                ? helper(stack)[0] 
+                : document;
+    
+            _onInit = createMethod(onInit);
+            _onMove = createMethod(onMove);
+            _onDrop = isFunc(onDrop)
+                ? function(evt) {
+                    const {
+                        clone
+                    } = this.storage;
+    
+                    const result = objectsCollide(
+                        clone,
+                        dropZone
+                    );
+    
+                    if (result) {
+                        onDrop.call(this, evt, this.el, clone);
+                    }
+                }
+                : () => {};
+            _onDestroy = createMethod(onDestroy);
+        }
+        
+        this.options = {
+            style: _style,
+            appendTo: _appendTo,
+            stack: _stack
+        };
+
+        this.proxyMethods = {
+            onInit: _onInit,
+            onDrop: _onDrop,
+            onMove: _onMove,
+            onDestroy: _onDestroy
+        };
+    }
+
+    _start({ clientX, clientY }) {
         const { 
             storage,
             el
@@ -4089,15 +4129,10 @@ class Clone {
             css
         } = storage; 
     
-        const offset = getOffset(parent);
+        const { left, top } = getOffset(parent);
     
-        const { 
-            clientX, 
-            clientY 
-        } = e; 
-    
-        css.left = `${(clientX - offset.left)}px`;
-        css.top = `${(clientY - offset.top)}px`;
+        css.left = `${(clientX - left)}px`;
+        css.top = `${(clientY - top)}px`;
     
         const clone = el.cloneNode(true);
         helper(clone).css(css);
@@ -4112,24 +4147,21 @@ class Clone {
         this._draw();
     }
 
-    _move(e) {    
+    _moving({ clientX, clientY }) {    
         const { storage } = this;
     
-        storage.clientX = e.clientX;
-        storage.clientY = e.clientY;
+        storage.clientX = clientX;
+        storage.clientY = clientY;
         storage.doDraw = true;
         storage.doMove = true;
     }
     
-    _end(e) {    
-        const { 
-            storage
-        } = this;
+    _end(e) {
+        const { storage } = this;
     
         const {
             clone,
-            frameId,
-            onDrop
+            frameId
         } = storage;
     
         storage.doDraw = false;
@@ -4137,14 +4169,10 @@ class Clone {
     
         if (isUndef(clone)) return;
     
-        onDrop.call(this, e);
+        this.proxyMethods.onDrop.call(this, e);
         clone.parentNode.removeChild(clone);
     
         delete storage.clone;
-    }
-    
-    _draw() {
-        this._animate();
     }
 
     _animate() {
@@ -4157,14 +4185,24 @@ class Clone {
             clientX,
             clientY,
             cx,
-            cy,
-            clone
+            cy
         } = storage;
 
         if (!doDraw) return;
         storage.doDraw = false;
 
-        const translate = `translate(${clientX - cx}px, ${clientY - cy}px)`;
+        this._drag(
+            clientX - cx,
+            clientY - cy
+        );
+    }
+
+    _processMove(dx, dy) {
+        const {
+            clone
+        } = this.storage;
+
+        const translate = `translate(${dx}px, ${dy}px)`;
 
         helper(clone).css({
             transform: translate,
@@ -4176,55 +4214,23 @@ class Clone {
     }
     
     _destroy() {
-        if (isUndef(this.storage)) return;
-        helper(this.el)
+        const {
+            storage,
+            proxyMethods,
+            el
+        } = this;
+
+        if (isUndef(storage)) return;
+        helper(el)
             .off('mousedown', this._onMouseDown)
             .off('touchstart', this._onTouchStart);
+
+        proxyMethods.onDestroy.call(this, el);
         delete this.storage;
     }
 
-    _onMouseDown(e) {
-        this._start(e);
-        helper(document)
-            .on('mousemove', this._onMouseMove)
-            .on('mouseup', this._onMouseUp);
-    }
-
-    _onMouseMove(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-        this._move(e);
-    }
-
-    _onMouseUp(e) {
-        this._end(e);
-        helper(document)
-            .off('mousemove', this._onMouseMove)
-            .off('mouseup', this._onMouseUp);
-    }
-
-    _onTouchStart(e) {
-        this._start(e.touches[0]);
-        helper(document)
-            .on('touchmove', this._onTouchMove, eventOptions)
-            .on('touchend', this._onTouchEnd, eventOptions);
-    }
-
-    _onTouchMove(e) {
-        if (e.preventDefault) {
-            e.preventDefault();
-        }
-        this._move(e.touches[0]);
-    }
-
-    _onTouchEnd(e) {
-        if (e.touches.length === 0) {
-            this._end(e.changedTouches[0]);
-        }
-        helper(document)
-            .off('touchmove', this._onTouchMove, eventOptions)
-            .off('touchend', this._onTouchEnd, eventOptions);
+    disable() {
+        this._destroy();
     }
 
 }
@@ -4232,7 +4238,7 @@ class Clone {
 function clone(options) {
     if (this.length) {
         return arrMap.call(this, item => {
-            return new Clone(item, options);
+            return new Cloneable(item, options);
         });
     }
 }
@@ -4252,13 +4258,6 @@ class Subjx extends Helper {
     }
 
 }
-
-/* @license
- * Move/Rotate/Resize tool
- * Released under the MIT license, 2018-2019
- * Karen Sarksyan
- * nichollascarter@gmail.com
-*/
 
 function subjx(params) {
     return new Subjx(params);

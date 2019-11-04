@@ -1,5 +1,5 @@
 import { helper } from '../../Helper';
-import Subject from '../Subject';
+import Transformable from '../Transformable';
 
 import {
     isDef,
@@ -34,11 +34,10 @@ const MIN_SIZE = 5;
 const ROT_OFFSET = 50;
 const floatRE = /[+-]?\d+(\.\d+)?/g;
 
-export default class DraggableSVG extends Subject {
+export default class DraggableSVG extends Transformable {
 
     constructor(el, options, observable) {
-        super(el, observable);
-        this.enable(options);
+        super(el, options, observable);
     }
 
     _init(el) {
@@ -51,6 +50,7 @@ export default class DraggableSVG extends Subject {
         } = options;
 
         const wrapper = createSVGElement('g');
+        addClass(wrapper, 'sjx-svg-wrapper');
         container.appendChild(wrapper);
 
         const {
@@ -76,13 +76,17 @@ export default class DraggableSVG extends Subject {
             ['transform', matrixToString(elCTM)]
         ];
 
-        attrs.forEach(item => {
-            box.setAttribute(item[0], item[1]);
+        attrs.forEach(([key, value]) => {
+            box.setAttribute(key, value);
         });
 
         const handlesGroup = createSVGElement('g'),
             normalLineGroup = createSVGElement('g'),
             group = createSVGElement('g');
+
+        addClass(group, 'sjx-svg-box-group');
+        addClass(handlesGroup, 'sjx-svg-handles');
+        addClass(normalLineGroup, 'sjx-svg-normal-group');
 
         group.appendChild(box);
         wrapper.appendChild(group);
@@ -898,9 +902,22 @@ function applyTranslate(element, { x, y }) {
 
     switch (element.tagName.toLowerCase()) {
 
+        case 'text': {
+            const resX = isDef(element.x.baseVal[0])
+                ? element.x.baseVal[0].value + x
+                : (Number(element.getAttribute('x')) || 0) + x;
+            const resY = isDef(element.y.baseVal[0])
+                ? element.y.baseVal[0].value + y
+                : (Number(element.getAttribute('y')) || 0) + y;
+
+            attrs.push(
+                ['x', resX],
+                ['y', resY]
+            );
+            break;
+        }
         case 'use':
         case 'image':
-        case 'text':
         case 'rect': {
             const resX = isDef(element.x.baseVal.value)
                 ? element.x.baseVal.value + x
@@ -999,11 +1016,12 @@ function applyResize(element, data) {
     switch (element.tagName.toLowerCase()) {
 
         case 'text': {
-            const x = element.x.baseVal.value || 
-                Number(element.getAttribute('x'));
-
-            const y = element.y.baseVal.value ||
-                Number(element.getAttribute('y'));
+            const x = isDef(element.x.baseVal[0])
+                ? element.x.baseVal[0].value
+                : (Number(element.getAttribute('x')) || 0);
+            const y = isDef(element.y.baseVal[0])
+                ? element.y.baseVal[0].value
+                : (Number(element.getAttribute('y')) || 0);
 
             const {
                 x: resX,
@@ -1185,8 +1203,8 @@ function applyResize(element, data) {
 
     }
 
-    attrs.forEach(attr => {
-        element.setAttribute(attr[0], attr[1]);
+    attrs.forEach(([key, value]) => {
+        element.setAttribute(key, value);
     });
 }
 

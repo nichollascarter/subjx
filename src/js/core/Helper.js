@@ -80,28 +80,6 @@ export default class Helper {
         return false;
     }
 
-    find(sel) {
-        let len = this.length,
-            selector;
-
-        while (len--) {
-            selector = this[len].querySelectorAll(sel);
-            return helper(selector);
-        }
-    }
-
-    each(fn) {
-        const arr = arrSlice.call(this, 0);
-
-        for (let index = arr.length - 1; index >= 0; --index) {
-            const func = () => {
-                return arr[index];
-            };
-            fn.call(func());
-        }
-        return this;
-    }
-
     on() {
         let len = this.length;
 

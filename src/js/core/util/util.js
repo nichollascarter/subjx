@@ -36,3 +36,11 @@ export function isUndef(val) {
 export function isFunc(val) {
     return typeof val === 'function';
 }
+
+export function createMethod(fn) {
+    return isFunc(fn)
+        ? function () {
+            fn.call(this, ...arguments);
+        }
+        : () => { };
+}

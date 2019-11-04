@@ -10,6 +10,13 @@ const env = process.env.NODE_ENV || 'production';
 const prod = env === 'production';
 let libraryName = "subjx";
 
+const banner = `/*@license
+* Drag/Rotate/Resize Library
+* Released under the MIT license, 2018-2019
+* Karen Sarksyan
+* nichollascarter@gmail.com
+*/`;
+
 const plugins = [
     postcss({
         minimize: true,
@@ -31,6 +38,9 @@ const uglifyPlugin = () => {
         compress:
         {
             evaluate: false
+        },
+        output: {
+            preamble: banner
         }
     })
 };
@@ -44,11 +54,13 @@ export default [
         input: './src/js/index.js',
         output: [{
             file: `dist/js/${libraryName}.esm.js`,
-            format: 'esm'
+            format: 'esm',
+            banner
         },
         {
             file: `dist/js/${libraryName}.common.js`,
-            format: 'cjs'
+            format: 'cjs',
+            banner
         }],
         plugins: [
             ...plugins,
@@ -60,7 +72,8 @@ export default [
         output: [{
             name: 'subjx',
             file: `dist/js/${libraryName}.js`,
-            format: 'umd'
+            format: 'umd',
+            banner
         }],
         plugins: [
             ...plugins,

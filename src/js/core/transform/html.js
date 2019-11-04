@@ -1,5 +1,5 @@
 import { helper } from '../Helper';
-import Subject from './Subject';
+import Transformable from './Transformable';
 
 import {
     addClass,
@@ -21,20 +21,17 @@ import {
 const MIN_SIZE = 2;
 const CENTER_DELTA = 7;
 
-export default class Draggable extends Subject {
+export default class Draggable extends Transformable {
 
     constructor(el, options, Observable) {
-        super(el, Observable);
-        this.enable(options);
+        super(el, options, Observable);
     }
 
     _init(el) {
         const container = document.createElement('div');
-
         addClass(container, 'sjx-wrapper');
-        el.parentNode.insertBefore(container, el);
 
-        const $el = helper(el);
+        el.parentNode.insertBefore(container, el);
 
         const { options } = this;
 
@@ -49,12 +46,12 @@ export default class Draggable extends Subject {
             height
         } = el.style;
 
+        const $el = helper(el);
+
         const w = width || $el.css('width'),
             h = height || $el.css('height'),
             t = top || $el.css('top'),
             l = left || $el.css('left');
-
-        const $parent = helper(container.parentNode);
 
         const css = {
             top: t,
@@ -65,6 +62,7 @@ export default class Draggable extends Subject {
         };
 
         const controls = document.createElement('div');
+        addClass(controls, 'sjx-controls');
 
         const handles = {
             normal: ['sjx-normal'],
@@ -97,20 +95,16 @@ export default class Draggable extends Subject {
             });
         }
 
-        addClass(controls, 'sjx-controls');
-
         container.appendChild(controls);
 
         const $controls = helper(controls);
         $controls.css(css);
 
-        const $container = helper(container);
-
         this.storage = {
             controls,
             handles,
-            radius: $container.find('.sjx-radius'),
-            parent: $parent
+            radius: undefined,
+            parent: el.parentNode
         };
 
         $controls
@@ -506,7 +500,7 @@ export default class Draggable extends Subject {
         );
 
         const pMatrix = parseMatrix(
-            getTransform(parent)
+            getTransform(helper(parent))
         );
 
         const parentMatrix = parent === container
