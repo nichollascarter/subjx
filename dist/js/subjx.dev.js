@@ -204,24 +204,19 @@
       throw new TypeError("Invalid attempt to destructure non-iterable instance");
     }
 
-    var eventOptions = {
-      passive: false
-    };
     var requestAnimFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame || function (f) {
       return setTimeout(f, 1000 / 60);
     };
     var cancelAnimFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame || function (requestID) {
       clearTimeout(requestID);
     };
-    /* eslint-disable no-console */
-
-    var forEach = Array.prototype.forEach,
-        arrSlice = Array.prototype.slice,
-        arrMap = Array.prototype.map,
-        arrReduce = Array.prototype.reduce,
-        warn = console.warn;
-    /* eslint-disable no-console */
-
+    var _Array$prototype = Array.prototype,
+        forEach = _Array$prototype.forEach,
+        arrSlice = _Array$prototype.slice,
+        arrMap = _Array$prototype.map,
+        arrReduce = _Array$prototype.reduce;
+    var _console = console,
+        warn = _console.warn;
     function isDef(val) {
       return val !== undefined && val !== null;
     }
@@ -334,7 +329,9 @@
 
             if (typeof arguments[1] !== 'string') {
               if (document.addEventListener) {
-                this[len].addEventListener(arguments[0], arguments[1], arguments[2]);
+                this[len].addEventListener(arguments[0], arguments[1], arguments[2] || {
+                  passive: false
+                });
               } else if (document.attachEvent) {
                 this[len].attachEvent("on".concat(arguments[0]), arguments[1]);
               } else {
@@ -406,7 +403,9 @@
 
       if (act === true) {
         if (document.addEventListener) {
-          el.addEventListener(evt, doit, options || false);
+          el.addEventListener(evt, doit, options || {
+            passive: false
+          });
         } else if (document.attachEvent) {
           el.attachEvent("on".concat(evt), doit);
         } else {
@@ -414,7 +413,9 @@
         }
       } else {
         if (document.removeEventListener) {
-          el.removeEventListener(evt, doit, options || false);
+          el.removeEventListener(evt, doit, options || {
+            passive: false
+          });
         } else if (document.detachEvent) {
           el.detachEvent("on".concat(evt), doit);
         } else {
@@ -594,7 +595,7 @@
         value: function _onTouchStart(e) {
           this._start(e.touches[0]);
 
-          helper(document).on('touchmove', this._onTouchMove, eventOptions).on('touchend', this._onTouchEnd, eventOptions);
+          helper(document).on('touchmove', this._onTouchMove).on('touchend', this._onTouchEnd);
         }
       }, {
         key: "_onMouseMove",
@@ -699,6 +700,16 @@
 
       return !(aTop < bTop || aTop + parseFloat(_a.css('height')) > bTop + parseFloat(_b.css('height')) || aLeft < bLeft || aLeft + parseFloat(_a.css('width')) > bLeft + parseFloat(_b.css('width')));
     }
+    function matrixToCSS(arr) {
+      var style = "matrix(".concat(arr.join(), ")");
+      return {
+        transform: style,
+        webkitTranform: style,
+        mozTransform: style,
+        msTransform: style,
+        otransform: style
+      };
+    }
 
     var RAD = Math.PI / 180;
     function snapToGrid(value, snap) {
@@ -715,27 +726,6 @@
     function snapCandidate(value, gridSize) {
       if (gridSize === 0) return value;
       return Math.round(value / gridSize) * gridSize;
-    }
-    function rotatedTopLeft(x, y, width, height, rotationAngle, revX, revY, doW, doH) {
-      var hw = parseFloat(width) / 2,
-          hh = parseFloat(height) / 2;
-      var cx = x + hw,
-          cy = y + hh;
-      var dx = x - cx,
-          dy = y - cy;
-      var originalTopLeftAngle = Math.atan2(doW ? 0 : dy, doH ? 0 : dx);
-      var rotatedTopLeftAngle = originalTopLeftAngle + rotationAngle;
-      var radius = Math.sqrt(Math.pow(doH ? 0 : hw, 2) + Math.pow(doW ? 0 : hh, 2));
-      var cos = Math.cos(rotatedTopLeftAngle),
-          sin = Math.sin(rotatedTopLeftAngle);
-      cos = revX === true ? -cos : cos;
-      sin = revY === true ? -sin : sin;
-      var rx = cx + radius * cos,
-          ry = cy + radius * sin;
-      return {
-        left: floatToFixed(rx),
-        top: floatToFixed(ry)
-      };
     }
     function floatToFixed(val) {
       var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 6;
@@ -1180,14 +1170,22 @@
       }, {
         key: "_checkHandles",
         value: function _checkHandles(handle, handles) {
-          var isTL = handle.is(handles.tl),
-              isTC = handle.is(handles.tc),
-              isTR = handle.is(handles.tr),
-              isBL = handle.is(handles.bl),
-              isBC = handle.is(handles.bc),
-              isBR = handle.is(handles.br),
-              isML = handle.is(handles.ml),
-              isMR = handle.is(handles.mr); //reverse axis
+          var tl = handles.tl,
+              tc = handles.tc,
+              tr = handles.tr,
+              bl = handles.bl,
+              br = handles.br,
+              bc = handles.bc,
+              ml = handles.ml,
+              mr = handles.mr;
+          var isTL = isDef(tl) ? handle.is(tl) : false,
+              isTC = isDef(tc) ? handle.is(tc) : false,
+              isTR = isDef(tr) ? handle.is(tr) : false,
+              isBL = isDef(bl) ? handle.is(bl) : false,
+              isBC = isDef(bc) ? handle.is(bc) : false,
+              isBR = isDef(br) ? handle.is(br) : false,
+              isML = isDef(ml) ? handle.is(ml) : false,
+              isMR = isDef(mr) ? handle.is(mr) : false; //reverse axis
 
           var revX = isTL || isML || isBL || isTC,
               revY = isTL || isTR || isTC || isML;
@@ -1291,7 +1289,7 @@
           if (storage.onExecution) {
             this._end();
 
-            helper(document).off('mousemove', this._onMouseMove).off('mouseup', this._onMouseUp).off('touchmove', this._onTouchMove, eventOptions).off('touchend', this._onTouchEnd, eventOptions);
+            helper(document).off('mousemove', this._onMouseMove).off('mouseup', this._onMouseUp).off('touchmove', this._onTouchMove).off('touchend', this._onTouchEnd);
           }
 
           removeClass(el, 'sjx-drag');
@@ -1306,6 +1304,177 @@
 
       return Transformable;
     }(SubjectModel);
+
+    function matrixTransform(point, matrix) {
+      var x = point.x,
+          y = point.y;
+
+      var _matrix = _slicedToArray(matrix, 6),
+          a = _matrix[0],
+          b = _matrix[1],
+          c = _matrix[2],
+          d = _matrix[3],
+          e = _matrix[4],
+          f = _matrix[5];
+
+      return {
+        x: a * x + c * y + e,
+        y: b * x + d * y + f
+      };
+    } //http://blog.acipo.com/matrix-inversion-in-javascript/
+
+    function matrixInvert(ctm) {
+      // I use Guassian Elimination to calculate the inverse:
+      // (1) 'augment' the matrix (left) by the identity (on the right)
+      // (2) Turn the matrix on the left into the identity by elemetry row ops
+      // (3) The matrix on the right is the inverse (was the identity matrix)
+      // There are 3 elemtary row ops: (I combine b and c in my code)
+      // (a) Swap 2 rows
+      // (b) Multiply a row by a scalar
+      // (c) Add 2 rows
+      var M = [[ctm[0], ctm[2], ctm[4]], [ctm[1], ctm[3], ctm[5]], [0, 0, 1]]; //if the matrix isn't square: exit (error)
+
+      if (M.length !== M[0].length) {
+        return;
+      } //create the identity matrix (I), and a copy (C) of the original
+
+
+      var dim = M.length;
+      var I = [],
+          C = [];
+
+      for (var i = 0; i < dim; i += 1) {
+        // Create the row
+        I[I.length] = [];
+        C[C.length] = [];
+
+        for (var j = 0; j < dim; j += 1) {
+          //if we're on the diagonal, put a 1 (for identity)
+          if (i == j) {
+            I[i][j] = 1;
+          } else {
+            I[i][j] = 0;
+          } // Also, make the copy of the original
+
+
+          C[i][j] = M[i][j];
+        }
+      } // Perform elementary row operations
+
+
+      for (var _i = 0; _i < dim; _i += 1) {
+        // get the element e on the diagonal
+        var e = C[_i][_i]; // if we have a 0 on the diagonal (we'll need to swap with a lower row)
+
+        if (e === 0) {
+          //look through every row below the i'th row
+          for (var ii = _i + 1; ii < dim; ii += 1) {
+            //if the ii'th row has a non-0 in the i'th col
+            if (C[ii][_i] !== 0) {
+              //it would make the diagonal have a non-0 so swap it
+              for (var _j = 0; _j < dim; _j++) {
+                e = C[_i][_j]; //temp store i'th row
+
+                C[_i][_j] = C[ii][_j]; //replace i'th row by ii'th
+
+                C[ii][_j] = e; //repace ii'th by temp
+
+                e = I[_i][_j]; //temp store i'th row
+
+                I[_i][_j] = I[ii][_j]; //replace i'th row by ii'th
+
+                I[ii][_j] = e; //repace ii'th by temp
+              } //don't bother checking other rows since we've swapped
+
+
+              break;
+            }
+          } //get the new diagonal
+
+
+          e = C[_i][_i]; //if it's still 0, not invertable (error)
+
+          if (e === 0) {
+            return;
+          }
+        } // Scale this row down by e (so we have a 1 on the diagonal)
+
+
+        for (var _j2 = 0; _j2 < dim; _j2++) {
+          C[_i][_j2] = C[_i][_j2] / e; //apply to original matrix
+
+          I[_i][_j2] = I[_i][_j2] / e; //apply to identity
+        } // Subtract this row (scaled appropriately for each row) from ALL of
+        // the other rows so that there will be 0's in this column in the
+        // rows above and below this one
+
+
+        for (var _ii = 0; _ii < dim; _ii++) {
+          // Only apply to other rows (we want a 1 on the diagonal)
+          if (_ii == _i) {
+            continue;
+          } // We want to change this element to 0
+
+
+          e = C[_ii][_i]; // Subtract (the row above(or below) scaled by e) from (the
+          // current row) but start at the i'th column and assume all the
+          // stuff left of diagonal is 0 (which it should be if we made this
+          // algorithm correctly)
+
+          for (var _j3 = 0; _j3 < dim; _j3++) {
+            C[_ii][_j3] -= e * C[_i][_j3]; //apply to original matrix
+
+            I[_ii][_j3] -= e * I[_i][_j3]; //apply to identity
+          }
+        }
+      } //we've done all operations, C should be the identity
+      //matrix I should be the inverse:
+
+
+      return [I[0][0], I[1][0], I[0][1], I[1][1], I[0][2], I[1][2]];
+    }
+    function multiplyMatrix(mtrx1, mtrx2) {
+      var m1 = [[mtrx1[0], mtrx1[2], mtrx1[4]], [mtrx1[1], mtrx1[3], mtrx1[5]], [0, 0, 1]];
+      var m2 = [[mtrx2[0], mtrx2[2], mtrx2[4]], [mtrx2[1], mtrx2[3], mtrx2[5]], [0, 0, 1]];
+      var result = [];
+
+      for (var j = 0; j < m2.length; j++) {
+        result[j] = [];
+
+        for (var k = 0; k < m1[0].length; k++) {
+          var sum = 0;
+
+          for (var i = 0; i < m1.length; i++) {
+            sum += m1[i][k] * m2[j][i];
+          }
+
+          result[j].push(sum);
+        }
+      }
+
+      return [result[0][0], result[1][0], result[0][1], result[1][1], result[0][2], result[1][2]];
+    }
+    function rotatedTopLeft(x, y, width, height, rotationAngle, revX, revY, doW, doH) {
+      var hw = parseFloat(width) / 2,
+          hh = parseFloat(height) / 2;
+      var cx = x + hw,
+          cy = y + hh;
+      var dx = x - cx,
+          dy = y - cy;
+      var originalTopLeftAngle = Math.atan2(doW ? 0 : dy, doH ? 0 : dx);
+      var rotatedTopLeftAngle = originalTopLeftAngle + rotationAngle;
+      var radius = Math.sqrt(Math.pow(doH ? 0 : hw, 2) + Math.pow(doW ? 0 : hh, 2));
+      var cos = Math.cos(rotatedTopLeftAngle),
+          sin = Math.sin(rotatedTopLeftAngle);
+      cos = revX === true ? -cos : cos;
+      sin = revY === true ? -sin : sin;
+      var rx = cx + radius * cos,
+          ry = cy + radius * sin;
+      return {
+        left: floatToFixed(rx),
+        top: floatToFixed(ry)
+      };
+    }
 
     var MIN_SIZE = 2;
     var CENTER_DELTA = 7;
@@ -1458,7 +1627,7 @@
       }, {
         key: "_applyMatrixToPoint",
         value: function _applyMatrixToPoint(matrix, x, y) {
-          return multiplyMatrixAndPoint({
+          return matrixTransform({
             x: x,
             y: y
           }, matrix);
@@ -1470,7 +1639,7 @@
               clientY = _ref2.clientY;
           var container = this.options.container;
           var globalMatrix = parseMatrix(getTransform(helper(container)));
-          return multiplyMatrixAndPoint({
+          return matrixTransform({
             x: clientX,
             y: clientY
           }, matrixInvert(globalMatrix));
@@ -1694,169 +1863,6 @@
       return Draggable;
     }(Transformable);
 
-    function matrixToCSS(arr) {
-      var style = "matrix(".concat(arr.join(), ")");
-      return {
-        transform: style,
-        webkitTranform: style,
-        mozTransform: style,
-        msTransform: style,
-        otransform: style
-      };
-    }
-
-    function multiplyMatrixAndPoint(point, matrix) {
-      var x = point.x,
-          y = point.y;
-
-      var _matrix = _slicedToArray(matrix, 6),
-          a = _matrix[0],
-          b = _matrix[1],
-          c = _matrix[2],
-          d = _matrix[3],
-          e = _matrix[4],
-          f = _matrix[5];
-
-      return {
-        x: a * x + c * y + e,
-        y: b * x + d * y + f
-      };
-    } //http://blog.acipo.com/matrix-inversion-in-javascript/
-
-
-    function matrixInvert(ctm) {
-      // I use Guassian Elimination to calculate the inverse:
-      // (1) 'augment' the matrix (left) by the identity (on the right)
-      // (2) Turn the matrix on the left into the identity by elemetry row ops
-      // (3) The matrix on the right is the inverse (was the identity matrix)
-      // There are 3 elemtary row ops: (I combine b and c in my code)
-      // (a) Swap 2 rows
-      // (b) Multiply a row by a scalar
-      // (c) Add 2 rows
-      var M = [[ctm[0], ctm[2], ctm[4]], [ctm[1], ctm[3], ctm[5]], [0, 0, 1]]; //if the matrix isn't square: exit (error)
-
-      if (M.length !== M[0].length) {
-        return;
-      } //create the identity matrix (I), and a copy (C) of the original
-
-
-      var dim = M.length;
-      var I = [],
-          C = [];
-
-      for (var i = 0; i < dim; i += 1) {
-        // Create the row
-        I[I.length] = [];
-        C[C.length] = [];
-
-        for (var j = 0; j < dim; j += 1) {
-          //if we're on the diagonal, put a 1 (for identity)
-          if (i == j) {
-            I[i][j] = 1;
-          } else {
-            I[i][j] = 0;
-          } // Also, make the copy of the original
-
-
-          C[i][j] = M[i][j];
-        }
-      } // Perform elementary row operations
-
-
-      for (var _i = 0; _i < dim; _i += 1) {
-        // get the element e on the diagonal
-        var e = C[_i][_i]; // if we have a 0 on the diagonal (we'll need to swap with a lower row)
-
-        if (e === 0) {
-          //look through every row below the i'th row
-          for (var ii = _i + 1; ii < dim; ii += 1) {
-            //if the ii'th row has a non-0 in the i'th col
-            if (C[ii][_i] !== 0) {
-              //it would make the diagonal have a non-0 so swap it
-              for (var _j = 0; _j < dim; _j++) {
-                e = C[_i][_j]; //temp store i'th row
-
-                C[_i][_j] = C[ii][_j]; //replace i'th row by ii'th
-
-                C[ii][_j] = e; //repace ii'th by temp
-
-                e = I[_i][_j]; //temp store i'th row
-
-                I[_i][_j] = I[ii][_j]; //replace i'th row by ii'th
-
-                I[ii][_j] = e; //repace ii'th by temp
-              } //don't bother checking other rows since we've swapped
-
-
-              break;
-            }
-          } //get the new diagonal
-
-
-          e = C[_i][_i]; //if it's still 0, not invertable (error)
-
-          if (e === 0) {
-            return;
-          }
-        } // Scale this row down by e (so we have a 1 on the diagonal)
-
-
-        for (var _j2 = 0; _j2 < dim; _j2++) {
-          C[_i][_j2] = C[_i][_j2] / e; //apply to original matrix
-
-          I[_i][_j2] = I[_i][_j2] / e; //apply to identity
-        } // Subtract this row (scaled appropriately for each row) from ALL of
-        // the other rows so that there will be 0's in this column in the
-        // rows above and below this one
-
-
-        for (var _ii = 0; _ii < dim; _ii++) {
-          // Only apply to other rows (we want a 1 on the diagonal)
-          if (_ii == _i) {
-            continue;
-          } // We want to change this element to 0
-
-
-          e = C[_ii][_i]; // Subtract (the row above(or below) scaled by e) from (the
-          // current row) but start at the i'th column and assume all the
-          // stuff left of diagonal is 0 (which it should be if we made this
-          // algorithm correctly)
-
-          for (var _j3 = 0; _j3 < dim; _j3++) {
-            C[_ii][_j3] -= e * C[_i][_j3]; //apply to original matrix
-
-            I[_ii][_j3] -= e * I[_i][_j3]; //apply to identity
-          }
-        }
-      } //we've done all operations, C should be the identity
-      //matrix I should be the inverse:
-
-
-      return [I[0][0], I[1][0], I[0][1], I[1][1], I[0][2], I[1][2]];
-    }
-
-    function multiplyMatrix(mtrx1, mtrx2) {
-      var m1 = [[mtrx1[0], mtrx1[2], mtrx1[4]], [mtrx1[1], mtrx1[3], mtrx1[5]], [0, 0, 1]];
-      var m2 = [[mtrx2[0], mtrx2[2], mtrx2[4]], [mtrx2[1], mtrx2[3], mtrx2[5]], [0, 0, 1]];
-      var result = [];
-
-      for (var j = 0; j < m2.length; j++) {
-        result[j] = [];
-
-        for (var k = 0; k < m1[0].length; k++) {
-          var sum = 0;
-
-          for (var i = 0; i < m1.length; i++) {
-            sum += m1[i][k] * m2[j][i];
-          }
-
-          result[j].push(sum);
-        }
-      }
-
-      return [result[0][0], result[1][0], result[0][1], result[1][1], result[0][2], result[1][2]];
-    }
-
     function createHandler(classList) {
       var element = document.createElement('div');
       classList.forEach(function (cls) {
@@ -1865,6 +1871,7 @@
       return element;
     }
 
+    var svgPoint = createSVGElement('svg').createSVGPoint();
     var ALLOWED_ELEMENTS = ['circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text', 'g'];
     function createSVGElement(name) {
       return document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -1877,13 +1884,18 @@
       return gTransform.inverse().multiply(toElement.getScreenCTM() || createSVGMatrix());
     }
     function matrixToString(m) {
-      return "matrix(".concat(m.a, ",").concat(m.b, ",").concat(m.c, ",").concat(m.d, ",").concat(m.e, ",").concat(m.f, ")");
+      var a = m.a,
+          b = m.b,
+          c = m.c,
+          d = m.d,
+          e = m.e,
+          f = m.f;
+      return "matrix(".concat(a, ",").concat(b, ",").concat(c, ",").concat(d, ",").concat(e, ",").concat(f, ")");
     }
-    function pointTo(ctm, svg, x, y) {
-      var pt = svg.createSVGPoint();
-      pt.x = x;
-      pt.y = y;
-      return pt.matrixTransform(ctm);
+    function pointTo(ctm, x, y) {
+      svgPoint.x = x;
+      svgPoint.y = y;
+      return svgPoint.matrixTransform(ctm);
     }
     function cloneMatrix(b) {
       var a = createSVGMatrix();
@@ -1906,7 +1918,13 @@
       }
     }
     function isIdentity(matrix) {
-      return matrix.a === 1 && matrix.b === 0 && matrix.c === 0 && matrix.d === 1 && matrix.e === 0 && matrix.f === 0;
+      var a = matrix.a,
+          b = matrix.b,
+          c = matrix.c,
+          d = matrix.d,
+          e = matrix.e,
+          f = matrix.f;
+      return a === 1 && b === 0 && c === 0 && d === 1 && e === 0 && f === 0;
     }
 
     var dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
@@ -2103,8 +2121,7 @@
     }
     function resizePath(params) {
       var path = params.path,
-          localCTM = params.localCTM,
-          container = params.container;
+          localCTM = params.localCTM;
 
       try {
         var serialized = parsePath(path);
@@ -2142,14 +2159,14 @@
                     mtrx.e = mtrx.f = 0;
                   }
 
-                  var _pointTo = pointTo(mtrx, container, x, y),
+                  var _pointTo = pointTo(mtrx, x, y),
                       resX = _pointTo.x,
                       resY = _pointTo.y;
 
                   coordinates.push(floatToFixed(resX), floatToFixed(resY));
                   mtrx.e = mtrx.f = 0;
 
-                  var _pointTo2 = pointTo(mtrx, container, rx, ry),
+                  var _pointTo2 = pointTo(mtrx, rx, ry),
                       newRx = _pointTo2.x,
                       newRy = _pointTo2.y;
 
@@ -2181,15 +2198,15 @@
                     _mtrx.e = _mtrx.f = 0;
                   }
 
-                  var _pointTo3 = pointTo(_mtrx, container, x1, y1),
+                  var _pointTo3 = pointTo(_mtrx, x1, y1),
                       resX1 = _pointTo3.x,
                       resY1 = _pointTo3.y;
 
-                  var _pointTo4 = pointTo(_mtrx, container, x2, y2),
+                  var _pointTo4 = pointTo(_mtrx, x2, y2),
                       resX2 = _pointTo4.x,
                       resY2 = _pointTo4.y;
 
-                  var _pointTo5 = pointTo(_mtrx, container, _x2, _y2),
+                  var _pointTo5 = pointTo(_mtrx, _x2, _y2),
                       _resX = _pointTo5.x,
                       _resY = _pointTo5.y;
 
@@ -2218,7 +2235,7 @@
                     _mtrx2.e = _mtrx2.f = 0;
                   }
 
-                  var _pointTo6 = pointTo(_mtrx2, container, _x3, 0),
+                  var _pointTo6 = pointTo(_mtrx2, _x3, 0),
                       _resX2 = _pointTo6.x;
 
                   _coordinates2.push(floatToFixed(_resX2));
@@ -2246,7 +2263,7 @@
                     _mtrx3.e = _mtrx3.f = 0;
                   }
 
-                  var _pointTo7 = pointTo(_mtrx3, container, 0, _y3),
+                  var _pointTo7 = pointTo(_mtrx3, 0, _y3),
                       _resY2 = _pointTo7.y;
 
                   _coordinates3.push(floatToFixed(_resY2));
@@ -2275,7 +2292,7 @@
                     _mtrx4.e = _mtrx4.f = 0;
                   }
 
-                  var _pointTo8 = pointTo(_mtrx4, container, _x4, _y4),
+                  var _pointTo8 = pointTo(_mtrx4, _x4, _y4),
                       _resX3 = _pointTo8.x,
                       _resY3 = _pointTo8.y;
 
@@ -2303,7 +2320,7 @@
                     _mtrx5.e = _mtrx5.f = 0;
                   }
 
-                  var _pointTo9 = pointTo(_mtrx5, container, _x5, _y5),
+                  var _pointTo9 = pointTo(_mtrx5, _x5, _y5),
                       _resX4 = _pointTo9.x,
                       _resY4 = _pointTo9.y;
 
@@ -2335,11 +2352,11 @@
                     _mtrx6.e = _mtrx6.f = 0;
                   }
 
-                  var _pointTo10 = pointTo(_mtrx6, container, _x6, _y6),
+                  var _pointTo10 = pointTo(_mtrx6, _x6, _y6),
                       _resX5 = _pointTo10.x,
                       _resY5 = _pointTo10.y;
 
-                  var _pointTo11 = pointTo(_mtrx6, container, _x7, _y7),
+                  var _pointTo11 = pointTo(_mtrx6, _x7, _y7),
                       _resX6 = _pointTo11.x,
                       _resY6 = _pointTo11.y;
 
@@ -2369,11 +2386,11 @@
                     _mtrx7.e = _mtrx7.f = 0;
                   }
 
-                  var _pointTo12 = pointTo(_mtrx7, container, _x8, _y8),
+                  var _pointTo12 = pointTo(_mtrx7, _x8, _y8),
                       _resX7 = _pointTo12.x,
                       _resY7 = _pointTo12.y;
 
-                  var _pointTo13 = pointTo(_mtrx7, container, _x9, _y9),
+                  var _pointTo13 = pointTo(_mtrx7, _x9, _y9),
                       _resX8 = _pointTo13.x,
                       _resY8 = _pointTo13.y;
 
@@ -2463,16 +2480,16 @@
           var centerX = el.getAttribute('data-cx'),
               centerY = el.getAttribute('data-cy');
           var boxCTM = getTransformToElement(box, box.parentNode),
-              boxCenter = pointTo(boxCTM, container, bX + bW / 2, bY + bH / 2);
+              boxCenter = pointTo(boxCTM, bX + bW / 2, bY + bH / 2);
           var handles = {
-            tl: pointTo(boxCTM, container, bX, bY),
-            tr: pointTo(boxCTM, container, bX + bW, bY),
-            br: pointTo(boxCTM, container, bX + bW, bY + bH),
-            bl: pointTo(boxCTM, container, bX, bY + bH),
-            tc: pointTo(boxCTM, container, bX + bW / 2, bY),
-            bc: pointTo(boxCTM, container, bX + bW / 2, bY + bH),
-            ml: pointTo(boxCTM, container, bX, bY + bH / 2),
-            mr: pointTo(boxCTM, container, bX + bW, bY + bH / 2),
+            tl: pointTo(boxCTM, bX, bY),
+            tr: pointTo(boxCTM, bX + bW, bY),
+            br: pointTo(boxCTM, bX + bW, bY + bH),
+            bl: pointTo(boxCTM, bX, bY + bH),
+            tc: pointTo(boxCTM, bX + bW / 2, bY),
+            bc: pointTo(boxCTM, bX + bW / 2, bY + bH),
+            ml: pointTo(boxCTM, bX, bY + bH / 2),
+            mr: pointTo(boxCTM, bX + bW, bY + bH / 2),
             center: rotationPoint ? createPoint(container, centerX, centerY) || boxCenter : undefined,
             //...(rotationPoint ? { center: createPoint(container, centerX, centerY) || boxCenter }),
             rotator: {}
@@ -2574,7 +2591,7 @@
           var clientX = _ref3.clientX,
               clientY = _ref3.clientY;
           var container = this.options.container;
-          return pointTo(container.getScreenCTM().inverse(), container, clientX, clientY);
+          return pointTo(container.getScreenCTM().inverse(), clientX, clientY);
         }
       }, {
         key: "_pointToElement",
@@ -2624,7 +2641,7 @@
               elY = eBBox.y,
               elW = eBBox.width,
               elH = eBBox.height;
-          var rotationPoint = isDef(handles.center) ? pointTo(transform.boxCTM, container, handles.center.cx.baseVal.value, handles.center.cy.baseVal.value) : pointTo(matrix, container, elX + elW / 2, elY + elH / 2);
+          var rotationPoint = isDef(handles.center) ? pointTo(transform.boxCTM, handles.center.cx.baseVal.value, handles.center.cy.baseVal.value) : pointTo(matrix, elX + elW / 2, elY + elH / 2);
           element.setAttribute('data-cx', rotationPoint.x);
           element.setAttribute('data-cy', rotationPoint.y);
           if (isUndef(cached)) return;
@@ -2636,8 +2653,7 @@
               oy = cached.oy;
 
           if (actionName === 'drag') {
-            if (dx === 0 && dy === 0) return; // create translate matrix for an element
-
+            if (dx === 0 && dy === 0) return;
             var eM = createSVGMatrix();
             eM.e = dx;
             eM.f = dy;
@@ -2652,8 +2668,7 @@
                 pt.x = ox;
                 pt.y = oy;
                 ctm.e = ctm.f = 0;
-                var newPT = pt.matrixTransform(ctm); // create translate matrix for an element
-
+                var newPT = pt.matrixTransform(ctm);
                 var eM = createSVGMatrix();
                 eM.e = dx;
                 eM.f = dy;
@@ -2690,7 +2705,7 @@
               y: y,
               width: newWidth,
               height: newHeight
-            }, container);
+            });
 
             if (isGroup(element)) {
               var _els = checkChildElements(element);
@@ -2729,8 +2744,7 @@
           var el = this.el,
               storage = this.storage,
               options = this.options;
-          var container = options.container,
-              proportions = options.proportions;
+          var proportions = options.proportions;
           var _this$storage = this.storage,
               box = _this$storage.box,
               left = _this$storage.left,
@@ -2785,12 +2799,11 @@
             y: newY,
             width: newWidth,
             height: newHeight
-          }, container);
+          });
         }
       }, {
         key: "_processMove",
         value: function _processMove(dx, dy) {
-          var container = this.options.container;
           var _this$storage2 = this.storage,
               transform = _this$storage2.transform,
               wrapper = _this$storage2.wrapper,
@@ -2806,7 +2819,7 @@
           wrapper.setAttribute('transform', matrixToString(moveWrapper));
           parentMatrix.e = parentMatrix.f = 0;
 
-          var _pointTo = pointTo(parentMatrix.inverse(), container, dx, dy),
+          var _pointTo = pointTo(parentMatrix.inverse(), dx, dy),
               x = _pointTo.x,
               y = _pointTo.y;
 
@@ -2824,7 +2837,7 @@
           var radiusMatrix = wrapperMatrix.inverse();
           radiusMatrix.e = radiusMatrix.f = 0;
 
-          var _pointTo2 = pointTo(radiusMatrix, container, dx, dy),
+          var _pointTo2 = pointTo(radiusMatrix, dx, dy),
               nx = _pointTo2.x,
               ny = _pointTo2.y;
 
@@ -2916,17 +2929,17 @@
           var centerX = cHandle ? cHandle.cx.baseVal.value : boxCenterX,
               centerY = cHandle ? cHandle.cy.baseVal.value : boxCenterY; // c-handler's coordinates
 
-          var _pointTo3 = pointTo(boxCTM, container, centerX, centerY),
+          var _pointTo3 = pointTo(boxCTM, centerX, centerY),
               bcx = _pointTo3.x,
               bcy = _pointTo3.y; // element's center coordinates
 
 
-          var _ref7 = isDef(cHandle) ? pointTo(parentMatrix.inverse(), container, bcx, bcy) : pointTo(elMatrix, container, el_x + el_w / 2, el_y + el_h / 2),
+          var _ref7 = isDef(cHandle) ? pointTo(parentMatrix.inverse(), bcx, bcy) : pointTo(elMatrix, el_x + el_w / 2, el_y + el_h / 2),
               elcx = _ref7.x,
               elcy = _ref7.y; // box's center coordinates
 
 
-          var _pointTo4 = pointTo(getTransformToElement(box, container), container, boxCenterX, boxCenterY),
+          var _pointTo4 = pointTo(getTransformToElement(box, container), boxCenterX, boxCenterY),
               rcx = _pointTo4.x,
               rcy = _pointTo4.y;
 
@@ -2975,7 +2988,6 @@
               handles = _this$storage5.handles,
               radius = _this$storage5.radius;
           var center = handles.center;
-          var container = this.options.container;
 
           var _box$getBBox5 = box.getBBox(),
               cw = _box$getBBox5.width,
@@ -2985,7 +2997,7 @@
 
           var matrix = getTransformToElement(box, box.parentNode);
 
-          var _pointTo5 = pointTo(matrix, container, c_left + cw / 2, c_top + ch / 2),
+          var _pointTo5 = pointTo(matrix, c_left + cw / 2, c_top + ch / 2),
               cx = _pointTo5.x,
               cy = _pointTo5.y;
 
@@ -3099,7 +3111,7 @@
             var x = isDef(element.x.baseVal[0]) ? element.x.baseVal[0].value : Number(element.getAttribute('x')) || 0;
             var y = isDef(element.y.baseVal[0]) ? element.y.baseVal[0].value : Number(element.getAttribute('y')) || 0;
 
-            var _pointTo6 = pointTo(localCTM, container, x, y),
+            var _pointTo6 = pointTo(localCTM, x, y),
                 resX = _pointTo6.x,
                 resY = _pointTo6.y;
 
@@ -3114,7 +3126,7 @@
                 cy = element.cy.baseVal.value,
                 newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-            var _pointTo7 = pointTo(localCTM, container, cx, cy),
+            var _pointTo7 = pointTo(localCTM, cx, cy),
                 _resX3 = _pointTo7.x,
                 _resY3 = _pointTo7.y;
 
@@ -3130,7 +3142,7 @@
                 _x = element.x.baseVal.value,
                 _y = element.y.baseVal.value;
 
-            var _pointTo8 = pointTo(localCTM, container, _x, _y),
+            var _pointTo8 = pointTo(localCTM, _x, _y),
                 _resX4 = _pointTo8.x,
                 _resY4 = _pointTo8.y;
 
@@ -3147,7 +3159,7 @@
                 _cx = element.cx.baseVal.value,
                 _cy = element.cy.baseVal.value;
 
-            var _pointTo9 = pointTo(localCTM, container, _cx, _cy),
+            var _pointTo9 = pointTo(localCTM, _cx, _cy),
                 cx1 = _pointTo9.x,
                 cy1 = _pointTo9.y;
 
@@ -3155,7 +3167,7 @@
             scaleMatrix.a = scaleX;
             scaleMatrix.d = scaleY;
 
-            var _pointTo10 = pointTo(scaleMatrix, container, rx, ry),
+            var _pointTo10 = pointTo(scaleMatrix, rx, ry),
                 nRx = _pointTo10.x,
                 nRy = _pointTo10.y;
 
@@ -3170,11 +3182,11 @@
                 resX2 = element.x2.baseVal.value,
                 resY2 = element.y2.baseVal.value;
 
-            var _pointTo11 = pointTo(localCTM, container, resX1, resY1),
+            var _pointTo11 = pointTo(localCTM, resX1, resY1),
                 resX1_ = _pointTo11.x,
                 resY1_ = _pointTo11.y;
 
-            var _pointTo12 = pointTo(localCTM, container, resX2, resY2),
+            var _pointTo12 = pointTo(localCTM, resX2, resY2),
                 resX2_ = _pointTo12.x,
                 resY2_ = _pointTo12.y;
 
@@ -3187,7 +3199,7 @@
           {
             var points = parsePoints(element.getAttribute('points'));
             var result = points.map(function (item) {
-              var _pointTo13 = pointTo(localCTM, container, Number(item[0]), Number(item[1])),
+              var _pointTo13 = pointTo(localCTM, Number(item[0]), Number(item[1])),
                   x = _pointTo13.x,
                   y = _pointTo13.y;
 
@@ -3204,8 +3216,7 @@
             var path = element.getAttribute('d');
             attrs.push(['d', resizePath({
               path: path,
-              localCTM: localCTM,
-              container: container
+              localCTM: localCTM
             })]);
             break;
           }
@@ -3220,7 +3231,7 @@
       });
     }
 
-    function applyTransformToHandles(storage, data, container) {
+    function applyTransformToHandles(storage, data) {
       var box = storage.box,
           handles = storage.handles,
           normalLine = storage.normalLine,
@@ -3233,16 +3244,16 @@
       var hW = width / 2,
           hH = height / 2;
       var boxCTM = getTransformToElement(box, box.parentNode);
-      var boxCenter = pointTo(boxCTM, container, x + hW, y + hH);
+      var boxCenter = pointTo(boxCTM, x + hW, y + hH);
       var attrs = {
-        tl: pointTo(boxCTM, container, x, y),
-        tr: pointTo(boxCTM, container, x + width, y),
-        br: pointTo(boxCTM, container, x + width, y + height),
-        bl: pointTo(boxCTM, container, x, y + height),
-        tc: pointTo(boxCTM, container, x + hW, y),
-        bc: pointTo(boxCTM, container, x + hW, y + height),
-        ml: pointTo(boxCTM, container, x, y + hH),
-        mr: pointTo(boxCTM, container, x + width, y + hH),
+        tl: pointTo(boxCTM, x, y),
+        tr: pointTo(boxCTM, x + width, y),
+        br: pointTo(boxCTM, x + width, y + height),
+        bl: pointTo(boxCTM, x, y + height),
+        tc: pointTo(boxCTM, x + hW, y),
+        bc: pointTo(boxCTM, x + hW, y + height),
+        ml: pointTo(boxCTM, x, y + hH),
+        mr: pointTo(boxCTM, x + width, y + hH),
         rotator: {},
         center: !center.isShifted && isDef(handles.center) ? boxCenter : undefined //...(!center.isShifted && isDef(handles.center) && { center: boxCenter })
 
