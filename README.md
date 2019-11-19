@@ -145,7 +145,7 @@ const xCloneable = xElem.clone({
 
 Avaliable methods:
 ```javascript
-subjx('.cloneable').drag({
+subjx('.cloneable').clone({
     onInit(el) {
         // fires on tool activation
     },
