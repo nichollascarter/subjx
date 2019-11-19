@@ -1,5 +1,7 @@
 import { warn } from './../../util/util';
 
+const svgPoint = createSVGElement('svg').createSVGPoint();
+
 export const ALLOWED_ELEMENTS = [
     'circle', 'ellipse',
     'image', 'line',
@@ -24,14 +26,14 @@ export function getTransformToElement(toElement, g) {
 }
 
 export function matrixToString(m) {
-    return `matrix(${m.a},${m.b},${m.c},${m.d},${m.e},${m.f})`;
+    const { a, b, c, d, e, f } = m;
+    return `matrix(${a},${b},${c},${d},${e},${f})`;
 }
 
-export function pointTo(ctm, svg, x, y) {
-    const pt = svg.createSVGPoint();
-    pt.x = x;
-    pt.y = y;
-    return pt.matrixTransform(ctm);
+export function pointTo(ctm, x, y) {
+    svgPoint.x = x;
+    svgPoint.y = y;
+    return svgPoint.matrixTransform(ctm);
 }
 
 export function cloneMatrix(b) {
@@ -62,10 +64,11 @@ export function checkElement(el) {
 }
 
 export function isIdentity(matrix) {
-    return matrix.a === 1 &&
-        matrix.b === 0 &&
-        matrix.c === 0 &&
-        matrix.d === 1 &&
-        matrix.e === 0 &&
-        matrix.f === 0;
+    const { a, b, c, d, e, f } = matrix;
+    return a === 1 &&
+        b === 0 &&
+        c === 0 &&
+        d === 1 &&
+        e === 0 &&
+        f === 0;
 }

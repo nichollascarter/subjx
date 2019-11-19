@@ -1,6 +1,6 @@
 import Observable from '../observable/Observable';
-import Draggable from './html';
-import DraggableSVG from './svg/index';
+import Draggable from './Draggable';
+import DraggableSVG from './svg';
 import { checkElement } from './svg/util';
 import { arrReduce, isDef } from '../util/util';
 

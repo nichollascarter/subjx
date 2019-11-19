@@ -91,14 +91,25 @@ export default class Helper {
 
             if (typeof (arguments[1]) !== 'string') {
                 if (document.addEventListener) {
-                    this[len].addEventListener(arguments[0], arguments[1], arguments[2]);
+                    this[len].addEventListener(
+                        arguments[0], 
+                        arguments[1], 
+                        arguments[2] || { passive: false }
+                    );
                 } else if (document.attachEvent) {
                     this[len].attachEvent(`on${arguments[0]}`, arguments[1]);
                 } else {
                     this[len][`on${arguments[0]}`] = arguments[1];
                 }
             } else {
-                listenerDelegate(this[len], arguments[0], arguments[1], arguments[2], arguments[3], true);
+                listenerDelegate(
+                    this[len], 
+                    arguments[0], 
+                    arguments[1], 
+                    arguments[2], 
+                    arguments[3], 
+                    true
+                );
             }
         }
         return this;
@@ -154,7 +165,7 @@ function listenerDelegate(el, evt, sel, handler, options, act) {
 
     if (act === true) {
         if (document.addEventListener) {
-            el.addEventListener(evt, doit, options || false);
+            el.addEventListener(evt, doit, options || { passive: false });
         } else if (document.attachEvent) {
             el.attachEvent(`on${evt}`, doit);
         } else {
@@ -162,7 +173,7 @@ function listenerDelegate(el, evt, sel, handler, options, act) {
         }
     } else {
         if (document.removeEventListener) {
-            el.removeEventListener(evt, doit, options || false);
+            el.removeEventListener(evt, doit, options || { passive: false });
         } else if (document.detachEvent) {
             el.detachEvent(`on${evt}`, doit);
         } else {

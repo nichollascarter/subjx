@@ -43,7 +43,7 @@ export default class Cloneable extends SubjectModel {
 
         this.storage = {
             css,
-            parent: isDef(appendTo) ? helper(appendTo)[0] : document.body,
+            parent: isDef(appendTo) ? helper(appendTo)[0] : document.body
         };
 
         $el.on('mousedown', this._onMouseDown)

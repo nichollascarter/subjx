@@ -6,8 +6,7 @@ import {
     cancelAnimFrame,
     isDef,
     isUndef,
-    createMethod,
-    eventOptions
+    createMethod
 } from '../util/util';
 
 import {
@@ -35,8 +34,6 @@ export default class Transformable extends SubjectModel {
     _cursorPoint() {
         throw Error(`'_cursorPoint()' method not implemented`);
     }
-
-    
 
     _rotate() {
         this._processRotate(...arguments);
@@ -571,14 +568,15 @@ export default class Transformable extends SubjectModel {
     }
 
     _checkHandles(handle, handles) {
-        const isTL = handle.is(handles.tl),
-            isTC = handle.is(handles.tc),
-            isTR = handle.is(handles.tr),
-            isBL = handle.is(handles.bl),
-            isBC = handle.is(handles.bc),
-            isBR = handle.is(handles.br),
-            isML = handle.is(handles.ml),
-            isMR = handle.is(handles.mr);
+        const { tl, tc, tr, bl, br, bc, ml, mr } = handles;
+        const isTL = isDef(tl) ? handle.is(tl) : false,
+            isTC = isDef(tc) ? handle.is(tc) : false,
+            isTR = isDef(tr) ? handle.is(tr) : false,
+            isBL = isDef(bl) ? handle.is(bl) : false,
+            isBC = isDef(bc) ? handle.is(bc) : false,
+            isBR = isDef(br) ? handle.is(br) : false,
+            isML = isDef(ml) ? handle.is(ml) : false,
+            isMR = isDef(mr) ? handle.is(mr) : false;
 
         //reverse axis
         const revX = isTL || isML || isBL || isTC,
@@ -696,8 +694,8 @@ export default class Transformable extends SubjectModel {
             helper(document)
                 .off('mousemove', this._onMouseMove)
                 .off('mouseup', this._onMouseUp)
-                .off('touchmove', this._onTouchMove, eventOptions)
-                .off('touchend', this._onTouchEnd, eventOptions);
+                .off('touchmove', this._onTouchMove)
+                .off('touchend', this._onTouchEnd);
         }
 
         removeClass(el, 'sjx-drag');

@@ -197,8 +197,7 @@ export function movePath(params) {
 export function resizePath(params) {
     const {
         path,
-        localCTM,
-        container
+        localCTM
     } = params;
 
     try {
@@ -241,7 +240,6 @@ export function resizePath(params) {
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container,
                             x,
                             y
                         );
@@ -258,7 +256,6 @@ export function resizePath(params) {
                             y: newRy
                         } = pointTo(
                             mtrx,
-                            container,
                             rx,
                             ry
                         );
@@ -292,8 +289,7 @@ export function resizePath(params) {
                             x: resX1,
                             y: resY1
                         } = pointTo(
-                            mtrx,
-                            container,
+                            mtrx,                          
                             x1,
                             y1
                         );
@@ -303,7 +299,6 @@ export function resizePath(params) {
                             y: resY2
                         } = pointTo(
                             mtrx,
-                            container,
                             x2,
                             y2
                         );
@@ -313,7 +308,6 @@ export function resizePath(params) {
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container,
                             x,
                             y
                         );
@@ -350,7 +344,6 @@ export function resizePath(params) {
                             x: resX
                         } = pointTo(
                             mtrx,
-                            container,
                             x,
                             0
                         );
@@ -382,7 +375,6 @@ export function resizePath(params) {
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container,
                             0,
                             y
                         );
@@ -415,7 +407,6 @@ export function resizePath(params) {
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container,
                             x,
                             y
                         );
@@ -447,7 +438,6 @@ export function resizePath(params) {
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container,
                             x,
                             y
                         );
@@ -481,7 +471,6 @@ export function resizePath(params) {
                             y: resY1
                         } = pointTo(
                             mtrx,
-                            container,
                             x1,
                             y1
                         );
@@ -491,7 +480,6 @@ export function resizePath(params) {
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container,
                             x,
                             y
                         );
@@ -525,7 +513,6 @@ export function resizePath(params) {
                             y: resY2
                         } = pointTo(
                             mtrx,
-                            container,
                             x2,
                             y2
                         );
@@ -535,7 +522,6 @@ export function resizePath(params) {
                             y: resY
                         } = pointTo(
                             mtrx,
-                            container,
                             x,
                             y
                         );

@@ -1,7 +1,3 @@
-export const eventOptions = {
-    passive: false
-};
-
 export const requestAnimFrame = 
     window.requestAnimationFrame ||
     window.mozRequestAnimationFrame ||
@@ -17,12 +13,15 @@ export const cancelAnimFrame =
     function (requestID) {
         clearTimeout(requestID);
     };
+
+export const {
+    forEach,
+    slice: arrSlice,
+    map: arrMap,
+    reduce: arrReduce
+} = Array.prototype;
 /* eslint-disable no-console */
-export const forEach = Array.prototype.forEach,
-    arrSlice = Array.prototype.slice,
-    arrMap = Array.prototype.map,
-    arrReduce = Array.prototype.reduce,
-    warn = console.warn;
+export const { warn } = console;
 /* eslint-disable no-console */
 
 export function isDef(val) {

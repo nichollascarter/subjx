@@ -75,3 +75,15 @@ export function objectsCollide(a, b) {
             (aLeft + parseFloat(_a.css('width'))) > (bLeft + parseFloat(_b.css('width'))))
     );
 }
+
+export function matrixToCSS(arr) {
+    const style = `matrix(${arr.join()})`;
+
+    return {
+        transform: style,
+        webkitTranform: style,
+        mozTransform: style,
+        msTransform: style,
+        otransform: style
+    };
+}

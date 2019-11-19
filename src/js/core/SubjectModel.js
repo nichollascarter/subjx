@@ -1,7 +1,4 @@
 import { helper } from './Helper';
-import {
-    eventOptions
-} from './util/util';
 
 export default class SubjectModel {
 
@@ -76,8 +73,8 @@ export default class SubjectModel {
     _onTouchStart(e) {
         this._start(e.touches[0]);
         helper(document)
-            .on('touchmove', this._onTouchMove, eventOptions)
-            .on('touchend', this._onTouchEnd, eventOptions);
+            .on('touchmove', this._onTouchMove)
+            .on('touchend', this._onTouchEnd);
     }
 
     _onMouseMove(e) {

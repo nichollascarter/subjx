@@ -18,46 +18,6 @@ export function snapCandidate(value, gridSize) {
     return Math.round(value / gridSize) * gridSize;
 }
 
-export function rotatedTopLeft(
-    x,
-    y,
-    width,
-    height,
-    rotationAngle,
-    revX,
-    revY,
-    doW,
-    doH
-) {
-    const hw = parseFloat(width) / 2,
-        hh = parseFloat(height) / 2;
-
-    const cx = x + hw,
-        cy = y + hh;
-
-    const dx = x - cx,
-        dy = y - cy;
-
-    const originalTopLeftAngle = Math.atan2(doW ? 0 : dy, doH ? 0 : dx);
-    const rotatedTopLeftAngle = originalTopLeftAngle + rotationAngle;
-
-    const radius = Math.sqrt(Math.pow(doH ? 0 : hw, 2) + Math.pow(doW ? 0 : hh, 2));
-
-    let cos = Math.cos(rotatedTopLeftAngle),
-        sin = Math.sin(rotatedTopLeftAngle);
-
-    cos = revX === true ? -cos : cos;
-    sin = revY === true ? -sin : sin;
-
-    const rx = cx + radius * cos,
-        ry = cy + radius * sin;
-
-    return {
-        left: floatToFixed(rx),
-        top: floatToFixed(ry)
-    };
-}
-
 export function floatToFixed(val, size = 6) {
     return Number(val.toFixed(size));
 }
