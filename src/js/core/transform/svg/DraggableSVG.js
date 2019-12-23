@@ -203,24 +203,17 @@ export default class DraggableSVG extends Transformable {
 
     _compute(e) {
         const {
-            storage
-        } = this;
-
-        const {
             handles
-        } = storage;
+        } = this.storage;
 
         const handle = helper(e.target);
 
         const {
             revX,
             revY,
-            onTopEdge,
-            onLeftEdge,
-            onRightEdge,
-            onBottomEdge,
             doW,
-            doH
+            doH,
+            ...rest
         } = this._checkHandles(handle, handles);
 
         const _computed = this._getState({
@@ -242,12 +235,7 @@ export default class DraggableSVG extends Transformable {
 
         return {
             ..._computed,
-            doW,
-            doH,
-            onTopEdge,
-            onLeftEdge,
-            onRightEdge,
-            onBottomEdge,
+            ...rest,
             handle,
             pressang
         };
