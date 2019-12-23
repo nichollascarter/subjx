@@ -126,6 +126,42 @@
       return _setPrototypeOf(o, p);
     }
 
+    function _objectWithoutPropertiesLoose(source, excluded) {
+      if (source == null) return {};
+      var target = {};
+      var sourceKeys = Object.keys(source);
+      var key, i;
+
+      for (i = 0; i < sourceKeys.length; i++) {
+        key = sourceKeys[i];
+        if (excluded.indexOf(key) >= 0) continue;
+        target[key] = source[key];
+      }
+
+      return target;
+    }
+
+    function _objectWithoutProperties(source, excluded) {
+      if (source == null) return {};
+
+      var target = _objectWithoutPropertiesLoose(source, excluded);
+
+      var key, i;
+
+      if (Object.getOwnPropertySymbols) {
+        var sourceSymbolKeys = Object.getOwnPropertySymbols(source);
+
+        for (i = 0; i < sourceSymbolKeys.length; i++) {
+          key = sourceSymbolKeys[i];
+          if (excluded.indexOf(key) >= 0) continue;
+          if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue;
+          target[key] = source[key];
+        }
+      }
+
+      return target;
+    }
+
     function _assertThisInitialized(self) {
       if (self === void 0) {
         throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
@@ -1575,12 +1611,9 @@
           var _this$_checkHandles = this._checkHandles(handle, handles),
               revX = _this$_checkHandles.revX,
               revY = _this$_checkHandles.revY,
-              onTopEdge = _this$_checkHandles.onTopEdge,
-              onLeftEdge = _this$_checkHandles.onLeftEdge,
-              onRightEdge = _this$_checkHandles.onRightEdge,
-              onBottomEdge = _this$_checkHandles.onBottomEdge,
               doW = _this$_checkHandles.doW,
-              doH = _this$_checkHandles.doH; //reverse angle
+              doH = _this$_checkHandles.doH,
+              rest = _objectWithoutProperties(_this$_checkHandles, ["revX", "revY", "doW", "doH"]); //reverse angle
 
 
           var factor = handle.is(handles.tr) || handle.is(handles.bl) ? -1 : 1;
@@ -1598,11 +1631,7 @@
               clientY = _this$_cursorPoint.y;
 
           var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);
-          return _objectSpread2({}, _computed, {
-            onTopEdge: onTopEdge,
-            onLeftEdge: onLeftEdge,
-            onRightEdge: onRightEdge,
-            onBottomEdge: onBottomEdge,
+          return _objectSpread2({}, _computed, {}, rest, {
             handle: handle,
             pressang: pressang
           });
@@ -1782,16 +1811,12 @@
           var handles = storage.handles,
               controls = storage.controls,
               parent = storage.parent;
-          var cHandle = handles.center,
-              tl = handles.tl,
-              tr = handles.tr;
-          var tl_off = getOffset(tl),
-              tr_off = getOffset(tr);
-          var refang = Math.atan2(tr_off.top - tl_off.top, tr_off.left - tl_off.left) * factor;
+          var cHandle = handles.center;
           var $controls = helper(controls);
           var containerMatrix = parseMatrix(getTransform(helper(container)));
           var matrix = parseMatrix(getTransform(helper(controls)));
           var pMatrix = parseMatrix(getTransform(helper(parent)));
+          var refang = Math.atan2(matrix[1], matrix[0]) * factor;
           var parentMatrix = parent === container ? multiplyMatrix(pMatrix, containerMatrix) : containerMatrix;
           var transform = {
             matrix: matrix,
@@ -2548,19 +2573,15 @@
       }, {
         key: "_compute",
         value: function _compute(e) {
-          var storage = this.storage;
-          var handles = storage.handles;
+          var handles = this.storage.handles;
           var handle = helper(e.target);
 
           var _this$_checkHandles = this._checkHandles(handle, handles),
               revX = _this$_checkHandles.revX,
               revY = _this$_checkHandles.revY,
-              onTopEdge = _this$_checkHandles.onTopEdge,
-              onLeftEdge = _this$_checkHandles.onLeftEdge,
-              onRightEdge = _this$_checkHandles.onRightEdge,
-              onBottomEdge = _this$_checkHandles.onBottomEdge,
               doW = _this$_checkHandles.doW,
-              doH = _this$_checkHandles.doH;
+              doH = _this$_checkHandles.doH,
+              rest = _objectWithoutProperties(_this$_checkHandles, ["revX", "revY", "doW", "doH"]);
 
           var _computed = this._getState({
             revX: revX,
@@ -2574,13 +2595,7 @@
               clientY = _this$_cursorPoint.y;
 
           var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);
-          return _objectSpread2({}, _computed, {
-            doW: doW,
-            doH: doH,
-            onTopEdge: onTopEdge,
-            onLeftEdge: onLeftEdge,
-            onRightEdge: onRightEdge,
-            onBottomEdge: onBottomEdge,
+          return _objectSpread2({}, _computed, {}, rest, {
             handle: handle,
             pressang: pressang
           });

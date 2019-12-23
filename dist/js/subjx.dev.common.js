@@ -1559,12 +1559,9 @@ class Draggable extends Transformable {
         const {
             revX,
             revY,
-            onTopEdge,
-            onLeftEdge,
-            onRightEdge,
-            onBottomEdge,
             doW,
-            doH
+            doH,
+            ...rest
         } = this._checkHandles(handle, handles);
 
         //reverse angle
@@ -1593,10 +1590,7 @@ class Draggable extends Transformable {
 
         return {
             ..._computed,
-            onTopEdge,
-            onLeftEdge,
-            onRightEdge,
-            onBottomEdge,
+            ...rest,
             handle,
             pressang
         };
@@ -1900,18 +1894,8 @@ class Draggable extends Transformable {
         } = storage;
 
         const {
-            center: cHandle,
-            tl,
-            tr
+            center: cHandle
         } = handles;
-
-        const tl_off = getOffset(tl),
-            tr_off = getOffset(tr);
-
-        const refang = Math.atan2(
-            tr_off.top - tl_off.top,
-            tr_off.left - tl_off.left
-        ) * factor;
 
         const $controls = helper(controls);
 
@@ -1926,6 +1910,10 @@ class Draggable extends Transformable {
         const pMatrix = parseMatrix(
             getTransform(helper(parent))
         );
+
+        const refang = Math.atan2(
+            matrix[1], matrix[0]
+        ) * factor;
 
         const parentMatrix = parent === container
             ? multiplyMatrix(
@@ -2830,24 +2818,17 @@ class DraggableSVG extends Transformable {
 
     _compute(e) {
         const {
-            storage
-        } = this;
-
-        const {
             handles
-        } = storage;
+        } = this.storage;
 
         const handle = helper(e.target);
 
         const {
             revX,
             revY,
-            onTopEdge,
-            onLeftEdge,
-            onRightEdge,
-            onBottomEdge,
             doW,
-            doH
+            doH,
+            ...rest
         } = this._checkHandles(handle, handles);
 
         const _computed = this._getState({
@@ -2869,12 +2850,7 @@ class DraggableSVG extends Transformable {
 
         return {
             ..._computed,
-            doW,
-            doH,
-            onTopEdge,
-            onLeftEdge,
-            onRightEdge,
-            onBottomEdge,
+            ...rest,
             handle,
             pressang
         };
