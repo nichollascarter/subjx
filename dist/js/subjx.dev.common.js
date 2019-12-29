@@ -1914,7 +1914,7 @@ class Draggable extends Transformable {
             matrix[1], matrix[0]
         ) * factor;
 
-        const parentMatrix = parent === container
+        const parentMatrix = parent !== container
             ? multiplyMatrix(
                 pMatrix,
                 containerMatrix
@@ -1973,8 +1973,8 @@ class Draggable extends Transformable {
             ch,
             coords,
             center: {
-                x: el_x + centerX,
-                y: el_y + centerY,
+                x: el_x + centerX - cDelta,
+                y: el_y + centerY - cDelta,
                 cx: -centerX + hW - cDelta,
                 cy: -centerY + hH - cDelta,
                 hx: centerX,

@@ -1816,7 +1816,7 @@
           var matrix = parseMatrix(getTransform(helper(controls)));
           var pMatrix = parseMatrix(getTransform(helper(parent)));
           var refang = Math.atan2(matrix[1], matrix[0]) * factor;
-          var parentMatrix = parent === container ? multiplyMatrix(pMatrix, containerMatrix) : containerMatrix;
+          var parentMatrix = parent !== container ? multiplyMatrix(pMatrix, containerMatrix) : containerMatrix;
           var transform = {
             matrix: matrix,
             parentMatrix: parentMatrix,
@@ -1848,8 +1848,8 @@
             ch: ch,
             coords: coords,
             center: {
-              x: el_x + centerX,
-              y: el_y + centerY,
+              x: el_x + centerX - cDelta,
+              y: el_y + centerY - cDelta,
               cx: -centerX + hW - cDelta,
               cy: -centerY + hH - cDelta,
               hx: centerX,
