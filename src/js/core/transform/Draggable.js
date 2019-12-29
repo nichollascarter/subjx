@@ -81,9 +81,8 @@ export default class Draggable extends Transformable {
             bc: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-c', 'sjx-hdl-bc'],
             ml: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-l', 'sjx-hdl-ml'],
             mr: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-r', 'sjx-hdl-mr'],
-            center: rotationPoint ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined,
-            //...(rotationPoint && { center: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc']}), IE11 not supports
-            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator']
+            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator'],
+            center: rotationPoint ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined
         };
 
         Object.keys(handles).forEach(key => {
@@ -543,14 +542,22 @@ export default class Draggable extends Transformable {
 
         const cDelta = isDefCenter ? CENTER_DELTA : 0;
 
+        const { x: el_x, y: el_y } = matrixTransform(
+            {
+                x: offset_.left,
+                y: offset_.top
+            },
+            matrixInvert(parentMatrix)
+        );
+
         return {
             transform,
             cw,
             ch,
             coords,
             center: {
-                x: offset_.left + centerX - cDelta,
-                y: offset_.top + centerY - cDelta,
+                x: el_x + centerX,
+                y: el_y + centerY,
                 cx: -centerX + hW - cDelta,
                 cy: -centerY + hH - cDelta,
                 hx: centerX,
@@ -566,8 +573,7 @@ export default class Draggable extends Transformable {
     }
 
     _moveCenterHandle(x, y) {
-        const { storage } = this;
-        const { handles, center } = storage;
+        const { handles, center } = this.storage;
 
         const left = `${center.hx + x}px`,
             top = `${center.hy + y}px`;
