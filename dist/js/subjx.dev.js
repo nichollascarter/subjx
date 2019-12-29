@@ -1563,9 +1563,8 @@
             bc: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-c', 'sjx-hdl-bc'],
             ml: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-l', 'sjx-hdl-ml'],
             mr: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-r', 'sjx-hdl-mr'],
-            center: rotationPoint ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined,
-            //...(rotationPoint && { center: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc']}), IE11 not supports
-            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator']
+            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator'],
+            center: rotationPoint ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined
           };
           Object.keys(handles).forEach(function (key) {
             var data = handles[key];
@@ -1835,14 +1834,22 @@
           var centerX = isDefCenter ? parseFloat(helper(cHandle).css('left')) : hW;
           var centerY = isDefCenter ? parseFloat(helper(cHandle).css('top')) : hH;
           var cDelta = isDefCenter ? CENTER_DELTA : 0;
+
+          var _matrixTransform = matrixTransform({
+            x: offset_.left,
+            y: offset_.top
+          }, matrixInvert(parentMatrix)),
+              el_x = _matrixTransform.x,
+              el_y = _matrixTransform.y;
+
           return {
             transform: transform,
             cw: cw,
             ch: ch,
             coords: coords,
             center: {
-              x: offset_.left + centerX - cDelta,
-              y: offset_.top + centerY - cDelta,
+              x: el_x + centerX,
+              y: el_y + centerY,
               cx: -centerX + hW - cDelta,
               cy: -centerY + hH - cDelta,
               hx: centerX,
@@ -1859,9 +1866,9 @@
       }, {
         key: "_moveCenterHandle",
         value: function _moveCenterHandle(x, y) {
-          var storage = this.storage;
-          var handles = storage.handles,
-              center = storage.center;
+          var _this$storage = this.storage,
+              handles = _this$storage.handles,
+              center = _this$storage.center;
           var left = "".concat(center.hx + x, "px"),
               top = "".concat(center.hy + y, "px");
           helper(handles.center).css({
