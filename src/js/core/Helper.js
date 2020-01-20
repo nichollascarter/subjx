@@ -1,5 +1,6 @@
 import {
     isDef,
+    isUndef,
     arrSlice,
     warn
 } from './util/util';
@@ -141,6 +142,8 @@ export default class Helper {
     }
 
     is(selector) {
+        if (isUndef(selector)) return false;
+        
         const _sel = helper(selector);
         let len = this.length;
 

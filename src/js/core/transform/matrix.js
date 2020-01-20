@@ -1,10 +1,6 @@
 import { floatToFixed } from './common';
 
-export function matrixTransform(point, matrix) {
-    const {
-        x, y
-    } = point;
-
+export function matrixTransform({ x, y }, matrix) {
     const [a, b, c, d, e, f] = matrix;
 
     return {
@@ -128,16 +124,19 @@ export function matrixInvert(ctm) {
     ];
 }
 
-export function multiplyMatrix(mtrx1, mtrx2) {
+export function multiplyMatrix(
+    [a1, b1, c1, d1, e1, f1], 
+    [a2, b2, c2, d2, e2, f2]
+) {
     const m1 = [
-        [mtrx1[0], mtrx1[2], mtrx1[4]],
-        [mtrx1[1], mtrx1[3], mtrx1[5]],
+        [a1, c1, e1],
+        [b1, d1, f1],
         [0, 0, 1]
     ];
 
     const m2 = [
-        [mtrx2[0], mtrx2[2], mtrx2[4]],
-        [mtrx2[1], mtrx2[3], mtrx2[5]],
+        [a2, c2, e2],
+        [b2, d2, f2],
         [0, 0, 1]
     ];
 

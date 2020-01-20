@@ -1,5 +1,7 @@
 import { helper } from '../Helper';
 import Transformable from './Transformable';
+import { floatToFixed } from './common';
+import { isDef, isUndef } from '../util/util';
 
 import {
     addClass,
@@ -8,15 +10,6 @@ import {
     getOffset,
     matrixToCSS
 } from '../util/css-util';
-
-import {
-    floatToFixed
-} from './common';
-
-import {
-    isDef,
-    isUndef
-} from '../util/util';
 
 import {
     matrixTransform,
@@ -35,16 +28,12 @@ export default class Draggable extends Transformable {
     }
 
     _init(el) {
-        const container = document.createElement('div');
-        addClass(container, 'sjx-wrapper');
-
-        el.parentNode.insertBefore(container, el);
-
-        const { options } = this;
-
         const {
-            rotationPoint
-        } = options;
+            rotationPoint,
+            container,
+            resizable,
+            rotatable
+        } = this.options;
 
         const {
             left,
@@ -52,6 +41,10 @@ export default class Draggable extends Transformable {
             width,
             height
         } = el.style;
+
+        const wrapper = document.createElement('div');
+        addClass(wrapper, 'sjx-wrapper');
+        container.appendChild(wrapper);
 
         const $el = helper(el);
 
@@ -71,8 +64,7 @@ export default class Draggable extends Transformable {
         const controls = document.createElement('div');
         addClass(controls, 'sjx-controls');
 
-        const handles = {
-            normal: ['sjx-normal'],
+        const resizingHandles = {
             tl: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-l', 'sjx-hdl-tl'],
             tr: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-r', 'sjx-hdl-tr'],
             br: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-r', 'sjx-hdl-br'],
@@ -80,9 +72,18 @@ export default class Draggable extends Transformable {
             tc: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-c', 'sjx-hdl-tc'],
             bc: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-c', 'sjx-hdl-bc'],
             ml: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-l', 'sjx-hdl-ml'],
-            mr: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-r', 'sjx-hdl-mr'],
-            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator'],
-            center: rotationPoint ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined
+            mr: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-r', 'sjx-hdl-mr']
+        };
+
+        const rotationHandles = {
+            normal: ['sjx-normal'],
+            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator']
+        };
+
+        const handles = {
+            ...(rotatable && rotationHandles),
+            ...(resizable && resizingHandles),
+            center: rotationPoint && rotatable ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined
         };
 
         Object.keys(handles).forEach(key => {
@@ -101,7 +102,7 @@ export default class Draggable extends Transformable {
             });
         }
 
-        container.appendChild(controls);
+        wrapper.appendChild(controls);
 
         const $controls = helper(controls);
         $controls.css(css);
@@ -233,12 +234,10 @@ export default class Draggable extends Transformable {
             storage
         } = this;
 
-        const $el = helper(el);
-
         const {
-            cached,
+            // cached,
             controls,
-            transform,
+            // transform,
             handles
         } = storage;
 
@@ -266,25 +265,27 @@ export default class Draggable extends Transformable {
         el.setAttribute('data-cx', centerX);
         el.setAttribute('data-cy', centerY);
 
-        if (isUndef(cached)) return;
+        // if (isUndef(cached)) return;
 
-        const { dx, dy } = cached;
+        // const $el = helper(el);
 
-        const css = matrixToCSS(transform.matrix);
+        // const { dx, dy } = cached;
 
-        const left = parseFloat(
-            el.style.left || $el.css('left')
-        );
+        // const css = matrixToCSS(transform.matrix);
 
-        const top = parseFloat(
-            el.style.top || $el.css('top')
-        );
+        // const left = parseFloat(
+        //     el.style.left || $el.css('left')
+        // );
 
-        css.left = `${left + dx}px`;
-        css.top = `${top + dy}px`;
+        // const top = parseFloat(
+        //     el.style.top || $el.css('top')
+        // );
 
-        $el.css(css);
-        $controls.css(css);
+        // css.left = `${left + dx}px`;
+        // css.top = `${top + dy}px`;
+
+        // $el.css(css);
+        // $controls.css(css);
 
         this.storage.cached = null;
     }
@@ -293,12 +294,8 @@ export default class Draggable extends Transformable {
         const {
             el,
             storage,
-            options
+            options: { proportions }
         } = this;
-
-        const {
-            proportions
-        } = options;
 
         const {
             controls,
@@ -354,6 +351,13 @@ export default class Draggable extends Transformable {
             dx: nx,
             dy: ny
         };
+        
+        return {
+            width: newWidth,
+            height: newHeight,
+            ox: nx,
+            oy: ny
+        };
     }
 
     _processMove(dx, dy) {
@@ -364,23 +368,21 @@ export default class Draggable extends Transformable {
 
         const {
             controls,
-            transform
+            transform: {
+                matrix,
+                parentMatrix
+            }
         } = storage;
-
-        const {
-            matrix,
-            parentMatrix
-        } = transform;
 
         const pctm = [...parentMatrix];
         pctm[4] = pctm[5] = 0;
 
-        const n_matrix = [...matrix];
+        const nMatrix = [...matrix];
 
-        n_matrix[4] = matrix[4] + dx;
-        n_matrix[5] = matrix[5] + dy;
+        nMatrix[4] = matrix[4] + dx;
+        nMatrix[5] = matrix[5] + dy;
 
-        const css = matrixToCSS(n_matrix);
+        const css = matrixToCSS(nMatrix);
 
         helper(controls).css(css);
         helper(el).css(css);
@@ -389,19 +391,19 @@ export default class Draggable extends Transformable {
             dx,
             dy
         };
+
+        return nMatrix;
     }
 
     _processRotate(radians) {
         const {
             el,
-            storage
+            storage: {
+                controls,
+                transform,
+                center
+            }
         } = this;
-
-        const {
-            controls,
-            transform,
-            center
-        } = storage;
 
         const {
             matrix,
@@ -448,6 +450,8 @@ export default class Draggable extends Transformable {
 
         helper(controls).css(css);
         helper(el).css(css);
+
+        return resMatrix;
     }
 
     _getState(params) {
@@ -461,19 +465,13 @@ export default class Draggable extends Transformable {
 
         const {
             el,
-            storage,
-            options
+            storage: {
+                handles,
+                controls,
+                parent
+            },
+            options: { container }
         } = this;
-
-        const {
-            container
-        } = options;
-
-        const {
-            handles,
-            controls,
-            parent
-        } = storage;
 
         const {
             center: cHandle
@@ -573,12 +571,15 @@ export default class Draggable extends Transformable {
     }
 
     _moveCenterHandle(x, y) {
-        const { handles, center } = this.storage;
+        const { 
+            handles: { center }, 
+            center: { hx, hy }
+        } = this.storage;
 
-        const left = `${center.hx + x}px`,
-            top = `${center.hy + y}px`;
+        const left = `${hx + x}px`,
+            top = `${hy + y}px`;
 
-        helper(handles.center).css(
+        helper(center).css(
             {
                 left,
                 top
@@ -588,16 +589,18 @@ export default class Draggable extends Transformable {
 
     resetCenterPoint() {
         const {
-            handles
+            handles: { center }
         } = this.storage;
 
-        helper(handles.center).css(
+        helper(center).css(
             {
                 left: null,
                 top: null
             }
         );
     }
+
+    fitControlsToSize() {}
 
     get controls() {
         return this.storage.controls;

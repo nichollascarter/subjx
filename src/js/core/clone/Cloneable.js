@@ -1,5 +1,6 @@
 import { helper } from '../Helper';
 import SubjectModel from '../SubjectModel';
+import { EVENTS } from '../consts';
 
 import {
     requestAnimFrame,
@@ -38,7 +39,6 @@ export default class Cloneable extends SubjectModel {
             position: 'absolute',
             'z-index': '2147483647',
             ...style
-            //...((isDef(style) && typeof style === 'object') && style)
         };
 
         this.storage = {
@@ -48,6 +48,10 @@ export default class Cloneable extends SubjectModel {
 
         $el.on('mousedown', this._onMouseDown)
             .on('touchstart', this._onTouchStart);
+
+        EVENTS.slice(0, 3).forEach((eventName) => {
+            this.eventDispatcher.registerEvent(eventName);
+        });
     }
 
     _processOptions(options) {
@@ -186,8 +190,10 @@ export default class Cloneable extends SubjectModel {
         storage.doDraw = false;
 
         this._drag(
-            clientX - cx,
-            clientY - cy
+            { 
+                dx: clientX - cx,
+                dy: clientY - cy
+            }
         );
     }
 

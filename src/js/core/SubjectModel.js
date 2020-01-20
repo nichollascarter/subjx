@@ -1,4 +1,5 @@
 import { helper } from './Helper';
+import EventDispatcher from './EventDispatcher';
 
 export default class SubjectModel {
 
@@ -6,6 +7,8 @@ export default class SubjectModel {
         this.el = el;
         this.storage = null;
         this.proxyMethods = null;
+
+        this.eventDispatcher = new EventDispatcher();
 
         this._onMouseDown = this._onMouseDown.bind(this);
         this._onTouchStart = this._onTouchStart.bind(this);
@@ -54,9 +57,18 @@ export default class SubjectModel {
         throwNotImplementedError();
     }
 
-    _drag() {
-        this._processMove(...arguments);
-        this.proxyMethods.onMove.call(this, ...arguments);
+    _drag({ dx, dy, ...rest }) {
+        const transform = this._processMove(dx, dy);
+
+        const finalArgs = {
+            dx,
+            dy,
+            transform,
+            ...rest
+        };
+
+        this.proxyMethods.onMove.call(this, finalArgs);
+        this._emitEvent('drag', finalArgs);
     }
 
     _draw() {
@@ -119,6 +131,20 @@ export default class SubjectModel {
                 this.el
             );
         }
+    }
+
+    _emitEvent() {
+        this.eventDispatcher.emit(this, ...arguments);
+    }
+
+    on(name, cb) {
+        this.eventDispatcher.addEventListener(name, cb);
+        return this;
+    }
+
+    off(name, cb) {
+        this.eventDispatcher.removeEventListener(name, cb);
+        return this;
     }
 
 }

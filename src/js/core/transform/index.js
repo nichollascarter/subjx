@@ -1,4 +1,4 @@
-import Observable from '../observable/Observable';
+import { Observable } from '../observable';
 import Draggable from './Draggable';
 import DraggableSVG from './svg';
 import { checkElement } from './svg/util';
