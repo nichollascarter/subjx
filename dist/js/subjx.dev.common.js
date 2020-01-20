@@ -2409,7 +2409,7 @@ function movePath(params) {
 
                 case 'M': {
                     for (let k = 0, len = values.length; k < len; k += 2) {
-                        const [x, y] = values.slice(k, k + 2);
+                        let [x, y] = values.slice(k, k + 2);
 
                         if (!(relative && !firstCommand)) {
                             x += dx;
@@ -2483,7 +2483,7 @@ function movePath(params) {
                 case 'L':
                 case 'T': {
                     for (let k = 0, len = values.length; k < len; k += 2) {
-                        const [x, y] = values.slice(k, k + 2);
+                        let [x, y] = values.slice(k, k + 2);
 
                         if (!relative) {
                             x += dx;
@@ -2500,7 +2500,7 @@ function movePath(params) {
                 case 'Q':
                 case 'S': {
                     for (let k = 0, len = values.length; k < len; k += 4) {
-                        const [x1, y1, x2, y2] = values.slice(k, k + 4);
+                        let [x1, y1, x2, y2] = values.slice(k, k + 4);
 
                         if (!relative) {
                             x1 += dx;
