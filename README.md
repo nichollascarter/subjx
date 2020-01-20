@@ -15,6 +15,7 @@
 Library provides dragging/resizing/rotating/snapping SVG/HTML Elements.
 
 ## [Demo](http://jsfiddle.net/nichollascarter/qgwzch0v/)
+## [Drag, zoom and pan SVG](https://codesandbox.io/s/svg-drag-pan-zoom-wb95s)
 
 ## Installation
 
