@@ -58,10 +58,61 @@ xDraggables.forEach(item => {
     item.disable();
 });
 ```
+
+"Draggable" API:
+
+```javascript
+// getter returns root DOM element of controls
+xDraggable.controls;
+
+// provides access to useful options
+xDraggable.storage;
+// for example: to get reference to any handle's DOM
+// const { 
+//   handles: { tl, tr, ...etc}
+// } = xDraggable.storage;
+
+// enabling dragging
+// there is no need to call this method manually
+xDraggable.enable(options);
+
+// disabling dragging possibilities, removes controls and handles
+xDraggable.disable();
+
+ // adds event listener for some events
+xDraggable.on(eventName, cb);
+
+// removes event listener for some events
+xDraggable.off(eventName, cb);
+
+// Event names
+const EVENTS = [
+    'dragStart',
+    'drag',
+    'dragEnd',
+    'resizeStart',
+    'resize',
+    'resizeEnd',
+    'rotateStart',
+    'rotate',
+    'rotateEnd'
+];
+
+// SVG elements methods
+
+// Useful when SVG element's container was transformed from outside
+// call this method when applying scale or viewBox values changing
+xDraggable.fitControlsToSize();
+
+// Returns rotation point handle to default position
+xDraggable.resetCenterPoint();
+```
+
 Possible parameters:
 ```javascript
 subjx('.draggable').drag({
     // transformation coordinate system
+    // "controls" appends to this element
     container: 'selector' | element,
     // constrain movement along an axis
     axis: 'x' | 'y'
@@ -79,6 +130,11 @@ subjx('.draggable').drag({
     },
     // keep aspect ratio when resizing
     proportions: true,
+    // allow or deny an action(default: true)
+    draggable: true,
+    // handles will not showing with false
+    resizable: true,
+    rotatable: true,
     // ----- experimental options ------
     // show/manipulate rotation point(not tested with HTML elements)
     rotationPoint: true,
@@ -90,7 +146,7 @@ subjx('.draggable').drag({
 Subscribing new draggable element to previously activated(useful with `each` option)
 ```javascript
 const observable = subjx.createObservable();
-subjx('.draggable').drag({...}, observable)
+subjx('.draggable').drag({...}, observable);
 
 const createDraggableAndSubscribe = e => {
     subjx(e.target).drag({...}, observable);
@@ -103,7 +159,7 @@ Allowed SVG elements:
 #### Notice: In most cases, it is recommended to use 'proportions' options
 
 
-Avaliable methods:
+Available methods:
 ```javascript
 subjx('.draggable').drag({
     onInit(el) {
@@ -143,7 +199,7 @@ const xCloneable = xElem.clone({
 });
 ```
 
-Avaliable methods:
+Available methods:
 ```javascript
 subjx('.cloneable').clone({
     onInit(el) {

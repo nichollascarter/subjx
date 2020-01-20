@@ -1,6 +1,6 @@
 /*@license
 * Drag/Rotate/Resize Library
-* Released under the MIT license, 2018-2019
+* Released under the MIT license, 2018-2020
 * Karen Sarksyan
 * nichollascarter@gmail.com
 */
@@ -189,6 +189,8 @@ class Helper {
     }
 
     is(selector) {
+        if (isUndef(selector)) return false;
+        
         const _sel = helper(selector);
         let len = this.length;
 
@@ -314,12 +316,58 @@ class Observable {
 
 }
 
+class Event {
+
+    constructor(name) {
+        this.name = name;
+        this.callbacks = [];
+    }
+
+    registerCallback(cb) {
+        this.callbacks.push(cb);
+    }
+
+    removeCallback(cb) {
+        const ix = this.callbacks(cb);
+        this.callbacks.splice(ix, 1);
+    }
+
+}
+
+class EventDispatcher {
+
+    constructor() {
+        this.events = {};
+    }
+
+    registerEvent(eventName) {
+        this.events[eventName] = new Event(eventName);
+    }
+
+    emit(ctx, eventName, eventArgs) {
+        this.events[eventName].callbacks.forEach((cb) => {
+            cb.call(ctx, eventArgs);
+        });
+    };
+    
+    addEventListener(eventName, cb) {
+        this.events[eventName].registerCallback(cb);
+    }
+
+    removeEventListener(eventName, cb) {
+        this.events[eventName].removeCallback(cb);
+    }
+
+}
+
 class SubjectModel {
 
     constructor(el) {
         this.el = el;
         this.storage = null;
         this.proxyMethods = null;
+
+        this.eventDispatcher = new EventDispatcher();
 
         this._onMouseDown = this._onMouseDown.bind(this);
         this._onTouchStart = this._onTouchStart.bind(this);
@@ -368,9 +416,18 @@ class SubjectModel {
         throwNotImplementedError();
     }
 
-    _drag() {
-        this._processMove(...arguments);
-        this.proxyMethods.onMove.call(this, ...arguments);
+    _drag({ dx, dy, ...rest }) {
+        const transform = this._processMove(dx, dy);
+
+        const finalArgs = {
+            dx,
+            dy,
+            transform,
+            ...rest
+        };
+
+        this.proxyMethods.onMove.call(this, finalArgs);
+        this._emitEvent('drag', finalArgs);
     }
 
     _draw() {
@@ -435,10 +492,61 @@ class SubjectModel {
         }
     }
 
+    _emitEvent() {
+        this.eventDispatcher.emit(this, ...arguments);
+    }
+
+    on(name, cb) {
+        this.eventDispatcher.addEventListener(name, cb);
+        return this;
+    }
+
+    off(name, cb) {
+        this.eventDispatcher.removeEventListener(name, cb);
+        return this;
+    }
+
 }
 
 function throwNotImplementedError() {
     throw Error(`Method not implemented`);
+}
+
+const EVENTS = [
+    'dragStart',
+    'drag',
+    'dragEnd',
+    'resizeStart',
+    'resize',
+    'resizeEnd',
+    'rotateStart',
+    'rotate',
+    'rotateEnd',
+    'setPointStart',
+    'setPointEnd'
+];
+
+const RAD = Math.PI / 180;
+
+function snapToGrid(value, snap) {
+    if (snap === 0) {
+        return value;
+    } else {
+        const result = snapCandidate(value, snap);
+
+        if (result - value < snap) {
+            return result;
+        }
+    }
+}
+
+function snapCandidate(value, gridSize) {
+    if (gridSize === 0) return value;
+    return Math.round(value / gridSize) * gridSize;
+}
+
+function floatToFixed(val, size = 6) {
+    return Number(val.toFixed(size));
 }
 
 function getOffset(node) {
@@ -529,29 +637,6 @@ function matrixToCSS(arr) {
     };
 }
 
-const RAD = Math.PI / 180;
-
-function snapToGrid(value, snap) {
-    if (snap === 0) {
-        return value;
-    } else {
-        const result = snapCandidate(value, snap);
-
-        if (result - value < snap) {
-            return result;
-        }
-    }
-}
-
-function snapCandidate(value, gridSize) {
-    if (gridSize === 0) return value;
-    return Math.round(value / gridSize) * gridSize;
-}
-
-function floatToFixed(val, size = 6) {
-    return Number(val.toFixed(size));
-}
-
 class Transformable extends SubjectModel {
 
     constructor(el, options, observable) {
@@ -560,6 +645,11 @@ class Transformable extends SubjectModel {
             throw new TypeError('Cannot construct Transformable instances directly');
         }
         this.observable = observable;
+
+        EVENTS.forEach((eventName) => {
+            this.eventDispatcher.registerEvent(eventName);
+        });
+        
         this.enable(options);
     }
 
@@ -567,14 +657,27 @@ class Transformable extends SubjectModel {
         throw Error(`'_cursorPoint()' method not implemented`);
     }
 
-    _rotate() {
-        this._processRotate(...arguments);
-        this.proxyMethods.onRotate.call(this, ...arguments);
+    _rotate({ radians, ...rest }) {
+        const resultMtrx = this._processRotate(radians);
+        const finalArgs = {
+            transform: resultMtrx,
+            delta: radians,
+            ...rest
+        };
+        this.proxyMethods.onRotate.call(this, finalArgs);
+        this._emitEvent('rotate', finalArgs);
     }
 
-    _resize() {
-        this._processResize(...arguments);
-        this.proxyMethods.onResize.call(this, ...arguments);
+    _resize({ dx, dy, ...rest }) {
+        const finalValues = this._processResize(dx, dy);
+        const finalArgs = {
+            ...finalValues,
+            dx,
+            dy,
+            ...rest
+        };
+        this.proxyMethods.onResize.call(this, finalArgs);
+        this._emitEvent('resize', finalArgs);
     }
 
     _processOptions(options) {
@@ -602,6 +705,9 @@ class Transformable extends SubjectModel {
             _cursorRotate = 'auto',
             _themeColor = '#00a8ff',
             _rotationPoint = false,
+            _draggable = true,
+            _resizable = true,
+            _rotatable = true,
             _onInit = () => { },
             _onMove = () => { },
             _onRotate = () => { },
@@ -621,6 +727,9 @@ class Transformable extends SubjectModel {
                 cursorRotate,
                 rotationPoint,
                 restrict,
+                draggable,
+                resizable,
+                rotatable,
                 onInit,
                 onDrop,
                 onMove,
@@ -669,6 +778,10 @@ class Transformable extends SubjectModel {
             _rotationPoint = rotationPoint || false;
             _proportions = proportions || false;
 
+            _draggable = isDef(draggable) ? draggable : true;
+            _resizable = isDef(resizable) ? resizable : true;
+            _rotatable = isDef(rotatable) ? rotatable : true;
+
             _onInit = createMethod(onInit);
             _onDrop = createMethod(onDrop);
             _onMove = createMethod(onMove);
@@ -688,7 +801,10 @@ class Transformable extends SubjectModel {
             container: _container,
             snap: _snap,
             each: _each,
-            proportions: _proportions
+            proportions: _proportions,
+            draggable: _draggable,
+            resizable: _resizable,
+            rotatable: _rotatable
         };
 
         this.proxyMethods = {
@@ -728,23 +844,23 @@ class Transformable extends SubjectModel {
             doRotate,
             doSetCenter,
             revX,
-            revY,
-            handle
+            revY
         } = storage;
 
         const {
             snap,
-            each,
-            restrict
+            each: {
+                move: moveEach,
+                resize: resizeEach,
+                rotate: rotateEach
+            },
+            restrict,
+            draggable,
+            resizable,
+            rotatable
         } = options;
 
-        const {
-            move: moveEach,
-            resize: resizeEach,
-            rotate: rotateEach
-        } = each;
-
-        if (doResize) {
+        if (doResize && resizable) {
             const {
                 transform,
                 cx,
@@ -769,26 +885,25 @@ class Transformable extends SubjectModel {
             dx = dox ? (revX ? - dx : dx) : 0,
             dy = doy ? (revY ? - dy : dy) : 0;
 
-            self._resize(
+            const args = {
                 dx,
                 dy,
-                handle[0]
-            );
+                clientX,
+                clientY
+            };
+
+            self._resize(args);
 
             if (resizeEach) {
                 observable.notify(
                     'onresize',
                     self,
-                    {
-                        dx,
-                        dy,
-                        handle: handle[0]
-                    }
+                    args
                 );
             }
         }
 
-        if (doDrag) {
+        if (doDrag && draggable) {
             const {
                 restrictOffset,
                 elementOffset,
@@ -814,23 +929,26 @@ class Transformable extends SubjectModel {
                 ? snapToGrid(clientY - ny, snap.y)
                 : 0;
 
-            self._drag(
+            const args = {
                 dx,
-                dy
+                dy,
+                clientX,
+                clientY
+            };
+
+            self._drag(
+                args
             );
 
             if (moveEach) {
                 observable.notify('onmove',
                     self,
-                    {
-                        dx,
-                        dy
-                    }
+                    args
                 );
             }
         }
 
-        if (doRotate) {
+        if (doRotate && rotatable) {
             const {
                 pressang,
                 center
@@ -841,21 +959,30 @@ class Transformable extends SubjectModel {
                 clientX - center.x
             ) - pressang;
 
+            const args = {
+                clientX,
+                clientY
+            };
+
             self._rotate(
-                snapToGrid(radians, snap.angle)
+                {
+                    radians: snapToGrid(radians, snap.angle),
+                    ...args
+                }
             );
 
             if (rotateEach) {
                 observable.notify('onrotate',
                     self,
                     {
-                        radians
+                        radians,
+                        ...args
                     }
                 );
             }
         }
 
-        if (doSetCenter) {
+        if (doSetCenter && rotatable) {
             const {
                 bx,
                 by
@@ -879,7 +1006,7 @@ class Transformable extends SubjectModel {
         const {
             observable,
             storage,
-            options,
+            options: { axis, restrict, each },
             el
         } = this;
 
@@ -909,23 +1036,25 @@ class Transformable extends SubjectModel {
             onLeftEdge;
 
         const {
-            handles,
-            radius
+            handles
         } = storage;
 
         const {
-            axis,
-            restrict
-        } = options;
+            rotator,
+            center,
+            radius
+        } = handles;
 
         if (isDef(radius)) {
             removeClass(radius, 'sjx-hidden');
         }
 
-        const doRotate = handle.is(handles.rotator),
-            doSetCenter = isDef(handles.center)
-                ? handle.is(handles.center)
+        const doRotate = handle.is(rotator),
+            doSetCenter = isDef(center)
+                ? handle.is(center)
                 : false;
+
+        const doDrag = !(doRotate || doResize || doSetCenter);
 
         const {
             clientX,
@@ -962,7 +1091,7 @@ class Transformable extends SubjectModel {
             bx,
             by,
             doResize,
-            doDrag: !(doRotate || doResize || doSetCenter),
+            doDrag,
             doRotate,
             doSetCenter,
             onExecution: true,
@@ -996,10 +1125,42 @@ class Transformable extends SubjectModel {
             ...newStorageValues
         };
 
+        const eventArgs = {
+            clientX,
+            clientY
+        };
+
+        if (doResize) {
+            this._emitEvent('resizeStart', eventArgs);
+        } else if (doRotate) {
+            this._emitEvent('rotateStart', eventArgs);
+        } else if (doDrag) {
+            this._emitEvent('dragStart', eventArgs);
+        }
+
+        const {
+            move,
+            resize,
+            rotate
+        } = each;
+
+        const actionName = doResize
+            ? 'resize'
+            : (doRotate? 'rotate' : 'drag');
+        
+        const triggerEvent = 
+            (doResize && resize) ||
+            (doRotate && rotate) ||
+            (doDrag && move);
+
         observable.notify(
             'ongetstate',
             this,
-            {
+            {   
+                clientX,
+                clientY,
+                actionName,
+                triggerEvent,
                 factor,
                 revX,
                 revY,
@@ -1007,7 +1168,7 @@ class Transformable extends SubjectModel {
                 doH
             }
         );
-
+        
         this._draw();
     }
 
@@ -1052,19 +1213,21 @@ class Transformable extends SubjectModel {
         }
     }
 
-    _end(e) {
+    _end({ clientX, clientY }) {
         const {
+            options: { each },
             observable,
             storage,
-            proxyMethods,
-            el
+            proxyMethods
         } = this;
 
         const {
             doResize,
             doDrag,
+            doRotate,
+            //doSetCenter,
             frame,
-            radius
+            handles: { radius }
         } = storage;
 
         const actionName = doResize
@@ -1080,14 +1243,41 @@ class Transformable extends SubjectModel {
         storage.cursor = null;
 
         this._apply(actionName);
-        proxyMethods.onDrop.call(this, e, el);
+
+        const eventArgs = {
+            clientX, 
+            clientY
+        };
+
+        proxyMethods.onDrop.call(this, eventArgs);
+
+        if (doResize) {
+            this._emitEvent('resizeEnd', eventArgs);
+        } else if (doRotate) {
+            this._emitEvent('rotateEnd', eventArgs);
+        } else if (doDrag) {
+            this._emitEvent('dragEnd', eventArgs);
+        }
+
+        const {
+            move,
+            resize,
+            rotate
+        } = each;
+
+        const triggerEvent = 
+            (doResize && resize) ||
+            (doRotate && rotate) ||
+            (doDrag && move);
 
         observable.notify(
             'onapply',
             this,
             {
+                clientX, 
+                clientY,
                 actionName,
-                e
+                triggerEvent
             }
         );
 
@@ -1096,7 +1286,7 @@ class Transformable extends SubjectModel {
         helper(document.body).css({ cursor: 'auto' });
         if (isDef(radius)) {
             addClass(radius, 'sjx-hidden');
-        }
+        }  
     }
 
     _checkHandles(handle, handles) {
@@ -1134,56 +1324,51 @@ class Transformable extends SubjectModel {
         };
     }
 
-    notifyMove({ dx, dy }) {
-        this._drag(
-            dx,
-            dy
-        );
+    notifyMove() {
+        this._drag(...arguments);
     }
 
-    notifyRotate({ radians }) {
+    notifyRotate({ radians, ...rest }) {
         const {
-            snap
+            snap: { angle }
         } = this.options;
 
         this._rotate(
-            snapToGrid(radians, snap.angle)
+            {
+                radians: snapToGrid(radians, angle),
+                ...rest
+            }
         );
     }
 
-    notifyResize({ dx, dy }) {
-        this._resize(
-            dx,
-            dy
-        );
+    notifyResize() {
+        this._resize(...arguments);
     }
 
-    notifyApply({ e, actionName }) {
-        this.proxyMethods.onDrop.call(this, e, this.el);
-        this._apply(actionName);
+    notifyApply({ clientX, clientY, actionName, triggerEvent }) {
+        this.proxyMethods.onDrop.call(this, { clientX, clientY });
+        if (triggerEvent) {
+            this._apply(actionName);
+            this._emitEvent(`${actionName}End`, { clientX, clientY });
+        }
     }
 
-    notifyGetState(data) {
-        const { storage } = this;
-
-        const recalc = this._getState(
-            data
-        );
-
-        this.storage = {
-            ...storage,
-            ...recalc
-        };
+    notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest}) {
+        if (triggerEvent) {
+            const recalc = this._getState(
+                rest
+            );
+    
+            this.storage = {
+                ...this.storage,
+                ...recalc
+            };
+            this._emitEvent(`${actionName}Start`, { clientX, clientY });
+        }
     }
 
-    subscribe(events) {
+    subscribe({ resize, move, rotate }) {
         const { observable: ob } = this;
-
-        const {
-            resize,
-            move,
-            rotate
-        } = events;
 
         if (move || resize || rotate) {
             ob.subscribe('ongetstate', this)
@@ -1241,11 +1426,7 @@ class Transformable extends SubjectModel {
 
 }
 
-function matrixTransform(point, matrix) {
-    const {
-        x, y
-    } = point;
-
+function matrixTransform({ x, y }, matrix) {
     const [a, b, c, d, e, f] = matrix;
 
     return {
@@ -1369,16 +1550,19 @@ function matrixInvert(ctm) {
     ];
 }
 
-function multiplyMatrix(mtrx1, mtrx2) {
+function multiplyMatrix(
+    [a1, b1, c1, d1, e1, f1], 
+    [a2, b2, c2, d2, e2, f2]
+) {
     const m1 = [
-        [mtrx1[0], mtrx1[2], mtrx1[4]],
-        [mtrx1[1], mtrx1[3], mtrx1[5]],
+        [a1, c1, e1],
+        [b1, d1, f1],
         [0, 0, 1]
     ];
 
     const m2 = [
-        [mtrx2[0], mtrx2[2], mtrx2[4]],
-        [mtrx2[1], mtrx2[3], mtrx2[5]],
+        [a2, c2, e2],
+        [b2, d2, f2],
         [0, 0, 1]
     ];
 
@@ -1452,16 +1636,12 @@ class Draggable extends Transformable {
     }
 
     _init(el) {
-        const container = document.createElement('div');
-        addClass(container, 'sjx-wrapper');
-
-        el.parentNode.insertBefore(container, el);
-
-        const { options } = this;
-
         const {
-            rotationPoint
-        } = options;
+            rotationPoint,
+            container,
+            resizable,
+            rotatable
+        } = this.options;
 
         const {
             left,
@@ -1469,6 +1649,10 @@ class Draggable extends Transformable {
             width,
             height
         } = el.style;
+
+        const wrapper = document.createElement('div');
+        addClass(wrapper, 'sjx-wrapper');
+        container.appendChild(wrapper);
 
         const $el = helper(el);
 
@@ -1488,8 +1672,7 @@ class Draggable extends Transformable {
         const controls = document.createElement('div');
         addClass(controls, 'sjx-controls');
 
-        const handles = {
-            normal: ['sjx-normal'],
+        const resizingHandles = {
             tl: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-l', 'sjx-hdl-tl'],
             tr: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-r', 'sjx-hdl-tr'],
             br: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-r', 'sjx-hdl-br'],
@@ -1497,9 +1680,18 @@ class Draggable extends Transformable {
             tc: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-c', 'sjx-hdl-tc'],
             bc: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-c', 'sjx-hdl-bc'],
             ml: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-l', 'sjx-hdl-ml'],
-            mr: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-r', 'sjx-hdl-mr'],
-            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator'],
-            center: rotationPoint ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined
+            mr: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-r', 'sjx-hdl-mr']
+        };
+
+        const rotationHandles = {
+            normal: ['sjx-normal'],
+            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator']
+        };
+
+        const handles = {
+            ...(rotatable && rotationHandles),
+            ...(resizable && resizingHandles),
+            center: rotationPoint && rotatable ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined
         };
 
         Object.keys(handles).forEach(key => {
@@ -1518,7 +1710,7 @@ class Draggable extends Transformable {
             });
         }
 
-        container.appendChild(controls);
+        wrapper.appendChild(controls);
 
         const $controls = helper(controls);
         $controls.css(css);
@@ -1650,12 +1842,10 @@ class Draggable extends Transformable {
             storage
         } = this;
 
-        const $el = helper(el);
-
         const {
-            cached,
+            // cached,
             controls,
-            transform,
+            // transform,
             handles
         } = storage;
 
@@ -1683,25 +1873,27 @@ class Draggable extends Transformable {
         el.setAttribute('data-cx', centerX);
         el.setAttribute('data-cy', centerY);
 
-        if (isUndef(cached)) return;
+        // if (isUndef(cached)) return;
 
-        const { dx, dy } = cached;
+        // const $el = helper(el);
 
-        const css = matrixToCSS(transform.matrix);
+        // const { dx, dy } = cached;
 
-        const left = parseFloat(
-            el.style.left || $el.css('left')
-        );
+        // const css = matrixToCSS(transform.matrix);
 
-        const top = parseFloat(
-            el.style.top || $el.css('top')
-        );
+        // const left = parseFloat(
+        //     el.style.left || $el.css('left')
+        // );
 
-        css.left = `${left + dx}px`;
-        css.top = `${top + dy}px`;
+        // const top = parseFloat(
+        //     el.style.top || $el.css('top')
+        // );
 
-        $el.css(css);
-        $controls.css(css);
+        // css.left = `${left + dx}px`;
+        // css.top = `${top + dy}px`;
+
+        // $el.css(css);
+        // $controls.css(css);
 
         this.storage.cached = null;
     }
@@ -1710,12 +1902,8 @@ class Draggable extends Transformable {
         const {
             el,
             storage,
-            options
+            options: { proportions }
         } = this;
-
-        const {
-            proportions
-        } = options;
 
         const {
             controls,
@@ -1771,6 +1959,13 @@ class Draggable extends Transformable {
             dx: nx,
             dy: ny
         };
+        
+        return {
+            width: newWidth,
+            height: newHeight,
+            ox: nx,
+            oy: ny
+        };
     }
 
     _processMove(dx, dy) {
@@ -1781,23 +1976,21 @@ class Draggable extends Transformable {
 
         const {
             controls,
-            transform
+            transform: {
+                matrix,
+                parentMatrix
+            }
         } = storage;
-
-        const {
-            matrix,
-            parentMatrix
-        } = transform;
 
         const pctm = [...parentMatrix];
         pctm[4] = pctm[5] = 0;
 
-        const n_matrix = [...matrix];
+        const nMatrix = [...matrix];
 
-        n_matrix[4] = matrix[4] + dx;
-        n_matrix[5] = matrix[5] + dy;
+        nMatrix[4] = matrix[4] + dx;
+        nMatrix[5] = matrix[5] + dy;
 
-        const css = matrixToCSS(n_matrix);
+        const css = matrixToCSS(nMatrix);
 
         helper(controls).css(css);
         helper(el).css(css);
@@ -1806,19 +1999,19 @@ class Draggable extends Transformable {
             dx,
             dy
         };
+
+        return nMatrix;
     }
 
     _processRotate(radians) {
         const {
             el,
-            storage
+            storage: {
+                controls,
+                transform,
+                center
+            }
         } = this;
-
-        const {
-            controls,
-            transform,
-            center
-        } = storage;
 
         const {
             matrix,
@@ -1865,6 +2058,8 @@ class Draggable extends Transformable {
 
         helper(controls).css(css);
         helper(el).css(css);
+
+        return resMatrix;
     }
 
     _getState(params) {
@@ -1878,19 +2073,13 @@ class Draggable extends Transformable {
 
         const {
             el,
-            storage,
-            options
+            storage: {
+                handles,
+                controls,
+                parent
+            },
+            options: { container }
         } = this;
-
-        const {
-            container
-        } = options;
-
-        const {
-            handles,
-            controls,
-            parent
-        } = storage;
 
         const {
             center: cHandle
@@ -1990,12 +2179,15 @@ class Draggable extends Transformable {
     }
 
     _moveCenterHandle(x, y) {
-        const { handles, center } = this.storage;
+        const { 
+            handles: { center }, 
+            center: { hx, hy }
+        } = this.storage;
 
-        const left = `${center.hx + x}px`,
-            top = `${center.hy + y}px`;
+        const left = `${hx + x}px`,
+            top = `${hy + y}px`;
 
-        helper(handles.center).css(
+        helper(center).css(
             {
                 left,
                 top
@@ -2005,16 +2197,18 @@ class Draggable extends Transformable {
 
     resetCenterPoint() {
         const {
-            handles
+            handles: { center }
         } = this.storage;
 
-        helper(handles.center).css(
+        helper(center).css(
             {
                 left: null,
                 top: null
             }
         );
     }
+
+    fitControlsToSize() {}
 
     get controls() {
         return this.storage.controls;
@@ -2031,6 +2225,7 @@ function createHandler(classList) {
 }
 
 const svgPoint = createSVGElement('svg').createSVGPoint();
+const floatRE = /[+-]?\d+(\.\d+)?/g;
 
 const ALLOWED_ELEMENTS = [
     'circle', 'ellipse',
@@ -2039,6 +2234,29 @@ const ALLOWED_ELEMENTS = [
     'polyline', 'rect',
     'text', 'g'
 ];
+
+function checkChildElements(element) {
+    const arrOfElements = [];
+
+    if (isGroup(element)) {
+        forEach.call(element.childNodes, item => {
+            if (item.nodeType === 1) {
+                const tagName = item.tagName.toLowerCase();
+
+                if (ALLOWED_ELEMENTS.indexOf(tagName) !== -1) {
+                    if (tagName === 'g') {
+                        arrOfElements.push(...checkChildElements(item));
+                    }
+                    arrOfElements.push(item);
+                }
+            }
+        });
+    } else {
+        arrOfElements.push(element);
+    }
+
+    return arrOfElements;
+}
 
 function createSVGElement(name) {
     return document.createElementNS('http://www.w3.org/2000/svg', name);
@@ -2101,6 +2319,32 @@ function isIdentity(matrix) {
         d === 1 &&
         e === 0 &&
         f === 0;
+}
+
+function createPoint(svg, x, y) {
+    if (isUndef(x) || isUndef(y)) {
+        return null;
+    }
+    const pt = svg.createSVGPoint();
+    pt.x = x;
+    pt.y = y;
+    return pt;
+}
+
+function isGroup(element) {
+    return element.tagName.toLowerCase() === 'g';
+}
+
+function parsePoints(pts) {
+    return pts.match(floatRE).reduce(
+        (result, value, index, array) => {
+            if (index % 2 === 0) {
+                result.push(array.slice(index, index + 2));
+            }
+            return result;
+        },
+        []
+    );
 }
 
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
@@ -2653,7 +2897,6 @@ function resizePath(params) {
 
 const MIN_SIZE$1 = 5;
 const ROT_OFFSET = 50;
-const floatRE = /[+-]?\d+(\.\d+)?/g;
 
 class DraggableSVG extends Transformable {
 
@@ -2662,13 +2905,13 @@ class DraggableSVG extends Transformable {
     }
 
     _init(el) {
-        const { options } = this;
-
         const {
             rotationPoint,
             container,
-            themeColor
-        } = options;
+            themeColor,
+            resizable,
+            rotatable
+        } = this.options;
 
         const wrapper = createSVGElement('g');
         addClass(wrapper, 'sjx-svg-wrapper');
@@ -2725,58 +2968,75 @@ class DraggableSVG extends Transformable {
             centerY = el.getAttribute('data-cy');
 
         const boxCTM = getTransformToElement(box, box.parentNode),
-            boxCenter = pointTo(boxCTM, bX + bW / 2, bY + bH / 2);
+            boxCenter = pointTo(boxCTM, bX + bW / 2, bY + bH / 2),
+            boxTL = pointTo(boxCTM, bX, bY),
+            boxTR = pointTo(boxCTM, bX + bW, bY),
+            boxMR = pointTo(boxCTM, bX + bW, bY + bH / 2);
 
-        const handles = {
-            tl: pointTo(boxCTM, bX, bY),
-            tr: pointTo(boxCTM, bX + bW, bY),
+        const resizingHandles = {
+            tl: boxTL,
+            tr: boxTR,
             br: pointTo(boxCTM, bX + bW, bY + bH),
             bl: pointTo(boxCTM, bX, bY + bH),
             tc: pointTo(boxCTM, bX + bW / 2, bY),
             bc: pointTo(boxCTM, bX + bW / 2, bY + bH),
             ml: pointTo(boxCTM, bX, bY + bH / 2),
-            mr: pointTo(boxCTM, bX + bW, bY + bH / 2),
-            center: rotationPoint ? createPoint(container, centerX, centerY) || boxCenter : undefined,
-            //...(rotationPoint ? { center: createPoint(container, centerX, centerY) || boxCenter }),
-            rotator: {}
+            mr: boxMR
         };
 
-        const theta = Math.atan2(
-            handles.tl.y - handles.tr.y,
-            handles.tl.x - handles.tr.x
-        );
+        let rotationHandles = {},
+            rotator = null;
 
-        handles.rotator.x = handles.mr.x - ROT_OFFSET * Math.cos(theta);
-        handles.rotator.y = handles.mr.y - ROT_OFFSET * Math.sin(theta);
+        if (rotatable) {
+            const theta = Math.atan2(
+                boxTL.y - boxTR.y,
+                boxTL.x - boxTR.x
+            );
 
-        const normalLine = createSVGElement('line');
+            rotator = {
+                x: boxMR.x - ROT_OFFSET * Math.cos(theta),
+                y: boxMR.y - ROT_OFFSET * Math.sin(theta)
+            }; 
 
-        normalLine.x1.baseVal.value = handles.mr.x;
-        normalLine.y1.baseVal.value = handles.mr.y;
-        normalLine.x2.baseVal.value = handles.rotator.x;
-        normalLine.y2.baseVal.value = handles.rotator.y;
+            const normalLine = createSVGElement('line');
 
-        setLineStyle(normalLine, themeColor);
+            normalLine.x1.baseVal.value = boxMR.x;
+            normalLine.y1.baseVal.value = boxMR.y;
+            normalLine.x2.baseVal.value = rotator.x;
+            normalLine.y2.baseVal.value = rotator.y;
 
-        normalLineGroup.appendChild(normalLine);
+            setLineStyle(normalLine, themeColor);
+            normalLineGroup.appendChild(normalLine);
 
-        let radius = null;
+            let radius = null;
 
-        if (rotationPoint) {
-            radius = createSVGElement('line');
+            if (rotationPoint) {
+                radius = createSVGElement('line');
 
-            addClass(radius, 'sjx-hidden');
+                addClass(radius, 'sjx-hidden');
 
-            radius.x1.baseVal.value = boxCenter.x;
-            radius.y1.baseVal.value = boxCenter.y;
-            radius.x2.baseVal.value = centerX || boxCenter.x;
-            radius.y2.baseVal.value = centerY || boxCenter.y;
+                radius.x1.baseVal.value = boxCenter.x;
+                radius.y1.baseVal.value = boxCenter.y;
+                radius.x2.baseVal.value = centerX || boxCenter.x;
+                radius.y2.baseVal.value = centerY || boxCenter.y;
 
-            setLineStyle(radius, '#fe3232');
-            radius.setAttribute('opacity', 0.5);
+                setLineStyle(radius, '#fe3232');
+                radius.setAttribute('opacity', 0.5);
 
-            normalLineGroup.appendChild(radius);
+                normalLineGroup.appendChild(radius);
+            }
+
+            rotationHandles = {
+                normal: normalLine,
+                radius
+            };
         }
+
+        const handles = {
+            ...(resizable && resizingHandles),
+            rotator,
+            center: rotationPoint && rotatable ? createPoint(container, centerX, centerY) || boxCenter : undefined
+        };
 
         Object.keys(handles).forEach(key => {
             const data = handles[key];
@@ -2798,11 +3058,12 @@ class DraggableSVG extends Transformable {
         this.storage = {
             wrapper,
             box,
-            handles,
-            normalLine,
-            radius: rotationPoint ? radius : undefined,
-            //...(rotationPoint && { radius }),
-            parent: el.parentNode
+            handles: {
+                ...handles,
+                ...rotationHandles
+            },
+            parent: el.parentNode,
+            center: {}
         };
 
         helper(wrapper)
@@ -2923,22 +3184,21 @@ class DraggableSVG extends Transformable {
         const {
             el: element,
             storage,
-            options
+            options: { container }
         } = this;
-
-        const {
-            container
-        } = options;
 
         const {
             box,
             handles,
             cached,
-            transform
+            transform 
         } = storage;
 
         const {
-            matrix
+            matrix,
+            boxCTM,
+            bBox,
+            ctm
         } = transform;
 
         const eBBox = element.getBBox();
@@ -2952,7 +3212,7 @@ class DraggableSVG extends Transformable {
 
         const rotationPoint = isDef(handles.center)
             ? pointTo(
-                transform.boxCTM,
+                boxCTM,
                 handles.center.cx.baseVal.value,
                 handles.center.cy.baseVal.value
             )
@@ -3048,7 +3308,8 @@ class DraggableSVG extends Transformable {
                     x,
                     y,
                     width: newWidth,
-                    height: newHeight
+                    height: newHeight,
+                    boxMatrix: null
                 }
             );
 
@@ -3061,7 +3322,7 @@ class DraggableSVG extends Transformable {
                             scaleX,
                             scaleY,
                             defaultCTM: child.__ctm__,
-                            bBox: transform.bBox,
+                            bBox: bBox,
                             container,
                             storage
                         });
@@ -3071,8 +3332,8 @@ class DraggableSVG extends Transformable {
                 applyResize(element, {
                     scaleX,
                     scaleY,
-                    defaultCTM: transform.ctm,
-                    bBox: transform.bBox,
+                    defaultCTM: ctm,
+                    bBox: bBox,
                     container,
                     storage
                 });
@@ -3091,15 +3352,10 @@ class DraggableSVG extends Transformable {
         const {
             el,
             storage,
-            options
+            options: { proportions }
         } = this;
 
         const {
-            proportions
-        } = options;
-
-        const {
-            box,
             left,
             top,
             cw,
@@ -3109,7 +3365,7 @@ class DraggableSVG extends Transformable {
             revY,
             doW,
             doH
-        } = this.storage;
+        } = storage;
 
         const {
             matrix,
@@ -3122,7 +3378,7 @@ class DraggableSVG extends Transformable {
         let {
             width: newWidth,
             height: newHeight
-        } = box.getBBox();
+        } = el.getBBox(); //box
 
         const ratio = doW || (!doW && !doH)
             ? (cw + dx) / cw
@@ -3160,26 +3416,33 @@ class DraggableSVG extends Transformable {
             matrixToString(res)
         );
 
-        this.storage.cached = {
-            scaleX,
-            scaleY
-        };
-
         const deltaW = newWidth - cw,
             deltaH = newHeight - ch;
 
         const newX = left - deltaW * (doH ? 0.5 : (revX ? 1 : 0)),
             newY = top - deltaH * (doW ? 0.5 : (revY ? 1 : 0));
 
+        this.storage.cached = {
+            scaleX,
+            scaleY
+        };
+
+        const finalValues = {
+            x: newX,
+            y: newY,
+            width: newWidth,
+            height: newHeight
+        };
+
         applyTransformToHandles(
             storage,
             {
-                x: newX,
-                y: newY,
-                width: newWidth,
-                height: newHeight
+                ...finalValues,
+                boxMatrix: null
             }
         );
+
+        return finalValues;
     }
 
     _processMove(dx, dy) {
@@ -3200,11 +3463,11 @@ class DraggableSVG extends Transformable {
         scMatrix.e = dx;
         scMatrix.f = dy;
 
-        const moveWrapper = scMatrix.multiply(wrapperMatrix);
+        const moveWrapperMtrx = scMatrix.multiply(wrapperMatrix);
 
         wrapper.setAttribute(
             'transform',
-            matrixToString(moveWrapper)
+            matrixToString(moveWrapperMtrx)
         );
 
         parentMatrix.e = parentMatrix.f = 0;
@@ -3217,11 +3480,11 @@ class DraggableSVG extends Transformable {
         trMatrix.e = x;
         trMatrix.f = y;
 
-        const moveElement = trMatrix.multiply(matrix);
+        const moveElementMtrx = trMatrix.multiply(matrix);
 
         this.el.setAttribute(
             'transform',
-            matrixToString(moveElement)
+            matrixToString(moveElementMtrx)
         );
 
         this.storage.cached = {
@@ -3231,17 +3494,19 @@ class DraggableSVG extends Transformable {
             oy: dy
         };
 
-        if (!center.isShifted) return;
+        if (center.isShifted) {
+            const radiusMatrix = wrapperMatrix.inverse();
+            radiusMatrix.e = radiusMatrix.f = 0;
+            const { x: nx, y: ny } = pointTo(
+                radiusMatrix,
+                dx,
+                dy
+            );
 
-        const radiusMatrix = wrapperMatrix.inverse();
-        radiusMatrix.e = radiusMatrix.f = 0;
-        const { x: nx, y: ny } = pointTo(
-            radiusMatrix,
-            dx,
-            dy
-        );
+            this._moveCenterHandle(-nx, -ny);
+        }
 
-        this._moveCenterHandle(-nx, -ny);
+        return moveElementMtrx;
     }
 
     _processRotate(radians) {
@@ -3298,29 +3563,23 @@ class DraggableSVG extends Transformable {
             'transform',
             matrixToString(elMatrix)
         );
+
+        return elMatrix;
     }
 
     _getState({ revX, revY, doW, doH }) {
         const {
             el: element,
             storage,
-            options
+            options: { container }
         } = this;
-
-        const {
-            container
-        } = options;
 
         const {
             box,
             wrapper,
             parent,
-            handles
+            handles: { center: cHandle }
         } = storage;
-
-        const {
-            center: cHandle
-        } = handles;
 
         const eBBox = element.getBBox();
 
@@ -3373,7 +3632,7 @@ class DraggableSVG extends Transformable {
                 ? cHandle.cy.baseVal.value
                 : boxCenterY;
 
-        // c-handler's coordinates
+        // c-handle's coordinates
         const { x: bcx, y: bcy } = pointTo(
             boxCTM,
             centerX,
@@ -3429,30 +3688,27 @@ class DraggableSVG extends Transformable {
 
     _moveCenterHandle(x, y) {
         const {
-            handles,
-            center,
-            radius
+            handles: { center, radius },
+            center: { hx, hy }
         } = this.storage;
 
-        if (isUndef(handles.center)) return;
+        if (isUndef(center)) return;
 
-        handles.center.cx.baseVal.value = center.hx + x;
-        handles.center.cy.baseVal.value = center.hy + y;
+        const mx = hx + x,
+            my = hy + y;
 
-        radius.x2.baseVal.value = center.hx + x;
-        radius.y2.baseVal.value = center.hy + y;
+        center.cx.baseVal.value = mx;
+        center.cy.baseVal.value = my;
+
+        radius.x2.baseVal.value = mx;
+        radius.y2.baseVal.value = my;
     }
 
     resetCenterPoint() {
         const {
             box,
-            handles,
-            radius
+            handles: { center, radius }
         } = this.storage;
-
-        const {
-            center
-        } = handles;
 
         const {
             width: cw,
@@ -3475,6 +3731,40 @@ class DraggableSVG extends Transformable {
 
         radius.x2.baseVal.value = cx;
         radius.y2.baseVal.value = cy;
+    }
+
+    fitControlsToSize() {
+        const { 
+            el, 
+            storage: { box, wrapper }, 
+            options: { container }
+        } = this;
+
+        const {
+            width,
+            height,
+            x,
+            y
+        } = el.getBBox();
+
+        const containerMatrix = getTransformToElement(
+            el,
+            container
+        );
+        
+        wrapper.removeAttribute('transform');
+        box.setAttribute('transform', matrixToString(containerMatrix));
+
+        applyTransformToHandles(
+            this.storage,
+            {
+                x,
+                y,
+                width,
+                height,
+                boxMatrix: containerMatrix
+            }
+        );
     }
 
     get controls() {
@@ -3788,8 +4078,6 @@ function applyTransformToHandles(
     const {
         box,
         handles,
-        normalLine,
-        radius,
         center
     } = storage;
 
@@ -3797,16 +4085,21 @@ function applyTransformToHandles(
         x,
         y,
         width,
-        height
+        height,
+        boxMatrix
     } = data;
 
     const hW = width / 2,
         hH = height / 2;
 
-    const boxCTM = getTransformToElement(
-        box,
-        box.parentNode
-    );
+    const forced = boxMatrix !== null;
+
+    const boxCTM = !forced
+        ? getTransformToElement(
+            box,
+            box.parentNode
+        )
+        : boxMatrix;
 
     const boxCenter = pointTo(boxCTM, x + hW, y + hH);
 
@@ -3820,9 +4113,17 @@ function applyTransformToHandles(
         ml: pointTo(boxCTM, x, y + hH),
         mr: pointTo(boxCTM, x + width, y + hH),
         rotator: {},
-        center: !center.isShifted && isDef(handles.center) ? boxCenter : undefined
-        //...(!center.isShifted && isDef(handles.center) && { center: boxCenter })
+        center: isDef(handles.center) && !center.isShifted ? boxCenter : undefined
     };
+
+    // if (forced) { 
+    //     attrs.center = pointTo(
+    //         boxCTM, 
+    //         center.x, 
+    //         center.y
+    //     );
+    //     console.log(attrs.center);
+    // }
 
     const theta = Math.atan2(
         attrs.tl.y - attrs.tr.y,
@@ -3832,11 +4133,18 @@ function applyTransformToHandles(
     attrs.rotator.x = attrs.mr.x - ROT_OFFSET * Math.cos(theta);
     attrs.rotator.y = attrs.mr.y - ROT_OFFSET * Math.sin(theta);
 
-    normalLine.x1.baseVal.value = attrs.mr.x;
-    normalLine.y1.baseVal.value = attrs.mr.y;
-    normalLine.x2.baseVal.value = attrs.rotator.x;
-    normalLine.y2.baseVal.value = attrs.rotator.y;
+    const {
+        normal,
+        radius
+    } = handles;
 
+    if (isDef(normal)) {
+        normal.x1.baseVal.value = attrs.mr.x;
+        normal.y1.baseVal.value = attrs.mr.y;
+        normal.x2.baseVal.value = attrs.rotator.x;
+        normal.y2.baseVal.value = attrs.rotator.y;
+    }
+   
     if (isDef(radius)) {
         radius.x1.baseVal.value = boxCenter.x;
         radius.y1.baseVal.value = boxCenter.y;
@@ -3863,49 +4171,10 @@ function applyTransformToHandles(
     Object.keys(attrs).forEach(key => {
         const hdl = handles[key];
         const attr = attrs[key];
-        if (isUndef(attr)) return;
+        if (isUndef(attr) || isUndef(hdl)) return;
         hdl.setAttribute('cx', attr.x);
         hdl.setAttribute('cy', attr.y);
     });
-}
-
-function isGroup(element) {
-    return element.tagName.toLowerCase() === 'g';
-}
-
-function checkChildElements(element) {
-    const arrOfElements = [];
-
-    if (isGroup(element)) {
-        forEach.call(element.childNodes, item => {
-            if (item.nodeType === 1) {
-                const tagName = item.tagName.toLowerCase();
-
-                if (ALLOWED_ELEMENTS.indexOf(tagName) !== -1) {
-                    if (tagName === 'g') {
-                        arrOfElements.push(...checkChildElements(item));
-                    }
-                    arrOfElements.push(item);
-                }
-            }
-        });
-    } else {
-        arrOfElements.push(element);
-    }
-
-    return arrOfElements;
-}
-
-function parsePoints(pts) {
-    return pts.match(floatRE).reduce(
-        (result, value, index, array) => {
-            if (index % 2 === 0) {
-                result.push(array.slice(index, index + 2));
-            }
-            return result;
-        },
-        []
-    );
 }
 
 function createHandler$1(l, t, color, key) {
@@ -3934,16 +4203,6 @@ function setLineStyle(line, color) {
     line.setAttribute('stroke', color);
     line.setAttribute('stroke-dasharray', '3 3');
     line.setAttribute('vector-effect', 'non-scaling-stroke');
-}
-
-function createPoint(svg, x, y) {
-    if (isUndef(x) || isUndef(y)) {
-        return null;
-    }
-    const pt = svg.createSVGPoint();
-    pt.x = x;
-    pt.y = y;
-    return pt;
 }
 
 // factory method for creating draggable elements
@@ -3993,7 +4252,6 @@ class Cloneable extends SubjectModel {
             position: 'absolute',
             'z-index': '2147483647',
             ...style
-            //...((isDef(style) && typeof style === 'object') && style)
         };
 
         this.storage = {
@@ -4003,6 +4261,10 @@ class Cloneable extends SubjectModel {
 
         $el.on('mousedown', this._onMouseDown)
             .on('touchstart', this._onTouchStart);
+
+        EVENTS.slice(0, 3).forEach((eventName) => {
+            this.eventDispatcher.registerEvent(eventName);
+        });
     }
 
     _processOptions(options) {
@@ -4141,8 +4403,10 @@ class Cloneable extends SubjectModel {
         storage.doDraw = false;
 
         this._drag(
-            clientX - cx,
-            clientY - cy
+            { 
+                dx: clientX - cx,
+                dy: clientY - cy
+            }
         );
     }
 

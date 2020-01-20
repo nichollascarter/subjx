@@ -12,7 +12,7 @@ let libraryName = "subjx";
 
 const banner = `/*@license
 * Drag/Rotate/Resize Library
-* Released under the MIT license, 2018-2019
+* Released under the MIT license, 2018-2020
 * Karen Sarksyan
 * nichollascarter@gmail.com
 */`;
