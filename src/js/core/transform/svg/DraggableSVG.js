@@ -23,10 +23,6 @@ const ROT_OFFSET = 50;
 
 export default class DraggableSVG extends Transformable {
 
-    constructor(el, options, observable) {
-        super(el, options, observable);
-    }
-
     _init(el) {
         const {
             rotationPoint,

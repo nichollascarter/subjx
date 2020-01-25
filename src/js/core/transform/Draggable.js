@@ -23,10 +23,6 @@ const CENTER_DELTA = 7;
 
 export default class Draggable extends Transformable {
 
-    constructor(el, options, Observable) {
-        super(el, options, Observable);
-    }
-
     _init(el) {
         const {
             rotationPoint,

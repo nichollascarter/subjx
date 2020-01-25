@@ -9,7 +9,7 @@ export default class Helper {
 
     constructor(params) {
         if (typeof params === 'string') {
-            let selector = document.querySelectorAll(params);
+            const selector = document.querySelectorAll(params);
             this.length = selector.length;
             for (let count = 0; count < this.length; count++) {
                 this[count] = selector[count];
@@ -55,7 +55,7 @@ export default class Helper {
             let len = obj.length;
 
             while (len--) {
-                for (let property in options) {
+                for (const property in options) {
                     obj[len].style[property] = options[property];
                 }
             }

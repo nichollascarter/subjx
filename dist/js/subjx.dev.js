@@ -1747,10 +1747,10 @@
     function (_Transformable) {
       _inherits(Draggable, _Transformable);
 
-      function Draggable(el, options, Observable) {
+      function Draggable() {
         _classCallCheck(this, Draggable);
 
-        return _possibleConstructorReturn(this, _getPrototypeOf(Draggable).call(this, el, options, Observable));
+        return _possibleConstructorReturn(this, _getPrototypeOf(Draggable).apply(this, arguments));
       }
 
       _createClass(Draggable, [{
@@ -2752,10 +2752,10 @@
     function (_Transformable) {
       _inherits(DraggableSVG, _Transformable);
 
-      function DraggableSVG(el, options, observable) {
+      function DraggableSVG() {
         _classCallCheck(this, DraggableSVG);
 
-        return _possibleConstructorReturn(this, _getPrototypeOf(DraggableSVG).call(this, el, options, observable));
+        return _possibleConstructorReturn(this, _getPrototypeOf(DraggableSVG).apply(this, arguments));
       }
 
       _createClass(DraggableSVG, [{
@@ -3926,10 +3926,10 @@
     function (_Helper) {
       _inherits(Subjx, _Helper);
 
-      function Subjx(params) {
+      function Subjx() {
         _classCallCheck(this, Subjx);
 
-        return _possibleConstructorReturn(this, _getPrototypeOf(Subjx).call(this, params));
+        return _possibleConstructorReturn(this, _getPrototypeOf(Subjx).apply(this, arguments));
       }
 
       _createClass(Subjx, [{

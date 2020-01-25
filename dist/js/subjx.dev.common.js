@@ -56,7 +56,7 @@ class Helper {
 
     constructor(params) {
         if (typeof params === 'string') {
-            let selector = document.querySelectorAll(params);
+            const selector = document.querySelectorAll(params);
             this.length = selector.length;
             for (let count = 0; count < this.length; count++) {
                 this[count] = selector[count];
@@ -102,7 +102,7 @@ class Helper {
             let len = obj.length;
 
             while (len--) {
-                for (let property in options) {
+                for (const property in options) {
                     obj[len].style[property] = options[property];
                 }
             }
@@ -1631,10 +1631,6 @@ const CENTER_DELTA = 7;
 
 class Draggable extends Transformable {
 
-    constructor(el, options, Observable) {
-        super(el, options, Observable);
-    }
-
     _init(el) {
         const {
             rotationPoint,
@@ -2899,10 +2895,6 @@ const MIN_SIZE$1 = 5;
 const ROT_OFFSET = 50;
 
 class DraggableSVG extends Transformable {
-
-    constructor(el, options, observable) {
-        super(el, options, observable);
-    }
 
     _init(el) {
         const {
@@ -4457,10 +4449,6 @@ function clone(options) {
 }
 
 class Subjx extends Helper {
-
-    constructor(params) {
-        super(params);
-    }
 
     drag() {
         return drag.call(this, ...arguments);
