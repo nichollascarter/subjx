@@ -166,16 +166,16 @@ subjx('.draggable').drag({
     onInit(el) {
         // fires on tool activation
     },
-    onMove(dx, dy) {
+    onMove({ clientX, clientY, dx, dy, transform }) {
         // fires on moving
     },
-    onResize(dx, dy, handle) {
+    onResize({ clientX, clientY, dx, dy, width, height }) {
         // fires on resizing
     },
-    onRotate(rad) {
+    onRotate({ clientX, clientY, delta, transform }) {
         // fires on rotation
     },
-    onDrop(e, el) {
+    onDrop({ clientX, clientY }) {
         // fires on drop
     },
     onDestroy(el) {
