@@ -16,6 +16,9 @@ module.exports = {
         "browser": true
     },
     "rules": {
+        "no-const-assign": "error",
+        "no-var": "error",
+        "no-useless-constructor": "error",
         "indent": ["error", 4, { "SwitchCase": 1 }],
         "init-declarations": "off",
         "no-undef": "warn",
