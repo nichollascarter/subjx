@@ -669,6 +669,46 @@ export default class Transformable extends SubjectModel {
         }  
     }
 
+    _compute(e) {
+        const {
+            handles
+        } = this.storage;
+
+        const handle = helper(e.target);
+
+        const {
+            revX,
+            revY,
+            doW,
+            doH,
+            ...rest
+        } = this._checkHandles(handle, handles);
+
+        const _computed = this._getState({
+            revX,
+            revY,
+            doW,
+            doH
+        });
+
+        const {
+            x: clientX,
+            y: clientY
+        } = this._cursorPoint(e);
+
+        const pressang = Math.atan2(
+            clientY - _computed.center.y,
+            clientX - _computed.center.x
+        );
+
+        return {
+            ..._computed,
+            ...rest,
+            handle,
+            pressang
+        };
+    }
+
     _checkHandles(handle, handles) {
         const { tl, tc, tr, bl, br, bc, ml, mr } = handles;
         const isTL = isDef(tl) ? handle.is(tl) : false,
@@ -802,6 +842,60 @@ export default class Transformable extends SubjectModel {
 
         proxyMethods.onDestroy.call(this, el);
         delete this.storage;
+    }
+
+    exeDrag({ dx, dy }) {
+        const { draggable } = this.options;
+        if (!draggable) return;
+    
+        this.storage = {
+            ...this.storage,
+            ...this._getState({ 
+                revX: false, 
+                revY: false, 
+                doW: false, 
+                doH: false 
+            })
+        };
+
+        this._drag({ dx, dy });
+        this._apply('drag');
+    }
+
+    exeResize({ dx, dy, revX, revY, doW, doH }) {
+        const { resizable } = this.options;
+        if (!resizable) return;
+
+        this.storage = {
+            ...this.storage,
+            ...this._getState({ 
+                revX: revX || false,
+                revY: revY || false,
+                doW: doW || false,
+                doH: doH || false
+            })
+        };
+
+        this._resize({ dx, dy });
+        this._apply('resize');
+    }
+
+    exeRotate({ delta }) {
+        const { rotatable } = this.options;
+        if (!rotatable) return;
+
+        this.storage = {
+            ...this.storage,
+            ...this._getState({ 
+                revX: false, 
+                revY: false, 
+                doW: false, 
+                doH: false 
+            })
+        };
+
+        this._rotate({ radians: delta });
+        this._apply('rotate');
     }
 
 }

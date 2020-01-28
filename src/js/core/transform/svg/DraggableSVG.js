@@ -202,46 +202,6 @@ export default class DraggableSVG extends Transformable {
         wrapper.parentNode.removeChild(wrapper);
     }
 
-    _compute(e) {
-        const {
-            handles
-        } = this.storage;
-
-        const handle = helper(e.target);
-
-        const {
-            revX,
-            revY,
-            doW,
-            doH,
-            ...rest
-        } = this._checkHandles(handle, handles);
-
-        const _computed = this._getState({
-            revX,
-            revY,
-            doW,
-            doH
-        });
-
-        const {
-            x: clientX,
-            y: clientY
-        } = this._cursorPoint(e);
-
-        const pressang = Math.atan2(
-            clientY - _computed.center.y,
-            clientX - _computed.center.x
-        );
-
-        return {
-            ..._computed,
-            ...rest,
-            handle,
-            pressang
-        };
-    }
-
     _cursorPoint({ clientX, clientY }) {
         const {
             container
