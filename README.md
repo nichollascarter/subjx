@@ -99,6 +99,27 @@ const EVENTS = [
     'rotateEnd'
 ];
 
+// execute dragging manually
+xDraggable.exeDrag({ 
+    dx, // drag along the x axis
+    dy // drag along the y axis
+});
+
+// execute resizing manually
+xDraggable.exeResize({ 
+    dx, // resize along the x axis
+    dy, // resize along the y axis
+    revX, // reverse resizing along the x axis
+    revY, // reverse resizing along the y axis
+    doW, // allow width resizing
+    doH  // allow height resizing
+});
+
+// execute rotating manually
+xDraggable.exeRotate({
+    delta // radians
+});
+
 // SVG elements methods
 
 // Useful when SVG element's container was transformed from outside

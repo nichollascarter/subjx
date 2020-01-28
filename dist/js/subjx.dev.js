@@ -1394,6 +1394,36 @@
           }
         }
       }, {
+        key: "_compute",
+        value: function _compute(e) {
+          var handles = this.storage.handles;
+          var handle = helper(e.target);
+
+          var _this$_checkHandles = this._checkHandles(handle, handles),
+              revX = _this$_checkHandles.revX,
+              revY = _this$_checkHandles.revY,
+              doW = _this$_checkHandles.doW,
+              doH = _this$_checkHandles.doH,
+              rest = _objectWithoutProperties(_this$_checkHandles, ["revX", "revY", "doW", "doH"]);
+
+          var _computed = this._getState({
+            revX: revX,
+            revY: revY,
+            doW: doW,
+            doH: doH
+          });
+
+          var _this$_cursorPoint3 = this._cursorPoint(e),
+              clientX = _this$_cursorPoint3.x,
+              clientY = _this$_cursorPoint3.y;
+
+          var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);
+          return _objectSpread2({}, _computed, {}, rest, {
+            handle: handle,
+            pressang: pressang
+          });
+        }
+      }, {
         key: "_checkHandles",
         value: function _checkHandles(handle, handles) {
           var tl = handles.tl,
@@ -1546,6 +1576,71 @@
           this.unsubscribe();
           proxyMethods.onDestroy.call(this, el);
           delete this.storage;
+        }
+      }, {
+        key: "exeDrag",
+        value: function exeDrag(_ref8) {
+          var dx = _ref8.dx,
+              dy = _ref8.dy;
+          var draggable = this.options.draggable;
+          if (!draggable) return;
+          this.storage = _objectSpread2({}, this.storage, {}, this._getState({
+            revX: false,
+            revY: false,
+            doW: false,
+            doH: false
+          }));
+
+          this._drag({
+            dx: dx,
+            dy: dy
+          });
+
+          this._apply('drag');
+        }
+      }, {
+        key: "exeResize",
+        value: function exeResize(_ref9) {
+          var dx = _ref9.dx,
+              dy = _ref9.dy,
+              revX = _ref9.revX,
+              revY = _ref9.revY,
+              doW = _ref9.doW,
+              doH = _ref9.doH;
+          var resizable = this.options.resizable;
+          if (!resizable) return;
+          this.storage = _objectSpread2({}, this.storage, {}, this._getState({
+            revX: revX || false,
+            revY: revY || false,
+            doW: doW || false,
+            doH: doH || false
+          }));
+
+          this._resize({
+            dx: dx,
+            dy: dy
+          });
+
+          this._apply('resize');
+        }
+      }, {
+        key: "exeRotate",
+        value: function exeRotate(_ref10) {
+          var delta = _ref10.delta;
+          var rotatable = this.options.rotatable;
+          if (!rotatable) return;
+          this.storage = _objectSpread2({}, this.storage, {}, this._getState({
+            revX: false,
+            revY: false,
+            doW: false,
+            doH: false
+          }));
+
+          this._rotate({
+            radians: delta
+          });
+
+          this._apply('rotate');
         }
       }]);
 
@@ -1838,40 +1933,6 @@
           wrapper.parentNode.removeChild(wrapper);
         }
       }, {
-        key: "_compute",
-        value: function _compute(e) {
-          var handles = this.storage.handles;
-          var handle = helper(e.target);
-
-          var _this$_checkHandles = this._checkHandles(handle, handles),
-              revX = _this$_checkHandles.revX,
-              revY = _this$_checkHandles.revY,
-              doW = _this$_checkHandles.doW,
-              doH = _this$_checkHandles.doH,
-              rest = _objectWithoutProperties(_this$_checkHandles, ["revX", "revY", "doW", "doH"]); //reverse angle
-
-
-          var factor = handle.is(handles.tr) || handle.is(handles.bl) ? -1 : 1;
-
-          var _computed = this._getState({
-            factor: factor,
-            revX: revX,
-            revY: revY,
-            doW: doW,
-            doH: doH
-          });
-
-          var _this$_cursorPoint = this._cursorPoint(e),
-              clientX = _this$_cursorPoint.x,
-              clientY = _this$_cursorPoint.y;
-
-          var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);
-          return _objectSpread2({}, _computed, {}, rest, {
-            handle: handle,
-            pressang: pressang
-          });
-        }
-      }, {
         key: "_pointToElement",
         value: function _pointToElement(_ref) {
           var x = _ref.x,
@@ -2042,11 +2103,11 @@
       }, {
         key: "_getState",
         value: function _getState(params) {
-          var factor = params.factor,
-              revX = params.revX,
+          var revX = params.revX,
               revY = params.revY,
               doW = params.doW,
               doH = params.doH;
+          var factor = revX !== revY ? -1 : 1;
           var el = this.el,
               _this$storage2 = this.storage,
               handles = _this$storage2.handles,
@@ -2886,36 +2947,6 @@
           var wrapper = this.storage.wrapper;
           helper(wrapper).off('mousedown', this._onMouseDown).off('touchstart', this._onTouchStart);
           wrapper.parentNode.removeChild(wrapper);
-        }
-      }, {
-        key: "_compute",
-        value: function _compute(e) {
-          var handles = this.storage.handles;
-          var handle = helper(e.target);
-
-          var _this$_checkHandles = this._checkHandles(handle, handles),
-              revX = _this$_checkHandles.revX,
-              revY = _this$_checkHandles.revY,
-              doW = _this$_checkHandles.doW,
-              doH = _this$_checkHandles.doH,
-              rest = _objectWithoutProperties(_this$_checkHandles, ["revX", "revY", "doW", "doH"]);
-
-          var _computed = this._getState({
-            revX: revX,
-            revY: revY,
-            doW: doW,
-            doH: doH
-          });
-
-          var _this$_cursorPoint = this._cursorPoint(e),
-              clientX = _this$_cursorPoint.x,
-              clientY = _this$_cursorPoint.y;
-
-          var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);
-          return _objectSpread2({}, _computed, {}, rest, {
-            handle: handle,
-            pressang: pressang
-          });
         }
       }, {
         key: "_cursorPoint",
