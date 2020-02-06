@@ -10,16 +10,22 @@
     Touch-enabled draggable, resizable, rotatable library for creating drag-n-drop applications.
 </h3>
 
+## Demos
+
+### [Basic example](http://jsfiddle.net/nichollascarter/qgwzch0v/)
+### [Drag, zoom and pan SVG](https://codesandbox.io/s/svg-drag-pan-zoom-wb95s)
+
 ## Usage
 
 Library provides dragging/resizing/rotating/snapping SVG/HTML Elements.
 
-## [Demo](http://jsfiddle.net/nichollascarter/qgwzch0v/)
-## [Drag, zoom and pan SVG](https://codesandbox.io/s/svg-drag-pan-zoom-wb95s)
-
 ## Installation
 
 Run `npm install` to install with `npm`.
+
+```
+npm install subjx
+```
 
 Including via a `<script>` tag:
 
@@ -28,8 +34,6 @@ Including via a `<script>` tag:
 ```
 
 ## Get started
-
- - Getting an element:
 
  Main function `subjx` returns `Subjx` instance which based on elements finded by
  passed parameters:
@@ -44,9 +48,7 @@ const xElem = subjx( 'selector' ) |
                 subjx( elementArray );
 ```
 
-- Choosing an action:
-
-1) Transformation(move, resize, rotate):
+## Transformation(drag/resize/rotate)
 
 ```javascript
 // enabling tool by `drag` method with the optional parameters
@@ -59,25 +61,24 @@ xDraggables.forEach(item => {
     item.disable();
 });
 ```
-
-"Draggable" API:
+### "Draggable" API
 
 ```javascript
-// getter returns root DOM element of controls
+// getter returns root DOM element of "controls"
 xDraggable.controls;
 
 // provides access to useful options
 xDraggable.storage;
 // for example: to get reference to any handle's DOM
-// const { 
-//   handles: { tl, tr, ...etc}
-// } = xDraggable.storage;
+const {
+  handles: { tl, tr, ...etc}
+} = xDraggable.storage;
 
-// enabling dragging
+// enables dragging
 // there is no need to call this method manually
 xDraggable.enable(options);
 
-// disabling dragging possibilities, removes controls and handles
+// disables dragging, removes controls and handles
 xDraggable.disable();
 
  // adds event listener for some events
@@ -130,11 +131,12 @@ xDraggable.fitControlsToSize();
 xDraggable.resetCenterPoint();
 ```
 
-Possible parameters:
+### Options
+
 ```javascript
 subjx('.draggable').drag({
     // transformation coordinate system
-    // "controls" appends to this element
+    // "controls" append to this element
     container: 'selector' | element,
     // constrain movement along an axis
     axis: 'x' | 'y'
@@ -165,23 +167,10 @@ subjx('.draggable').drag({
     restrict: 'selector'
 });
 ```
-Subscribing new draggable element to previously activated(useful with `each` option)
-```javascript
-const observable = subjx.createObservable();
-subjx('.draggable').drag({...}, observable);
+#### Notice: In most cases, it is recommended to use 'proportions' option
 
-const createDraggableAndSubscribe = e => {
-    subjx(e.target).drag({...}, observable);
-};
-```
+### Methods
 
-Allowed SVG elements:
-`path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `circle`, `g`
-
-#### Notice: In most cases, it is recommended to use 'proportions' options
-
-
-Available methods:
 ```javascript
 subjx('.draggable').drag({
     onInit(el) {
@@ -205,7 +194,23 @@ subjx('.draggable').drag({
 });
 ```
 
-2) Tool for creating a clone:
+Subscribing new draggable element to previously activated(useful with `each` option)
+```javascript
+const observable = subjx.createObservable();
+subjx('.draggable').drag({...}, observable);
+
+const createDraggableAndSubscribe = e => {
+    subjx(e.target).drag({...}, observable);
+};
+```
+
+Allowed SVG elements:
+`g`, `path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `circle`
+
+
+## Cloning
+
+### Options
 
 ```javascript
 const xCloneable = xElem.clone({
@@ -221,7 +226,8 @@ const xCloneable = xElem.clone({
 });
 ```
 
-Available methods:
+### Methods
+
 ```javascript
 subjx('.cloneable').clone({
     onInit(el) {
