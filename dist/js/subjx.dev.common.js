@@ -564,7 +564,7 @@ function getTransform(el) {
 }
 
 function parseMatrix(value) {
-    const transform = value.match(/-?\d+\.?\d+|-?\d+/g);
+    const transform = value.match(/[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?/g);
 
     if (transform) {
         return transform.map(item => {
@@ -2061,8 +2061,8 @@ class Draggable extends Transformable {
             parentMatrix
         } = transform;
 
-        const cos = floatToFixed(Math.cos(radians)),
-            sin = floatToFixed(Math.sin(radians));
+        const cos = floatToFixed(Math.cos(radians), 4),
+            sin = floatToFixed(Math.sin(radians), 4);
 
         const translateMatrix = [
             1,

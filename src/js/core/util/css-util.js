@@ -15,7 +15,7 @@ export function getTransform(el) {
 }
 
 export function parseMatrix(value) {
-    const transform = value.match(/-?\d+\.?\d+|-?\d+/g);
+    const transform = value.match(/[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?/g);
 
     if (transform) {
         return transform.map(item => {

@@ -359,8 +359,8 @@ export default class Draggable extends Transformable {
             parentMatrix
         } = transform;
 
-        const cos = floatToFixed(Math.cos(radians)),
-            sin = floatToFixed(Math.sin(radians));
+        const cos = floatToFixed(Math.cos(radians), 4),
+            sin = floatToFixed(Math.sin(radians), 4);
 
         const translateMatrix = [
             1,

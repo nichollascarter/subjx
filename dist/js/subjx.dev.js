@@ -801,7 +801,7 @@
       return transform;
     }
     function parseMatrix(value) {
-      var transform = value.match(/-?\d+\.?\d+|-?\d+/g);
+      var transform = value.match(/[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?/g);
 
       if (transform) {
         return transform.map(function (item) {
@@ -2084,8 +2084,8 @@
               center = _this$storage.center;
           var matrix = transform.matrix,
               parentMatrix = transform.parentMatrix;
-          var cos = floatToFixed(Math.cos(radians)),
-              sin = floatToFixed(Math.sin(radians));
+          var cos = floatToFixed(Math.cos(radians), 4),
+              sin = floatToFixed(Math.sin(radians), 4);
           var translateMatrix = [1, 0, 0, 1, center.cx, center.cy];
           var rotMatrix = [cos, sin, -sin, cos, 0, 0];
 
