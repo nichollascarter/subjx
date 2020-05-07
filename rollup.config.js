@@ -78,7 +78,8 @@ export default [
         plugins: [
             ...plugins,
             babel({
-                exclude: 'node_modules/**'
+                exclude: 'node_modules/**',
+                presets: ["@babel/preset-env"]
             }),
             prod && uglifyPlugin()
         ]
