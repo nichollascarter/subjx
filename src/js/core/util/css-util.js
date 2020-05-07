@@ -1,10 +1,10 @@
 import { helper } from '../Helper';
 
-export function getOffset(node) {
+export const getOffset = (node) => {
     return node.getBoundingClientRect();
-}
+};
 
-export function getTransform(el) {
+export const getTransform = (el) => {
     const transform = el.css('-webkit-transform') ||
         el.css('-moz-transform') ||
         el.css('-ms-transform') ||
@@ -12,9 +12,9 @@ export function getTransform(el) {
         el.css('transform') ||
         'none';
     return transform;
-}
+};
 
-export function parseMatrix(value) {
+export const parseMatrix = (value) => {
     const transform = value.match(/[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?/g);
 
     if (transform) {
@@ -24,9 +24,9 @@ export function parseMatrix(value) {
     } else {
         return [1, 0, 0, 1, 0, 0];
     }
-}
+};
 
-export function addClass(node, cls) {
+export const addClass = (node, cls) => {
     if (!cls) return;
 
     if (node.classList) {
@@ -39,9 +39,9 @@ export function addClass(node, cls) {
         }
     }
     return node;
-}
+};
 
-export function removeClass(node, cls) {
+export const removeClass = (node, cls) => {
     if (!cls) return;
 
     if (node.classList) {
@@ -54,9 +54,9 @@ export function removeClass(node, cls) {
         }
     }
     return node;
-}
+};
 
-export function objectsCollide(a, b) {
+export const objectsCollide = (a, b) => {
     const {
             top: aTop,
             left: aLeft
@@ -74,9 +74,9 @@ export function objectsCollide(a, b) {
         ((aLeft < bLeft) ||
             (aLeft + parseFloat(_a.css('width'))) > (bLeft + parseFloat(_b.css('width'))))
     );
-}
+};
 
-export function matrixToCSS(arr) {
+export const matrixToCSS = (arr) => {
     const style = `matrix(${arr.join()})`;
 
     return {
@@ -86,4 +86,4 @@ export function matrixToCSS(arr) {
         msTransform: style,
         otransform: style
     };
-}
+};

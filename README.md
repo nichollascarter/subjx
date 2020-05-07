@@ -65,6 +65,7 @@ xDraggables.forEach(item => {
 
 ```javascript
 // getter returns root DOM element of "controls"
+const [xDraggable] = xDraggables;
 xDraggable.controls;
 
 // provides access to useful options
@@ -159,6 +160,9 @@ subjx('.draggable').drag({
     // handles will not showing with false
     resizable: true,
     rotatable: true,
+    // Draggable SVG options
+    rotatorAnchor: 'n' | 's' | 'w' | 'e',
+    rotatorOffset: 30,
     // ----- experimental options ------
     // show/manipulate rotation point(not tested with HTML elements)
     rotationPoint: true,
@@ -252,5 +256,5 @@ xCloneable.forEach(item => {
 });
 ```
 
-## Licence
+## License
 MIT (c) Karen Sarksyan

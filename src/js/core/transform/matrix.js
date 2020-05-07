@@ -1,16 +1,16 @@
 import { floatToFixed } from './common';
 
-export function matrixTransform({ x, y }, matrix) {
+export const matrixTransform = ({ x, y }, matrix) => {
     const [a, b, c, d, e, f] = matrix;
 
     return {
         x: a * x + c * y + e,
         y: b * x + d * y + f
     };
-}
+};
 
 //http://blog.acipo.com/matrix-inversion-in-javascript/
-export function matrixInvert(ctm) {
+export const matrixInvert = (ctm) => {
     // I use Guassian Elimination to calculate the inverse:
     // (1) 'augment' the matrix (left) by the identity (on the right)
     // (2) Turn the matrix on the left into the identity by elemetry row ops
@@ -122,12 +122,12 @@ export function matrixInvert(ctm) {
         I[0][1], I[1][1],
         I[0][2], I[1][2]
     ];
-}
+};
 
-export function multiplyMatrix(
+export const multiplyMatrix = (
     [a1, b1, c1, d1, e1, f1], 
     [a2, b2, c2, d2, e2, f2]
-) {
+) => {
     const m1 = [
         [a1, c1, e1],
         [b1, d1, f1],
@@ -158,9 +158,9 @@ export function multiplyMatrix(
         result[0][1], result[1][1],
         result[0][2], result[1][2]
     ];
-}
+};
 
-export function rotatedTopLeft(
+export const rotatedTopLeft = (
     x,
     y,
     width,
@@ -170,7 +170,7 @@ export function rotatedTopLeft(
     revY,
     doW,
     doH
-) {
+) => {
     const hw = parseFloat(width) / 2,
         hh = parseFloat(height) / 2;
 
@@ -198,4 +198,4 @@ export function rotatedTopLeft(
         left: floatToFixed(rx),
         top: floatToFixed(ry)
     };
-}
+};

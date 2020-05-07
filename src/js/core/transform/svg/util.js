@@ -15,7 +15,11 @@ const ALLOWED_ELEMENTS = [
     'text', 'g'
 ];
 
-export function checkChildElements(element) {
+export function createSVGElement(name) {
+    return document.createElementNS('http://www.w3.org/2000/svg', name);
+}
+
+export const checkChildElements = (element) => {
     const arrOfElements = [];
 
     if (isGroup(element)) {
@@ -36,35 +40,31 @@ export function checkChildElements(element) {
     }
 
     return arrOfElements;
-}
+};
 
-export function createSVGElement(name) {
-    return document.createElementNS('http://www.w3.org/2000/svg', name);
-}
-
-export function createSVGMatrix() {
+export const createSVGMatrix = () => {
     return createSVGElement('svg').createSVGMatrix();
-}
+};
 
-export function getTransformToElement(toElement, g) {
+export const getTransformToElement = (toElement, g) => {
     const gTransform = g.getScreenCTM() || createSVGMatrix();
     return gTransform.inverse().multiply(
         toElement.getScreenCTM() || createSVGMatrix()
     );
-}
+};
 
-export function matrixToString(m) {
+export const matrixToString = (m) => {
     const { a, b, c, d, e, f } = m;
     return `matrix(${a},${b},${c},${d},${e},${f})`;
-}
+};
 
-export function pointTo(ctm, x, y) {
+export const pointTo = (ctm, x, y) => {
     svgPoint.x = x;
     svgPoint.y = y;
     return svgPoint.matrixTransform(ctm);
-}
+};
 
-export function cloneMatrix(b) {
+export const cloneMatrix = (b) => {
     const a = createSVGMatrix();
 
     a.a = b.a;
@@ -75,9 +75,9 @@ export function cloneMatrix(b) {
     a.f = b.f;
 
     return a;
-}
+};
 
-export function checkElement(el) {
+export const checkElement = (el) => {
     const tagName = el.tagName.toLowerCase();
 
     if (ALLOWED_ELEMENTS.indexOf(tagName) === -1) {
@@ -89,9 +89,9 @@ export function checkElement(el) {
     } else {
         return true;
     }
-}
+};
 
-export function isIdentity(matrix) {
+export const isIdentity = (matrix) => {
     const { a, b, c, d, e, f } = matrix;
     return a === 1 &&
         b === 0 &&
@@ -99,9 +99,9 @@ export function isIdentity(matrix) {
         d === 1 &&
         e === 0 &&
         f === 0;
-}
+};
 
-export function createPoint(svg, x, y) {
+export const createPoint = (svg, x, y) => {
     if (isUndef(x) || isUndef(y)) {
         return null;
     }
@@ -109,13 +109,13 @@ export function createPoint(svg, x, y) {
     pt.x = x;
     pt.y = y;
     return pt;
-}
+};
 
-export function isGroup(element) {
+export const isGroup = (element) => {
     return element.tagName.toLowerCase() === 'g';
-}
+};
 
-export function parsePoints(pts) {
+export const parsePoints = (pts) => {
     return pts.match(floatRE).reduce(
         (result, value, index, array) => {
             if (index % 2 === 0) {
@@ -125,4 +125,4 @@ export function parsePoints(pts) {
         },
         []
     );
-}
+};

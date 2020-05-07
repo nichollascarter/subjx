@@ -29,7 +29,7 @@ export default class Transformable extends SubjectModel {
         EVENTS.forEach((eventName) => {
             this.eventDispatcher.registerEvent(eventName);
         });
-        
+
         this.enable(options);
     }
 
@@ -83,11 +83,14 @@ export default class Transformable extends SubjectModel {
             _cursorMove = 'auto',
             _cursorResize = 'auto',
             _cursorRotate = 'auto',
-            _themeColor = '#00a8ff',
             _rotationPoint = false,
             _draggable = true,
             _resizable = true,
             _rotatable = true,
+            _rotatorAnchor = null,
+            _rotatorOffset = 50,
+            _showNormal = true,
+            _custom = null,
             _onInit = () => { },
             _onMove = () => { },
             _onRotate = () => { },
@@ -118,7 +121,10 @@ export default class Transformable extends SubjectModel {
                 onDestroy,
                 container,
                 proportions,
-                themeColor
+                custom,
+                rotatorAnchor,
+                rotatorOffset,
+                showNormal
             } = options;
 
             if (isDef(snap)) {
@@ -145,7 +151,6 @@ export default class Transformable extends SubjectModel {
                     : helper(restrict)[0] || document;
             }
 
-            _themeColor = themeColor || '#00a8ff';
             _cursorMove = cursorMove || 'auto';
             _cursorResize = cursorResize || 'auto';
             _cursorRotate = cursorRotate || 'auto';
@@ -162,6 +167,11 @@ export default class Transformable extends SubjectModel {
             _resizable = isDef(resizable) ? resizable : true;
             _rotatable = isDef(rotatable) ? rotatable : true;
 
+            _custom = (typeof custom === 'object' && custom) || null;
+            _rotatorAnchor = rotatorAnchor || null;
+            _rotatorOffset = rotatorOffset || 50;
+            _showNormal = isDef(showNormal) ? showNormal : true;
+
             _onInit = createMethod(onInit);
             _onDrop = createMethod(onDrop);
             _onMove = createMethod(onMove);
@@ -172,7 +182,6 @@ export default class Transformable extends SubjectModel {
 
         this.options = {
             axis: _axis,
-            themeColor: _themeColor,
             cursorMove: _cursorMove,
             cursorRotate: _cursorRotate,
             cursorResize: _cursorResize,
@@ -184,7 +193,11 @@ export default class Transformable extends SubjectModel {
             proportions: _proportions,
             draggable: _draggable,
             resizable: _resizable,
-            rotatable: _rotatable
+            rotatable: _rotatable,
+            custom: _custom,
+            rotatorAnchor: _rotatorAnchor,
+            rotatorOffset: _rotatorOffset,
+            showNormal: _showNormal
         };
 
         this.proxyMethods = {
@@ -262,7 +275,7 @@ export default class Transformable extends SubjectModel {
                 ? snapToGrid(y - cy, snap.y / transform.scY)
                 : 0;
 
-            dx = dox ? (revX ? - dx : dx) : 0,
+            dx = dox ? (revX ? - dx : dx) : 0;
             dy = doy ? (revY ? - dy : dy) : 0;
 
             const args = {
@@ -292,12 +305,39 @@ export default class Transformable extends SubjectModel {
             } = storage;
 
             if (isDef(restrict)) {
-                if ((clientX - restrictOffset.left) < nx - elementOffset.left) {
-                    clientX = nx - elementOffset.left + restrictOffset.left;
+                const {
+                    left: restLeft,
+                    top: restTop
+                } = restrictOffset;
+    
+                const {
+                    left: elLeft,
+                    top: elTop,
+                    width: elW,
+                    height: elH
+                } = elementOffset;
+    
+                const distX = nx - clientX,
+                    distY = ny - clientY;
+    
+                const maxX = restrict.clientWidth - elW,
+                    maxY = restrict.clientHeight - elH;
+    
+                const offsetY = elTop - restTop,
+                    offsetX = elLeft - restLeft;
+    
+                if (offsetY - distY < 0) {
+                    clientY = ny - elTop + restTop;
                 }
-
-                if ((clientY - restrictOffset.top) < ny - elementOffset.top) {
-                    clientY = ny - elementOffset.top + restrictOffset.top;
+                if (offsetX - distX < 0) {
+                    clientX = nx - elLeft + restLeft;
+                }
+    
+                if (offsetY - distY > maxY) {
+                    clientY = maxY + (ny - elTop + restTop);
+                }
+                if (offsetX - distX > maxX) {
+                    clientX = maxX + (nx - elLeft + restLeft);
                 }
             }
 
@@ -526,9 +566,9 @@ export default class Transformable extends SubjectModel {
 
         const actionName = doResize
             ? 'resize'
-            : (doRotate? 'rotate' : 'drag');
-        
-        const triggerEvent = 
+            : (doRotate ? 'rotate' : 'drag');
+
+        const triggerEvent =
             (doResize && resize) ||
             (doRotate && rotate) ||
             (doDrag && move);
@@ -536,7 +576,7 @@ export default class Transformable extends SubjectModel {
         observable.notify(
             'ongetstate',
             this,
-            {   
+            {
                 clientX,
                 clientY,
                 actionName,
@@ -548,7 +588,7 @@ export default class Transformable extends SubjectModel {
                 doH
             }
         );
-        
+
         this._draw();
     }
 
@@ -625,7 +665,7 @@ export default class Transformable extends SubjectModel {
         this._apply(actionName);
 
         const eventArgs = {
-            clientX, 
+            clientX,
             clientY
         };
 
@@ -645,7 +685,7 @@ export default class Transformable extends SubjectModel {
             rotate
         } = each;
 
-        const triggerEvent = 
+        const triggerEvent =
             (doResize && resize) ||
             (doRotate && rotate) ||
             (doDrag && move);
@@ -654,7 +694,7 @@ export default class Transformable extends SubjectModel {
             'onapply',
             this,
             {
-                clientX, 
+                clientX,
                 clientY,
                 actionName,
                 triggerEvent
@@ -666,7 +706,7 @@ export default class Transformable extends SubjectModel {
         helper(document.body).css({ cursor: 'auto' });
         if (isDef(radius)) {
             addClass(radius, 'sjx-hidden');
-        }  
+        }
     }
 
     _compute(e) {
@@ -773,12 +813,12 @@ export default class Transformable extends SubjectModel {
         }
     }
 
-    notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest}) {
+    notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest }) {
         if (triggerEvent) {
             const recalc = this._getState(
                 rest
             );
-    
+
             this.storage = {
                 ...this.storage,
                 ...recalc
@@ -847,14 +887,14 @@ export default class Transformable extends SubjectModel {
     exeDrag({ dx, dy }) {
         const { draggable } = this.options;
         if (!draggable) return;
-    
+
         this.storage = {
             ...this.storage,
-            ...this._getState({ 
-                revX: false, 
-                revY: false, 
-                doW: false, 
-                doH: false 
+            ...this._getState({
+                revX: false,
+                revY: false,
+                doW: false,
+                doH: false
             })
         };
 
@@ -868,7 +908,7 @@ export default class Transformable extends SubjectModel {
 
         this.storage = {
             ...this.storage,
-            ...this._getState({ 
+            ...this._getState({
                 revX: revX || false,
                 revY: revY || false,
                 doW: doW || false,
@@ -886,11 +926,11 @@ export default class Transformable extends SubjectModel {
 
         this.storage = {
             ...this.storage,
-            ...this._getState({ 
-                revX: false, 
-                revY: false, 
-                doW: false, 
-                doH: false 
+            ...this._getState({
+                revX: false,
+                revY: false,
+                doW: false,
+                doH: false
             })
         };
 

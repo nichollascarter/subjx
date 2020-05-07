@@ -42,7 +42,7 @@ const uglifyPlugin = () => {
         output: {
             preamble: banner
         }
-    })
+    });
 };
 
 const uglifyESMPlugin = () => {
@@ -78,8 +78,7 @@ export default [
         plugins: [
             ...plugins,
             babel({
-                exclude: 'node_modules/**',
-                presets: ["@babel/preset-env"]
+                exclude: 'node_modules/**'
             }),
             prod && uglifyPlugin()
         ]

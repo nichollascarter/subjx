@@ -28,7 +28,8 @@ export default class Draggable extends Transformable {
             rotationPoint,
             container,
             resizable,
-            rotatable
+            rotatable,
+            showNormal
         } = this.options;
 
         const {
@@ -72,14 +73,16 @@ export default class Draggable extends Transformable {
         };
 
         const rotationHandles = {
-            normal: ['sjx-normal'],
+            normal: showNormal ? ['sjx-normal'] : null,
             rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator']
         };
 
         const handles = {
             ...(rotatable && rotationHandles),
             ...(resizable && resizingHandles),
-            center: rotationPoint && rotatable ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined
+            center: rotationPoint && rotatable
+                ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] 
+                : undefined
         };
 
         Object.keys(handles).forEach(key => {
@@ -266,7 +269,7 @@ export default class Draggable extends Transformable {
         const newWidth = proportions ? cw * ratio : cw + dx,
             newHeight = proportions ? ch * ratio : ch + dy;
 
-        if (newWidth < MIN_SIZE || newHeight < MIN_SIZE) return;
+        if (newWidth <= MIN_SIZE || newHeight <= MIN_SIZE) return;
 
         const matrix = [...transform.matrix];
 
@@ -560,10 +563,10 @@ export default class Draggable extends Transformable {
 
 }
 
-function createHandler(classList) {
+const createHandler = (classList) => {
     const element = document.createElement('div');
     classList.forEach(cls => {
         addClass(element, cls);
     });
     return element;
-}
+};

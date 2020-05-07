@@ -149,6 +149,6 @@ export default class SubjectModel {
 
 }
 
-function throwNotImplementedError() {
+const throwNotImplementedError = () => {
     throw Error(`Method not implemented`);
-}
+};

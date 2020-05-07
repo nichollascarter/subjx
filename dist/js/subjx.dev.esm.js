@@ -30,25 +30,25 @@ const {
 const { warn } = console;
 /* eslint-disable no-console */
 
-function isDef(val) {
+const isDef = (val) => {
     return val !== undefined && val !== null;
-}
+};
 
-function isUndef(val) {
+const isUndef = (val) => {
     return val === undefined || val === null;
-}
+};
 
-function isFunc(val) {
+const isFunc = (val) => {
     return typeof val === 'function';
-}
+};
 
-function createMethod(fn) {
+const createMethod = (fn) => {
     return isFunc(fn)
         ? function () {
             fn.call(this, ...arguments);
         }
         : () => { };
-}
+};
 
 class Helper {
 
@@ -506,9 +506,9 @@ class SubjectModel {
 
 }
 
-function throwNotImplementedError() {
+const throwNotImplementedError = () => {
     throw Error(`Method not implemented`);
-}
+};
 
 const EVENTS = [
     'dragStart',
@@ -526,7 +526,7 @@ const EVENTS = [
 
 const RAD = Math.PI / 180;
 
-function snapToGrid(value, snap) {
+const snapToGrid = (value, snap) => {
     if (snap === 0) {
         return value;
     } else {
@@ -536,22 +536,22 @@ function snapToGrid(value, snap) {
             return result;
         }
     }
-}
+};
 
-function snapCandidate(value, gridSize) {
+const snapCandidate = (value, gridSize) => {
     if (gridSize === 0) return value;
     return Math.round(value / gridSize) * gridSize;
-}
+};
 
-function floatToFixed(val, size = 6) {
+const floatToFixed = (val, size = 6) => {
     return Number(val.toFixed(size));
-}
+};
 
-function getOffset(node) {
+const getOffset = (node) => {
     return node.getBoundingClientRect();
-}
+};
 
-function getTransform(el) {
+const getTransform = (el) => {
     const transform = el.css('-webkit-transform') ||
         el.css('-moz-transform') ||
         el.css('-ms-transform') ||
@@ -559,9 +559,9 @@ function getTransform(el) {
         el.css('transform') ||
         'none';
     return transform;
-}
+};
 
-function parseMatrix(value) {
+const parseMatrix = (value) => {
     const transform = value.match(/[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?/g);
 
     if (transform) {
@@ -571,9 +571,9 @@ function parseMatrix(value) {
     } else {
         return [1, 0, 0, 1, 0, 0];
     }
-}
+};
 
-function addClass(node, cls) {
+const addClass = (node, cls) => {
     if (!cls) return;
 
     if (node.classList) {
@@ -586,9 +586,9 @@ function addClass(node, cls) {
         }
     }
     return node;
-}
+};
 
-function removeClass(node, cls) {
+const removeClass = (node, cls) => {
     if (!cls) return;
 
     if (node.classList) {
@@ -601,9 +601,9 @@ function removeClass(node, cls) {
         }
     }
     return node;
-}
+};
 
-function objectsCollide(a, b) {
+const objectsCollide = (a, b) => {
     const {
             top: aTop,
             left: aLeft
@@ -621,9 +621,9 @@ function objectsCollide(a, b) {
         ((aLeft < bLeft) ||
             (aLeft + parseFloat(_a.css('width'))) > (bLeft + parseFloat(_b.css('width'))))
     );
-}
+};
 
-function matrixToCSS(arr) {
+const matrixToCSS = (arr) => {
     const style = `matrix(${arr.join()})`;
 
     return {
@@ -633,7 +633,7 @@ function matrixToCSS(arr) {
         msTransform: style,
         otransform: style
     };
-}
+};
 
 class Transformable extends SubjectModel {
 
@@ -647,7 +647,7 @@ class Transformable extends SubjectModel {
         EVENTS.forEach((eventName) => {
             this.eventDispatcher.registerEvent(eventName);
         });
-        
+
         this.enable(options);
     }
 
@@ -701,11 +701,14 @@ class Transformable extends SubjectModel {
             _cursorMove = 'auto',
             _cursorResize = 'auto',
             _cursorRotate = 'auto',
-            _themeColor = '#00a8ff',
             _rotationPoint = false,
             _draggable = true,
             _resizable = true,
             _rotatable = true,
+            _rotatorAnchor = null,
+            _rotatorOffset = 50,
+            _showNormal = true,
+            _custom = null,
             _onInit = () => { },
             _onMove = () => { },
             _onRotate = () => { },
@@ -736,7 +739,10 @@ class Transformable extends SubjectModel {
                 onDestroy,
                 container,
                 proportions,
-                themeColor
+                custom,
+                rotatorAnchor,
+                rotatorOffset,
+                showNormal
             } = options;
 
             if (isDef(snap)) {
@@ -763,7 +769,6 @@ class Transformable extends SubjectModel {
                     : helper(restrict)[0] || document;
             }
 
-            _themeColor = themeColor || '#00a8ff';
             _cursorMove = cursorMove || 'auto';
             _cursorResize = cursorResize || 'auto';
             _cursorRotate = cursorRotate || 'auto';
@@ -780,6 +785,11 @@ class Transformable extends SubjectModel {
             _resizable = isDef(resizable) ? resizable : true;
             _rotatable = isDef(rotatable) ? rotatable : true;
 
+            _custom = (typeof custom === 'object' && custom) || null;
+            _rotatorAnchor = rotatorAnchor || null;
+            _rotatorOffset = rotatorOffset || 50;
+            _showNormal = isDef(showNormal) ? showNormal : true;
+
             _onInit = createMethod(onInit);
             _onDrop = createMethod(onDrop);
             _onMove = createMethod(onMove);
@@ -790,7 +800,6 @@ class Transformable extends SubjectModel {
 
         this.options = {
             axis: _axis,
-            themeColor: _themeColor,
             cursorMove: _cursorMove,
             cursorRotate: _cursorRotate,
             cursorResize: _cursorResize,
@@ -802,7 +811,11 @@ class Transformable extends SubjectModel {
             proportions: _proportions,
             draggable: _draggable,
             resizable: _resizable,
-            rotatable: _rotatable
+            rotatable: _rotatable,
+            custom: _custom,
+            rotatorAnchor: _rotatorAnchor,
+            rotatorOffset: _rotatorOffset,
+            showNormal: _showNormal
         };
 
         this.proxyMethods = {
@@ -880,7 +893,7 @@ class Transformable extends SubjectModel {
                 ? snapToGrid(y - cy, snap.y / transform.scY)
                 : 0;
 
-            dx = dox ? (revX ? - dx : dx) : 0,
+            dx = dox ? (revX ? - dx : dx) : 0;
             dy = doy ? (revY ? - dy : dy) : 0;
 
             const args = {
@@ -910,12 +923,39 @@ class Transformable extends SubjectModel {
             } = storage;
 
             if (isDef(restrict)) {
-                if ((clientX - restrictOffset.left) < nx - elementOffset.left) {
-                    clientX = nx - elementOffset.left + restrictOffset.left;
+                const {
+                    left: restLeft,
+                    top: restTop
+                } = restrictOffset;
+    
+                const {
+                    left: elLeft,
+                    top: elTop,
+                    width: elW,
+                    height: elH
+                } = elementOffset;
+    
+                const distX = nx - clientX,
+                    distY = ny - clientY;
+    
+                const maxX = restrict.clientWidth - elW,
+                    maxY = restrict.clientHeight - elH;
+    
+                const offsetY = elTop - restTop,
+                    offsetX = elLeft - restLeft;
+    
+                if (offsetY - distY < 0) {
+                    clientY = ny - elTop + restTop;
                 }
-
-                if ((clientY - restrictOffset.top) < ny - elementOffset.top) {
-                    clientY = ny - elementOffset.top + restrictOffset.top;
+                if (offsetX - distX < 0) {
+                    clientX = nx - elLeft + restLeft;
+                }
+    
+                if (offsetY - distY > maxY) {
+                    clientY = maxY + (ny - elTop + restTop);
+                }
+                if (offsetX - distX > maxX) {
+                    clientX = maxX + (nx - elLeft + restLeft);
                 }
             }
 
@@ -1144,9 +1184,9 @@ class Transformable extends SubjectModel {
 
         const actionName = doResize
             ? 'resize'
-            : (doRotate? 'rotate' : 'drag');
-        
-        const triggerEvent = 
+            : (doRotate ? 'rotate' : 'drag');
+
+        const triggerEvent =
             (doResize && resize) ||
             (doRotate && rotate) ||
             (doDrag && move);
@@ -1154,7 +1194,7 @@ class Transformable extends SubjectModel {
         observable.notify(
             'ongetstate',
             this,
-            {   
+            {
                 clientX,
                 clientY,
                 actionName,
@@ -1166,7 +1206,7 @@ class Transformable extends SubjectModel {
                 doH
             }
         );
-        
+
         this._draw();
     }
 
@@ -1243,7 +1283,7 @@ class Transformable extends SubjectModel {
         this._apply(actionName);
 
         const eventArgs = {
-            clientX, 
+            clientX,
             clientY
         };
 
@@ -1263,7 +1303,7 @@ class Transformable extends SubjectModel {
             rotate
         } = each;
 
-        const triggerEvent = 
+        const triggerEvent =
             (doResize && resize) ||
             (doRotate && rotate) ||
             (doDrag && move);
@@ -1272,7 +1312,7 @@ class Transformable extends SubjectModel {
             'onapply',
             this,
             {
-                clientX, 
+                clientX,
                 clientY,
                 actionName,
                 triggerEvent
@@ -1284,7 +1324,7 @@ class Transformable extends SubjectModel {
         helper(document.body).css({ cursor: 'auto' });
         if (isDef(radius)) {
             addClass(radius, 'sjx-hidden');
-        }  
+        }
     }
 
     _compute(e) {
@@ -1391,12 +1431,12 @@ class Transformable extends SubjectModel {
         }
     }
 
-    notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest}) {
+    notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest }) {
         if (triggerEvent) {
             const recalc = this._getState(
                 rest
             );
-    
+
             this.storage = {
                 ...this.storage,
                 ...recalc
@@ -1465,14 +1505,14 @@ class Transformable extends SubjectModel {
     exeDrag({ dx, dy }) {
         const { draggable } = this.options;
         if (!draggable) return;
-    
+
         this.storage = {
             ...this.storage,
-            ...this._getState({ 
-                revX: false, 
-                revY: false, 
-                doW: false, 
-                doH: false 
+            ...this._getState({
+                revX: false,
+                revY: false,
+                doW: false,
+                doH: false
             })
         };
 
@@ -1486,7 +1526,7 @@ class Transformable extends SubjectModel {
 
         this.storage = {
             ...this.storage,
-            ...this._getState({ 
+            ...this._getState({
                 revX: revX || false,
                 revY: revY || false,
                 doW: doW || false,
@@ -1504,11 +1544,11 @@ class Transformable extends SubjectModel {
 
         this.storage = {
             ...this.storage,
-            ...this._getState({ 
-                revX: false, 
-                revY: false, 
-                doW: false, 
-                doH: false 
+            ...this._getState({
+                revX: false,
+                revY: false,
+                doW: false,
+                doH: false
             })
         };
 
@@ -1518,17 +1558,17 @@ class Transformable extends SubjectModel {
 
 }
 
-function matrixTransform({ x, y }, matrix) {
+const matrixTransform = ({ x, y }, matrix) => {
     const [a, b, c, d, e, f] = matrix;
 
     return {
         x: a * x + c * y + e,
         y: b * x + d * y + f
     };
-}
+};
 
 //http://blog.acipo.com/matrix-inversion-in-javascript/
-function matrixInvert(ctm) {
+const matrixInvert = (ctm) => {
     // I use Guassian Elimination to calculate the inverse:
     // (1) 'augment' the matrix (left) by the identity (on the right)
     // (2) Turn the matrix on the left into the identity by elemetry row ops
@@ -1640,12 +1680,12 @@ function matrixInvert(ctm) {
         I[0][1], I[1][1],
         I[0][2], I[1][2]
     ];
-}
+};
 
-function multiplyMatrix(
+const multiplyMatrix = (
     [a1, b1, c1, d1, e1, f1], 
     [a2, b2, c2, d2, e2, f2]
-) {
+) => {
     const m1 = [
         [a1, c1, e1],
         [b1, d1, f1],
@@ -1676,9 +1716,9 @@ function multiplyMatrix(
         result[0][1], result[1][1],
         result[0][2], result[1][2]
     ];
-}
+};
 
-function rotatedTopLeft(
+const rotatedTopLeft = (
     x,
     y,
     width,
@@ -1688,7 +1728,7 @@ function rotatedTopLeft(
     revY,
     doW,
     doH
-) {
+) => {
     const hw = parseFloat(width) / 2,
         hh = parseFloat(height) / 2;
 
@@ -1716,7 +1756,7 @@ function rotatedTopLeft(
         left: floatToFixed(rx),
         top: floatToFixed(ry)
     };
-}
+};
 
 const MIN_SIZE = 2;
 const CENTER_DELTA = 7;
@@ -1728,7 +1768,8 @@ class Draggable extends Transformable {
             rotationPoint,
             container,
             resizable,
-            rotatable
+            rotatable,
+            showNormal
         } = this.options;
 
         const {
@@ -1772,14 +1813,16 @@ class Draggable extends Transformable {
         };
 
         const rotationHandles = {
-            normal: ['sjx-normal'],
+            normal: showNormal ? ['sjx-normal'] : null,
             rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator']
         };
 
         const handles = {
             ...(rotatable && rotationHandles),
             ...(resizable && resizingHandles),
-            center: rotationPoint && rotatable ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] : undefined
+            center: rotationPoint && rotatable
+                ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] 
+                : undefined
         };
 
         Object.keys(handles).forEach(key => {
@@ -1966,7 +2009,7 @@ class Draggable extends Transformable {
         const newWidth = proportions ? cw * ratio : cw + dx,
             newHeight = proportions ? ch * ratio : ch + dy;
 
-        if (newWidth < MIN_SIZE || newHeight < MIN_SIZE) return;
+        if (newWidth <= MIN_SIZE || newHeight <= MIN_SIZE) return;
 
         const matrix = [...transform.matrix];
 
@@ -2260,13 +2303,13 @@ class Draggable extends Transformable {
 
 }
 
-function createHandler(classList) {
+const createHandler = (classList) => {
     const element = document.createElement('div');
     classList.forEach(cls => {
         addClass(element, cls);
     });
     return element;
-}
+};
 
 const svgPoint = createSVGElement('svg').createSVGPoint();
 const floatRE = /[+-]?\d+(\.\d+)?/g;
@@ -2279,7 +2322,11 @@ const ALLOWED_ELEMENTS = [
     'text', 'g'
 ];
 
-function checkChildElements(element) {
+function createSVGElement(name) {
+    return document.createElementNS('http://www.w3.org/2000/svg', name);
+}
+
+const checkChildElements = (element) => {
     const arrOfElements = [];
 
     if (isGroup(element)) {
@@ -2300,35 +2347,31 @@ function checkChildElements(element) {
     }
 
     return arrOfElements;
-}
+};
 
-function createSVGElement(name) {
-    return document.createElementNS('http://www.w3.org/2000/svg', name);
-}
-
-function createSVGMatrix() {
+const createSVGMatrix = () => {
     return createSVGElement('svg').createSVGMatrix();
-}
+};
 
-function getTransformToElement(toElement, g) {
+const getTransformToElement = (toElement, g) => {
     const gTransform = g.getScreenCTM() || createSVGMatrix();
     return gTransform.inverse().multiply(
         toElement.getScreenCTM() || createSVGMatrix()
     );
-}
+};
 
-function matrixToString(m) {
+const matrixToString = (m) => {
     const { a, b, c, d, e, f } = m;
     return `matrix(${a},${b},${c},${d},${e},${f})`;
-}
+};
 
-function pointTo(ctm, x, y) {
+const pointTo = (ctm, x, y) => {
     svgPoint.x = x;
     svgPoint.y = y;
     return svgPoint.matrixTransform(ctm);
-}
+};
 
-function cloneMatrix(b) {
+const cloneMatrix = (b) => {
     const a = createSVGMatrix();
 
     a.a = b.a;
@@ -2339,9 +2382,9 @@ function cloneMatrix(b) {
     a.f = b.f;
 
     return a;
-}
+};
 
-function checkElement(el) {
+const checkElement = (el) => {
     const tagName = el.tagName.toLowerCase();
 
     if (ALLOWED_ELEMENTS.indexOf(tagName) === -1) {
@@ -2353,9 +2396,9 @@ function checkElement(el) {
     } else {
         return true;
     }
-}
+};
 
-function isIdentity(matrix) {
+const isIdentity = (matrix) => {
     const { a, b, c, d, e, f } = matrix;
     return a === 1 &&
         b === 0 &&
@@ -2363,9 +2406,9 @@ function isIdentity(matrix) {
         d === 1 &&
         e === 0 &&
         f === 0;
-}
+};
 
-function createPoint(svg, x, y) {
+const createPoint = (svg, x, y) => {
     if (isUndef(x) || isUndef(y)) {
         return null;
     }
@@ -2373,13 +2416,13 @@ function createPoint(svg, x, y) {
     pt.x = x;
     pt.y = y;
     return pt;
-}
+};
 
-function isGroup(element) {
+const isGroup = (element) => {
     return element.tagName.toLowerCase() === 'g';
-}
+};
 
-function parsePoints(pts) {
+const parsePoints = (pts) => {
     return pts.match(floatRE).reduce(
         (result, value, index, array) => {
             if (index % 2 === 0) {
@@ -2389,12 +2432,12 @@ function parsePoints(pts) {
         },
         []
     );
-}
+};
 
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
 const sepRE = /\s*,\s*|\s+/g;
 
-function parsePath(path) {
+const parsePath = (path) => {
     let match = dRE.lastIndex = 0;
 
     const serialized = [];
@@ -2421,9 +2464,9 @@ function parsePath(path) {
     }
 
     return serialized;
-}
+};
 
-function movePath(params) {
+const movePath = (params) => {
     const {
         path,
         dx,
@@ -2577,9 +2620,9 @@ function movePath(params) {
     } catch (err) {
         warn('Path parsing error: ' + err);
     }
-}
+};
 
-function resizePath(params) {
+const resizePath = (params) => {
     const {
         path,
         localCTM
@@ -2937,10 +2980,10 @@ function resizePath(params) {
     } catch (err) {
         warn('Path parsing error: ' + err);
     }
-}
+};
 
 const MIN_SIZE$1 = 5;
-const ROT_OFFSET = 50;
+const THEME_COLOR = '#00a8ff';
 
 class DraggableSVG extends Transformable {
 
@@ -2948,9 +2991,12 @@ class DraggableSVG extends Transformable {
         const {
             rotationPoint,
             container,
-            themeColor,
             resizable,
-            rotatable
+            rotatable,
+            rotatorAnchor,
+            rotatorOffset,
+            showNormal,
+            custom
         } = this.options;
 
         const wrapper = createSVGElement('g');
@@ -2972,9 +3018,9 @@ class DraggableSVG extends Transformable {
             ['height', ch],
             ['x', cx],
             ['y', cy],
-            ['fill', themeColor],
+            ['fill', THEME_COLOR],
             ['fill-opacity', 0.1],
-            ['stroke', themeColor],
+            ['stroke', THEME_COLOR],
             ['stroke-dasharray', '3 3'],
             ['vector-effect', 'non-scaling-stroke'],
             ['transform', matrixToString(elCTM)]
@@ -2997,12 +3043,13 @@ class DraggableSVG extends Transformable {
         wrapper.appendChild(normalLineGroup);
         wrapper.appendChild(handlesGroup);
 
-        const {
-            x: bX,
-            y: bY,
-            width: bW,
-            height: bH
-        } = box.getBBox();
+        const bBox = box.getBBox(),
+            {
+                x: bX,
+                y: bY,
+                width: bW,
+                height: bH
+            } = bBox;
 
         const centerX = el.getAttribute('data-cx'),
             centerY = el.getAttribute('data-cy');
@@ -3011,16 +3058,21 @@ class DraggableSVG extends Transformable {
             boxCenter = pointTo(boxCTM, bX + bW / 2, bY + bH / 2),
             boxTL = pointTo(boxCTM, bX, bY),
             boxTR = pointTo(boxCTM, bX + bW, bY),
-            boxMR = pointTo(boxCTM, bX + bW, bY + bH / 2);
+            boxMR = pointTo(boxCTM, bX + bW, bY + bH / 2),
+            boxML = pointTo(boxCTM, bX, bY + bH / 2),
+            boxTC = pointTo(boxCTM, bX + bW / 2, bY),
+            boxBC = pointTo(boxCTM, bX + bW / 2, bY + bH),
+            boxBR = pointTo(boxCTM, bX + bW, bY + bH),
+            boxBL = pointTo(boxCTM, bX, bY + bH);
 
         const resizingHandles = {
             tl: boxTL,
             tr: boxTR,
-            br: pointTo(boxCTM, bX + bW, bY + bH),
-            bl: pointTo(boxCTM, bX, bY + bH),
-            tc: pointTo(boxCTM, bX + bW / 2, bY),
-            bc: pointTo(boxCTM, bX + bW / 2, bY + bH),
-            ml: pointTo(boxCTM, bX, bY + bH / 2),
+            br: boxBR,
+            bl: boxBL,
+            tc: boxTC,
+            bc: boxBC,
+            ml: boxML,
             mr: boxMR
         };
 
@@ -3028,26 +3080,59 @@ class DraggableSVG extends Transformable {
             rotator = null;
 
         if (rotatable) {
-            const theta = Math.atan2(
-                boxTL.y - boxTR.y,
-                boxTL.x - boxTR.x
-            );
+            const anchor = {};
+            let factor = 1;
+
+            switch (rotatorAnchor) {
+
+                case 'n':
+                    anchor.x = boxTC.x;
+                    anchor.y = boxTC.y;
+                    break;
+                case 's':
+                    anchor.x = boxBC.x;
+                    anchor.y = boxBC.y;
+                    factor = -1;
+                    break;
+                case 'w':
+                    anchor.x = boxML.x;
+                    anchor.y = boxML.y;
+                    factor = -1;
+                    break;
+                case 'e':
+                default:
+                    anchor.x = boxMR.x;
+                    anchor.y = boxMR.y;
+                    break;
+
+            }
+
+            const theta = rotatorAnchor === 'n' || rotatorAnchor === 's'
+                ? Math.atan2(
+                    boxBL.y - boxTL.y,
+                    boxBL.x - boxTL.x
+                )
+                : Math.atan2(
+                    boxTL.y - boxTR.y,
+                    boxTL.x - boxTR.x
+                );
 
             rotator = {
-                x: boxMR.x - ROT_OFFSET * Math.cos(theta),
-                y: boxMR.y - ROT_OFFSET * Math.sin(theta)
-            }; 
+                x: anchor.x - (rotatorOffset * factor) * Math.cos(theta),
+                y: anchor.y - (rotatorOffset * factor) * Math.sin(theta)
+            };
+            
+            const normalLine = showNormal ? createSVGElement('line') : null;
 
-            const normalLine = createSVGElement('line');
+            if (showNormal) {
+                normalLine.x1.baseVal.value = anchor.x;
+                normalLine.y1.baseVal.value = anchor.y;
+                normalLine.x2.baseVal.value = rotator.x;
+                normalLine.y2.baseVal.value = rotator.y;
 
-            normalLine.x1.baseVal.value = boxMR.x;
-            normalLine.y1.baseVal.value = boxMR.y;
-            normalLine.x2.baseVal.value = rotator.x;
-            normalLine.y2.baseVal.value = rotator.y;
-
-            setLineStyle(normalLine, themeColor);
-            normalLineGroup.appendChild(normalLine);
-
+                setLineStyle(normalLine, THEME_COLOR);
+                normalLineGroup.appendChild(normalLine);
+            }
             let radius = null;
 
             if (rotationPoint) {
@@ -3075,7 +3160,9 @@ class DraggableSVG extends Transformable {
         const handles = {
             ...(resizable && resizingHandles),
             rotator,
-            center: rotationPoint && rotatable ? createPoint(container, centerX, centerY) || boxCenter : undefined
+            center: rotationPoint && rotatable
+                ? createPoint(container, centerX, centerY) || boxCenter
+                : undefined
         };
 
         Object.keys(handles).forEach(key => {
@@ -3084,14 +3171,18 @@ class DraggableSVG extends Transformable {
             const { x, y } = data;
             const color = key === 'center'
                 ? '#fe3232'
-                : themeColor;
+                : THEME_COLOR;
 
-            handles[key] = createHandler$1(
-                x,
-                y,
-                color,
-                key
-            );
+            if (isDef(custom) && isFunc(custom[key])) {
+                handles[key] = custom[key](boxCTM, bBox, pointTo);
+            } else {
+                handles[key] = createHandler$1(
+                    x,
+                    y,
+                    color,
+                    key
+                );
+            }
             handlesGroup.appendChild(handles[key]);
         });
 
@@ -3102,8 +3193,7 @@ class DraggableSVG extends Transformable {
                 ...handles,
                 ...rotationHandles
             },
-            parent: el.parentNode,
-            center: {}
+            parent: el.parentNode
         };
 
         helper(wrapper)
@@ -3184,6 +3274,7 @@ class DraggableSVG extends Transformable {
         const {
             el: element,
             storage,
+            options,
             options: { container }
         } = this;
 
@@ -3304,6 +3395,7 @@ class DraggableSVG extends Transformable {
 
             applyTransformToHandles(
                 storage,
+                options,
                 {
                     x,
                     y,
@@ -3352,6 +3444,7 @@ class DraggableSVG extends Transformable {
         const {
             el,
             storage,
+            options,
             options: { proportions }
         } = this;
 
@@ -3378,7 +3471,7 @@ class DraggableSVG extends Transformable {
         let {
             width: newWidth,
             height: newHeight
-        } = el.getBBox(); //box
+        } = el.getBBox();
 
         const ratio = doW || (!doW && !doH)
             ? (cw + dx) / cw
@@ -3387,7 +3480,7 @@ class DraggableSVG extends Transformable {
         newWidth = proportions ? cw * ratio : cw + dx;
         newHeight = proportions ? ch * ratio : ch + dy;
 
-        if (Math.abs(newWidth) < MIN_SIZE$1 || Math.abs(newHeight) < MIN_SIZE$1) return;
+        if (Math.abs(newWidth) <= MIN_SIZE$1 || Math.abs(newHeight) <= MIN_SIZE$1) return;
 
         const scaleX = newWidth / cw,
             scaleY = newHeight / ch;
@@ -3436,6 +3529,7 @@ class DraggableSVG extends Transformable {
 
         applyTransformToHandles(
             storage,
+            options,
             {
                 ...finalValues,
                 boxMatrix: null
@@ -3757,6 +3851,7 @@ class DraggableSVG extends Transformable {
 
         applyTransformToHandles(
             this.storage,
+            this.options,
             {
                 x,
                 y,
@@ -3773,7 +3868,7 @@ class DraggableSVG extends Transformable {
 
 }
 
-function applyTranslate(element, { x, y }) {
+const applyTranslate = (element, { x, y }) => {
     const attrs = [];
 
     switch (element.tagName.toLowerCase()) {
@@ -3866,9 +3961,9 @@ function applyTranslate(element, { x, y }) {
     attrs.forEach(item => {
         element.setAttribute(item[0], item[1]);
     });
-}
+};
 
-function applyResize(element, data) {
+const applyResize = (element, data) => {
     const {
         scaleX,
         scaleY,
@@ -4069,12 +4164,19 @@ function applyResize(element, data) {
     attrs.forEach(([key, value]) => {
         element.setAttribute(key, value);
     });
-}
+};
 
-function applyTransformToHandles(
+const applyTransformToHandles = (
     storage,
+    options,
     data
-) {
+) => {
+    const {
+        rotatable,
+        rotatorAnchor,
+        rotatorOffset
+    } = options;
+
     const {
         box,
         handles,
@@ -4112,7 +4214,6 @@ function applyTransformToHandles(
         bc: pointTo(boxCTM, x + hW, y + height),
         ml: pointTo(boxCTM, x, y + hH),
         mr: pointTo(boxCTM, x + width, y + hH),
-        rotator: {},
         center: isDef(handles.center) && !center.isShifted ? boxCenter : undefined
     };
 
@@ -4125,33 +4226,71 @@ function applyTransformToHandles(
     //     console.log(attrs.center);
     // }
 
-    const theta = Math.atan2(
-        attrs.tl.y - attrs.tr.y,
-        attrs.tl.x - attrs.tr.x
-    );
+    if (rotatable) {
+        const anchor = {};
+        let factor = 1;
 
-    attrs.rotator.x = attrs.mr.x - ROT_OFFSET * Math.cos(theta);
-    attrs.rotator.y = attrs.mr.y - ROT_OFFSET * Math.sin(theta);
+        switch (rotatorAnchor) {
 
-    const {
-        normal,
-        radius
-    } = handles;
+            case 'n':
+                anchor.x = attrs.tc.x;
+                anchor.y = attrs.tc.y;
+                break;
+            case 's':
+                anchor.x = attrs.bc.x;
+                anchor.y = attrs.bc.y;
+                factor = -1;
+                break;
+            case 'w':
+                anchor.x = attrs.ml.x;
+                anchor.y = attrs.ml.y;
+                factor = -1;
+                break;
+            case 'e':
+            default:
+                anchor.x = attrs.mr.x;
+                anchor.y = attrs.mr.y;
+                break;
 
-    if (isDef(normal)) {
-        normal.x1.baseVal.value = attrs.mr.x;
-        normal.y1.baseVal.value = attrs.mr.y;
-        normal.x2.baseVal.value = attrs.rotator.x;
-        normal.y2.baseVal.value = attrs.rotator.y;
-    }
-   
-    if (isDef(radius)) {
-        radius.x1.baseVal.value = boxCenter.x;
-        radius.y1.baseVal.value = boxCenter.y;
-        if (!center.isShifted) {
-            radius.x2.baseVal.value = boxCenter.x;
-            radius.y2.baseVal.value = boxCenter.y;
         }
+
+        const theta = rotatorAnchor === 'n' || rotatorAnchor === 's'
+            ? Math.atan2(
+                attrs.bl.y - attrs.tl.y,
+                attrs.bl.x - attrs.tl.x
+            )
+            : Math.atan2(
+                attrs.tl.y - attrs.tr.y,
+                attrs.tl.x - attrs.tr.x
+            );
+
+        const rotator = {
+            x: anchor.x - (rotatorOffset * factor) * Math.cos(theta),
+            y: anchor.y - (rotatorOffset * factor) * Math.sin(theta)
+        };
+
+        const {
+            normal,
+            radius
+        } = handles;
+
+        if (isDef(normal)) {
+            normal.x1.baseVal.value = anchor.x;
+            normal.y1.baseVal.value = anchor.y;
+            normal.x2.baseVal.value = rotator.x;
+            normal.y2.baseVal.value = rotator.y;
+        }
+    
+        if (isDef(radius)) {
+            radius.x1.baseVal.value = boxCenter.x;
+            radius.y1.baseVal.value = boxCenter.y;
+            if (!center.isShifted) {
+                radius.x2.baseVal.value = boxCenter.x;
+                radius.y2.baseVal.value = boxCenter.y;
+            }
+        }
+
+        attrs.rotator = rotator;
     }
 
     x += width < 0 ? width : 0;
@@ -4175,9 +4314,9 @@ function applyTransformToHandles(
         hdl.setAttribute('cx', attr.x);
         hdl.setAttribute('cy', attr.y);
     });
-}
+};
 
-function createHandler$1(l, t, color, key) {
+const createHandler$1 = (l, t, color, key) => {
     const handler = createSVGElement('circle');
     addClass(handler, `sjx-svg-hdl-${key}`);
 
@@ -4197,13 +4336,13 @@ function createHandler$1(l, t, color, key) {
     });
 
     return handler;
-}
+};
 
-function setLineStyle(line, color) {
+const setLineStyle = (line, color) => {
     line.setAttribute('stroke', color);
     line.setAttribute('stroke-dasharray', '3 3');
     line.setAttribute('vector-effect', 'non-scaling-stroke');
-}
+};
 
 // factory method for creating draggable elements
 function drag(options, obInstance) {

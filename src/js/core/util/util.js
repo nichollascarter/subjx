@@ -24,22 +24,22 @@ export const {
 export const { warn } = console;
 /* eslint-disable no-console */
 
-export function isDef(val) {
+export const isDef = (val) => {
     return val !== undefined && val !== null;
-}
+};
 
-export function isUndef(val) {
+export const isUndef = (val) => {
     return val === undefined || val === null;
-}
+};
 
-export function isFunc(val) {
+export const isFunc = (val) => {
     return typeof val === 'function';
-}
+};
 
-export function createMethod(fn) {
+export const createMethod = (fn) => {
     return isFunc(fn)
         ? function () {
             fn.call(this, ...arguments);
         }
         : () => { };
-}
+};

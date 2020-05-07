@@ -9,7 +9,7 @@ import {
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
 const sepRE = /\s*,\s*|\s+/g;
 
-function parsePath(path) {
+const parsePath = (path) => {
     let match = dRE.lastIndex = 0;
 
     const serialized = [];
@@ -36,9 +36,9 @@ function parsePath(path) {
     }
 
     return serialized;
-}
+};
 
-export function movePath(params) {
+export const movePath = (params) => {
     const {
         path,
         dx,
@@ -192,9 +192,9 @@ export function movePath(params) {
     } catch (err) {
         warn('Path parsing error: ' + err);
     }
-}
+};
 
-export function resizePath(params) {
+export const resizePath = (params) => {
     const {
         path,
         localCTM
@@ -552,4 +552,4 @@ export function resizePath(params) {
     } catch (err) {
         warn('Path parsing error: ' + err);
     }
-}
+};
