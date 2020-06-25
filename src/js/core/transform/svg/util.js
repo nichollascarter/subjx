@@ -12,7 +12,7 @@ const ALLOWED_ELEMENTS = [
     'image', 'line',
     'path', 'polygon',
     'polyline', 'rect',
-    'text', 'g'
+    'text', 'g', 'foreignobject'
 ];
 
 export function createSVGElement(name) {
@@ -82,8 +82,8 @@ export const checkElement = (el) => {
 
     if (ALLOWED_ELEMENTS.indexOf(tagName) === -1) {
         warn(
-            'Selected element is not allowed to transform. Allowed elements:\n' +
-            'circle, ellipse, image, line, path, polygon, polyline, rect, text, g'
+            `Selected element "${tagName}" is not allowed to transform. Allowed elements:\n
+            circle, ellipse, image, line, path, polygon, polyline, rect, text, g`
         );
         return false;
     } else {

@@ -87,6 +87,7 @@ export default class Transformable extends SubjectModel {
             _draggable = true,
             _resizable = true,
             _rotatable = true,
+            _scalable = false,
             _rotatorAnchor = null,
             _rotatorOffset = 50,
             _showNormal = true,
@@ -113,6 +114,7 @@ export default class Transformable extends SubjectModel {
                 draggable,
                 resizable,
                 rotatable,
+                scalable,
                 onInit,
                 onDrop,
                 onMove,
@@ -166,6 +168,7 @@ export default class Transformable extends SubjectModel {
             _draggable = isDef(draggable) ? draggable : true;
             _resizable = isDef(resizable) ? resizable : true;
             _rotatable = isDef(rotatable) ? rotatable : true;
+            _scalable = scalable || false;
 
             _custom = (typeof custom === 'object' && custom) || null;
             _rotatorAnchor = rotatorAnchor || null;
@@ -194,6 +197,7 @@ export default class Transformable extends SubjectModel {
             draggable: _draggable,
             resizable: _resizable,
             rotatable: _rotatable,
+            scalable: _scalable,
             custom: _custom,
             rotatorAnchor: _rotatorAnchor,
             rotatorOffset: _rotatorOffset,
@@ -423,6 +427,7 @@ export default class Transformable extends SubjectModel {
     }
 
     _start(e) {
+        const { clientX, clientY } = e;
         const {
             observable,
             storage,
@@ -455,9 +460,7 @@ export default class Transformable extends SubjectModel {
             onTopEdge ||
             onLeftEdge;
 
-        const {
-            handles
-        } = storage;
+        const { handles } = storage;
 
         const {
             rotator,
@@ -476,32 +479,21 @@ export default class Transformable extends SubjectModel {
 
         const doDrag = !(doRotate || doResize || doSetCenter);
 
-        const {
-            clientX,
-            clientY
-        } = e;
-
-        const {
-            x,
-            y
-        } = this._cursorPoint(
+        const { x, y } = this._cursorPoint(
             {
                 clientX,
                 clientY
             }
         );
 
-        const {
-            x: nx,
-            y: ny
-        } = this._pointToElement({ x, y });
+        const { x: nx, y: ny } = this._pointToElement({ x, y });
 
         const {
             x: bx,
             y: by
         } = this._pointToControls({ x, y });
 
-        const newStorageValues = {
+        const nextStorage = {
             clientX,
             clientY,
             nx: x,
@@ -542,7 +534,7 @@ export default class Transformable extends SubjectModel {
 
         this.storage = {
             ...storage,
-            ...newStorageValues
+            ...nextStorage
         };
 
         const eventArgs = {
@@ -593,15 +585,9 @@ export default class Transformable extends SubjectModel {
     }
 
     _moving(e) {
-        const {
-            storage,
-            options
-        } = this;
+        const { storage, options } = this;
 
-        const {
-            x,
-            y
-        } = this._cursorPoint(e);
+        const { x, y } = this._cursorPoint(e);
 
         storage.e = e;
         storage.clientX = x;
@@ -710,9 +696,7 @@ export default class Transformable extends SubjectModel {
     }
 
     _compute(e) {
-        const {
-            handles
-        } = this.storage;
+        const { handles } = this.storage;
 
         const handle = helper(e.target);
 
@@ -731,10 +715,7 @@ export default class Transformable extends SubjectModel {
             doH
         });
 
-        const {
-            x: clientX,
-            y: clientY
-        } = this._cursorPoint(e);
+        const { x: clientX, y: clientY } = this._cursorPoint(e);
 
         const pressang = Math.atan2(
             clientY - _computed.center.y,
@@ -760,7 +741,7 @@ export default class Transformable extends SubjectModel {
             isML = isDef(ml) ? handle.is(ml) : false,
             isMR = isDef(mr) ? handle.is(mr) : false;
 
-        //reverse axis
+        // reverse axis
         const revX = isTL || isML || isBL || isTC,
             revY = isTL || isTR || isTC || isML;
 

@@ -2,13 +2,13 @@
 import resolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
 import postcss from 'rollup-plugin-postcss';
-import { terser } from "rollup-plugin-terser";
+import { terser } from 'rollup-plugin-terser';
 import { uglify } from 'rollup-plugin-uglify';
 import { eslint } from 'rollup-plugin-eslint';
 
 const env = process.env.NODE_ENV || 'production';
 const prod = env === 'production';
-let libraryName = "subjx";
+let libraryName = 'subjx';
 
 const banner = `/*@license
 * Drag/Rotate/Resize Library
@@ -17,21 +17,21 @@ const banner = `/*@license
 * nichollascarter@gmail.com
 */`;
 
-const plugins = [
-    postcss({
-        minimize: true,
-        extract: "dist/style/subjx.css"
-    }),
-    eslint({
-        exclude: 'node_modules/**',
-        throwOnError: true
-    }),
-    resolve()
-];
-
 if (!prod) {
     libraryName += '.dev';
 }
+
+const plugins = [
+    postcss({
+        minimize: true,
+        extract: 'dist/style/subjx.css'
+    }),
+    eslint({
+        exclude: 'node_modules/**',
+        throwOnError: prod
+    }),
+    resolve()
+];
 
 const uglifyPlugin = () => {
     return uglify({
@@ -79,7 +79,7 @@ export default [
             ...plugins,
             babel({
                 exclude: 'node_modules/**',
-                presets: ["@babel/preset-env"]
+                presets: ['@babel/preset-env']
             }),
             prod && uglifyPlugin()
         ]

@@ -96,8 +96,8 @@ export default class Draggable extends Transformable {
         if (isDef(handles.center)) {
             const cHandle = helper(handles.center);
             cHandle.css({
-                left: `${el.getAttribute('data-cx')}px`,
-                top: `${el.getAttribute('data-cy')}px`
+                left: `${el.getAttribute('data-sjx-cx')}px`,
+                top: `${el.getAttribute('data-sjx-cy')}px`
             });
         }
 
@@ -214,8 +214,8 @@ export default class Draggable extends Transformable {
             ? parseFloat(helper(cHandle).css('top'))
             : hH;
 
-        el.setAttribute('data-cx', centerX);
-        el.setAttribute('data-cy', centerY);
+        el.setAttribute('data-sjx-cx', centerX);
+        el.setAttribute('data-sjx-cy', centerY);
 
         // if (isUndef(cached)) return;
 
