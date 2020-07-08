@@ -88,6 +88,7 @@ export default class Transformable extends SubjectModel {
             _resizable = true,
             _rotatable = true,
             _scalable = false,
+            _applyTranslate = false,
             _rotatorAnchor = null,
             _rotatorOffset = 50,
             _showNormal = true,
@@ -105,16 +106,17 @@ export default class Transformable extends SubjectModel {
             const {
                 snap,
                 each,
-                axis,
-                cursorMove,
-                cursorResize,
-                cursorRotate,
-                rotationPoint,
+                axis = 'xy',
+                cursorMove = 'auto',
+                cursorResize = 'auto',
+                cursorRotate = 'auto',
+                rotationPoint = false,
                 restrict,
-                draggable,
-                resizable,
-                rotatable,
-                scalable,
+                draggable = true,
+                resizable = true,
+                rotatable = true,
+                scalable = false,
+                applyTranslate = false,
                 onInit,
                 onDrop,
                 onMove,
@@ -122,29 +124,37 @@ export default class Transformable extends SubjectModel {
                 onRotate,
                 onDestroy,
                 container,
-                proportions,
+                proportions = false,
                 custom,
                 rotatorAnchor,
-                rotatorOffset,
-                showNormal
+                rotatorOffset = 50,
+                showNormal = true
             } = options;
 
             if (isDef(snap)) {
-                const { x, y, angle } = snap;
+                const { 
+                    x = 10, 
+                    y = 10, 
+                    angle 
+                } = snap;
 
-                _snap.x = isUndef(x) ? 10 : x;
-                _snap.y = isUndef(y) ? 10 : y;
+                _snap.x = x;
+                _snap.y = y;
                 _snap.angle = isUndef(angle)
                     ? _snap.angle
                     : angle * RAD;
             }
 
             if (isDef(each)) {
-                const { move, resize, rotate } = each;
+                const { 
+                    move = false, 
+                    resize = false, 
+                    rotate = false
+                } = each;
 
-                _each.move = move || false;
-                _each.resize = resize || false;
-                _each.rotate = rotate || false;
+                _each.move = move;
+                _each.resize = resize;
+                _each.rotate = rotate;
             }
 
             if (isDef(restrict)) {
@@ -153,27 +163,28 @@ export default class Transformable extends SubjectModel {
                     : helper(restrict)[0] || document;
             }
 
-            _cursorMove = cursorMove || 'auto';
-            _cursorResize = cursorResize || 'auto';
-            _cursorRotate = cursorRotate || 'auto';
-            _axis = axis || 'xy';
+            _cursorMove = cursorMove;
+            _cursorResize = cursorResize;
+            _cursorRotate = cursorRotate;
+            _axis = axis;
 
             _container = isDef(container) && helper(container)[0]
                 ? helper(container)[0]
                 : _container;
 
-            _rotationPoint = rotationPoint || false;
-            _proportions = proportions || false;
+            _rotationPoint = rotationPoint;
+            _proportions = proportions;
 
-            _draggable = isDef(draggable) ? draggable : true;
-            _resizable = isDef(resizable) ? resizable : true;
-            _rotatable = isDef(rotatable) ? rotatable : true;
-            _scalable = scalable || false;
+            _draggable = draggable;
+            _resizable = resizable;
+            _rotatable = rotatable;
+            _scalable = scalable;
+            _applyTranslate = applyTranslate;
 
             _custom = (typeof custom === 'object' && custom) || null;
             _rotatorAnchor = rotatorAnchor || null;
-            _rotatorOffset = rotatorOffset || 50;
-            _showNormal = isDef(showNormal) ? showNormal : true;
+            _rotatorOffset = rotatorOffset;
+            _showNormal = showNormal;
 
             _onInit = createMethod(onInit);
             _onDrop = createMethod(onDrop);
@@ -198,6 +209,7 @@ export default class Transformable extends SubjectModel {
             resizable: _resizable,
             rotatable: _rotatable,
             scalable: _scalable,
+            applyTranslate: _applyTranslate,
             custom: _custom,
             rotatorAnchor: _rotatorAnchor,
             rotatorOffset: _rotatorOffset,

@@ -989,6 +989,7 @@
               _resizable = true,
               _rotatable = true,
               _scalable = false,
+              _applyTranslate = false,
               _rotatorAnchor = null,
               _rotatorOffset = 50,
               _showNormal = true,
@@ -1005,16 +1006,27 @@
           if (isDef(options)) {
             var snap = options.snap,
                 each = options.each,
-                axis = options.axis,
-                cursorMove = options.cursorMove,
-                cursorResize = options.cursorResize,
-                cursorRotate = options.cursorRotate,
-                rotationPoint = options.rotationPoint,
+                _options$axis = options.axis,
+                axis = _options$axis === void 0 ? 'xy' : _options$axis,
+                _options$cursorMove = options.cursorMove,
+                cursorMove = _options$cursorMove === void 0 ? 'auto' : _options$cursorMove,
+                _options$cursorResize = options.cursorResize,
+                cursorResize = _options$cursorResize === void 0 ? 'auto' : _options$cursorResize,
+                _options$cursorRotate = options.cursorRotate,
+                cursorRotate = _options$cursorRotate === void 0 ? 'auto' : _options$cursorRotate,
+                _options$rotationPoin = options.rotationPoint,
+                rotationPoint = _options$rotationPoin === void 0 ? false : _options$rotationPoin,
                 restrict = options.restrict,
-                draggable = options.draggable,
-                resizable = options.resizable,
-                rotatable = options.rotatable,
-                scalable = options.scalable,
+                _options$draggable = options.draggable,
+                draggable = _options$draggable === void 0 ? true : _options$draggable,
+                _options$resizable = options.resizable,
+                resizable = _options$resizable === void 0 ? true : _options$resizable,
+                _options$rotatable = options.rotatable,
+                rotatable = _options$rotatable === void 0 ? true : _options$rotatable,
+                _options$scalable = options.scalable,
+                scalable = _options$scalable === void 0 ? false : _options$scalable,
+                _options$applyTransla = options.applyTranslate,
+                applyTranslate = _options$applyTransla === void 0 ? false : _options$applyTransla,
                 onInit = options.onInit,
                 onDrop = options.onDrop,
                 onMove = options.onMove,
@@ -1022,49 +1034,58 @@
                 onRotate = options.onRotate,
                 onDestroy = options.onDestroy,
                 container = options.container,
-                proportions = options.proportions,
+                _options$proportions = options.proportions,
+                proportions = _options$proportions === void 0 ? false : _options$proportions,
                 custom = options.custom,
                 rotatorAnchor = options.rotatorAnchor,
-                rotatorOffset = options.rotatorOffset,
-                showNormal = options.showNormal;
+                _options$rotatorOffse = options.rotatorOffset,
+                rotatorOffset = _options$rotatorOffse === void 0 ? 50 : _options$rotatorOffse,
+                _options$showNormal = options.showNormal,
+                showNormal = _options$showNormal === void 0 ? true : _options$showNormal;
 
             if (isDef(snap)) {
-              var x = snap.x,
-                  y = snap.y,
+              var _snap$x = snap.x,
+                  x = _snap$x === void 0 ? 10 : _snap$x,
+                  _snap$y = snap.y,
+                  y = _snap$y === void 0 ? 10 : _snap$y,
                   angle = snap.angle;
-              _snap.x = isUndef(x) ? 10 : x;
-              _snap.y = isUndef(y) ? 10 : y;
+              _snap.x = x;
+              _snap.y = y;
               _snap.angle = isUndef(angle) ? _snap.angle : angle * RAD;
             }
 
             if (isDef(each)) {
-              var move = each.move,
-                  resize = each.resize,
-                  rotate = each.rotate;
-              _each.move = move || false;
-              _each.resize = resize || false;
-              _each.rotate = rotate || false;
+              var _each$move = each.move,
+                  move = _each$move === void 0 ? false : _each$move,
+                  _each$resize = each.resize,
+                  resize = _each$resize === void 0 ? false : _each$resize,
+                  _each$rotate = each.rotate,
+                  rotate = _each$rotate === void 0 ? false : _each$rotate;
+              _each.move = move;
+              _each.resize = resize;
+              _each.rotate = rotate;
             }
 
             if (isDef(restrict)) {
               _restrict = restrict === 'parent' ? el.parentNode : helper(restrict)[0] || document;
             }
 
-            _cursorMove = cursorMove || 'auto';
-            _cursorResize = cursorResize || 'auto';
-            _cursorRotate = cursorRotate || 'auto';
-            _axis = axis || 'xy';
+            _cursorMove = cursorMove;
+            _cursorResize = cursorResize;
+            _cursorRotate = cursorRotate;
+            _axis = axis;
             _container = isDef(container) && helper(container)[0] ? helper(container)[0] : _container;
-            _rotationPoint = rotationPoint || false;
-            _proportions = proportions || false;
-            _draggable = isDef(draggable) ? draggable : true;
-            _resizable = isDef(resizable) ? resizable : true;
-            _rotatable = isDef(rotatable) ? rotatable : true;
-            _scalable = scalable || false;
+            _rotationPoint = rotationPoint;
+            _proportions = proportions;
+            _draggable = draggable;
+            _resizable = resizable;
+            _rotatable = rotatable;
+            _scalable = scalable;
+            _applyTranslate = applyTranslate;
             _custom = _typeof(custom) === 'object' && custom || null;
             _rotatorAnchor = rotatorAnchor || null;
-            _rotatorOffset = rotatorOffset || 50;
-            _showNormal = isDef(showNormal) ? showNormal : true;
+            _rotatorOffset = rotatorOffset;
+            _showNormal = showNormal;
             _onInit = createMethod(onInit);
             _onDrop = createMethod(onDrop);
             _onMove = createMethod(onMove);
@@ -1088,6 +1109,7 @@
             resizable: _resizable,
             rotatable: _rotatable,
             scalable: _scalable,
+            applyTranslate: _applyTranslate,
             custom: _custom,
             rotatorAnchor: _rotatorAnchor,
             rotatorOffset: _rotatorOffset,
@@ -3110,7 +3132,8 @@
               options = this.options,
               _this$options2 = this.options,
               container = _this$options2.container,
-              scalable = _this$options2.scalable;
+              scalable = _this$options2.scalable,
+              applyDragging = _this$options2.applyTranslate;
           var box = storage.box,
               handles = storage.handles,
               cached = storage.cached,
@@ -3140,7 +3163,7 @@
               oy = cached.oy;
 
           if (actionName === 'drag') {
-            if (dx === 0 && dy === 0) return;
+            if (!applyDragging || dx === 0 && dy === 0) return;
             var eM = createSVGMatrix();
             eM.e = dx;
             eM.f = dy;

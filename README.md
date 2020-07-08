@@ -13,6 +13,7 @@
 ## Demos
 
 ### [Basic example](http://jsfiddle.net/nichollascarter/qgwzch0v/)
+
 ### [Drag, zoom and pan SVG](https://codesandbox.io/s/svg-drag-pan-zoom-wb95s)
 
 ## Usage
@@ -61,6 +62,7 @@ xDraggables.forEach(item => {
     item.disable();
 });
 ```
+
 ### "Draggable" API
 
 ```javascript
@@ -102,13 +104,13 @@ const EVENTS = [
 ];
 
 // execute dragging manually
-xDraggable.exeDrag({ 
+xDraggable.exeDrag({
     dx, // drag along the x axis
     dy // drag along the y axis
 });
 
 // execute resizing manually
-xDraggable.exeResize({ 
+xDraggable.exeResize({
     dx, // resize along the x axis
     dy, // resize along the y axis
     revX, // reverse resizing along the x axis
@@ -150,7 +152,7 @@ subjx('.draggable').drag({
     // mimic behavior with other '.draggable' elements
     each: {
         move: true,
-        resize: true, 
+        resize: true,
         rotate: true
     },
     // keep aspect ratio when resizing
@@ -161,16 +163,19 @@ subjx('.draggable').drag({
     resizable: true,
     rotatable: true,
     // Draggable SVG options
+    // applies scaling only to root element
+    scalable: true,
     rotatorAnchor: 'n' | 's' | 'w' | 'e',
     rotatorOffset: 30,
     // ----- experimental options ------
     // show/manipulate rotation point(not tested with HTML elements)
     rotationPoint: true,
     // restrict moving
-    // spreads to dragging one element 
+    // spreads to dragging one element
     restrict: 'selector'
 });
 ```
+
 #### Notice: In most cases, it is recommended to use 'proportions' option
 
 ### Methods
@@ -199,6 +204,7 @@ subjx('.draggable').drag({
 ```
 
 Subscribing new draggable element to previously activated(useful with `each` option)
+
 ```javascript
 const observable = subjx.createObservable();
 subjx('.draggable').drag({...}, observable);
@@ -210,7 +216,6 @@ const createDraggableAndSubscribe = e => {
 
 Allowed SVG elements:
 `g`, `path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `circle`
-
 
 ## Cloning
 
@@ -250,6 +255,7 @@ subjx('.cloneable').clone({
 ```
 
 Disabling
+
 ```javascript
 xCloneable.forEach(item => {
     item.disable();
@@ -257,4 +263,5 @@ xCloneable.forEach(item => {
 ```
 
 ## License
+
 MIT (c) Karen Sarksyan

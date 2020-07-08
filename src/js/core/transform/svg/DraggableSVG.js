@@ -300,7 +300,11 @@ export default class DraggableSVG extends Transformable {
             el: element,
             storage,
             options,
-            options: { container, scalable }
+            options: { 
+                container, 
+                scalable,
+                applyTranslate: applyDragging
+            }
         } = this;
 
         const {
@@ -353,7 +357,7 @@ export default class DraggableSVG extends Transformable {
         } = cached;
 
         if (actionName === 'drag') {
-            if (dx === 0 && dy === 0) return;
+            if (!applyDragging || (dx === 0 && dy === 0)) return;
 
             const eM = createSVGMatrix();
 
