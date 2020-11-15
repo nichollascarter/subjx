@@ -2,24 +2,23 @@ import { helper } from '../Helper';
 import Transformable from './Transformable';
 import { floatToFixed } from './common';
 import { isDef, isUndef } from '../util/util';
+import { addClass, matrixToCSS } from '../util/css-util';
+import { MIN_SIZE } from '../consts';
 
 import {
-    addClass,
-    getTransform,
-    parseMatrix,
-    getOffset,
-    matrixToCSS
-} from '../util/css-util';
-
-import {
-    matrixTransform,
     matrixInvert,
+    createRotateMatrix,
+    createTranslateMatrix,
+    createScaleMatrix,
     multiplyMatrix,
-    rotatedTopLeft
+    multiplyMatrixAndPoint,
+    getTransform,
+    getCurrentTransformMatrix,
+    flatMatrix,
+    cloneMatrix,
+    decompose,
+    getAbsoluteOffset
 } from './matrix';
-
-const MIN_SIZE = 2;
-const CENTER_DELTA = 7;
 
 export default class Draggable extends Transformable {
 
@@ -29,238 +28,424 @@ export default class Draggable extends Transformable {
             container,
             resizable,
             rotatable,
-            showNormal
+            showNormal,
+            rotatorOffset,
+            rotatorAnchor
         } = this.options;
 
-        const {
-            left,
-            top,
-            width,
-            height
-        } = el.style;
+        const { offsetHeight, offsetWidth } = el;
 
         const wrapper = document.createElement('div');
         addClass(wrapper, 'sjx-wrapper');
-        container.appendChild(wrapper);
-
-        const $el = helper(el);
-
-        const w = width || $el.css('width'),
-            h = height || $el.css('height'),
-            t = top || $el.css('top'),
-            l = left || $el.css('left');
-
-        const css = {
-            top: t,
-            left: l,
-            width: w,
-            height: h,
-            transform: getTransform($el)
-        };
 
         const controls = document.createElement('div');
         addClass(controls, 'sjx-controls');
 
-        const resizingHandles = {
-            tl: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-l', 'sjx-hdl-tl'],
-            tr: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-r', 'sjx-hdl-tr'],
-            br: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-r', 'sjx-hdl-br'],
-            bl: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-l', 'sjx-hdl-bl'],
-            tc: ['sjx-hdl', 'sjx-hdl-t', 'sjx-hdl-c', 'sjx-hdl-tc'],
-            bc: ['sjx-hdl', 'sjx-hdl-b', 'sjx-hdl-c', 'sjx-hdl-bc'],
-            ml: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-l', 'sjx-hdl-ml'],
-            mr: ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-r', 'sjx-hdl-mr']
+        const handles = {};
+
+        const matrix = getCurrentTransformMatrix(el, container);
+        const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
+
+        const vertices = {
+            tl: [0, 0, 0, 1],
+            bl: [0, offsetHeight, 0, 1],
+            br: [offsetWidth, offsetHeight, 0, 1],
+            tr: [offsetWidth, 0, 0, 1],
+            tc: [offsetWidth / 2, 0, 0, 1],
+            ml: [0, offsetHeight / 2, 0, 1],
+            bc: [offsetWidth / 2, offsetHeight, 0, 1],
+            mr: [offsetWidth, offsetHeight / 2, 0, 1],
+            center: [offsetWidth / 2, offsetHeight / 2, 0, 1]
         };
 
-        const rotationHandles = {
-            normal: showNormal ? ['sjx-normal'] : null,
-            rotator: ['sjx-hdl', 'sjx-hdl-m', 'sjx-rotator']
+        const finalVertices = Object.entries(vertices)
+            .reduce((nextVerteces, [key, vertex]) => (
+                [...nextVerteces, [key, multiplyMatrixAndPoint(matrix, vertex)]]
+            ), [])
+            .reduce((vertices, [key, [x, y, z, w]]) => {
+                vertices[key] = [
+                    x + offsetLeft,
+                    y + offsetTop,
+                    z,
+                    w
+                ];
+                return vertices;
+            }, {});
+
+        let rotationHandles = {},
+            rotator = null;
+
+        if (rotatable) {
+            const anchor = {};
+            let factor = 1;
+
+            switch (rotatorAnchor) {
+
+                case 'n':
+                    anchor.x = finalVertices.tc[0];
+                    anchor.y = finalVertices.tc[1];
+                    break;
+                case 's':
+                    anchor.x = finalVertices.bc[0];
+                    anchor.y = finalVertices.bc[1];
+                    factor = -1;
+                    break;
+                case 'w':
+                    anchor.x = finalVertices.ml[0];
+                    anchor.y = finalVertices.ml[1];
+                    factor = -1;
+                    break;
+                case 'e':
+                default:
+                    anchor.x = finalVertices.mr[0];
+                    anchor.y = finalVertices.mr[1];
+                    break;
+
+            }
+
+            const theta = rotatorAnchor === 'n' || rotatorAnchor === 's'
+                ? Math.atan2(
+                    finalVertices.bl[1] - finalVertices.tl[1],
+                    finalVertices.bl[0] - finalVertices.tl[0]
+                )
+                : Math.atan2(
+                    finalVertices.tl[1] - finalVertices.tr[1],
+                    finalVertices.tl[0] - finalVertices.tr[0]
+                );
+
+            rotator = [
+                anchor.x - (rotatorOffset * factor) * Math.cos(theta),
+                anchor.y - (rotatorOffset * factor) * Math.sin(theta)
+            ];
+
+            const normalLine = showNormal
+                ? renderLine([[anchor.x, anchor.y], rotator])
+                : null;
+
+            if (showNormal) controls.appendChild(normalLine);
+
+            let radius = null;
+
+            if (rotationPoint) {
+                radius = renderLine([finalVertices.center, finalVertices.center]);
+                addClass(radius, 'sjx-hidden');
+
+                controls.appendChild(radius);
+            }
+
+            rotationHandles = {
+                ...rotationHandles,
+                normal: normalLine,
+                radius
+            };
+        }
+
+        const resizingEdges = {
+            te: [finalVertices.tl, finalVertices.tr],
+            be: [finalVertices.bl, finalVertices.br],
+            le: [finalVertices.tl, finalVertices.bl],
+            re: [finalVertices.tr, finalVertices.br]
         };
 
-        const handles = {
-            ...(rotatable && rotationHandles),
-            ...(resizable && resizingHandles),
+        const resizingHandles = resizable ?
+            {
+                tl: finalVertices.tl,
+                tr: finalVertices.tr,
+                br: finalVertices.br,
+                bl: finalVertices.bl,
+                tc: finalVertices.tc,
+                bc: finalVertices.bc,
+                ml: finalVertices.ml,
+                mr: finalVertices.mr
+            }
+            : {};
+
+        const allHandles = {
+            ...resizingHandles,
             center: rotationPoint && rotatable
-                ? ['sjx-hdl', 'sjx-hdl-m', 'sjx-hdl-c', 'sjx-hdl-mc'] 
-                : undefined
+                ? finalVertices.center
+                : undefined,
+            rotator
         };
 
-        Object.keys(handles).forEach(key => {
-            const data = handles[key];
+        Object.keys(resizingEdges).forEach(key => {
+            const data = resizingEdges[key];
             if (isUndef(data)) return;
-            const handler = createHandler(data);
+            const handler = renderLine(data);
             handles[key] = handler;
             controls.appendChild(handler);
         });
 
-        if (isDef(handles.center)) {
-            const cHandle = helper(handles.center);
-            cHandle.css({
-                left: `${el.getAttribute('data-sjx-cx')}px`,
-                top: `${el.getAttribute('data-sjx-cy')}px`
-            });
-        }
+        Object.keys(allHandles).forEach(key => {
+            const data = allHandles[key];
+            if (isUndef(data)) return;
+            const handler = createHandler(data, key);
+            handles[key] = handler;
+            controls.appendChild(handler);
+        });
 
         wrapper.appendChild(controls);
-
-        const $controls = helper(controls);
-        $controls.css(css);
+        container.appendChild(wrapper);
 
         this.storage = {
             controls,
-            handles,
+            handles: {
+                ...handles,
+                ...rotationHandles
+            },
             radius: undefined,
-            parent: el.parentNode
+            parent: el.parentNode,
+            wrapper,
+            beforeTransform: {
+                ctm: matrix
+            },
+            stored: {
+                center: {
+                    x: el.getAttribute('data-sjx-cx') || 0,
+                    y: el.getAttribute('data-sjx-cy') || 0
+                }
+            }
         };
 
-        $controls
-            .on('mousedown', this._onMouseDown)
-            .on('touchstart', this._onTouchStart);
+        [el, controls].map(target => (
+            helper(target)
+                .on('mousedown', this._onMouseDown)
+                .on('touchstart', this._onTouchStart)
+        ));
     }
 
     _destroy() {
         const {
-            controls
-        } = this.storage;
+            el,
+            storage: {
+                controls,
+                wrapper
+            }
+        } = this;
 
-        helper(controls)
-            .off('mousedown', this._onMouseDown)
-            .off('touchstart', this._onTouchStart);
+        [el, controls].map(target => (
+            helper(target)
+                .off('mousedown', this._onMouseDown)
+                .off('touchstart', this._onTouchStart)
+        ));
 
-        const wrapper = controls.parentNode;
         wrapper.parentNode.removeChild(wrapper);
     }
 
     _pointToElement({ x, y }) {
-        const {
-            transform
-        } = this.storage;
+        const { transform: { ctm } } = this.storage;
 
-        const ctm = [...transform.matrix];
-        ctm[4] = ctm[5] = 0;
+        const matrix = matrixInvert(ctm);
+        matrix[0][3] = matrix[1][3] = matrix[2][3] = 0;
 
         return this._applyMatrixToPoint(
-            matrixInvert(ctm),
+            matrix,
             x,
             y
         );
     }
 
-    _pointToControls(data) {
-        return this._pointToElement(data);
+    _pointToControls({ x, y }) {
+        const { transform: { wrapperMatrix } } = this.storage;
+
+        const matrix = matrixInvert(wrapperMatrix);
+        matrix[0][3] = matrix[1][3] = matrix[2][3] = 0;
+
+        return this._applyMatrixToPoint(
+            matrix,
+            x,
+            y
+        );
     }
 
     _applyMatrixToPoint(matrix, x, y) {
-        return matrixTransform(
-            {
-                x,
-                y
-            },
-            matrix
-        );
+        const [nx, ny] = multiplyMatrixAndPoint(matrix, [x, y, 0, 1]);
+
+        return {
+            x: nx,
+            y: ny
+        };
     }
 
     _cursorPoint({ clientX, clientY }) {
+        const { container } = this.options;
+
+        const globalMatrix = getCurrentTransformMatrix(container);
+
+        return this._applyMatrixToPoint(
+            matrixInvert(globalMatrix),
+            clientX,
+            clientY
+        );
+    }
+
+    _restrictHandler(matrix) {
         const {
-            container
-        } = this.options;
+            storage: {
+                transform: {
+                    containerBox: [
+                        restrictWidth,
+                        restrictHeight
+                    ]
+                }
+            }
+        } = this;
 
-        const globalMatrix = parseMatrix(
-            getTransform(helper(container))
-        );
+        let restrictX = null,
+            restrictY = null;
 
-        return matrixTransform(
-            {
-                x: clientX,
-                y: clientY
-            },
-            matrixInvert(
-                globalMatrix
-            )
-        );
+        for (const point of this.getBoundingRect(matrix)) {
+            const [x, y] = point;
+            if (x < 0 || x > restrictWidth) {
+                restrictX = x || restrictWidth;
+            }
+            if (y < 0 || y > restrictHeight) {
+                restrictY = y || restrictHeight;
+            }
+        }
+
+        return {
+            x: restrictX,
+            y: restrictY
+        };
     }
 
     _apply() {
         const {
             el,
-            storage
+            storage,
+            options: {
+                applyTranslate
+            }
         } = this;
 
         const {
-            // cached,
+            cached,
             controls,
-            // transform,
-            handles
+            transform: { matrix }
+            // handles
         } = storage;
 
         const $controls = helper(controls);
 
-        const cw = parseFloat($controls.css('width')),
-            ch = parseFloat($controls.css('height'));
+        // const cw = el.offsetWidth,
+        //     ch = el.offsetHeight;
 
-        const hW = cw / 2,
-            hH = ch / 2;
+        // const { center: cHandle } = handles;
 
-        const {
-            center: cHandle
-        } = handles;
+        // const isDefCenter = isDef(cHandle);
 
-        const isDefCenter = isDef(cHandle);
+        if (isUndef(cached)) return;
 
-        const centerX = isDefCenter
-            ? parseFloat(helper(cHandle).css('left'))
-            : hW;
-        const centerY = isDefCenter
-            ? parseFloat(helper(cHandle).css('top'))
-            : hH;
+        // const nextStoredCenter = {
+        //     x: isDefCenter ? storage.stored.center.x + cached.centerOffset.x : 0,
+        //     y: isDefCenter ? storage.stored.center.y + cached.centerOffset.y : 0
+        // };
 
-        el.setAttribute('data-sjx-cx', centerX);
-        el.setAttribute('data-sjx-cy', centerY);
+        // el.setAttribute('data-sjx-cx', nextStoredCenter.x);
+        // el.setAttribute('data-sjx-cy', nextStoredCenter.y);
 
-        // if (isUndef(cached)) return;
+        // this.storage = {
+        //     ...this.storage,
+        //     stored: {
+        //         ...this.storage.stored,
+        //         center: {
+        //             ...nextStoredCenter
+        //         }
+        //     }
+        // };
 
-        // const $el = helper(el);
+        if (applyTranslate) {
+            const $el = helper(el);
 
-        // const { dx, dy } = cached;
+            const { dx, dy } = cached;
 
-        // const css = matrixToCSS(transform.matrix);
+            const css = matrixToCSS(matrix);
 
-        // const left = parseFloat(
-        //     el.style.left || $el.css('left')
-        // );
+            const left = parseFloat(
+                el.style.left || $el.css('left')
+            );
 
-        // const top = parseFloat(
-        //     el.style.top || $el.css('top')
-        // );
+            const top = parseFloat(
+                el.style.top || $el.css('top')
+            );
 
-        // css.left = `${left + dx}px`;
-        // css.top = `${top + dy}px`;
+            css.left = `${left + dx}px`;
+            css.top = `${top + dy}px`;
 
-        // $el.css(css);
-        // $controls.css(css);
+            $el.css(css);
+            $controls.css(css);
+        }
 
-        this.storage.cached = null;
+        this.storage.cached = {};
     }
 
     _processResize(dx, dy) {
         const {
             el,
             storage,
-            options: { proportions }
+            storage: {
+                transform: {
+                    matrix,
+                    auxiliary: {
+                        scale: {
+                            translateMatrix
+                        }
+                    }
+                },
+                cached: {
+                    dist: {
+                        dx: nextDx = dx,
+                        dy: nextDy = dy
+                    } = {}
+                } = {}
+            },
+            options: {
+                proportions,
+                scalable,
+                restrict
+            }
         } = this;
 
         const {
-            controls,
-            coords,
             cw,
             ch,
-            transform,
-            refang,
             revX,
             revY,
             doW,
             doH
         } = storage;
+
+        const getScale = (distX, distY) => {
+            const ratio = doW || (!doW && !doH)
+                ? (cw + distX) / cw
+                : (ch + distY) / ch;
+
+            const newWidth = proportions ? cw * ratio : cw + distX,
+                newHeight = proportions ? ch * ratio : ch + distY;
+
+            const scaleX = newWidth / cw,
+                scaleY = newHeight / ch;
+
+            return [scaleX, scaleY];
+        };
+
+        const getScaleMatrix = (scaleX, scaleY) => {
+            const scaleMatrix = createScaleMatrix(
+                scaleX,
+                scaleY
+            );
+
+            const fullScaleMatrix = multiplyMatrix(
+                multiplyMatrix(translateMatrix, scaleMatrix),
+                matrixInvert(translateMatrix)
+            );
+
+            return multiplyMatrix(
+                fullScaleMatrix,
+                matrix
+            );
+        };
 
         const ratio = doW || (!doW && !doH)
             ? (cw + dx) / cw
@@ -269,141 +454,191 @@ export default class Draggable extends Transformable {
         const newWidth = proportions ? cw * ratio : cw + dx,
             newHeight = proportions ? ch * ratio : ch + dy;
 
-        if (newWidth <= MIN_SIZE || newHeight <= MIN_SIZE) return;
+        if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
 
-        const matrix = [...transform.matrix];
+        const { x: restX, y: restY } = restrict
+            ? this._restrictHandler(getScaleMatrix(...getScale(dx, dy)))
+            : { x: null, y: null };
 
-        const newCoords = rotatedTopLeft(
-            matrix[4],
-            matrix[5],
-            newWidth,
-            newHeight,
-            refang,
-            revX,
-            revY,
-            doW,
-            doH
+        storage.cached.dist = {
+            dx: restX !== null && restrict ? nextDx : dx,
+            dy: restY !== null && restrict ? nextDy : dy
+        };
+
+        const resultMatrix = getScaleMatrix(...getScale(nextDx, nextDy));
+
+        if (scalable) {
+            helper(el).css(
+                matrixToCSS(flatMatrix(resultMatrix))
+            );
+        } else {
+            const sX = (cw / 2) * (doH ? 0 : (revX ? -1 : 1)),
+                sY = (ch / 2) * (doW ? 0 : (revY ? -1 : 1));
+
+            const transMatrix = createTranslateMatrix(
+                sX,
+                sY,
+                0
+            );
+
+            const nextScaleMatrix = multiplyMatrix(
+                multiplyMatrix(transMatrix, scaleMatrix),
+                matrixInvert(transMatrix)
+            );
+
+            const trMatrix = createTranslateMatrix(
+                nextScaleMatrix[0][3],
+                nextScaleMatrix[1][3]
+            );
+
+            const result = multiplyMatrix(
+                multiplyMatrix(trMatrix, matrix),
+                matrixInvert(trMatrix)
+            );
+
+            helper(el).css({
+                width: `${newWidth}px`,
+                height: `${newHeight}px`,
+                ...matrixToCSS(flatMatrix(result))
+            });
+        }
+
+        applyTransformToHandles(
+            storage,
+            this.options,
+            {
+                el,
+                boxMatrix: resultMatrix
+            }
         );
 
-        const nx = coords.left - newCoords.left,
-            ny = coords.top - newCoords.top;
-
-        matrix[4] += nx;
-        matrix[5] += ny;
-
-        const css = matrixToCSS(matrix);
-
-        css.width = `${newWidth}px`;
-        css.height = `${newHeight}px`;
-
-        helper(controls).css(css);
-        helper(el).css(css);
-
-        storage.cached = {
-            dx: nx,
-            dy: ny
-        };
-        
         return {
+            transform: resultMatrix,
             width: newWidth,
-            height: newHeight,
-            ox: nx,
-            oy: ny
+            height: newHeight
         };
     }
 
     _processMove(dx, dy) {
         const {
             el,
-            storage
+            storage,
+            storage: {
+                wrapper,
+                transform: {
+                    matrix,
+                    wrapperMatrix,
+                    auxiliary: {
+                        translate: {
+                            parentMatrix
+                        }
+                    }
+                },
+                cached: {
+                    dist: {
+                        dx: nextDx = dx,
+                        dy: nextDy = dy
+                    } = {}
+                } = {}
+            },
+            options: {
+                restrict
+            }
         } = this;
 
-        const {
-            controls,
-            transform: {
-                matrix,
-                parentMatrix
-            }
-        } = storage;
+        const [x, y] = multiplyMatrixAndPoint(
+            parentMatrix,
+            [dx, dy, 0, 1]
+        );
 
-        const pctm = [...parentMatrix];
-        pctm[4] = pctm[5] = 0;
+        const preTranslateMatrix = multiplyMatrix(
+            matrix,
+            createTranslateMatrix(x, y)
+        );
 
-        const nMatrix = [...matrix];
+        const { x: restX, y: restY } = restrict
+            ? this._restrictHandler(preTranslateMatrix)
+            : { x: null, y: null };
 
-        nMatrix[4] = matrix[4] + dx;
-        nMatrix[5] = matrix[5] + dy;
-
-        const css = matrixToCSS(nMatrix);
-
-        helper(controls).css(css);
-        helper(el).css(css);
-
-        storage.cached = {
-            dx,
-            dy
+        storage.cached.dist = {
+            dx: restX !== null && restrict ? nextDx : dx,
+            dy: restY !== null && restrict ? nextDy : dy
         };
 
-        return nMatrix;
+        const [nx, ny] = multiplyMatrixAndPoint(
+            parentMatrix,
+            [nextDx, nextDy, 0, 1]
+        );
+
+        const moveElementMtrx = multiplyMatrix(
+            matrix,
+            createTranslateMatrix(nx, ny)
+        );
+
+        const moveWrapperMtrx = multiplyMatrix(
+            wrapperMatrix,
+            createTranslateMatrix(nextDx, nextDy)
+        );
+
+        const elStyle = matrixToCSS(flatMatrix(moveElementMtrx));
+        const wrapperStyle = matrixToCSS(flatMatrix(moveWrapperMtrx));
+
+        helper(el).css(elStyle);
+        helper(wrapper).css(wrapperStyle);
+
+        return moveElementMtrx;
     }
 
     _processRotate(radians) {
         const {
             el,
             storage: {
-                controls,
-                transform,
-                center
+                transform: {
+                    matrix,
+                    auxiliary: {
+                        rotate: {
+                            translateMatrix
+                        }
+                    }
+                }
+            },
+            options: {
+                restrict
             }
         } = this;
-
-        const {
-            matrix,
-            parentMatrix
-        } = transform;
 
         const cos = floatToFixed(Math.cos(radians), 4),
             sin = floatToFixed(Math.sin(radians), 4);
 
-        const translateMatrix = [
-            1,
-            0,
-            0,
-            1,
-            center.cx,
-            center.cy
-        ];
+        const rotationMatrix = createRotateMatrix(sin, cos);
 
-        const rotMatrix = [
-            cos,
-            sin,
-            -sin,
-            cos,
-            0,
-            0
-        ];
-
-        const pctm = [...parentMatrix];
-        pctm[4] = pctm[5] = 0;
-
-        const resRotMatrix = multiplyMatrix(
-            matrixInvert(pctm),
-            multiplyMatrix(rotMatrix, pctm)
+        const transformMatrix = multiplyMatrix(
+            multiplyMatrix(matrixInvert(translateMatrix), rotationMatrix),
+            translateMatrix
         );
 
-        const nMatrix = multiplyMatrix(
-            multiplyMatrix(translateMatrix, resRotMatrix),
-            matrixInvert(translateMatrix)
+        const resultMatrix = multiplyMatrix(matrix, transformMatrix);
+
+        const { x: restX, y: restY } = restrict
+            ? this._restrictHandler(resultMatrix)
+            : { x: null, y: null };
+
+        if (isDef(restX) || isDef(restY)) return resultMatrix;
+
+        helper(el).css(
+            matrixToCSS(flatMatrix(resultMatrix))
         );
 
-        const resMatrix = multiplyMatrix(nMatrix, matrix);
+        applyTransformToHandles(
+            this.storage,
+            this.options,
+            {
+                el,
+                boxMatrix: resultMatrix
+            }
+        );
 
-        const css = matrixToCSS(resMatrix);
-
-        helper(controls).css(css);
-        helper(el).css(css);
-
-        return resMatrix;
+        return resultMatrix;
     }
 
     _getState(params) {
@@ -414,110 +649,149 @@ export default class Draggable extends Transformable {
             doH
         } = params;
 
-        const factor = revX !== revY
-            ? -1
-            : 1;
-
         const {
             el,
             storage: {
                 handles,
-                controls,
-                parent
+                parent,
+                wrapper,
+                stored: {
+                    center: centerData
+                }
             },
-            options: { container }
+            options: {
+                container
+            }
         } = this;
 
+        const [glLeft, glTop] = getAbsoluteOffset(el, container);
+
         const {
-            center: cHandle
-        } = handles;
+            offsetLeft: elOffsetLeft,
+            offsetTop: elOffsetTop
+        } = el;
 
-        const $controls = helper(controls);
+        const { center: cHandle } = handles;
 
-        const containerMatrix = parseMatrix(
-            getTransform(helper(container))
-        );
+        const matrix = getTransform(el);
+        const ctm = getCurrentTransformMatrix(el, container);
+        const containerMatrix = getCurrentTransformMatrix(container, container.parentNode);
+        const parentMatrix = getCurrentTransformMatrix(parent, container);
+        const wrapperMatrix = getCurrentTransformMatrix(wrapper, container);
 
-        const matrix = parseMatrix(
-            getTransform(helper(controls))
-        );
-
-        const pMatrix = parseMatrix(
-            getTransform(helper(parent))
-        );
-
-        const refang = Math.atan2(
-            matrix[1], matrix[0]
-        ) * factor;
-
-        const parentMatrix = parent !== container
-            ? multiplyMatrix(
-                pMatrix,
-                containerMatrix
-            )
-            : containerMatrix;
-
-        const transform = {
-            matrix,
-            parentMatrix,
-            scX: Math.sqrt(matrix[0] * matrix[0] + matrix[1] * matrix[1]),
-            scY: Math.sqrt(matrix[2] * matrix[2] + matrix[3] * matrix[3])
-        };
-
-        const cw = parseFloat($controls.css('width')),
-            ch = parseFloat($controls.css('height'));
-
-        // getting current coordinates considering rotation angle                                                                                                  
-        const coords = rotatedTopLeft(
-            matrix[4],
-            matrix[5],
-            cw,
-            ch,
-            refang,
-            revX,
-            revY,
-            doW,
-            doH
-        );
+        const cw = el.offsetWidth;
+        const ch = el.offsetHeight;
 
         const hW = cw / 2,
             hH = ch / 2;
 
-        const offset_ = getOffset(el),
-            isDefCenter = isDef(cHandle);
+        const scaleX = doH ? 0 : (revX ? -hW : hW),
+            scaleY = doW ? 0 : (revY ? -hH : hH);
 
-        const centerX = isDefCenter
-            ? parseFloat(helper(cHandle).css('left'))
-            : hW;
-        const centerY = isDefCenter
-            ? parseFloat(helper(cHandle).css('top'))
-            : hH;
-
-        const cDelta = isDefCenter ? CENTER_DELTA : 0;
-
-        const { x: el_x, y: el_y } = matrixTransform(
-            {
-                x: offset_.left,
-                y: offset_.top
-            },
-            matrixInvert(parentMatrix)
+        const [cenX, cenY] = multiplyMatrixAndPoint(
+            ctm,
+            [
+                hW,
+                hH,
+                0,
+                1
+            ]
         );
+
+        const [elX, elY] = multiplyMatrixAndPoint(
+            matrix,
+            [
+                centerData.x,
+                centerData.y,
+                0,
+                1
+            ]
+        );
+
+        const parentCloneMatrix = cloneMatrix(parentMatrix);
+        parentCloneMatrix[0][3] = parentCloneMatrix[1][3] = parentCloneMatrix[2][3] = 0;
+
+        const nMatrix = cloneMatrix(matrix);
+        nMatrix[0][3] = nMatrix[1][3] = nMatrix[2][3] = 0;
+
+        const [oldX, oldY] = multiplyMatrixAndPoint(
+            matrix,
+            [
+                hW,
+                hH,
+                0,
+                1
+            ]
+        );
+
+        const {
+            options: {
+                container: {
+                    offsetWidth,
+                    offsetHeight
+                }
+            }
+        } = this;
+
+        const containerCtm = cloneMatrix(containerMatrix);
+        containerCtm[0][3] = containerCtm[1][3] = containerCtm[2][3] = 0;
+
+        const containerBox = multiplyMatrixAndPoint(
+            containerCtm,
+            [offsetWidth, offsetHeight, 0, 1]
+        );
+
+        const transform = {
+            auxiliary: {
+                scale: {
+                    translateMatrix: createTranslateMatrix(
+                        scaleX,
+                        scaleY,
+                        0
+                    )
+                },
+                translate: {
+                    parentMatrix: matrixInvert(parentCloneMatrix)
+                },
+                rotate: {
+                    translateMatrix: createTranslateMatrix(
+                        elX,
+                        elY,
+                        0
+                    )
+                }
+            },
+            scaleX,
+            scaleY,
+            matrix,
+            localCTM: getCurrentTransformMatrix(el, el.parentNode),
+            ctm,
+            parentMatrix,
+            containerMatrix,
+            wrapperMatrix,
+            scX: decompose(getCurrentTransformMatrix(el, el.parentNode)).scale.sX,
+            scY: decompose(getCurrentTransformMatrix(el, el.parentNode)).scale.sY,
+            oldX: oldX,
+            oldY: oldY,
+            globalOffset: getAbsoluteOffset(el, container),
+            containerBox
+        };
 
         return {
             transform,
             cw,
             ch,
-            coords,
+            left: elOffsetLeft,
+            top: elOffsetTop,
             center: {
-                x: el_x + centerX - cDelta,
-                y: el_y + centerY - cDelta,
-                cx: -centerX + hW - cDelta,
-                cy: -centerY + hH - cDelta,
-                hx: centerX,
-                hy: centerY
+                x: cenX + glLeft,
+                y: cenY + glTop,
+                elX,
+                elY,
+                cx: 0,
+                cy: 0,
+                matrix: cHandle ? getTransform(cHandle) : null
             },
-            factor,
-            refang,
             revX,
             revY,
             doW,
@@ -526,47 +800,343 @@ export default class Draggable extends Transformable {
     }
 
     _moveCenterHandle(x, y) {
-        const { 
-            handles: { center }, 
-            center: { hx, hy }
+        const {
+            handles: { center },
+            center: { matrix }
         } = this.storage;
 
-        const left = `${hx + x}px`,
-            top = `${hy + y}px`;
-
-        helper(center).css(
-            {
-                left,
-                top
-            }
+        const resultMatrix = multiplyMatrix(
+            matrix,
+            createTranslateMatrix(x, y)
         );
+
+        helper(center).css({
+            ...matrixToCSS(flatMatrix(resultMatrix))
+        });
+
+        this.storage.cached = {
+            centerOffset: { x, y }
+        };
     }
 
     resetCenterPoint() {
         const {
-            handles: { center }
-        } = this.storage;
+            el,
+            el: {
+                offsetHeight,
+                offsetWidth
+            },
+            storage: {
+                wrapper,
+                handles: { center }
+            },
+            options: {
+                container
+            }
+        } = this;
+
+        if (!center) return;
+
+        const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
+
+        const matrix = multiplyMatrix(
+            getCurrentTransformMatrix(el, container),
+            matrixInvert(getCurrentTransformMatrix(wrapper, wrapper.parentNode))
+        );
+
+        const [x, y] = multiplyMatrixAndPoint(
+            matrix,
+            [offsetWidth / 2, offsetHeight / 2, 0, 1]
+        );
 
         helper(center).css(
+            { transform: `translate(${x + offsetLeft}px, ${y + offsetTop}px)` }
+        );
+    }
+
+    fitControlsToSize() {
+        const {
+            el,
+            storage: {
+                wrapper
+            }
+        } = this;
+
+        wrapper.removeAttribute('transform');
+
+        applyTransformToHandles(
+            this.storage,
+            this.options,
             {
-                left: null,
-                top: null
+                el
             }
         );
     }
 
-    fitControlsToSize() {}
+    getBoundingRect(transformMatrix) {
+        const {
+            el,
+            options: { container }
+        } = this;
+
+        const matrix = transformMatrix
+            ? getCurrentTransformMatrix(el, container, transformMatrix)
+            : getCurrentTransformMatrix(el, container);
+
+        return getBoundingRect(el, container, matrix);
+    }
 
     get controls() {
-        return this.storage.controls;
+        return this.storage.wrapper;
     }
 
 }
 
-const createHandler = (classList) => {
+const createHandler = ([x, y], key = 'handler', style = {}) => {
     const element = document.createElement('div');
-    classList.forEach(cls => {
-        addClass(element, cls);
+    addClass(element, 'sjx-hdl');
+    addClass(element, `sjx-hdl-${key}`);
+
+    helper(element).css({
+        transform: `translate(${x}px, ${y}px)`,
+        ...style
     });
     return element;
+};
+
+const renderLine = ([pt1, pt2, thickness = 1]) => {
+    const {
+        cx,
+        cy,
+        length,
+        theta
+    } = getLineAttrs(pt1, pt2, thickness);
+
+    const line = document.createElement('div');
+
+    helper(line).css({
+        transform: `translate(${cx}px, ${cy}px) rotate(${theta}deg)`,
+        height: `${thickness}px`,
+        width: `${length}px`
+    });
+
+    addClass(line, 'sjx-hdl-line');
+    return line;
+};
+
+const getLineAttrs = (pt1, pt2, thickness = 1) => {
+    const [x1, y1] = pt1;
+    const [x2, y2] = pt2;
+
+    const length = Math.sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)));
+
+    const cx = ((x1 + x2) / 2) - (length / 2);
+    const cy = ((y1 + y2) / 2) - (thickness / 2);
+
+    const theta = Math.atan2((y1 - y2), (x1 - x2)) * (180 / Math.PI);
+
+    return {
+        cx,
+        cy,
+        thickness,
+        theta,
+        length
+    };
+};
+
+const applyTransformToHandles = (storage, options, data) => {
+    const {
+        wrapper,
+        handles,
+        transform: {
+            //ctm,
+            wrapperMatrix = getCurrentTransformMatrix(wrapper, wrapper.parentNode)
+        } = {}
+    } = storage;
+
+    const {
+        rotationPoint,
+        rotatable,
+        resizable,
+        showNormal,
+        rotatorOffset,
+        rotatorAnchor,
+        container
+    } = options;
+
+    const {
+        //boxMatrix,
+        el
+    } = data;
+
+    const { offsetHeight, offsetWidth } = el;
+    const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
+
+    const matrix = multiplyMatrix(
+        getCurrentTransformMatrix(el, container), // better to find result matrix instead of calculated
+        matrixInvert(wrapperMatrix)
+    );
+
+    const vertices = {
+        tl: [0, 0, 0, 1],
+        tr: [offsetWidth, 0, 0, 1],
+        bl: [0, offsetHeight, 0, 1],
+        br: [offsetWidth, offsetHeight, 0, 1],
+        tc: [offsetWidth / 2, 0, 0, 1],
+        ml: [0, offsetHeight / 2, 0, 1],
+        bc: [offsetWidth / 2, offsetHeight, 0, 1],
+        mr: [offsetWidth, offsetHeight / 2, 0, 1],
+        ...(rotationPoint && rotatable &&
+            { center: [offsetWidth / 2, offsetHeight / 2, 0, 1] }
+        )
+    };
+
+    const finalVertices = Object.entries(vertices)
+        .reduce((nextVerteces, [key, vertex]) => (
+            [...nextVerteces, [key, multiplyMatrixAndPoint(matrix, vertex)]]
+        ), [])
+        .reduce((vertices, [key, [x, y, z, w]]) => {
+            vertices[key] = [
+                x + offsetLeft,
+                y + offsetTop,
+                z,
+                w
+            ];
+            return vertices;
+        }, {});
+
+    let normalLine = null;
+    let rotationHandles = {};
+
+    if (rotatable) {
+        const anchor = {};
+        let factor = 1;
+        let rotator = [];
+
+        switch (rotatorAnchor) {
+
+            case 'n':
+                anchor.x = finalVertices.tc[0];
+                anchor.y = finalVertices.tc[1];
+                break;
+            case 's':
+                anchor.x = finalVertices.bc[0];
+                anchor.y = finalVertices.bc[1];
+                factor = -1;
+                break;
+            case 'w':
+                anchor.x = finalVertices.ml[0];
+                anchor.y = finalVertices.ml[1];
+                factor = -1;
+                break;
+            case 'e':
+            default:
+                anchor.x = finalVertices.mr[0];
+                anchor.y = finalVertices.mr[1];
+                break;
+
+        }
+
+        const theta = rotatorAnchor === 'n' || rotatorAnchor === 's'
+            ? Math.atan2(
+                finalVertices.bl[1] - finalVertices.tl[1],
+                finalVertices.bl[0] - finalVertices.tl[0]
+            )
+            : Math.atan2(
+                finalVertices.tl[1] - finalVertices.tr[1],
+                finalVertices.tl[0] - finalVertices.tr[0]
+            );
+
+        const nextRotatorOffset = rotatorOffset * factor;
+
+        rotator = [
+            anchor.x - nextRotatorOffset * Math.cos(theta),
+            anchor.y - nextRotatorOffset * Math.sin(theta)
+        ];
+
+        normalLine = showNormal
+            ? [[anchor.x, anchor.y], rotator]
+            : null;
+
+        rotationHandles = {
+            rotator
+        };
+    }
+
+    const resizingHandles = {
+        tl: finalVertices.tl,
+        tr: finalVertices.tr,
+        br: finalVertices.br,
+        bl: finalVertices.bl,
+        tc: finalVertices.tc,
+        bc: finalVertices.bc,
+        ml: finalVertices.ml,
+        mr: finalVertices.mr,
+        center: finalVertices.center
+        // rotator
+    };
+
+    const resizingEdges = {
+        te: [finalVertices.tl, finalVertices.tr],
+        be: [finalVertices.bl, finalVertices.br],
+        le: [finalVertices.tl, finalVertices.bl],
+        re: [finalVertices.tr, finalVertices.br],
+        ...(showNormal && normalLine && { normal: normalLine })
+    };
+
+    Object.keys(resizingEdges).forEach(key => {
+        const [pt1, pt2] = resizingEdges[key];
+
+        const {
+            cx,
+            cy,
+            length,
+            theta
+        } = getLineAttrs(pt1, pt2);
+
+        helper(handles[key]).css({
+            transform: `translate(${cx}px, ${cy}px) rotate(${theta}deg)`,
+            width: `${length}px`
+        });
+    });
+
+    const allHandles = {
+        ...(resizable && resizingHandles),
+        ...rotationHandles
+    };
+
+    Object.keys(allHandles).forEach(key => {
+        const hdl = allHandles[key];
+        if (!hdl) return;
+
+        const [x, y] = hdl;
+        helper(handles[key]).css({
+            transform: `translate(${x}px, ${y}px)`
+        });
+    });
+};
+
+const getBoundingRect = (el, container, ctm) => {
+    const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
+    const { offsetWidth, offsetHeight } = el;
+
+    const vertices = {
+        tl: [0, 0, 0, 1],
+        tr: [offsetWidth, 0, 0, 1],
+        bl: [0, offsetHeight, 0, 1],
+        br: [offsetWidth, offsetHeight, 0, 1]
+    };
+
+    return Object.values(vertices)
+        .reduce((nextVerteces, vertex) => (
+            [...nextVerteces, multiplyMatrixAndPoint(ctm, vertex)]
+        ), [])
+        .map(([x, y, z, w]) => (
+            [
+                x + offsetLeft,
+                y + offsetTop,
+                z,
+                w
+            ]
+        ));
 };

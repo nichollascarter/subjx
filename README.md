@@ -74,7 +74,7 @@ xDraggable.controls;
 xDraggable.storage;
 // for example: to get reference to any handle's DOM
 const {
-  handles: { tl, tr, ...etc}
+  handles: { tl, tr, ...etc }
 } = xDraggable.storage;
 
 // enables dragging
@@ -136,45 +136,20 @@ xDraggable.resetCenterPoint();
 
 ### Options
 
-```javascript
-subjx('.draggable').drag({
-    // transformation coordinate system
-    // "controls" append to this element
-    container: 'selector' | element,
-    // constrain movement along an axis
-    axis: 'x' | 'y'
-    // snapping to grid (default: 10)
-    snap: {
-        x: 20(px),
-        y: 20(px),
-        angle: 45(deg)
-    },
-    // mimic behavior with other '.draggable' elements
-    each: {
-        move: true,
-        resize: true,
-        rotate: true
-    },
-    // keep aspect ratio when resizing
-    proportions: true,
-    // allow or deny an action(default: true)
-    draggable: true,
-    // handles will not showing with false
-    resizable: true,
-    rotatable: true,
-    // Draggable SVG options
-    // applies scaling only to root element
-    scalable: true,
-    rotatorAnchor: 'n' | 's' | 'w' | 'e',
-    rotatorOffset: 30,
-    // ----- experimental options ------
-    // show/manipulate rotation point(not tested with HTML elements)
-    rotationPoint: true,
-    // restrict moving
-    // spreads to dragging one element
-    restrict: 'selector'
-});
-```
+|Property|Description|Type|Default|
+|--|--|--|--|
+| **container** | Transformation coordinate system. "controls" append to this element | `'selector', element` | - |
+| **axis** | Constrain movement along an axis | `string` | 'xy' |
+| **snap** | Snapping to grid in pixels/radians | `object` | { x: 10, y: 10, angle: 10 } |
+| **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
+| **proportions** | Keep aspect ratio when resizing | `boolean` | true |
+| **draggable** | Allow or deny an action | `boolean` | true |
+| **resizable** | Allow or deny an action | `boolean` | true |
+| **rotatable** | Allow or deny an action | `boolean` | true |
+| **scalable** | Applies scaling only to root element | `boolean` | false |
+| **restrict** | Restricts element dragging/resizing/rotation | `'selector' | element` | - |
+| **rotatorAnchor** | Rotator anchor direction | `string: 'n' | 's' | 'w' | 'e'` | 'e' |
+| **rotatorOffset** | Rotator offset  | `number` | 50 |
 
 #### Notice: In most cases, it is recommended to use 'proportions' option
 
@@ -188,7 +163,7 @@ subjx('.draggable').drag({
     onMove({ clientX, clientY, dx, dy, transform }) {
         // fires on moving
     },
-    onResize({ clientX, clientY, dx, dy, width, height }) {
+    onResize({ clientX, clientY, dx, dy, transform, width, height }) {
         // fires on resizing
     },
     onRotate({ clientX, clientY, delta, transform }) {

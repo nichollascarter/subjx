@@ -160,7 +160,7 @@ export default class Transformable extends SubjectModel {
             if (isDef(restrict)) {
                 _restrict = restrict === 'parent'
                     ? el.parentNode
-                    : helper(restrict)[0] || document;
+                    : helper(restrict)[0] || document.body;
             }
 
             _cursorMove = cursorMove;
@@ -263,7 +263,6 @@ export default class Transformable extends SubjectModel {
                 resize: resizeEach,
                 rotate: rotateEach
             },
-            restrict,
             draggable,
             resizable,
             rotatable
@@ -271,7 +270,10 @@ export default class Transformable extends SubjectModel {
 
         if (doResize && resizable) {
             const {
-                transform,
+                transform: {
+                    scX,
+                    scY
+                },
                 cx,
                 cy
             } = storage;
@@ -284,11 +286,11 @@ export default class Transformable extends SubjectModel {
             );
 
             let dx = dox
-                ? snapToGrid(x - cx, snap.x / transform.scX)
+                ? snapToGrid(x - cx, snap.x / scX)
                 : 0;
 
             let dy = doy
-                ? snapToGrid(y - cy, snap.y / transform.scY)
+                ? snapToGrid(y - cy, snap.y / scY)
                 : 0;
 
             dx = dox ? (revX ? - dx : dx) : 0;
@@ -313,50 +315,8 @@ export default class Transformable extends SubjectModel {
         }
 
         if (doDrag && draggable) {
-            const {
-                restrictOffset,
-                elementOffset,
-                nx,
-                ny
-            } = storage;
-
-            if (isDef(restrict)) {
-                const {
-                    left: restLeft,
-                    top: restTop
-                } = restrictOffset;
-    
-                const {
-                    left: elLeft,
-                    top: elTop,
-                    width: elW,
-                    height: elH
-                } = elementOffset;
-    
-                const distX = nx - clientX,
-                    distY = ny - clientY;
-    
-                const maxX = restrict.clientWidth - elW,
-                    maxY = restrict.clientHeight - elH;
-    
-                const offsetY = elTop - restTop,
-                    offsetX = elLeft - restLeft;
-    
-                if (offsetY - distY < 0) {
-                    clientY = ny - elTop + restTop;
-                }
-                if (offsetX - distX < 0) {
-                    clientX = nx - elLeft + restLeft;
-                }
-    
-                if (offsetY - distY > maxY) {
-                    clientY = maxY + (ny - elTop + restTop);
-                }
-                if (offsetX - distX > maxX) {
-                    clientX = maxX + (nx - elLeft + restLeft);
-                }
-            }
-
+            const { nx, ny } = storage;
+            
             const dx = dox
                 ? snapToGrid(clientX - nx, snap.x)
                 : 0;
@@ -377,7 +337,8 @@ export default class Transformable extends SubjectModel {
             );
 
             if (moveEach) {
-                observable.notify('onmove',
+                observable.notify(
+                    'onmove',
                     self,
                     args
                 );
@@ -390,10 +351,11 @@ export default class Transformable extends SubjectModel {
                 center
             } = storage;
 
-            const radians = Math.atan2(
+            const delta = Math.atan2(
                 clientY - center.y,
                 clientX - center.x
-            ) - pressang;
+            );
+            const radians = delta - pressang;
 
             const args = {
                 clientX,
@@ -408,7 +370,8 @@ export default class Transformable extends SubjectModel {
             );
 
             if (rotateEach) {
-                observable.notify('onrotate',
+                observable.notify(
+                    'onrotate',
                     self,
                     {
                         radians,
@@ -443,15 +406,21 @@ export default class Transformable extends SubjectModel {
         const {
             observable,
             storage,
+            storage: { handles },
             options: { axis, restrict, each },
             el
         } = this;
 
-        const computed = this._compute(e);
+        const isTarget = Object.values(handles).some((hdl) => helper(e.target).is(hdl)) ||
+            el.contains(e.target);
+        
+        storage.isTarget = isTarget;
 
-        Object.keys(computed).forEach(prop => {
-            storage[prop] = computed[prop];
-        });
+        if (!isTarget) return;
+
+        const computed = this._compute(e, el);
+
+        Object.keys(computed).map(prop => storage[prop] = computed[prop]);
 
         const {
             onRightEdge,
@@ -472,46 +441,32 @@ export default class Transformable extends SubjectModel {
             onTopEdge ||
             onLeftEdge;
 
-        const { handles } = storage;
-
         const {
             rotator,
             center,
             radius
         } = handles;
 
-        if (isDef(radius)) {
-            removeClass(radius, 'sjx-hidden');
-        }
+        if (isDef(radius)) removeClass(radius, 'sjx-hidden');
 
         const doRotate = handle.is(rotator),
             doSetCenter = isDef(center)
                 ? handle.is(center)
                 : false;
 
-        const doDrag = !(doRotate || doResize || doSetCenter);
+        const doDrag = el.contains(e.target) && !(doRotate || doResize || doSetCenter);
 
-        const { x, y } = this._cursorPoint(
-            {
-                clientX,
-                clientY
-            }
-        );
-
-        const { x: nx, y: ny } = this._pointToElement({ x, y });
-
-        const {
-            x: bx,
-            y: by
-        } = this._pointToControls({ x, y });
+        const { x, y } = this._cursorPoint({ clientX, clientY });
+        const { x: ex, y: ey } = this._pointToElement({ x, y });
+        const { x: bx, y: by } = this._pointToControls({ x, y });
 
         const nextStorage = {
             clientX,
             clientY,
+            cx: ex,
+            cy: ey,
             nx: x,
             ny: y,
-            cx: nx,
-            cy: ny,
             bx,
             by,
             doResize,
@@ -531,7 +486,9 @@ export default class Transformable extends SubjectModel {
                 handle.is(handles.tl) ||
                 handle.is(handles.tr) ||
                 handle.is(handles.bl) ||
-                handle.is(handles.br)
+                handle.is(handles.br) ||
+                handle.is(handles.le) ||
+                handle.is(handles.re)
                 : true),
             doy: /\y/.test(axis) && (doResize
                 ?
@@ -540,8 +497,11 @@ export default class Transformable extends SubjectModel {
                 handle.is(handles.bc) ||
                 handle.is(handles.tr) ||
                 handle.is(handles.tl) ||
-                handle.is(handles.tc)
-                : true)
+                handle.is(handles.tc) ||
+                handle.is(handles.te) ||
+                handle.is(handles.be)
+                : true),
+            cached: {}
         };
 
         this.storage = {
@@ -599,6 +559,8 @@ export default class Transformable extends SubjectModel {
     _moving(e) {
         const { storage, options } = this;
 
+        if (!storage.isTarget) return;
+
         const { x, y } = this._cursorPoint(e);
 
         storage.e = e;
@@ -636,17 +598,19 @@ export default class Transformable extends SubjectModel {
             options: { each },
             observable,
             storage,
+            storage: {
+                doResize,
+                doDrag,
+                doRotate,
+                //doSetCenter,
+                frame,
+                handles: { radius },
+                isTarget
+            },
             proxyMethods
         } = this;
 
-        const {
-            doResize,
-            doDrag,
-            doRotate,
-            //doSetCenter,
-            frame,
-            handles: { radius }
-        } = storage;
+        if (!isTarget) return;
 
         const actionName = doResize
             ? 'resize'
@@ -707,7 +671,7 @@ export default class Transformable extends SubjectModel {
         }
     }
 
-    _compute(e) {
+    _compute(e, el) {
         const { handles } = this.storage;
 
         const handle = helper(e.target);
@@ -737,13 +701,15 @@ export default class Transformable extends SubjectModel {
         return {
             ..._computed,
             ...rest,
-            handle,
+            handle: Object.values(handles).some((hdl) => helper(e.target).is(hdl)) 
+                ? handle
+                : helper(el),
             pressang
         };
     }
 
     _checkHandles(handle, handles) {
-        const { tl, tc, tr, bl, br, bc, ml, mr } = handles;
+        const { tl, tc, tr, bl, br, bc, ml, mr, te, be, le, re } = handles;
         const isTL = isDef(tl) ? handle.is(tl) : false,
             isTC = isDef(tc) ? handle.is(tc) : false,
             isTR = isDef(tr) ? handle.is(tr) : false,
@@ -751,19 +717,23 @@ export default class Transformable extends SubjectModel {
             isBC = isDef(bc) ? handle.is(bc) : false,
             isBR = isDef(br) ? handle.is(br) : false,
             isML = isDef(ml) ? handle.is(ml) : false,
-            isMR = isDef(mr) ? handle.is(mr) : false;
+            isMR = isDef(mr) ? handle.is(mr) : false,
+            isTE = isDef(te) ? handle.is(te) : false,
+            isBE = isDef(be) ? handle.is(be) : false,
+            isLE = isDef(le) ? handle.is(le) : false,
+            isRE = isDef(re) ? handle.is(re) : false;
 
         // reverse axis
-        const revX = isTL || isML || isBL || isTC,
-            revY = isTL || isTR || isTC || isML;
+        const revX = isTL || isML || isBL || isTC || isLE,
+            revY = isTL || isTR || isTC || isML || isTE;
 
-        const onTopEdge = isTC || isTR || isTL,
-            onLeftEdge = isTL || isML || isBL,
-            onRightEdge = isTR || isMR || isBR,
-            onBottomEdge = isBR || isBC || isBL;
+        const onTopEdge = isTC || isTR || isTL || isTE,
+            onLeftEdge = isTL || isML || isBL || isLE,
+            onRightEdge = isTR || isMR || isBR || isRE,
+            onBottomEdge = isBR || isBC || isBL || isBE;
 
-        const doW = isML || isMR,
-            doH = isTC || isBC;
+        const doW = isML || isMR || isLE || isRE,
+            doH = isTC || isBC || isBE || isTE;
 
         return {
             revX,
@@ -808,9 +778,7 @@ export default class Transformable extends SubjectModel {
 
     notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest }) {
         if (triggerEvent) {
-            const recalc = this._getState(
-                rest
-            );
+            const recalc = this._getState(rest);
 
             this.storage = {
                 ...this.storage,
@@ -842,11 +810,13 @@ export default class Transformable extends SubjectModel {
     unsubscribe() {
         const { observable: ob } = this;
 
-        ob.unsubscribe('ongetstate', this)
-            .unsubscribe('onapply', this)
-            .unsubscribe('onmove', this)
-            .unsubscribe('onresize', this)
-            .unsubscribe('onrotate', this);
+        [
+            'ongetstate', 
+            'onapply', 
+            'onmove',
+            'onresize',
+            'onrotate'
+        ].map(eventName => ob.unsubscribe(eventName, this));
     }
 
     disable() {
@@ -860,7 +830,7 @@ export default class Transformable extends SubjectModel {
 
         // unexpected case
         if (storage.onExecution) {
-            this._end();
+            // this._end();
             helper(document)
                 .off('mousemove', this._onMouseMove)
                 .off('mouseup', this._onMouseUp)
@@ -895,17 +865,24 @@ export default class Transformable extends SubjectModel {
         this._apply('drag');
     }
 
-    exeResize({ dx, dy, revX, revY, doW, doH }) {
+    exeResize({
+        dx,
+        dy,
+        revX = false,
+        revY = false,
+        doW = false,
+        doH = false
+    }) {
         const { resizable } = this.options;
         if (!resizable) return;
 
         this.storage = {
             ...this.storage,
             ...this._getState({
-                revX: revX || false,
-                revY: revY || false,
-                doW: doW || false,
-                doH: doH || false
+                revX,
+                revY,
+                doW,
+                doH
             })
         };
 

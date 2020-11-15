@@ -1,29 +1,8 @@
 import { helper } from '../Helper';
+import { cssPrefixes } from '../consts';
 
 export const getOffset = (node) => {
     return node.getBoundingClientRect();
-};
-
-export const getTransform = (el) => {
-    const transform = el.css('-webkit-transform') ||
-        el.css('-moz-transform') ||
-        el.css('-ms-transform') ||
-        el.css('-o-transform') ||
-        el.css('transform') ||
-        'none';
-    return transform;
-};
-
-export const parseMatrix = (value) => {
-    const transform = value.match(/[+\-]?(?:0|[1-9]\d*)(?:\.\d*)?(?:[eE][+\-]?\d+)?/g);
-
-    if (transform) {
-        return transform.map(item => {
-            return parseFloat(item);
-        });
-    } else {
-        return [1, 0, 0, 1, 0, 0];
-    }
 };
 
 export const addClass = (node, cls) => {
@@ -77,7 +56,7 @@ export const objectsCollide = (a, b) => {
 };
 
 export const matrixToCSS = (arr) => {
-    const style = `matrix(${arr.join()})`;
+    const style = `matrix3d(${arr.join()})`;
 
     return {
         transform: style,
@@ -86,4 +65,16 @@ export const matrixToCSS = (arr) => {
         msTransform: style,
         otransform: style
     };
+};
+
+export const getStyle = (el, property) => {
+    const style = window.getComputedStyle(el);
+    let value = null;
+
+    for (const prefix of cssPrefixes) {
+        value = style.getPropertyValue(`${prefix}${property}`) || value;
+        if (value) break;
+    }
+
+    return value;
 };
