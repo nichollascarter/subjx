@@ -48,14 +48,12 @@ export default class DraggableSVG extends Transformable {
         const wrapper = createSVGElement('g');
         addClass(wrapper, 'sjx-svg-wrapper');
 
-        container.appendChild(wrapper);
+        
 
         const elCTM = getTransformToElement(el, container);
 
         const controls = createSVGElement('g');
         addClass(controls, 'sjx-svg-controls');
-
-        wrapper.appendChild(controls);
 
         const centerX = el.getAttribute('data-sjx-cx'),
             centerY = el.getAttribute('data-sjx-cy');
@@ -212,6 +210,9 @@ export default class DraggableSVG extends Transformable {
 
             controls.appendChild(handles[key]);
         });
+
+        wrapper.appendChild(controls);
+        container.appendChild(wrapper);
 
         this.storage = {
             wrapper,
@@ -543,35 +544,33 @@ export default class DraggableSVG extends Transformable {
         };
 
         const getScaleMatrix = (scaleX, scaleY) => {
-            const scaleMatrix = createScaleMatrix(
-                scaleX,
-                scaleY
-            );
+            const scaleMatrix = createScaleMatrix(scaleX, scaleY);
 
             return translateMatrix
                 .multiply(scaleMatrix)
                 .multiply(translateMatrix.inverse());
         };
 
-        const ratio = doW || (!doW && !doH)
-            ? (boxWidth + dx) / boxWidth
-            : (boxHeight + dy) / boxHeight;
-
-        const newWidth = proportions ? boxWidth * ratio : boxWidth + dx;
-        const newHeight = proportions ? boxHeight * ratio : boxHeight + dy;
-
-        if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
+        const preScaledMatrix = matrix.multiply(
+            getScaleMatrix(...getScale(dx, dy))
+        );
 
         const { x: restX, y: restY } = restrict
-            ? this._restrictHandler(getScaleMatrix(...getScale(dx, dy)))
+            ? this._restrictHandler(preScaledMatrix)
             : { x: null, y: null };
 
-        storage.cached.dist = {
-            dx: restX !== null && restrict ? nextDx : dx,
-            dy: restY !== null && restrict ? nextDy : dy
-        };
+        const newDx = ((restX !== null) || (proportions && restY !== null) && restrict)
+            ? nextDx 
+            : dx;
+        const newDy = ((restY !== null) || (proportions && restX !== null) && restrict)
+            ? nextDy 
+            : dy;
 
-        const [scaleX, scaleY] = getScale(nextDx, nextDy);
+        const [scaleX, scaleY] = getScale(newDx, newDy);
+        const newWidth = proportions ? boxWidth * scaleX : boxWidth + newDx,
+            newHeight = proportions ? boxHeight * scaleY : boxHeight + newDy;
+
+        if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
 
         const scaleMatrix = getScaleMatrix(scaleX, scaleY);
         const resultMatrix = matrix.multiply(scaleMatrix);
@@ -589,12 +588,16 @@ export default class DraggableSVG extends Transformable {
             );
         }
 
-        this.storage.cached = {
-            ...this.storage.cached,
+        storage.cached = {
+            ...storage.cached,
             scaleX,
             scaleY,
             transformMatrix: scaleMatrix,
-            resultMatrix
+            resultMatrix,
+            dist: {
+                dx: newDx,
+                dy: newDy
+            }
         };
 
         this._apply('resize');
@@ -681,13 +684,6 @@ export default class DraggableSVG extends Transformable {
             matrixToString(moveElementMtrx)
         );
 
-        // this.storage.cached = {
-        //     dx: dx,
-        //     dy: dy,
-        //     ox: x,
-        //     oy: y
-        // };
-
         if (center.isShifted) {
             const radiusMatrix = wrapperMatrix.inverse();
             radiusMatrix.e = radiusMatrix.f = 0;
@@ -761,15 +757,13 @@ export default class DraggableSVG extends Transformable {
     _getState({ revX, revY, doW, doH }) {
         const {
             el: element,
-            storage,
+            storage: {
+                wrapper,
+                parent,
+                handles: { center: cHandle }
+            },
             options: { container }
         } = this;
-
-        const {
-            wrapper,
-            parent,
-            handles: { center: cHandle }
-        } = storage;
 
         const eBBox = element.getBBox();
 

@@ -35,6 +35,12 @@ export const createRotateMatrix = (sin, cos) => {
     return res;
 };
 
+export const dropTranslate = (matrix, clone = true) => {
+    const nextMatrix = clone ? cloneMatrix(matrix) : matrix;
+    nextMatrix[0][3] = nextMatrix[1][3] = nextMatrix[2][3] = 0;
+    return nextMatrix;
+};
+
 export const multiplyMatrixAndPoint = (mat, point) => {
     const out = [];
 

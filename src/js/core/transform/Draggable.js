@@ -15,7 +15,7 @@ import {
     getTransform,
     getCurrentTransformMatrix,
     flatMatrix,
-    cloneMatrix,
+    dropTranslate,
     decompose,
     getAbsoluteOffset
 } from './matrix';
@@ -234,12 +234,10 @@ export default class Draggable extends Transformable {
 
     _pointToElement({ x, y }) {
         const { transform: { ctm } } = this.storage;
-
         const matrix = matrixInvert(ctm);
-        matrix[0][3] = matrix[1][3] = matrix[2][3] = 0;
 
         return this._applyMatrixToPoint(
-            matrix,
+            dropTranslate(matrix, false),
             x,
             y
         );
@@ -247,12 +245,10 @@ export default class Draggable extends Transformable {
 
     _pointToControls({ x, y }) {
         const { transform: { wrapperMatrix } } = this.storage;
-
         const matrix = matrixInvert(wrapperMatrix);
-        matrix[0][3] = matrix[1][3] = matrix[2][3] = 0;
 
         return this._applyMatrixToPoint(
-            matrix,
+            dropTranslate(matrix, false),
             x,
             y
         );
@@ -260,7 +256,6 @@ export default class Draggable extends Transformable {
 
     _applyMatrixToPoint(matrix, x, y) {
         const [nx, ny] = multiplyMatrixAndPoint(matrix, [x, y, 0, 1]);
-
         return {
             x: nx,
             y: ny
@@ -269,7 +264,6 @@ export default class Draggable extends Transformable {
 
     _cursorPoint({ clientX, clientY }) {
         const { container } = this.options;
-
         const globalMatrix = getCurrentTransformMatrix(container);
 
         return this._applyMatrixToPoint(
@@ -398,7 +392,13 @@ export default class Draggable extends Transformable {
                         dx: nextDx = dx,
                         dy: nextDy = dy
                     } = {}
-                } = {}
+                } = {},
+                cw,
+                ch,
+                revX,
+                revY,
+                doW,
+                doH
             },
             options: {
                 proportions,
@@ -406,15 +406,6 @@ export default class Draggable extends Transformable {
                 restrict
             }
         } = this;
-
-        const {
-            cw,
-            ch,
-            revX,
-            revY,
-            doW,
-            doH
-        } = storage;
 
         const getScale = (distX, distY) => {
             const ratio = doW || (!doW && !doH)
@@ -431,68 +422,56 @@ export default class Draggable extends Transformable {
         };
 
         const getScaleMatrix = (scaleX, scaleY) => {
-            const scaleMatrix = createScaleMatrix(
-                scaleX,
-                scaleY
-            );
+            const scaleMatrix = createScaleMatrix(scaleX, scaleY);
 
-            const fullScaleMatrix = multiplyMatrix(
+            return multiplyMatrix(
                 multiplyMatrix(translateMatrix, scaleMatrix),
                 matrixInvert(translateMatrix)
             );
-
-            return multiplyMatrix(
-                fullScaleMatrix,
-                matrix
-            );
         };
 
-        const ratio = doW || (!doW && !doH)
-            ? (cw + dx) / cw
-            : (ch + dy) / ch;
+        const preScaleMatrix = multiplyMatrix(
+            getScaleMatrix(...getScale(dx, dy)),
+            matrix
+        );
 
-        const newWidth = proportions ? cw * ratio : cw + dx,
-            newHeight = proportions ? ch * ratio : ch + dy;
+        const { x: restX, y: restY } = restrict
+            ? this._restrictHandler(preScaleMatrix)
+            : { x: null, y: null };
+
+        const newDx = ((restX !== null) || (proportions && restY !== null) && restrict)
+            ? nextDx 
+            : dx;
+        const newDy = ((restY !== null) || (proportions && restX !== null) && restrict)
+            ? nextDy 
+            : dy;
+
+        const [scaleX, scaleY] = getScale(newDx, newDy);
+        const newWidth = proportions ? cw * scaleX : cw + newDx,
+            newHeight = proportions ? ch * scaleY : ch + newDy;
 
         if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
 
-        const { x: restX, y: restY } = restrict
-            ? this._restrictHandler(getScaleMatrix(...getScale(dx, dy)))
-            : { x: null, y: null };
-
-        storage.cached.dist = {
-            dx: restX !== null && restrict ? nextDx : dx,
-            dy: restY !== null && restrict ? nextDy : dy
-        };
-
-        const resultMatrix = getScaleMatrix(...getScale(nextDx, nextDy));
+        const scaleMatrix = getScaleMatrix(scaleX, scaleY);
+        const resultMatrix = multiplyMatrix(scaleMatrix, matrix);
 
         if (scalable) {
             helper(el).css(
                 matrixToCSS(flatMatrix(resultMatrix))
             );
         } else {
-            const sX = (cw / 2) * (doH ? 0 : (revX ? -1 : 1)),
-                sY = (ch / 2) * (doW ? 0 : (revY ? -1 : 1));
-
-            const transMatrix = createTranslateMatrix(
-                sX,
-                sY,
-                0
-            );
-
-            const nextScaleMatrix = multiplyMatrix(
-                multiplyMatrix(transMatrix, scaleMatrix),
-                matrixInvert(transMatrix)
-            );
-
             const trMatrix = createTranslateMatrix(
-                nextScaleMatrix[0][3],
-                nextScaleMatrix[1][3]
+                scaleMatrix[0][3],
+                scaleMatrix[1][3]
+            );
+
+            const inverted = createTranslateMatrix(
+                scaleMatrix[0][3] *= revX ? -1 : 1,
+                scaleMatrix[1][3] *= revY ? -1 : 1
             );
 
             const result = multiplyMatrix(
-                multiplyMatrix(trMatrix, matrix),
+                multiplyMatrix(inverted, matrix),
                 matrixInvert(trMatrix)
             );
 
@@ -511,6 +490,11 @@ export default class Draggable extends Transformable {
                 boxMatrix: resultMatrix
             }
         );
+
+        storage.cached.dist = {
+            dx: newDx,
+            dy: newDy
+        };
 
         return {
             transform: resultMatrix,
@@ -560,14 +544,12 @@ export default class Draggable extends Transformable {
             ? this._restrictHandler(preTranslateMatrix)
             : { x: null, y: null };
 
-        storage.cached.dist = {
-            dx: restX !== null && restrict ? nextDx : dx,
-            dy: restY !== null && restrict ? nextDy : dy
-        };
+        const newDx = restX !== null && restrict ? nextDx : dx,
+            newDy = restY !== null && restrict ? nextDy : dy;
 
         const [nx, ny] = multiplyMatrixAndPoint(
             parentMatrix,
-            [nextDx, nextDy, 0, 1]
+            [newDx, newDy, 0, 1]
         );
 
         const moveElementMtrx = multiplyMatrix(
@@ -577,7 +559,7 @@ export default class Draggable extends Transformable {
 
         const moveWrapperMtrx = multiplyMatrix(
             wrapperMatrix,
-            createTranslateMatrix(nextDx, nextDy)
+            createTranslateMatrix(newDx, newDy)
         );
 
         const elStyle = matrixToCSS(flatMatrix(moveElementMtrx));
@@ -585,6 +567,11 @@ export default class Draggable extends Transformable {
 
         helper(el).css(elStyle);
         helper(wrapper).css(wrapperStyle);
+
+        storage.cached.dist = {
+            dx: newDx,
+            dy: newDy
+        };
 
         return moveElementMtrx;
     }
@@ -641,18 +628,13 @@ export default class Draggable extends Transformable {
         return resultMatrix;
     }
 
-    _getState(params) {
-        const {
-            revX,
-            revY,
-            doW,
-            doH
-        } = params;
-
+    _getState({ revX, revY, doW, doH }) {
         const {
             el,
             storage: {
-                handles,
+                handles: {
+                    center: cHandle
+                },
                 parent,
                 wrapper,
                 stored: {
@@ -660,7 +642,12 @@ export default class Draggable extends Transformable {
                 }
             },
             options: {
-                container
+                container,
+                container: {
+                    offsetWidth,
+                    offsetHeight
+                },
+                scalable
             }
         } = this;
 
@@ -668,19 +655,16 @@ export default class Draggable extends Transformable {
 
         const {
             offsetLeft: elOffsetLeft,
-            offsetTop: elOffsetTop
+            offsetTop: elOffsetTop,
+            offsetWidth: cw,
+            offsetHeight: ch
         } = el;
-
-        const { center: cHandle } = handles;
 
         const matrix = getTransform(el);
         const ctm = getCurrentTransformMatrix(el, container);
         const containerMatrix = getCurrentTransformMatrix(container, container.parentNode);
         const parentMatrix = getCurrentTransformMatrix(parent, container);
         const wrapperMatrix = getCurrentTransformMatrix(wrapper, container);
-
-        const cw = el.offsetWidth;
-        const ch = el.offsetHeight;
 
         const hW = cw / 2,
             hH = ch / 2;
@@ -708,72 +692,47 @@ export default class Draggable extends Transformable {
             ]
         );
 
-        const parentCloneMatrix = cloneMatrix(parentMatrix);
-        parentCloneMatrix[0][3] = parentCloneMatrix[1][3] = parentCloneMatrix[2][3] = 0;
-
-        const nMatrix = cloneMatrix(matrix);
-        nMatrix[0][3] = nMatrix[1][3] = nMatrix[2][3] = 0;
-
-        const [oldX, oldY] = multiplyMatrixAndPoint(
-            matrix,
-            [
-                hW,
-                hH,
-                0,
-                1
-            ]
-        );
-
-        const {
-            options: {
-                container: {
-                    offsetWidth,
-                    offsetHeight
-                }
-            }
-        } = this;
-
-        const containerCtm = cloneMatrix(containerMatrix);
-        containerCtm[0][3] = containerCtm[1][3] = containerCtm[2][3] = 0;
-
         const containerBox = multiplyMatrixAndPoint(
-            containerCtm,
+            dropTranslate(containerMatrix),
             [offsetWidth, offsetHeight, 0, 1]
         );
+
+        const { 
+            scale: { sX, sY }
+        } = decompose(getCurrentTransformMatrix(el, el.parentNode));
 
         const transform = {
             auxiliary: {
                 scale: {
-                    translateMatrix: createTranslateMatrix(
-                        scaleX,
-                        scaleY,
-                        0
-                    )
+                    translateMatrix: scalable 
+                        ? createTranslateMatrix(
+                            scaleX,
+                            scaleY
+                        )
+                        : createTranslateMatrix(
+                            doH ? 0 : hW,
+                            doW ? 0 : hH
+                        )  
                 },
                 translate: {
-                    parentMatrix: matrixInvert(parentCloneMatrix)
+                    parentMatrix: matrixInvert(dropTranslate(parentMatrix))
                 },
                 rotate: {
                     translateMatrix: createTranslateMatrix(
                         elX,
-                        elY,
-                        0
+                        elY
                     )
                 }
             },
             scaleX,
             scaleY,
             matrix,
-            localCTM: getCurrentTransformMatrix(el, el.parentNode),
             ctm,
             parentMatrix,
             containerMatrix,
             wrapperMatrix,
-            scX: decompose(getCurrentTransformMatrix(el, el.parentNode)).scale.sX,
-            scY: decompose(getCurrentTransformMatrix(el, el.parentNode)).scale.sY,
-            oldX: oldX,
-            oldY: oldY,
-            globalOffset: getAbsoluteOffset(el, container),
+            scX: sX,
+            scY: sY,
             containerBox
         };
 
@@ -801,9 +760,11 @@ export default class Draggable extends Transformable {
 
     _moveCenterHandle(x, y) {
         const {
-            handles: { center },
-            center: { matrix }
-        } = this.storage;
+            storage: {
+                handles: { center },
+                center: { matrix }
+            }
+        } = this;
 
         const resultMatrix = multiplyMatrix(
             matrix,
