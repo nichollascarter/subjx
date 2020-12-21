@@ -1,6 +1,6 @@
 import { helper } from '../Helper';
 import Transformable from './Transformable';
-import { floatToFixed } from './common';
+import { floatToFixed, getMinMaxOf2DIndex } from './common';
 import { isDef, isUndef } from '../util/util';
 import { addClass, matrixToCSS } from '../util/css-util';
 import { MIN_SIZE } from '../consts';
@@ -277,24 +277,32 @@ export default class Draggable extends Transformable {
         const {
             storage: {
                 transform: {
-                    containerBox: [
-                        restrictWidth,
-                        restrictHeight
-                    ]
+                    containerMatrix
                 }
+            },
+            options: {
+                restrict,
+                container
             }
         } = this;
 
         let restrictX = null,
             restrictY = null;
 
-        for (const point of this.getBoundingRect(matrix)) {
-            const [x, y] = point;
-            if (x < 0 || x > restrictWidth) {
-                restrictX = x || restrictWidth;
+        const containerBox = getBoundingRect(restrict, container, containerMatrix);
+        const elBox = this.getBoundingRect(matrix);
+
+        const [minX, maxX] = getMinMaxOf2DIndex(containerBox, 0);
+        const [minY, maxY] = getMinMaxOf2DIndex(containerBox, 1);
+
+        for (let i = 0, len = elBox.length; i < len; i++) {
+            const [x, y] = elBox[i];
+
+            if (x < minX || x > maxX) {
+                restrictX = x;
             }
-            if (y < 0 || y > restrictHeight) {
-                restrictY = y || restrictHeight;
+            if (y < minY || y > maxY) {
+                restrictY = y;
             }
         }
 
@@ -393,8 +401,10 @@ export default class Draggable extends Transformable {
                         dy: nextDy = dy
                     } = {}
                 } = {},
-                cw,
-                ch,
+                box: {
+                    width: cw,
+                    height: ch
+                },
                 revX,
                 revY,
                 doW,
@@ -643,31 +653,35 @@ export default class Draggable extends Transformable {
             },
             options: {
                 container,
-                container: {
-                    offsetWidth,
-                    offsetHeight
-                },
+                restrict,
                 scalable
             }
         } = this;
+
+        const {
+            offsetWidth,
+            offsetHeight
+        } = restrict || container;
 
         const [glLeft, glTop] = getAbsoluteOffset(el, container);
 
         const {
             offsetLeft: elOffsetLeft,
             offsetTop: elOffsetTop,
-            offsetWidth: cw,
-            offsetHeight: ch
+            offsetWidth: elWidth,
+            offsetHeight: elHeight
         } = el;
 
         const matrix = getTransform(el);
         const ctm = getCurrentTransformMatrix(el, container);
-        const containerMatrix = getCurrentTransformMatrix(container, container.parentNode);
         const parentMatrix = getCurrentTransformMatrix(parent, container);
         const wrapperMatrix = getCurrentTransformMatrix(wrapper, container);
+        const containerMatrix = restrict
+            ? getCurrentTransformMatrix(restrict, restrict.parentNode)
+            : getCurrentTransformMatrix(container, container.parentNode);
 
-        const hW = cw / 2,
-            hH = ch / 2;
+        const hW = elWidth / 2,
+            hH = elHeight / 2;
 
         const scaleX = doH ? 0 : (revX ? -hW : hW),
             scaleY = doW ? 0 : (revY ? -hH : hH);
@@ -738,17 +752,21 @@ export default class Draggable extends Transformable {
 
         return {
             transform,
-            cw,
-            ch,
-            left: elOffsetLeft,
-            top: elOffsetTop,
+            box: {
+                width: elWidth,
+                height: elHeight,
+                left: elOffsetLeft,
+                top: elOffsetTop,
+                offset: {
+                    left: glLeft,
+                    top: glTop
+                }
+            },
             center: {
                 x: cenX + glLeft,
                 y: cenY + glTop,
                 elX,
                 elY,
-                cx: 0,
-                cy: 0,
                 matrix: cHandle ? getTransform(cHandle) : null
             },
             revX,
@@ -834,17 +852,19 @@ export default class Draggable extends Transformable {
         );
     }
 
-    getBoundingRect(transformMatrix) {
+    getBoundingRect(transformMatrix = null) {
         const {
             el,
-            options: { container }
+            options: { 
+                restrict
+            },
+            storage: {
+                box
+            }
         } = this;
 
-        const matrix = transformMatrix
-            ? getCurrentTransformMatrix(el, container, transformMatrix)
-            : getCurrentTransformMatrix(el, container);
-
-        return getBoundingRect(el, container, matrix);
+        const matrix = getCurrentTransformMatrix(el, restrict, transformMatrix);
+        return getBoundingRect(el, restrict, matrix, box);
     }
 
     get controls() {
@@ -1077,25 +1097,39 @@ const applyTransformToHandles = (storage, options, data) => {
     });
 };
 
-const getBoundingRect = (el, container, ctm) => {
+const getBoundingRect = (el, container, ctm, box) => {
     const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
-    const { offsetWidth, offsetHeight } = el;
-
-    const vertices = {
-        tl: [0, 0, 0, 1],
-        tr: [offsetWidth, 0, 0, 1],
-        bl: [0, offsetHeight, 0, 1],
-        br: [offsetWidth, offsetHeight, 0, 1]
+    const { 
+        width, 
+        height,
+        offset: {
+            left,
+            top
+        }
+    } = box || { 
+        width: el.offsetWidth, 
+        height: el.offsetHeight,
+        offset: {
+            left: offsetLeft,
+            top: offsetTop
+        }
     };
 
-    return Object.values(vertices)
+    const vertices = [
+        [0, 0, 0, 1],
+        [width, 0, 0, 1],
+        [0, height, 0, 1],
+        [width, height, 0, 1]
+    ];
+
+    return vertices
         .reduce((nextVerteces, vertex) => (
             [...nextVerteces, multiplyMatrixAndPoint(ctm, vertex)]
         ), [])
         .map(([x, y, z, w]) => (
             [
-                x + offsetLeft,
-                y + offsetTop,
+                x + left,
+                y + top,
                 z,
                 w
             ]

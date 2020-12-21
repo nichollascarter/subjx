@@ -130,7 +130,7 @@ export default class Transformable extends SubjectModel {
                 rotatorOffset = 50,
                 showNormal = true
             } = options;
-
+            console.log(options)
             if (isDef(snap)) {
                 const { 
                     x = 10, 
@@ -827,16 +827,6 @@ export default class Transformable extends SubjectModel {
         } = this;
 
         if (isUndef(storage)) return;
-
-        // unexpected case
-        if (storage.onExecution) {
-            // this._end();
-            helper(document)
-                .off('mousemove', this._onMouseMove)
-                .off('mouseup', this._onMouseUp)
-                .off('touchmove', this._onTouchMove)
-                .off('touchend', this._onTouchEnd);
-        }
 
         removeClass(el, 'sjx-drag');
 

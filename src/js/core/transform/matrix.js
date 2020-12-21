@@ -246,10 +246,9 @@ export const getAbsoluteOffset = (elem, container = document.body) => {
     let allowBorderOffset = false;
     while (elem) {
         const parentTx = getCurrentTransformMatrix(elem.offsetParent);
-        parentTx[0][3] = parentTx[1][3] = parentTx[2][3] = 0;
 
         const [offsetLeft, offsetTop] = multiplyMatrixAndPoint(
-            parentTx,
+            dropTranslate(parentTx, false),
             [
                 elem.offsetLeft + (allowBorderOffset ? elem.clientLeft : 0),
                 elem.offsetTop + (allowBorderOffset ? elem.clientTop : 0),
