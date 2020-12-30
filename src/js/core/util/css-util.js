@@ -1,9 +1,7 @@
 import { helper } from '../Helper';
 import { cssPrefixes } from '../consts';
 
-export const getOffset = (node) => {
-    return node.getBoundingClientRect();
-};
+export const getOffset = node => node.getBoundingClientRect();
 
 export const addClass = (node, cls) => {
     if (!cls) return;

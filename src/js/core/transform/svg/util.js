@@ -142,8 +142,8 @@ export const isGroup = (element) => (
     element.tagName.toLowerCase() === 'g'
 );
 
-export const parsePoints = (pts) => {
-    return pts.match(floatRE).reduce(
+export const parsePoints = (pts) => (
+    pts.match(floatRE).reduce(
         (result, _, index, array) => {
             if (index % 2 === 0) {
                 result.push(array.slice(index, index + 2));
@@ -151,5 +151,5 @@ export const parsePoints = (pts) => {
             return result;
         },
         []
-    );
-};
+    )
+);

@@ -130,7 +130,7 @@ export default class Transformable extends SubjectModel {
                 rotatorOffset = 50,
                 showNormal = true
             } = options;
-            console.log(options)
+
             if (isDef(snap)) {
                 const { 
                     x = 10, 

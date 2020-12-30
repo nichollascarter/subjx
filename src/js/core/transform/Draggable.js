@@ -168,21 +168,18 @@ export default class Draggable extends Transformable {
             rotator
         };
 
-        Object.keys(resizingEdges).forEach(key => {
-            const data = resizingEdges[key];
-            if (isUndef(data)) return;
-            const handler = renderLine(data);
-            handles[key] = handler;
-            controls.appendChild(handler);
-        });
+        const mapHandlers = (obj, renderFunc) => (
+            Object.keys(obj).map(key => {
+                const data = obj[key];
+                if (isUndef(data)) return;
+                const handler = renderFunc(data, key);
+                handles[key] = handler;
+                controls.appendChild(handler);
+            })
+        );
 
-        Object.keys(allHandles).forEach(key => {
-            const data = allHandles[key];
-            if (isUndef(data)) return;
-            const handler = createHandler(data, key);
-            handles[key] = handler;
-            controls.appendChild(handler);
-        });
+        mapHandlers(resizingEdges, renderLine);
+        mapHandlers(allHandles, createHandler);
 
         wrapper.appendChild(controls);
         container.appendChild(wrapper);
@@ -196,9 +193,6 @@ export default class Draggable extends Transformable {
             radius: undefined,
             parent: el.parentNode,
             wrapper,
-            beforeTransform: {
-                ctm: matrix
-            },
             stored: {
                 center: {
                     x: el.getAttribute('data-sjx-cx') || 0,
@@ -885,7 +879,7 @@ const createHandler = ([x, y], key = 'handler', style = {}) => {
     return element;
 };
 
-const renderLine = ([pt1, pt2, thickness = 1]) => {
+const renderLine = ([pt1, pt2, thickness = 1], key) => {
     const {
         cx,
         cy,
@@ -902,6 +896,7 @@ const renderLine = ([pt1, pt2, thickness = 1]) => {
     });
 
     addClass(line, 'sjx-hdl-line');
+    addClass(line, `sjx-hdl-${key}`);
     return line;
 };
 
