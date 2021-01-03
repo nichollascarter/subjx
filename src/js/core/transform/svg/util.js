@@ -1,8 +1,9 @@
-import { 
-    warn, 
+import {
+    warn,
     forEach,
     isUndef
 } from './../../util/util';
+import { addClass } from '../../util/css-util';
 
 const svgPoint = createSVGElement('svg').createSVGPoint();
 const floatRE = /[+-]?\d+(\.\d+)?/g;
@@ -12,11 +13,14 @@ const allowedElements = [
     'image', 'line',
     'path', 'polygon',
     'polyline', 'rect',
-    'text', 'g', 'foreignobject', 'use'
+    'text', 'g', 'foreignobject',
+    'use'
 ];
 
-export function createSVGElement(name) {
-    return document.createElementNS('http://www.w3.org/2000/svg', name);
+export function createSVGElement(name, classNames = []) {
+    const element = document.createElementNS('http://www.w3.org/2000/svg', name);
+    classNames.forEach(className => addClass(element, className));
+    return element;
 }
 
 export const checkChildElements = (element) => {

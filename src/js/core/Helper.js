@@ -93,8 +93,8 @@ export default class Helper {
             if (typeof (arguments[1]) !== 'string') {
                 if (document.addEventListener) {
                     this[len].addEventListener(
-                        arguments[0], 
-                        arguments[1], 
+                        arguments[0],
+                        arguments[1],
                         arguments[2] || { passive: false }
                     );
                 } else if (document.attachEvent) {
@@ -104,11 +104,11 @@ export default class Helper {
                 }
             } else {
                 listenerDelegate(
-                    this[len], 
-                    arguments[0], 
-                    arguments[1], 
-                    arguments[2], 
-                    arguments[3], 
+                    this[len],
+                    arguments[0],
+                    arguments[1],
+                    arguments[2],
+                    arguments[3],
                     true
                 );
             }
@@ -143,7 +143,7 @@ export default class Helper {
 
     is(selector) {
         if (isUndef(selector)) return false;
-        
+
         const _sel = helper(selector);
         let len = this.length;
 

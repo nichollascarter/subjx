@@ -4,7 +4,7 @@
 * Karen Sarksyan
 * nichollascarter@gmail.com
 */
-const requestAnimFrame = 
+const requestAnimFrame =
     window.requestAnimationFrame ||
     window.mozRequestAnimationFrame ||
     window.webkitRequestAnimationFrame ||
@@ -132,8 +132,8 @@ class Helper {
             if (typeof (arguments[1]) !== 'string') {
                 if (document.addEventListener) {
                     this[len].addEventListener(
-                        arguments[0], 
-                        arguments[1], 
+                        arguments[0],
+                        arguments[1],
                         arguments[2] || { passive: false }
                     );
                 } else if (document.attachEvent) {
@@ -143,11 +143,11 @@ class Helper {
                 }
             } else {
                 listenerDelegate(
-                    this[len], 
-                    arguments[0], 
-                    arguments[1], 
-                    arguments[2], 
-                    arguments[3], 
+                    this[len],
+                    arguments[0],
+                    arguments[1],
+                    arguments[2],
+                    arguments[3],
                     true
                 );
             }
@@ -182,7 +182,7 @@ class Helper {
 
     is(selector) {
         if (isUndef(selector)) return false;
-        
+
         const _sel = helper(selector);
         let len = this.length;
 
@@ -248,6 +248,129 @@ function helper(params) {
     return new Helper(params);
 }
 
+const MIN_SIZE = 2;
+const THEME_COLOR = '#00a8ff';
+const LIB_CLASS_PREFIX = 'sjx-';
+
+const E_MOUSEDOWN = 'mousedown';
+const E_MOUSEUP = 'mouseup';
+const E_MOUSEMOVE = 'mousemove';
+const E_TOUCHSTART = 'touchstart';
+const E_TOUCHEND = 'touchend';
+const E_TOUCHMOVE = 'touchmove';
+
+const E_DRAG_START = 'dragStart';
+const E_DRAG = 'drag';
+const E_DRAG_END = 'dragEnd';
+const E_RESIZE_START = 'resizeStart';
+const E_RESIZE = 'resize';
+const E_RESIZE_END = 'resizeEnd';
+const E_ROTATE_START = 'rotateStart';
+const E_ROTATE = 'rotate';
+const E_ROTATE_END ='rotateEnd';
+const E_SET_POINT_START = 'setPointStart';
+const E_SET_POINT_END = 'setPointEnd';
+
+const EMITTER_EVENTS = [
+    E_DRAG_START,
+    E_DRAG, ,
+    E_DRAG_END,
+    E_RESIZE_START,
+    E_RESIZE,
+    E_RESIZE_END,
+    E_ROTATE_START,
+    E_ROTATE,
+    E_ROTATE_END,
+    E_SET_POINT_START,
+    E_SET_POINT_END
+];
+
+const CSS_PREFIXES = [
+    '-webkit-',
+    '-moz-',
+    '-ms-',
+    '-o-'
+];
+
+const ON_GETSTATE = 'ongetstate';
+const ON_APPLY = 'onapply';
+const ON_MOVE = 'onmove';
+const ON_RESIZE = 'onresize';
+const ON_ROTATE = 'onrotate';
+
+const NOTIFIER_EVENTS = [
+    ON_GETSTATE,
+    ON_APPLY,
+    ON_MOVE,
+    ON_RESIZE,
+    ON_ROTATE
+];
+
+const NOTIFIER_CONSTANTS = {
+    NOTIFIER_EVENTS,
+    ON_GETSTATE,
+    ON_APPLY,
+    ON_MOVE,
+    ON_RESIZE,
+    ON_ROTATE
+};
+
+const EVENT_EMITTER_CONSTANTS = {
+    EMITTER_EVENTS,
+    E_DRAG_START,
+    E_DRAG,
+    E_DRAG_END,
+    E_RESIZE_START,
+    E_RESIZE,
+    E_RESIZE_END,
+    E_ROTATE_START,
+    E_ROTATE,
+    E_ROTATE_END,
+    E_SET_POINT_START,
+    E_SET_POINT_END
+};
+
+const CLIENT_EVENTS_CONSTANTS = {
+    E_MOUSEDOWN,
+    E_MOUSEUP,
+    E_MOUSEMOVE,
+    E_TOUCHSTART,
+    E_TOUCHEND,
+    E_TOUCHMOVE
+};
+
+const TRANSFORM_HANDLES_KEYS = {
+    TOP_LEFT: 'tl',
+    TOP_CENTER: 'tc',
+    TOP_RIGHT: 'tr',
+    BOTTOM_LEFT: 'bl',
+    BOTTOM_RIGHT: 'br',
+    BOTTOM_CENTER: 'bc',
+    MIDDLE_LEFT: 'ml',
+    MIDDLE_RIGHT: 'mr',
+    CENTER: 'center'
+};
+
+const TRANSFORM_EDGES_KEYS = {
+    TOP_EDGE: 'te',
+    BOTTOM_EDGE: 'be',
+    LEFT_EDGE: 'le',
+    RIGHT_EDGE: 're'
+};
+
+const TRANSFORM_HANDLES_CONSTANTS = {
+    TRANSFORM_HANDLES_KEYS,
+    TRANSFORM_EDGES_KEYS
+};
+
+const {
+    ON_GETSTATE: ON_GETSTATE$1,
+    ON_APPLY: ON_APPLY$1,
+    ON_MOVE: ON_MOVE$1,
+    ON_RESIZE: ON_RESIZE$1,
+    ON_ROTATE: ON_ROTATE$1
+} = NOTIFIER_CONSTANTS;
+
 class Observable {
 
     constructor() {
@@ -286,22 +409,22 @@ class Observable {
             if (source === observer) return;
             switch (eventName) {
 
-                case 'onmove':
+                case ON_MOVE$1:
                     observer.notifyMove(data);
                     break;
-                case 'onrotate':
+                case ON_ROTATE$1:
                     observer.notifyRotate(data);
                     break;
-                case 'onresize':
+                case ON_RESIZE$1:
                     observer.notifyResize(data);
                     break;
-                case 'onapply':
+                case ON_APPLY$1:
                     observer.notifyApply(data);
                     break;
-                case 'ongetstate':
+                case ON_GETSTATE$1:
                     observer.notifyGetState(data);
                     break;
-            
+
             }
         });
     }
@@ -341,7 +464,7 @@ class EventDispatcher {
             cb.call(ctx, eventArgs);
         });
     };
-    
+
     addEventListener(eventName, cb) {
         this.events[eventName].registerCallback(cb);
     }
@@ -352,6 +475,13 @@ class EventDispatcher {
 
 }
 
+const { E_DRAG: E_DRAG$1 } = EVENT_EMITTER_CONSTANTS;
+const {
+    E_MOUSEMOVE: E_MOUSEMOVE$1,
+    E_MOUSEUP: E_MOUSEUP$1,
+    E_TOUCHMOVE: E_TOUCHMOVE$1,
+    E_TOUCHEND: E_TOUCHEND$1
+} = CLIENT_EVENTS_CONSTANTS;
 class SubjectModel {
 
     constructor(el) {
@@ -387,7 +517,7 @@ class SubjectModel {
     _destroy() {
         throwNotImplementedError();
     }
-    
+
     _processOptions() {
         throwNotImplementedError();
     }
@@ -419,7 +549,7 @@ class SubjectModel {
         };
 
         this.proxyMethods.onMove.call(this, finalArgs);
-        this._emitEvent('drag', finalArgs);
+        this._emitEvent(E_DRAG$1, finalArgs);
     }
 
     _draw() {
@@ -429,15 +559,15 @@ class SubjectModel {
     _onMouseDown(e) {
         this._start(e);
         helper(document)
-            .on('mousemove', this._onMouseMove)
-            .on('mouseup', this._onMouseUp);
+            .on(E_MOUSEMOVE$1, this._onMouseMove)
+            .on(E_MOUSEUP$1, this._onMouseUp);
     }
 
     _onTouchStart(e) {
         this._start(e.touches[0]);
         helper(document)
-            .on('touchmove', this._onTouchMove)
-            .on('touchend', this._onTouchEnd);
+            .on(E_TOUCHMOVE$1, this._onTouchMove)
+            .on(E_TOUCHEND$1, this._onTouchEnd);
     }
 
     _onMouseMove(e) {
@@ -462,8 +592,8 @@ class SubjectModel {
 
     _onMouseUp(e) {
         helper(document)
-            .off('mousemove', this._onMouseMove)
-            .off('mouseup', this._onMouseUp);
+            .off(E_MOUSEMOVE$1, this._onMouseMove)
+            .off(E_MOUSEUP$1, this._onMouseUp);
 
         this._end(
             e,
@@ -473,8 +603,8 @@ class SubjectModel {
 
     _onTouchEnd(e) {
         helper(document)
-            .off('touchmove', this._onTouchMove)
-            .off('touchend', this._onTouchEnd);
+            .off(E_TOUCHMOVE$1, this._onTouchMove)
+            .off(E_TOUCHEND$1, this._onTouchEnd);
 
         if (e.touches.length === 0) {
             this._end(
@@ -504,36 +634,13 @@ const throwNotImplementedError = () => {
     throw Error(`Method not implemented`);
 };
 
-const MIN_SIZE = 2;
-const THEME_COLOR = '#00a8ff';
-
-const EVENTS = [
-    'dragStart',
-    'drag',
-    'dragEnd',
-    'resizeStart',
-    'resize',
-    'resizeEnd',
-    'rotateStart',
-    'rotate',
-    'rotateEnd',
-    'setPointStart',
-    'setPointEnd'
-];
-
-const cssPrefixes = [
-    '-webkit-',
-    '-moz-',
-    '-ms-',
-    '-o-'
-];
-
 const RAD = Math.PI / 180;
 
-const snapCandidate = (value, gridSize) => {
-    if (gridSize === 0) return value;
-    return Math.round(value / gridSize) * gridSize;
-};
+const snapCandidate = (value, gridSize) => (
+    gridSize === 0
+        ? value
+        : Math.round(value / gridSize) * gridSize
+);
 
 const snapToGrid = (value, snap) => {
     if (snap === 0) {
@@ -547,9 +654,9 @@ const snapToGrid = (value, snap) => {
     }
 };
 
-const floatToFixed = (val, size = 6) => {
-    return Number(val.toFixed(size));
-};
+const floatToFixed = (val, size = 6) => (
+    Number(val.toFixed(size))
+);
 
 const getMinMaxOf2DIndex = (arr, idx) => {
     const axisValues = arr.map(e => e[idx]);
@@ -627,13 +734,55 @@ const getStyle = (el, property) => {
     const style = window.getComputedStyle(el);
     let value = null;
 
-    for (const prefix of cssPrefixes) {
+    for (const prefix of CSS_PREFIXES) {
         value = style.getPropertyValue(`${prefix}${property}`) || value;
         if (value) break;
     }
 
     return value;
 };
+
+const {
+    NOTIFIER_EVENTS: NOTIFIER_EVENTS$1,
+    ON_GETSTATE: ON_GETSTATE$2,
+    ON_APPLY: ON_APPLY$2,
+    ON_MOVE: ON_MOVE$2,
+    ON_RESIZE: ON_RESIZE$2,
+    ON_ROTATE: ON_ROTATE$2
+} = NOTIFIER_CONSTANTS;
+
+const {
+    EMITTER_EVENTS: EMITTER_EVENTS$1,
+    E_DRAG_START: E_DRAG_START$1,
+    E_DRAG: E_DRAG$2,
+    E_DRAG_END: E_DRAG_END$1,
+    E_RESIZE_START: E_RESIZE_START$1,
+    E_RESIZE: E_RESIZE$1,
+    E_RESIZE_END: E_RESIZE_END$1,
+    E_ROTATE_START: E_ROTATE_START$1,
+    E_ROTATE: E_ROTATE$1,
+    E_ROTATE_END: E_ROTATE_END$1
+} = EVENT_EMITTER_CONSTANTS;
+
+const { TRANSFORM_HANDLES_KEYS: TRANSFORM_HANDLES_KEYS$1, TRANSFORM_EDGES_KEYS: TRANSFORM_EDGES_KEYS$1 } = TRANSFORM_HANDLES_CONSTANTS;
+
+const {
+    TOP_LEFT,
+    TOP_CENTER,
+    TOP_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_RIGHT,
+    BOTTOM_CENTER,
+    MIDDLE_LEFT,
+    MIDDLE_RIGHT
+} = TRANSFORM_HANDLES_KEYS$1;
+
+const {
+    TOP_EDGE,
+    BOTTOM_EDGE,
+    LEFT_EDGE,
+    RIGHT_EDGE
+} = TRANSFORM_EDGES_KEYS$1;
 
 class Transformable extends SubjectModel {
 
@@ -644,10 +793,7 @@ class Transformable extends SubjectModel {
         }
         this.observable = observable;
 
-        EVENTS.forEach((eventName) => {
-            this.eventDispatcher.registerEvent(eventName);
-        });
-
+        EMITTER_EVENTS$1.forEach(eventName => this.eventDispatcher.registerEvent(eventName));
         this.enable(options);
     }
 
@@ -663,7 +809,7 @@ class Transformable extends SubjectModel {
             ...rest
         };
         this.proxyMethods.onRotate.call(this, finalArgs);
-        this._emitEvent('rotate', finalArgs);
+        this._emitEvent(E_ROTATE$1, finalArgs);
     }
 
     _resize({ dx, dy, ...rest }) {
@@ -675,13 +821,13 @@ class Transformable extends SubjectModel {
             ...rest
         };
         this.proxyMethods.onResize.call(this, finalArgs);
-        this._emitEvent('resize', finalArgs);
+        this._emitEvent(E_RESIZE$1, finalArgs);
     }
 
     _processOptions(options) {
         const { el } = this;
 
-        addClass(el, 'sjx-drag');
+        addClass(el, `${LIB_CLASS_PREFIX}drag`);
 
         const _snap = {
             x: 10,
@@ -750,10 +896,10 @@ class Transformable extends SubjectModel {
             } = options;
 
             if (isDef(snap)) {
-                const { 
-                    x = 10, 
-                    y = 10, 
-                    angle 
+                const {
+                    x = 10,
+                    y = 10,
+                    angle
                 } = snap;
 
                 _snap.x = x;
@@ -764,9 +910,9 @@ class Transformable extends SubjectModel {
             }
 
             if (isDef(each)) {
-                const { 
-                    move = false, 
-                    resize = false, 
+                const {
+                    move = false,
+                    resize = false,
                     rotate = false
                 } = each;
 
@@ -925,7 +1071,7 @@ class Transformable extends SubjectModel {
 
             if (resizeEach) {
                 observable.notify(
-                    'onresize',
+                    ON_RESIZE$2,
                     self,
                     args
                 );
@@ -934,7 +1080,7 @@ class Transformable extends SubjectModel {
 
         if (doDrag && draggable) {
             const { nx, ny } = storage;
-            
+
             const dx = dox
                 ? snapToGrid(clientX - nx, snap.x)
                 : 0;
@@ -956,7 +1102,7 @@ class Transformable extends SubjectModel {
 
             if (moveEach) {
                 observable.notify(
-                    'onmove',
+                    ON_MOVE$2,
                     self,
                     args
                 );
@@ -989,7 +1135,7 @@ class Transformable extends SubjectModel {
 
             if (rotateEach) {
                 observable.notify(
-                    'onrotate',
+                    ON_ROTATE$2,
                     self,
                     {
                         radians,
@@ -1031,7 +1177,7 @@ class Transformable extends SubjectModel {
 
         const isTarget = Object.values(handles).some((hdl) => helper(e.target).is(hdl)) ||
             el.contains(e.target);
-        
+
         storage.isTarget = isTarget;
 
         if (!isTarget) return;
@@ -1065,7 +1211,7 @@ class Transformable extends SubjectModel {
             radius
         } = handles;
 
-        if (isDef(radius)) removeClass(radius, 'sjx-hidden');
+        if (isDef(radius)) removeClass(radius, `${LIB_CLASS_PREFIX}hidden`);
 
         const doRotate = handle.is(rotator),
             doSetCenter = isDef(center)
@@ -1133,11 +1279,11 @@ class Transformable extends SubjectModel {
         };
 
         if (doResize) {
-            this._emitEvent('resizeStart', eventArgs);
+            this._emitEvent(E_RESIZE_START$1, eventArgs);
         } else if (doRotate) {
-            this._emitEvent('rotateStart', eventArgs);
+            this._emitEvent(E_ROTATE_START$1, eventArgs);
         } else if (doDrag) {
-            this._emitEvent('dragStart', eventArgs);
+            this._emitEvent(E_DRAG_START$1, eventArgs);
         }
 
         const {
@@ -1147,8 +1293,8 @@ class Transformable extends SubjectModel {
         } = each;
 
         const actionName = doResize
-            ? 'resize'
-            : (doRotate ? 'rotate' : 'drag');
+            ? E_RESIZE$1
+            : (doRotate ? E_ROTATE$1 : E_DRAG$2);
 
         const triggerEvent =
             (doResize && resize) ||
@@ -1156,7 +1302,7 @@ class Transformable extends SubjectModel {
             (doDrag && move);
 
         observable.notify(
-            'ongetstate',
+            ON_GETSTATE$2,
             this,
             {
                 clientX,
@@ -1231,8 +1377,8 @@ class Transformable extends SubjectModel {
         if (!isTarget) return;
 
         const actionName = doResize
-            ? 'resize'
-            : (doDrag ? 'drag' : 'rotate');
+            ? E_RESIZE$1
+            : (doDrag ? E_DRAG$2 : E_ROTATE$1);
 
         storage.doResize = false;
         storage.doDrag = false;
@@ -1252,11 +1398,11 @@ class Transformable extends SubjectModel {
         proxyMethods.onDrop.call(this, eventArgs);
 
         if (doResize) {
-            this._emitEvent('resizeEnd', eventArgs);
+            this._emitEvent(E_RESIZE_END$1, eventArgs);
         } else if (doRotate) {
-            this._emitEvent('rotateEnd', eventArgs);
+            this._emitEvent(E_ROTATE_END$1, eventArgs);
         } else if (doDrag) {
-            this._emitEvent('dragEnd', eventArgs);
+            this._emitEvent(E_DRAG_END$1, eventArgs);
         }
 
         const {
@@ -1271,7 +1417,7 @@ class Transformable extends SubjectModel {
             (doDrag && move);
 
         observable.notify(
-            'onapply',
+            ON_APPLY$2,
             this,
             {
                 clientX,
@@ -1285,7 +1431,7 @@ class Transformable extends SubjectModel {
 
         helper(document.body).css({ cursor: 'auto' });
         if (isDef(radius)) {
-            addClass(radius, 'sjx-hidden');
+            addClass(radius, `${LIB_CLASS_PREFIX}hidden`);
         }
     }
 
@@ -1319,7 +1465,7 @@ class Transformable extends SubjectModel {
         return {
             ..._computed,
             ...rest,
-            handle: Object.values(handles).some((hdl) => helper(e.target).is(hdl)) 
+            handle: Object.values(handles).some(hdl => helper(e.target).is(hdl))
                 ? handle
                 : helper(el),
             pressang
@@ -1327,31 +1473,19 @@ class Transformable extends SubjectModel {
     }
 
     _checkHandles(handle, handles) {
-        const { tl, tc, tr, bl, br, bc, ml, mr, te, be, le, re } = handles;
-        const isTL = isDef(tl) ? handle.is(tl) : false,
-            isTC = isDef(tc) ? handle.is(tc) : false,
-            isTR = isDef(tr) ? handle.is(tr) : false,
-            isBL = isDef(bl) ? handle.is(bl) : false,
-            isBC = isDef(bc) ? handle.is(bc) : false,
-            isBR = isDef(br) ? handle.is(br) : false,
-            isML = isDef(ml) ? handle.is(ml) : false,
-            isMR = isDef(mr) ? handle.is(mr) : false,
-            isTE = isDef(te) ? handle.is(te) : false,
-            isBE = isDef(be) ? handle.is(be) : false,
-            isLE = isDef(le) ? handle.is(le) : false,
-            isRE = isDef(re) ? handle.is(re) : false;
+        const checkIsHandle = hdl => isDef(hdl) ? handle.is(hdl) : false;
+        const checkAction = items => items.some(key => checkIsHandle(handles[key]));
 
-        // reverse axis
-        const revX = isTL || isML || isBL || isTC || isLE,
-            revY = isTL || isTR || isTC || isML || isTE;
+        const revX = checkAction([TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT, TOP_CENTER, LEFT_EDGE]);
+        const revY = checkAction([TOP_LEFT, TOP_RIGHT, TOP_CENTER, MIDDLE_LEFT, TOP_EDGE]);
 
-        const onTopEdge = isTC || isTR || isTL || isTE,
-            onLeftEdge = isTL || isML || isBL || isLE,
-            onRightEdge = isTR || isMR || isBR || isRE,
-            onBottomEdge = isBR || isBC || isBL || isBE;
+        const onTopEdge = checkAction([TOP_CENTER, TOP_RIGHT, TOP_LEFT, TOP_EDGE]);
+        const onLeftEdge = checkAction([TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT, LEFT_EDGE]);
+        const onRightEdge = checkAction([TOP_RIGHT, MIDDLE_RIGHT, BOTTOM_RIGHT, RIGHT_EDGE]);
+        const onBottomEdge = checkAction([BOTTOM_RIGHT, BOTTOM_CENTER, BOTTOM_LEFT, BOTTOM_EDGE]);
 
-        const doW = isML || isMR || isLE || isRE,
-            doH = isTC || isBC || isBE || isTE;
+        const doW = checkAction([MIDDLE_LEFT, MIDDLE_RIGHT, LEFT_EDGE, RIGHT_EDGE]);
+        const doH = checkAction([TOP_CENTER, BOTTOM_CENTER, BOTTOM_EDGE, TOP_EDGE]);
 
         return {
             revX,
@@ -1410,31 +1544,24 @@ class Transformable extends SubjectModel {
         const { observable: ob } = this;
 
         if (move || resize || rotate) {
-            ob.subscribe('ongetstate', this)
-                .subscribe('onapply', this);
+            ob.subscribe(ON_GETSTATE$2, this)
+                .subscribe(ON_APPLY$2, this);
         }
 
         if (move) {
-            ob.subscribe('onmove', this);
+            ob.subscribe(ON_MOVE$2, this);
         }
         if (resize) {
-            ob.subscribe('onresize', this);
+            ob.subscribe(ON_RESIZE$2, this);
         }
         if (rotate) {
-            ob.subscribe('onrotate', this);
+            ob.subscribe(ON_ROTATE$2, this);
         }
     }
 
     unsubscribe() {
         const { observable: ob } = this;
-
-        [
-            'ongetstate', 
-            'onapply', 
-            'onmove',
-            'onresize',
-            'onrotate'
-        ].map(eventName => ob.unsubscribe(eventName, this));
+        NOTIFIER_EVENTS$1.map(eventName => ob.unsubscribe(eventName, this));
     }
 
     disable() {
@@ -1446,7 +1573,7 @@ class Transformable extends SubjectModel {
 
         if (isUndef(storage)) return;
 
-        removeClass(el, 'sjx-drag');
+        removeClass(el, `${LIB_CLASS_PREFIX}drag`);
 
         this._destroy();
         this.unsubscribe();
@@ -1470,7 +1597,7 @@ class Transformable extends SubjectModel {
         };
 
         this._drag({ dx, dy });
-        this._apply('drag');
+        this._apply(E_DRAG$2);
     }
 
     exeResize({
@@ -1495,7 +1622,7 @@ class Transformable extends SubjectModel {
         };
 
         this._resize({ dx, dy });
-        this._apply('resize');
+        this._apply(E_RESIZE$1);
     }
 
     exeRotate({ delta }) {
@@ -1513,7 +1640,7 @@ class Transformable extends SubjectModel {
         };
 
         this._rotate({ radians: delta });
-        this._apply('rotate');
+        this._apply(E_ROTATE$1);
     }
 
 }
@@ -1681,18 +1808,18 @@ const getCurrentTransformMatrix = (el, container = document.body, newTransform) 
 };
 
 const decompose = (m) => {
-    const sX = Math.sqrt(m[0][0] * m[0][0] + m[0][1] * m[0][1] + m[0][2] * m[0][2]),
-        sY = Math.sqrt(m[1][0] * m[1][0] + m[1][1] * m[1][1] + m[1][2] * m[1][2]),
-        sZ = Math.sqrt(m[2][0] * m[2][0] + m[2][1] * m[2][1] + m[2][2] * m[2][2]);
+    const sX = Math.sqrt(m[0][0] * m[0][0] + m[1][0] * m[1][0] + m[2][0] * m[2][0]),
+        sY = Math.sqrt(m[0][1] * m[0][1] + m[1][1] * m[1][1] + m[2][1] * m[2][1]),
+        sZ = Math.sqrt(m[0][2] * m[0][2] + m[1][2] * m[1][2] + m[2][2] * m[2][2]);
 
-    let rX = Math.atan2(-m[3][0] / sZ, m[3][1] / sZ),
-        rY = Math.asin(m[1][3] / sZ),
-        rZ = Math.atan2(-m[0][3] / sY, m[0][0] / sX);
+    let rX = Math.atan2(-m[0][3] / sZ, m[1][3] / sZ),
+        rY = Math.asin(m[3][1] / sZ),
+        rZ = Math.atan2(-m[3][0] / sY, m[0][0] / sX);
 
-    if (m[1][0] === 1 || m[1][0] === -1) {
+    if (m[0][1] === 1 || m[0][1] === -1) {
         rX = 0;
-        rY = m[1][0] * -Math.PI / 2;
-        rZ = m[1][0] * Math.atan2(m[1][1] / sY, m[1][0] / sY);
+        rY = m[0][1] * -Math.PI / 2;
+        rZ = m[0][1] * Math.atan2(m[1][1] / sY, m[0][1] / sY);
     }
 
     return {
@@ -1702,9 +1829,9 @@ const decompose = (m) => {
             z: rZ
         },
         translate: {
-            x: m[3][0] / sX,
-            y: m[3][1] / sY,
-            z: m[3][2] / sZ
+            x: m[0][3] / sX,
+            y: m[1][3] / sY,
+            z: m[2][3] / sZ
         },
         scale: {
             sX,
@@ -1786,6 +1913,7 @@ const getAbsoluteOffset = (elem, container = document.body) => {
     return [left, top, 0, 1];
 };
 
+const { E_MOUSEDOWN: E_MOUSEDOWN$1, E_TOUCHSTART: E_TOUCHSTART$1 } = CLIENT_EVENTS_CONSTANTS;
 class Draggable extends Transformable {
 
     _init(el) {
@@ -1801,16 +1929,23 @@ class Draggable extends Transformable {
 
         const { offsetHeight, offsetWidth } = el;
 
-        const wrapper = document.createElement('div');
-        addClass(wrapper, 'sjx-wrapper');
-
-        const controls = document.createElement('div');
-        addClass(controls, 'sjx-controls');
+        const wrapper = createElement(['sjx-wrapper']);
+        const controls = createElement(['sjx-controls']);
 
         const handles = {};
 
         const matrix = getCurrentTransformMatrix(el, container);
         const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
+
+        const originRotation = [
+            'data-sjx-cx',
+            'data-sjx-cy'
+        ].map(attr => {
+            const val = el.getAttribute(attr);
+            return isDef(val) ? Number(val) : undefined;
+        });
+
+        const hasOrigin = originRotation.every(val => !isNaN(val));
 
         const vertices = {
             tl: [0, 0, 0, 1],
@@ -1926,10 +2061,14 @@ class Draggable extends Transformable {
             }
             : {};
 
+        const nextCenter = hasOrigin
+            ? [...originRotation, 0, 1]
+            : finalVertices.center;
+
         const allHandles = {
             ...resizingHandles,
             center: rotationPoint && rotatable
-                ? finalVertices.center
+                ? nextCenter
                 : undefined,
             rotator
         };
@@ -1951,26 +2090,22 @@ class Draggable extends Transformable {
         container.appendChild(wrapper);
 
         this.storage = {
+            wrapper,
             controls,
             handles: {
                 ...handles,
                 ...rotationHandles
             },
-            radius: undefined,
             parent: el.parentNode,
-            wrapper,
-            stored: {
-                center: {
-                    x: el.getAttribute('data-sjx-cx') || 0,
-                    y: el.getAttribute('data-sjx-cy') || 0
-                }
+            center: {
+                isShifted: hasOrigin
             }
         };
 
         [el, controls].map(target => (
             helper(target)
-                .on('mousedown', this._onMouseDown)
-                .on('touchstart', this._onTouchStart)
+                .on(E_MOUSEDOWN$1, this._onMouseDown)
+                .on(E_TOUCHSTART$1, this._onTouchStart)
         ));
     }
 
@@ -1985,8 +2120,8 @@ class Draggable extends Transformable {
 
         [el, controls].map(target => (
             helper(target)
-                .off('mousedown', this._onMouseDown)
-                .off('touchstart', this._onTouchStart)
+                .off(E_MOUSEDOWN$1, this._onMouseDown)
+                .off(E_TOUCHSTART$1, this._onTouchStart)
         ));
 
         wrapper.parentNode.removeChild(wrapper);
@@ -2074,62 +2209,38 @@ class Draggable extends Transformable {
 
     _apply() {
         const {
-            el,
-            storage,
+            el: element,
+            storage: {
+                cached,
+                controls,
+                transform: { matrix },
+                center
+            },
             options: {
                 applyTranslate
             }
         } = this;
 
-        const {
-            cached,
-            controls,
-            transform: { matrix }
-            // handles
-        } = storage;
-
         const $controls = helper(controls);
-
-        // const cw = el.offsetWidth,
-        //     ch = el.offsetHeight;
-
-        // const { center: cHandle } = handles;
-
-        // const isDefCenter = isDef(cHandle);
 
         if (isUndef(cached)) return;
 
-        // const nextStoredCenter = {
-        //     x: isDefCenter ? storage.stored.center.x + cached.centerOffset.x : 0,
-        //     y: isDefCenter ? storage.stored.center.y + cached.centerOffset.y : 0
-        // };
-
-        // el.setAttribute('data-sjx-cx', nextStoredCenter.x);
-        // el.setAttribute('data-sjx-cy', nextStoredCenter.y);
-
-        // this.storage = {
-        //     ...this.storage,
-        //     stored: {
-        //         ...this.storage.stored,
-        //         center: {
-        //             ...nextStoredCenter
-        //         }
-        //     }
-        // };
+        element.setAttribute('data-sjx-cx', center.elX);
+        element.setAttribute('data-sjx-cy', center.elY);
 
         if (applyTranslate) {
-            const $el = helper(el);
+            const $el = helper(element);
 
             const { dx, dy } = cached;
 
             const css = matrixToCSS(matrix);
 
             const left = parseFloat(
-                el.style.left || $el.css('left')
+                element.style.left || $el.css('left')
             );
 
             const top = parseFloat(
-                el.style.top || $el.css('top')
+                element.style.top || $el.css('top')
             );
 
             css.left = `${left + dx}px`;
@@ -2210,10 +2321,10 @@ class Draggable extends Transformable {
             : { x: null, y: null };
 
         const newDx = ((restX !== null) || (proportions && restY !== null) && restrict)
-            ? nextDx 
+            ? nextDx
             : dx;
         const newDy = ((restY !== null) || (proportions && restX !== null) && restrict)
-            ? nextDy 
+            ? nextDy
             : dy;
 
         const [scaleX, scaleY] = getScale(newDx, newDy);
@@ -2288,6 +2399,7 @@ class Draggable extends Transformable {
                         }
                     }
                 },
+                center,
                 cached: {
                     dist: {
                         dx: nextDx = dx,
@@ -2342,6 +2454,8 @@ class Draggable extends Transformable {
             dx: newDx,
             dy: newDy
         };
+
+        if (center.isShifted) ;
 
         return moveElementMtrx;
     }
@@ -2407,9 +2521,7 @@ class Draggable extends Transformable {
                 },
                 parent,
                 wrapper,
-                stored: {
-                    center: centerData
-                }
+                center: oldCenter
             },
             options: {
                 container,
@@ -2446,6 +2558,16 @@ class Draggable extends Transformable {
         const scaleX = doH ? 0 : (revX ? -hW : hW),
             scaleY = doW ? 0 : (revY ? -hH : hH);
 
+        const originTransform = cHandle ? getTransform(cHandle) : createIdentityMatrix();
+
+        const {
+            translate: {
+                x: originX,
+                y: originY
+            }
+        } = decompose(getCurrentTransformMatrix(cHandle));
+
+        // real element's center
         const [cenX, cenY] = multiplyMatrixAndPoint(
             ctm,
             [
@@ -2456,11 +2578,29 @@ class Draggable extends Transformable {
             ]
         );
 
+        const globalCenterX = cenX + glLeft;
+        const globalCenterY = cenY + glTop;
+
+        // search distance between el's center and rotation handle
+        const [distX, distY] = multiplyMatrixAndPoint(
+            multiplyMatrix(
+                matrixInvert(dropTranslate(ctm)),
+                dropTranslate(originTransform)
+            ),
+            [
+                originX - globalCenterX,
+                originY - globalCenterY,
+                0,
+                1
+            ]
+        );
+
+        // todo: check rotation origin with parent transform
         const [elX, elY] = multiplyMatrixAndPoint(
             matrix,
             [
-                centerData.x,
-                centerData.y,
+                distX,
+                distY,
                 0,
                 1
             ]
@@ -2471,14 +2611,14 @@ class Draggable extends Transformable {
             [offsetWidth, offsetHeight, 0, 1]
         );
 
-        const { 
+        const {
             scale: { sX, sY }
         } = decompose(getCurrentTransformMatrix(el, el.parentNode));
 
         const transform = {
             auxiliary: {
                 scale: {
-                    translateMatrix: scalable 
+                    translateMatrix: scalable
                         ? createTranslateMatrix(
                             scaleX,
                             scaleY
@@ -2486,7 +2626,7 @@ class Draggable extends Transformable {
                         : createTranslateMatrix(
                             doH ? 0 : hW,
                             doW ? 0 : hH
-                        )  
+                        )
                 },
                 translate: {
                     parentMatrix: matrixInvert(dropTranslate(parentMatrix))
@@ -2523,11 +2663,12 @@ class Draggable extends Transformable {
                 }
             },
             center: {
-                x: cenX + glLeft,
-                y: cenY + glTop,
+                ...oldCenter,
+                x: globalCenterX,
+                y: globalCenterY,
                 elX,
                 elY,
-                matrix: cHandle ? getTransform(cHandle) : null
+                matrix: originTransform
             },
             revX,
             revY,
@@ -2553,9 +2694,7 @@ class Draggable extends Transformable {
             ...matrixToCSS(flatMatrix(resultMatrix))
         });
 
-        this.storage.cached = {
-            centerOffset: { x, y }
-        };
+        this.storage.center.isShifted = true;
     }
 
     resetCenterPoint() {
@@ -2615,7 +2754,7 @@ class Draggable extends Transformable {
     getBoundingRect(transformMatrix = null) {
         const {
             el,
-            options: { 
+            options: {
                 restrict
             },
             storage: {
@@ -2634,9 +2773,7 @@ class Draggable extends Transformable {
 }
 
 const createHandler = ([x, y], key = 'handler', style = {}) => {
-    const element = document.createElement('div');
-    addClass(element, 'sjx-hdl');
-    addClass(element, `sjx-hdl-${key}`);
+    const element = createElement(['sjx-hdl', `sjx-hdl-${key}`]);
 
     helper(element).css({
         transform: `translate(${x}px, ${y}px)`,
@@ -2653,7 +2790,7 @@ const renderLine = ([pt1, pt2, thickness = 1], key) => {
         theta
     } = getLineAttrs(pt1, pt2, thickness);
 
-    const line = document.createElement('div');
+    const line = createElement(['sjx-hdl-line', `sjx-hdl-${key}`]);
 
     helper(line).css({
         transform: `translate(${cx}px, ${cy}px) rotate(${theta}deg)`,
@@ -2661,8 +2798,6 @@ const renderLine = ([pt1, pt2, thickness = 1], key) => {
         width: `${length}px`
     });
 
-    addClass(line, 'sjx-hdl-line');
-    addClass(line, `sjx-hdl-${key}`);
     return line;
 };
 
@@ -2693,7 +2828,8 @@ const applyTransformToHandles = (storage, options, data) => {
         transform: {
             //ctm,
             wrapperMatrix = getCurrentTransformMatrix(wrapper, wrapper.parentNode)
-        } = {}
+        } = {},
+        center
     } = storage;
 
     const {
@@ -2728,7 +2864,7 @@ const applyTransformToHandles = (storage, options, data) => {
         ml: [0, offsetHeight / 2, 0, 1],
         bc: [offsetWidth / 2, offsetHeight, 0, 1],
         mr: [offsetWidth, offsetHeight / 2, 0, 1],
-        ...(rotationPoint && rotatable &&
+        ...(rotationPoint && rotatable && !center.isShifted &&
             { center: [offsetWidth / 2, offsetHeight / 2, 0, 1] }
         )
     };
@@ -2860,15 +2996,15 @@ const applyTransformToHandles = (storage, options, data) => {
 
 const getBoundingRect = (el, container, ctm, box) => {
     const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
-    const { 
-        width, 
+    const {
+        width,
         height,
         offset: {
             left,
             top
         }
-    } = box || { 
-        width: el.offsetWidth, 
+    } = box || {
+        width: el.offsetWidth,
         height: el.offsetHeight,
         offset: {
             left: offsetLeft,
@@ -2897,6 +3033,12 @@ const getBoundingRect = (el, container, ctm, box) => {
         ));
 };
 
+const createElement = (classNames = []) => {
+    const element = document.createElement('div');
+    classNames.forEach(className => addClass(element, className));
+    return element;
+};
+
 const svgPoint = createSVGElement('svg').createSVGPoint();
 const floatRE = /[+-]?\d+(\.\d+)?/g;
 
@@ -2905,11 +3047,14 @@ const allowedElements = [
     'image', 'line',
     'path', 'polygon',
     'polyline', 'rect',
-    'text', 'g', 'foreignobject', 'use'
+    'text', 'g', 'foreignobject',
+    'use'
 ];
 
-function createSVGElement(name) {
-    return document.createElementNS('http://www.w3.org/2000/svg', name);
+function createSVGElement(name, classNames = []) {
+    const element = document.createElementNS('http://www.w3.org/2000/svg', name);
+    classNames.forEach(className => addClass(element, className));
+    return element;
 }
 
 const checkChildElements = (element) => {
@@ -3007,16 +3152,6 @@ const isIdentity = (matrix) => {
         f === 0;
 };
 
-const createPoint = (_, x, y) => {
-    if (isUndef(x) || isUndef(y)) {
-        return null;
-    }
-    const pt = createSVGElement('svg').createSVGPoint();
-    pt.x = x;
-    pt.y = y;
-    return pt;
-};
-
 const checkElement = (el) => {
     const tagName = el.tagName.toLowerCase();
 
@@ -3056,11 +3191,11 @@ const parsePath = (path) => {
     const serialized = [];
 
     while ((match = dRE.exec(path))) {
-        const cmd = match[1];
+        const [, cmd, params] = match;
         const upCmd = cmd.toUpperCase();
 
         // normalize the data
-        const data = match[2]
+        const data = params
             .replace(/([^e])-/g, '$1 -')
             .replace(/ +/g, ' ');
 
@@ -3124,7 +3259,7 @@ const movePath = (params) => {
                         firstCommand = false;
                     }
                     break;
-                }              
+                }
                 case 'A': {
                     for (let k = 0, len = values.length; k < len; k += 7) {
                         const set = values.slice(k, k + 7);
@@ -3330,7 +3465,7 @@ const resizePath = (params) => {
                             x: resX1,
                             y: resY1
                         } = pointTo(
-                            mtrx,                          
+                            mtrx,
                             x1,
                             y1
                         );
@@ -3595,6 +3730,9 @@ const resizePath = (params) => {
     }
 };
 
+const { E_DRAG: E_DRAG$3, E_RESIZE: E_RESIZE$2 } = EVENT_EMITTER_CONSTANTS;
+const { E_MOUSEDOWN: E_MOUSEDOWN$2, E_TOUCHSTART: E_TOUCHSTART$2 } = CLIENT_EVENTS_CONSTANTS;
+
 class DraggableSVG extends Transformable {
 
     _init(el) {
@@ -3618,16 +3756,18 @@ class DraggableSVG extends Transformable {
             height: bH
         } = elBBox;
 
-        const wrapper = createSVGElement('g');
-        addClass(wrapper, 'sjx-svg-wrapper');
+        const wrapper = createSVGElement('g', ['sjx-svg-wrapper']);
+        const controls = createSVGElement('g', ['sjx-svg-controls']);
 
-        const controls = createSVGElement('g');
-        addClass(controls, 'sjx-svg-controls');
+        const originRotation = [
+            'data-sjx-cx',
+            'data-sjx-cy'
+        ].map(attr => {
+            const val = el.getAttribute(attr);
+            return isDef(val) ? Number(val) : undefined;
+        });
 
-        const centerX = el.getAttribute('data-sjx-cx'),
-            centerY = el.getAttribute('data-sjx-cy');
-
-        const elCTM = getTransformToElement(el, container);
+        const hasOrigin = originRotation.every(val => !isNaN(val));
 
         const vertices = {
             tl: [bX, bY],
@@ -3641,12 +3781,16 @@ class DraggableSVG extends Transformable {
             center: [bX + bW / 2, bY + bH / 2]
         };
 
+        const elCTM = getTransformToElement(el, container);
+
         const nextVertices = Object
             .entries(vertices)
-            .reduce((nextRes, [key, vertex]) => {
-                nextRes[key] = pointTo(elCTM, vertex[0], vertex[1]);
-                return nextRes;
-            }, {});
+            .reduce((nextRes, [key, [x, y]]) => (
+                {
+                    ...nextRes,
+                    [key]: pointTo(elCTM, x, y)
+                }
+            ), {});
 
         const handles = {};
         let rotationHandles = {},
@@ -3704,14 +3848,12 @@ class DraggableSVG extends Transformable {
             let radius = null;
 
             if (rotationPoint) {
-                radius = createSVGElement('line');
-
-                addClass(radius, 'sjx-hidden');
+                radius = createSVGElement('line', ['sjx-hidden']);
 
                 radius.x1.baseVal.value = nextVertices.center.x;
                 radius.y1.baseVal.value = nextVertices.center.y;
-                radius.x2.baseVal.value = centerX || nextVertices.center.x;
-                radius.y2.baseVal.value = centerY || nextVertices.center.y;
+                radius.x2.baseVal.value = originRotation[0] || nextVertices.center.x;
+                radius.y2.baseVal.value = originRotation[1] || nextVertices.center.y;
 
                 setLineStyle(radius, '#fe3232');
                 radius.setAttribute('opacity', 0.5);
@@ -3753,10 +3895,18 @@ class DraggableSVG extends Transformable {
             controls.appendChild(handles[key]);
         });
 
+        const nextCenter = hasOrigin
+            ? pointTo(
+                createSVGMatrix(),
+                originRotation[0],
+                originRotation[1]
+            )
+            : nextVertices.center;
+
         const allHandles = {
             ...resizingHandles,
             center: rotationPoint && rotatable
-                ? createPoint(centerX, centerY) || nextVertices.center
+                ? nextCenter
                 : undefined
         };
 
@@ -3795,14 +3945,14 @@ class DraggableSVG extends Transformable {
             },
             parent: el.parentNode,
             center: {
-                isShifted: false
+                isShifted: hasOrigin
             }
         };
 
         [el, controls].map(target => (
             helper(target)
-                .on('mousedown', this._onMouseDown)
-                .on('touchstart', this._onTouchStart)
+                .on(E_MOUSEDOWN$2, this._onMouseDown)
+                .on(E_TOUCHSTART$2, this._onTouchStart)
         ));
     }
 
@@ -3817,8 +3967,8 @@ class DraggableSVG extends Transformable {
 
         [el, controls].map(target => (
             helper(target)
-                .off('mousedown', this._onMouseDown)
-                .off('touchstart', this._onTouchStart)
+                .off(E_MOUSEDOWN$2, this._onMouseDown)
+                .off(E_TOUCHSTART$2, this._onTouchStart)
         ));
 
         wrapper.parentNode.removeChild(wrapper);
@@ -3848,13 +3998,13 @@ class DraggableSVG extends Transformable {
 
         let restrictX = null,
             restrictY = null;
-       
+
         const containerBox = getBoundingRect$1(restrict, containerMatrix);
         const elBox = this.getBoundingRect(matrix);
 
         const [minX, maxX] = getMinMaxOf2DIndex(containerBox, 0);
         const [minY, maxY] = getMinMaxOf2DIndex(containerBox, 1);
-        
+
         for (let i = 0, len = elBox.length; i < len; i++) {
             const [x, y] = elBox[i];
 
@@ -3911,9 +4061,9 @@ class DraggableSVG extends Transformable {
             storage,
             storage: {
                 bBox,
-                handles,
                 cached,
-                transform
+                transform,
+                center
             },
             options,
             options: {
@@ -3929,27 +4079,8 @@ class DraggableSVG extends Transformable {
             ctm
         } = transform;
 
-        const {
-            x: elX,
-            y: elY,
-            width: elW,
-            height: elH
-        } = element.getBBox();
-
-        const { x: centerX, y: centerY } = isDef(handles.center)
-            ? pointTo(
-                matrix,
-                handles.center.cx.baseVal.value,
-                handles.center.cy.baseVal.value
-            )
-            : pointTo(
-                matrix,
-                elX + elW / 2,
-                elY + elH / 2
-            );
-
-        element.setAttribute('data-sjx-cx', centerX);
-        element.setAttribute('data-sjx-cy', centerY);
+        element.setAttribute('data-sjx-cx', center.elX);
+        element.setAttribute('data-sjx-cy', center.elY);
 
         if (isUndef(cached)) return;
 
@@ -3963,7 +4094,7 @@ class DraggableSVG extends Transformable {
             transformMatrix
         } = cached;
 
-        if (actionName === 'drag') {
+        if (actionName === E_DRAG$3) {
             if (!applyDragging || (dx === 0 && dy === 0)) return;
 
             const eM = createTranslateMatrix$1(dx, dy);
@@ -3997,7 +4128,7 @@ class DraggableSVG extends Transformable {
                     if (!isGroup(child)) {
                         const ctm = parentMatrix.inverse();
                         ctm.e = ctm.f = 0;
-    
+
                         applyTranslate(child, {
                             ...pointTo(ctm, ox, oy)
                         });
@@ -4011,7 +4142,7 @@ class DraggableSVG extends Transformable {
             }
         }
 
-        if (actionName === 'resize') {
+        if (actionName === E_RESIZE$2) {
             if (!transformMatrix) return;
             if (!scalable) {
                 if (isGroup(element)) {
@@ -4038,7 +4169,7 @@ class DraggableSVG extends Transformable {
                 } else {
                     const containerCTM = container.getScreenCTM() || createSVGMatrix();
                     const elementMatrix = element.getScreenCTM().multiply(transformMatrix);
-                
+
                     const resultCTM = containerCTM.inverse().multiply(elementMatrix);
 
                     const localCTM = ctm.inverse().multiply(resultCTM);
@@ -4136,10 +4267,10 @@ class DraggableSVG extends Transformable {
             : { x: null, y: null };
 
         const newDx = ((restX !== null) || (proportions && restY !== null) && restrict)
-            ? nextDx 
+            ? nextDx
             : dx;
         const newDy = ((restY !== null) || (proportions && restX !== null) && restrict)
-            ? nextDy 
+            ? nextDy
             : dy;
 
         const [scaleX, scaleY] = getScale(newDx, newDy);
@@ -4176,7 +4307,7 @@ class DraggableSVG extends Transformable {
             }
         };
 
-        this._apply('resize');
+        this._apply(E_RESIZE$2);
 
         return {
             x: newX,
@@ -4496,9 +4627,9 @@ class DraggableSVG extends Transformable {
                     x: boxLeft,
                     y: boxTop
                 },
-                handles: { 
+                handles: {
                     center,
-                    radius 
+                    radius
                 }
             }
         } = this;
@@ -5004,9 +5135,10 @@ const applyTransformToHandles$1 = (
 };
 
 const createHandler$1 = (left, top, color, key) => {
-    const handler = createSVGElement('circle');
-    addClass(handler, `sjx-svg-hdl`);
-    addClass(handler, `sjx-svg-hdl-${key}`);
+    const handler = createSVGElement(
+        'circle',
+        ['sjx-svg-hdl', `sjx-svg-hdl-${key}`]
+    );
 
     const attrs = {
         cx: left,
@@ -5019,9 +5151,9 @@ const createHandler$1 = (left, top, color, key) => {
         'vector-effect': 'non-scaling-stroke'
     };
 
-    Object.entries(attrs).forEach(([attr, value]) => {
-        handler.setAttribute(attr, value);
-    });
+    Object.entries(attrs).forEach(([attr, value]) => (
+        handler.setAttribute(attr, value)
+    ));
 
     return handler;
 };
@@ -5103,9 +5235,10 @@ const storeElementAttributes = (element) => {
 };
 
 const renderLine$1 = ([b, e], color, key) => {
-    const handler = createSVGElement('line');
-    addClass(handler, `sjx-svg-line`);
-    addClass(handler, `sjx-svg-line-${key}`);
+    const handler = createSVGElement(
+        'line',
+        ['sjx-svg-line', `sjx-svg-line-${key}`]
+    );
 
     const attrs = {
         x1: b.x,
@@ -5117,9 +5250,9 @@ const renderLine$1 = ([b, e], color, key) => {
         'vector-effect': 'non-scaling-stroke'
     };
 
-    Object.entries(attrs).forEach(([attr, value]) => {
-        handler.setAttribute(attr, value);
-    });
+    Object.entries(attrs).forEach(([attr, value]) => (
+        handler.setAttribute(attr, value)
+    ));
 
     return handler;
 };
@@ -5164,6 +5297,9 @@ function drag(options, obInstance) {
     }
 }
 
+const { EMITTER_EVENTS: EMITTER_EVENTS$2 } = EVENT_EMITTER_CONSTANTS;
+const { E_MOUSEDOWN: E_MOUSEDOWN$3, E_TOUCHSTART: E_TOUCHSTART$3 } = CLIENT_EVENTS_CONSTANTS;
+
 class Cloneable extends SubjectModel {
 
     constructor(el, options) {
@@ -5172,9 +5308,9 @@ class Cloneable extends SubjectModel {
     }
 
     _init() {
-        const { 
-            el, 
-            options 
+        const {
+            el,
+            options
         } = this;
         const $el = helper(el);
 
@@ -5194,10 +5330,10 @@ class Cloneable extends SubjectModel {
             parent: isDef(appendTo) ? helper(appendTo)[0] : document.body
         };
 
-        $el.on('mousedown', this._onMouseDown)
-            .on('touchstart', this._onTouchStart);
+        $el.on(E_MOUSEDOWN$3, this._onMouseDown)
+            .on(E_TOUCHSTART$3, this._onTouchStart);
 
-        EVENTS.slice(0, 3).forEach((eventName) => {
+        EMITTER_EVENTS$2.slice(0, 3).forEach((eventName) => {
             this.eventDispatcher.registerEvent(eventName);
         });
     }
@@ -5210,7 +5346,7 @@ class Cloneable extends SubjectModel {
             _onMove = () => {},
             _onDrop = () => {},
             _onDestroy = () => {};
-        
+
         if (isDef(options)) {
             const {
                 style,
@@ -5224,11 +5360,11 @@ class Cloneable extends SubjectModel {
 
             _style = (isDef(style) && typeof style === 'object') ? style : _style;
             _appendTo = appendTo || null;
-    
-            const dropZone = isDef(stack) 
-                ? helper(stack)[0] 
+
+            const dropZone = isDef(stack)
+                ? helper(stack)[0]
                 : document;
-    
+
             _onInit = createMethod(onInit);
             _onMove = createMethod(onMove);
             _onDrop = isFunc(onDrop)
@@ -5236,12 +5372,12 @@ class Cloneable extends SubjectModel {
                     const {
                         clone
                     } = this.storage;
-    
+
                     const result = objectsCollide(
                         clone,
                         dropZone
                     );
-    
+
                     if (result) {
                         onDrop.call(this, evt, this.el, clone);
                     }
@@ -5249,7 +5385,7 @@ class Cloneable extends SubjectModel {
                 : () => {};
             _onDestroy = createMethod(onDestroy);
         }
-        
+
         this.options = {
             style: _style,
             appendTo: _appendTo,
@@ -5265,65 +5401,65 @@ class Cloneable extends SubjectModel {
     }
 
     _start({ clientX, clientY }) {
-        const { 
+        const {
             storage,
             el
         } = this;
-    
+
         const {
             parent,
             css
-        } = storage; 
-    
+        } = storage;
+
         const { left, top } = getOffset(parent);
-    
+
         css.left = `${(clientX - left)}px`;
         css.top = `${(clientY - top)}px`;
-    
+
         const clone = el.cloneNode(true);
         helper(clone).css(css);
-    
+
         storage.clientX = clientX;
         storage.clientY = clientY;
         storage.cx = clientX;
         storage.cy = clientY;
         storage.clone = clone;
-    
+
         helper(parent)[0].appendChild(clone);
         this._draw();
     }
 
-    _moving({ clientX, clientY }) {    
+    _moving({ clientX, clientY }) {
         const { storage } = this;
-    
+
         storage.clientX = clientX;
         storage.clientY = clientY;
         storage.doDraw = true;
         storage.doMove = true;
     }
-    
+
     _end(e) {
         const { storage } = this;
-    
+
         const {
             clone,
             frameId
         } = storage;
-    
+
         storage.doDraw = false;
         cancelAnimFrame(frameId);
-    
+
         if (isUndef(clone)) return;
-    
+
         this.proxyMethods.onDrop.call(this, e);
         clone.parentNode.removeChild(clone);
-    
+
         delete storage.clone;
     }
 
     _animate() {
         const { storage } = this;
-    
+
         storage.frameId = requestAnimFrame(this._animate);
 
         const {
@@ -5338,7 +5474,7 @@ class Cloneable extends SubjectModel {
         storage.doDraw = false;
 
         this._drag(
-            { 
+            {
                 dx: clientX - cx,
                 dy: clientY - cy
             }
@@ -5357,10 +5493,10 @@ class Cloneable extends SubjectModel {
             webkitTranform: translate,
             mozTransform: translate,
             msTransform: translate,
-            otransform: translate 
+            otransform: translate
         });
     }
-    
+
     _destroy() {
         const {
             storage,
@@ -5369,9 +5505,10 @@ class Cloneable extends SubjectModel {
         } = this;
 
         if (isUndef(storage)) return;
+
         helper(el)
-            .off('mousedown', this._onMouseDown)
-            .off('touchstart', this._onTouchStart);
+            .off(E_MOUSEDOWN$3, this._onMouseDown)
+            .off(E_TOUCHSTART$3, this._onTouchStart);
 
         proxyMethods.onDestroy.call(this, el);
         delete this.storage;
@@ -5385,9 +5522,9 @@ class Cloneable extends SubjectModel {
 
 function clone(options) {
     if (this.length) {
-        return arrMap.call(this, item => {
-            return new Cloneable(item, options);
-        });
+        return arrMap.call(this, item => (
+            new Cloneable(item, options)
+        ));
     }
 }
 

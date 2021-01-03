@@ -48,7 +48,10 @@
     height: 0;
 }
 
-.sjx-controls, .sjx-hdl, .sjx-normal, .sjx-hdl-line {
+.sjx-controls,
+.sjx-hdl,
+.sjx-normal,
+.sjx-hdl-line {
     position: absolute;
     box-sizing: border-box;
 }

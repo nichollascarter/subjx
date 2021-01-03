@@ -1,7 +1,13 @@
 import { helper } from '../Helper';
 import SubjectModel from '../SubjectModel';
-import { EVENTS } from '../consts';
 import { snapToGrid, RAD } from './common';
+
+import {
+    LIB_CLASS_PREFIX,
+    NOTIFIER_CONSTANTS,
+    EVENT_EMITTER_CONSTANTS,
+    TRANSFORM_HANDLES_CONSTANTS
+} from '../consts';
 
 import {
     requestAnimFrame,
@@ -17,6 +23,48 @@ import {
     getOffset
 } from '../util/css-util';
 
+const {
+    NOTIFIER_EVENTS,
+    ON_GETSTATE,
+    ON_APPLY,
+    ON_MOVE,
+    ON_RESIZE,
+    ON_ROTATE
+} = NOTIFIER_CONSTANTS;
+
+const {
+    EMITTER_EVENTS,
+    E_DRAG_START,
+    E_DRAG,
+    E_DRAG_END,
+    E_RESIZE_START,
+    E_RESIZE,
+    E_RESIZE_END,
+    E_ROTATE_START,
+    E_ROTATE,
+    E_ROTATE_END
+} = EVENT_EMITTER_CONSTANTS;
+
+const { TRANSFORM_HANDLES_KEYS, TRANSFORM_EDGES_KEYS } = TRANSFORM_HANDLES_CONSTANTS;
+
+const {
+    TOP_LEFT,
+    TOP_CENTER,
+    TOP_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_RIGHT,
+    BOTTOM_CENTER,
+    MIDDLE_LEFT,
+    MIDDLE_RIGHT
+} = TRANSFORM_HANDLES_KEYS;
+
+const {
+    TOP_EDGE,
+    BOTTOM_EDGE,
+    LEFT_EDGE,
+    RIGHT_EDGE
+} = TRANSFORM_EDGES_KEYS;
+
 export default class Transformable extends SubjectModel {
 
     constructor(el, options, observable) {
@@ -26,10 +74,7 @@ export default class Transformable extends SubjectModel {
         }
         this.observable = observable;
 
-        EVENTS.forEach((eventName) => {
-            this.eventDispatcher.registerEvent(eventName);
-        });
-
+        EMITTER_EVENTS.forEach(eventName => this.eventDispatcher.registerEvent(eventName));
         this.enable(options);
     }
 
@@ -45,7 +90,7 @@ export default class Transformable extends SubjectModel {
             ...rest
         };
         this.proxyMethods.onRotate.call(this, finalArgs);
-        this._emitEvent('rotate', finalArgs);
+        this._emitEvent(E_ROTATE, finalArgs);
     }
 
     _resize({ dx, dy, ...rest }) {
@@ -57,13 +102,13 @@ export default class Transformable extends SubjectModel {
             ...rest
         };
         this.proxyMethods.onResize.call(this, finalArgs);
-        this._emitEvent('resize', finalArgs);
+        this._emitEvent(E_RESIZE, finalArgs);
     }
 
     _processOptions(options) {
         const { el } = this;
 
-        addClass(el, 'sjx-drag');
+        addClass(el, `${LIB_CLASS_PREFIX}drag`);
 
         const _snap = {
             x: 10,
@@ -132,10 +177,10 @@ export default class Transformable extends SubjectModel {
             } = options;
 
             if (isDef(snap)) {
-                const { 
-                    x = 10, 
-                    y = 10, 
-                    angle 
+                const {
+                    x = 10,
+                    y = 10,
+                    angle
                 } = snap;
 
                 _snap.x = x;
@@ -146,9 +191,9 @@ export default class Transformable extends SubjectModel {
             }
 
             if (isDef(each)) {
-                const { 
-                    move = false, 
-                    resize = false, 
+                const {
+                    move = false,
+                    resize = false,
                     rotate = false
                 } = each;
 
@@ -307,7 +352,7 @@ export default class Transformable extends SubjectModel {
 
             if (resizeEach) {
                 observable.notify(
-                    'onresize',
+                    ON_RESIZE,
                     self,
                     args
                 );
@@ -316,7 +361,7 @@ export default class Transformable extends SubjectModel {
 
         if (doDrag && draggable) {
             const { nx, ny } = storage;
-            
+
             const dx = dox
                 ? snapToGrid(clientX - nx, snap.x)
                 : 0;
@@ -338,7 +383,7 @@ export default class Transformable extends SubjectModel {
 
             if (moveEach) {
                 observable.notify(
-                    'onmove',
+                    ON_MOVE,
                     self,
                     args
                 );
@@ -371,7 +416,7 @@ export default class Transformable extends SubjectModel {
 
             if (rotateEach) {
                 observable.notify(
-                    'onrotate',
+                    ON_ROTATE,
                     self,
                     {
                         radians,
@@ -413,7 +458,7 @@ export default class Transformable extends SubjectModel {
 
         const isTarget = Object.values(handles).some((hdl) => helper(e.target).is(hdl)) ||
             el.contains(e.target);
-        
+
         storage.isTarget = isTarget;
 
         if (!isTarget) return;
@@ -447,7 +492,7 @@ export default class Transformable extends SubjectModel {
             radius
         } = handles;
 
-        if (isDef(radius)) removeClass(radius, 'sjx-hidden');
+        if (isDef(radius)) removeClass(radius, `${LIB_CLASS_PREFIX}hidden`);
 
         const doRotate = handle.is(rotator),
             doSetCenter = isDef(center)
@@ -515,11 +560,11 @@ export default class Transformable extends SubjectModel {
         };
 
         if (doResize) {
-            this._emitEvent('resizeStart', eventArgs);
+            this._emitEvent(E_RESIZE_START, eventArgs);
         } else if (doRotate) {
-            this._emitEvent('rotateStart', eventArgs);
+            this._emitEvent(E_ROTATE_START, eventArgs);
         } else if (doDrag) {
-            this._emitEvent('dragStart', eventArgs);
+            this._emitEvent(E_DRAG_START, eventArgs);
         }
 
         const {
@@ -529,8 +574,8 @@ export default class Transformable extends SubjectModel {
         } = each;
 
         const actionName = doResize
-            ? 'resize'
-            : (doRotate ? 'rotate' : 'drag');
+            ? E_RESIZE
+            : (doRotate ? E_ROTATE : E_DRAG);
 
         const triggerEvent =
             (doResize && resize) ||
@@ -538,7 +583,7 @@ export default class Transformable extends SubjectModel {
             (doDrag && move);
 
         observable.notify(
-            'ongetstate',
+            ON_GETSTATE,
             this,
             {
                 clientX,
@@ -613,8 +658,8 @@ export default class Transformable extends SubjectModel {
         if (!isTarget) return;
 
         const actionName = doResize
-            ? 'resize'
-            : (doDrag ? 'drag' : 'rotate');
+            ? E_RESIZE
+            : (doDrag ? E_DRAG : E_ROTATE);
 
         storage.doResize = false;
         storage.doDrag = false;
@@ -634,11 +679,11 @@ export default class Transformable extends SubjectModel {
         proxyMethods.onDrop.call(this, eventArgs);
 
         if (doResize) {
-            this._emitEvent('resizeEnd', eventArgs);
+            this._emitEvent(E_RESIZE_END, eventArgs);
         } else if (doRotate) {
-            this._emitEvent('rotateEnd', eventArgs);
+            this._emitEvent(E_ROTATE_END, eventArgs);
         } else if (doDrag) {
-            this._emitEvent('dragEnd', eventArgs);
+            this._emitEvent(E_DRAG_END, eventArgs);
         }
 
         const {
@@ -653,7 +698,7 @@ export default class Transformable extends SubjectModel {
             (doDrag && move);
 
         observable.notify(
-            'onapply',
+            ON_APPLY,
             this,
             {
                 clientX,
@@ -667,7 +712,7 @@ export default class Transformable extends SubjectModel {
 
         helper(document.body).css({ cursor: 'auto' });
         if (isDef(radius)) {
-            addClass(radius, 'sjx-hidden');
+            addClass(radius, `${LIB_CLASS_PREFIX}hidden`);
         }
     }
 
@@ -701,7 +746,7 @@ export default class Transformable extends SubjectModel {
         return {
             ..._computed,
             ...rest,
-            handle: Object.values(handles).some((hdl) => helper(e.target).is(hdl)) 
+            handle: Object.values(handles).some(hdl => helper(e.target).is(hdl))
                 ? handle
                 : helper(el),
             pressang
@@ -709,31 +754,19 @@ export default class Transformable extends SubjectModel {
     }
 
     _checkHandles(handle, handles) {
-        const { tl, tc, tr, bl, br, bc, ml, mr, te, be, le, re } = handles;
-        const isTL = isDef(tl) ? handle.is(tl) : false,
-            isTC = isDef(tc) ? handle.is(tc) : false,
-            isTR = isDef(tr) ? handle.is(tr) : false,
-            isBL = isDef(bl) ? handle.is(bl) : false,
-            isBC = isDef(bc) ? handle.is(bc) : false,
-            isBR = isDef(br) ? handle.is(br) : false,
-            isML = isDef(ml) ? handle.is(ml) : false,
-            isMR = isDef(mr) ? handle.is(mr) : false,
-            isTE = isDef(te) ? handle.is(te) : false,
-            isBE = isDef(be) ? handle.is(be) : false,
-            isLE = isDef(le) ? handle.is(le) : false,
-            isRE = isDef(re) ? handle.is(re) : false;
+        const checkIsHandle = hdl => isDef(hdl) ? handle.is(hdl) : false;
+        const checkAction = items => items.some(key => checkIsHandle(handles[key]));
 
-        // reverse axis
-        const revX = isTL || isML || isBL || isTC || isLE,
-            revY = isTL || isTR || isTC || isML || isTE;
+        const revX = checkAction([TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT, TOP_CENTER, LEFT_EDGE]);
+        const revY = checkAction([TOP_LEFT, TOP_RIGHT, TOP_CENTER, MIDDLE_LEFT, TOP_EDGE]);
 
-        const onTopEdge = isTC || isTR || isTL || isTE,
-            onLeftEdge = isTL || isML || isBL || isLE,
-            onRightEdge = isTR || isMR || isBR || isRE,
-            onBottomEdge = isBR || isBC || isBL || isBE;
+        const onTopEdge = checkAction([TOP_CENTER, TOP_RIGHT, TOP_LEFT, TOP_EDGE]);
+        const onLeftEdge = checkAction([TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT, LEFT_EDGE]);
+        const onRightEdge = checkAction([TOP_RIGHT, MIDDLE_RIGHT, BOTTOM_RIGHT, RIGHT_EDGE]);
+        const onBottomEdge = checkAction([BOTTOM_RIGHT, BOTTOM_CENTER, BOTTOM_LEFT, BOTTOM_EDGE]);
 
-        const doW = isML || isMR || isLE || isRE,
-            doH = isTC || isBC || isBE || isTE;
+        const doW = checkAction([MIDDLE_LEFT, MIDDLE_RIGHT, LEFT_EDGE, RIGHT_EDGE]);
+        const doH = checkAction([TOP_CENTER, BOTTOM_CENTER, BOTTOM_EDGE, TOP_EDGE]);
 
         return {
             revX,
@@ -792,31 +825,24 @@ export default class Transformable extends SubjectModel {
         const { observable: ob } = this;
 
         if (move || resize || rotate) {
-            ob.subscribe('ongetstate', this)
-                .subscribe('onapply', this);
+            ob.subscribe(ON_GETSTATE, this)
+                .subscribe(ON_APPLY, this);
         }
 
         if (move) {
-            ob.subscribe('onmove', this);
+            ob.subscribe(ON_MOVE, this);
         }
         if (resize) {
-            ob.subscribe('onresize', this);
+            ob.subscribe(ON_RESIZE, this);
         }
         if (rotate) {
-            ob.subscribe('onrotate', this);
+            ob.subscribe(ON_ROTATE, this);
         }
     }
 
     unsubscribe() {
         const { observable: ob } = this;
-
-        [
-            'ongetstate', 
-            'onapply', 
-            'onmove',
-            'onresize',
-            'onrotate'
-        ].map(eventName => ob.unsubscribe(eventName, this));
+        NOTIFIER_EVENTS.map(eventName => ob.unsubscribe(eventName, this));
     }
 
     disable() {
@@ -828,7 +854,7 @@ export default class Transformable extends SubjectModel {
 
         if (isUndef(storage)) return;
 
-        removeClass(el, 'sjx-drag');
+        removeClass(el, `${LIB_CLASS_PREFIX}drag`);
 
         this._destroy();
         this.unsubscribe();
@@ -852,7 +878,7 @@ export default class Transformable extends SubjectModel {
         };
 
         this._drag({ dx, dy });
-        this._apply('drag');
+        this._apply(E_DRAG);
     }
 
     exeResize({
@@ -877,7 +903,7 @@ export default class Transformable extends SubjectModel {
         };
 
         this._resize({ dx, dy });
-        this._apply('resize');
+        this._apply(E_RESIZE);
     }
 
     exeRotate({ delta }) {
@@ -895,7 +921,7 @@ export default class Transformable extends SubjectModel {
         };
 
         this._rotate({ radians: delta });
-        this._apply('rotate');
+        this._apply(E_ROTATE);
     }
 
 }

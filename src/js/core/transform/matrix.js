@@ -163,18 +163,18 @@ export const getCurrentTransformMatrix = (el, container = document.body, newTran
 };
 
 export const decompose = (m) => {
-    const sX = Math.sqrt(m[0][0] * m[0][0] + m[0][1] * m[0][1] + m[0][2] * m[0][2]),
-        sY = Math.sqrt(m[1][0] * m[1][0] + m[1][1] * m[1][1] + m[1][2] * m[1][2]),
-        sZ = Math.sqrt(m[2][0] * m[2][0] + m[2][1] * m[2][1] + m[2][2] * m[2][2]);
+    const sX = Math.sqrt(m[0][0] * m[0][0] + m[1][0] * m[1][0] + m[2][0] * m[2][0]),
+        sY = Math.sqrt(m[0][1] * m[0][1] + m[1][1] * m[1][1] + m[2][1] * m[2][1]),
+        sZ = Math.sqrt(m[0][2] * m[0][2] + m[1][2] * m[1][2] + m[2][2] * m[2][2]);
 
-    let rX = Math.atan2(-m[3][0] / sZ, m[3][1] / sZ),
-        rY = Math.asin(m[1][3] / sZ),
-        rZ = Math.atan2(-m[0][3] / sY, m[0][0] / sX);
+    let rX = Math.atan2(-m[0][3] / sZ, m[1][3] / sZ),
+        rY = Math.asin(m[3][1] / sZ),
+        rZ = Math.atan2(-m[3][0] / sY, m[0][0] / sX);
 
-    if (m[1][0] === 1 || m[1][0] === -1) {
+    if (m[0][1] === 1 || m[0][1] === -1) {
         rX = 0;
-        rY = m[1][0] * -Math.PI / 2;
-        rZ = m[1][0] * Math.atan2(m[1][1] / sY, m[1][0] / sY);
+        rY = m[0][1] * -Math.PI / 2;
+        rZ = m[0][1] * Math.atan2(m[1][1] / sY, m[0][1] / sY);
     }
 
     return {
@@ -184,9 +184,9 @@ export const decompose = (m) => {
             z: rZ
         },
         translate: {
-            x: m[3][0] / sX,
-            y: m[3][1] / sY,
-            z: m[3][2] / sZ
+            x: m[0][3] / sX,
+            y: m[1][3] / sY,
+            z: m[2][3] / sZ
         },
         scale: {
             sX,

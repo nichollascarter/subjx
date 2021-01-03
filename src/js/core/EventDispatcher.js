@@ -31,7 +31,7 @@ export default class EventDispatcher {
             cb.call(ctx, eventArgs);
         });
     };
-    
+
     addEventListener(eventName, cb) {
         this.events[eventName].registerCallback(cb);
     }

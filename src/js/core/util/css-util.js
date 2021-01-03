@@ -1,5 +1,5 @@
 import { helper } from '../Helper';
-import { cssPrefixes } from '../consts';
+import { CSS_PREFIXES } from '../consts';
 
 export const getOffset = node => node.getBoundingClientRect();
 
@@ -69,7 +69,7 @@ export const getStyle = (el, property) => {
     const style = window.getComputedStyle(el);
     let value = null;
 
-    for (const prefix of cssPrefixes) {
+    for (const prefix of CSS_PREFIXES) {
         value = style.getPropertyValue(`${prefix}${property}`) || value;
         if (value) break;
     }

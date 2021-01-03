@@ -1,6 +1,6 @@
 import { helper } from '../Helper';
 import SubjectModel from '../SubjectModel';
-import { EVENTS } from '../consts';
+import { EVENT_EMITTER_CONSTANTS, CLIENT_EVENTS_CONSTANTS } from '../consts';
 
 import {
     requestAnimFrame,
@@ -16,6 +16,9 @@ import {
     objectsCollide
 } from '../util/css-util';
 
+const { EMITTER_EVENTS } = EVENT_EMITTER_CONSTANTS;
+const { E_MOUSEDOWN, E_TOUCHSTART } = CLIENT_EVENTS_CONSTANTS;
+
 export default class Cloneable extends SubjectModel {
 
     constructor(el, options) {
@@ -24,9 +27,9 @@ export default class Cloneable extends SubjectModel {
     }
 
     _init() {
-        const { 
-            el, 
-            options 
+        const {
+            el,
+            options
         } = this;
         const $el = helper(el);
 
@@ -46,10 +49,10 @@ export default class Cloneable extends SubjectModel {
             parent: isDef(appendTo) ? helper(appendTo)[0] : document.body
         };
 
-        $el.on('mousedown', this._onMouseDown)
-            .on('touchstart', this._onTouchStart);
+        $el.on(E_MOUSEDOWN, this._onMouseDown)
+            .on(E_TOUCHSTART, this._onTouchStart);
 
-        EVENTS.slice(0, 3).forEach((eventName) => {
+        EMITTER_EVENTS.slice(0, 3).forEach((eventName) => {
             this.eventDispatcher.registerEvent(eventName);
         });
     }
@@ -62,7 +65,7 @@ export default class Cloneable extends SubjectModel {
             _onMove = () => {},
             _onDrop = () => {},
             _onDestroy = () => {};
-        
+
         if (isDef(options)) {
             const {
                 style,
@@ -76,11 +79,11 @@ export default class Cloneable extends SubjectModel {
 
             _style = (isDef(style) && typeof style === 'object') ? style : _style;
             _appendTo = appendTo || null;
-    
-            const dropZone = isDef(stack) 
-                ? helper(stack)[0] 
+
+            const dropZone = isDef(stack)
+                ? helper(stack)[0]
                 : document;
-    
+
             _onInit = createMethod(onInit);
             _onMove = createMethod(onMove);
             _onDrop = isFunc(onDrop)
@@ -88,12 +91,12 @@ export default class Cloneable extends SubjectModel {
                     const {
                         clone
                     } = this.storage;
-    
+
                     const result = objectsCollide(
                         clone,
                         dropZone
                     );
-    
+
                     if (result) {
                         onDrop.call(this, evt, this.el, clone);
                     }
@@ -101,7 +104,7 @@ export default class Cloneable extends SubjectModel {
                 : () => {};
             _onDestroy = createMethod(onDestroy);
         }
-        
+
         this.options = {
             style: _style,
             appendTo: _appendTo,
@@ -117,65 +120,65 @@ export default class Cloneable extends SubjectModel {
     }
 
     _start({ clientX, clientY }) {
-        const { 
+        const {
             storage,
             el
         } = this;
-    
+
         const {
             parent,
             css
-        } = storage; 
-    
+        } = storage;
+
         const { left, top } = getOffset(parent);
-    
+
         css.left = `${(clientX - left)}px`;
         css.top = `${(clientY - top)}px`;
-    
+
         const clone = el.cloneNode(true);
         helper(clone).css(css);
-    
+
         storage.clientX = clientX;
         storage.clientY = clientY;
         storage.cx = clientX;
         storage.cy = clientY;
         storage.clone = clone;
-    
+
         helper(parent)[0].appendChild(clone);
         this._draw();
     }
 
-    _moving({ clientX, clientY }) {    
+    _moving({ clientX, clientY }) {
         const { storage } = this;
-    
+
         storage.clientX = clientX;
         storage.clientY = clientY;
         storage.doDraw = true;
         storage.doMove = true;
     }
-    
+
     _end(e) {
         const { storage } = this;
-    
+
         const {
             clone,
             frameId
         } = storage;
-    
+
         storage.doDraw = false;
         cancelAnimFrame(frameId);
-    
+
         if (isUndef(clone)) return;
-    
+
         this.proxyMethods.onDrop.call(this, e);
         clone.parentNode.removeChild(clone);
-    
+
         delete storage.clone;
     }
 
     _animate() {
         const { storage } = this;
-    
+
         storage.frameId = requestAnimFrame(this._animate);
 
         const {
@@ -190,7 +193,7 @@ export default class Cloneable extends SubjectModel {
         storage.doDraw = false;
 
         this._drag(
-            { 
+            {
                 dx: clientX - cx,
                 dy: clientY - cy
             }
@@ -209,10 +212,10 @@ export default class Cloneable extends SubjectModel {
             webkitTranform: translate,
             mozTransform: translate,
             msTransform: translate,
-            otransform: translate 
+            otransform: translate
         });
     }
-    
+
     _destroy() {
         const {
             storage,
@@ -221,9 +224,10 @@ export default class Cloneable extends SubjectModel {
         } = this;
 
         if (isUndef(storage)) return;
+
         helper(el)
-            .off('mousedown', this._onMouseDown)
-            .off('touchstart', this._onTouchStart);
+            .off(E_MOUSEDOWN, this._onMouseDown)
+            .off(E_TOUCHSTART, this._onTouchStart);
 
         proxyMethods.onDestroy.call(this, el);
         delete this.storage;
