@@ -2014,7 +2014,8 @@ class Draggable extends Transformable {
             parent: el.parentNode,
             center: {
                 isShifted: hasOrigin
-            }
+            },
+            cached: {}
         };
 
         [el, controls].map(target => (
@@ -3889,7 +3890,8 @@ class DraggableSVG extends Transformable {
             parent: el.parentNode,
             center: {
                 isShifted: hasOrigin
-            }
+            },
+            cached: {}
         };
 
         [el, controls].map(target => (

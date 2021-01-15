@@ -2252,7 +2252,8 @@
             parent: el.parentNode,
             center: {
               isShifted: hasOrigin
-            }
+            },
+            cached: {}
           };
           [el, controls].map(function (target) {
             return helper(target).on(E_MOUSEDOWN$1, _this._onMouseDown).on(E_TOUCHSTART$1, _this._onTouchStart);
@@ -3819,7 +3820,8 @@
             parent: el.parentNode,
             center: {
               isShifted: hasOrigin
-            }
+            },
+            cached: {}
           };
           [el, controls].map(function (target) {
             return helper(target).on(E_MOUSEDOWN$2, _this._onMouseDown).on(E_TOUCHSTART$2, _this._onTouchStart);
