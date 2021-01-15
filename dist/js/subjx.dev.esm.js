@@ -824,172 +824,84 @@ class Transformable extends SubjectModel {
         this._emitEvent(E_RESIZE$1, finalArgs);
     }
 
-    _processOptions(options) {
+    _processOptions(options = {}) {
         const { el } = this;
 
         addClass(el, `${LIB_CLASS_PREFIX}drag`);
 
-        const _snap = {
-            x: 10,
-            y: 10,
-            angle: 10 * RAD
-        };
-
-        const _each = {
-            move: false,
-            resize: false,
-            rotate: false
-        };
-
-        let _restrict = null,
-            _proportions = false,
-            _axis = 'xy',
-            _cursorMove = 'auto',
-            _cursorResize = 'auto',
-            _cursorRotate = 'auto',
-            _rotationPoint = false,
-            _draggable = true,
-            _resizable = true,
-            _rotatable = true,
-            _scalable = false,
-            _applyTranslate = false,
-            _rotatorAnchor = null,
-            _rotatorOffset = 50,
-            _showNormal = true,
-            _custom = null,
-            _onInit = () => { },
-            _onMove = () => { },
-            _onRotate = () => { },
-            _onResize = () => { },
-            _onDrop = () => { },
-            _onDestroy = () => { };
-
-        let _container = el.parentNode;
-
-        if (isDef(options)) {
-            const {
-                snap,
-                each,
-                axis = 'xy',
-                cursorMove = 'auto',
-                cursorResize = 'auto',
-                cursorRotate = 'auto',
-                rotationPoint = false,
-                restrict,
-                draggable = true,
-                resizable = true,
-                rotatable = true,
-                scalable = false,
-                applyTranslate = false,
-                onInit,
-                onDrop,
-                onMove,
-                onResize,
-                onRotate,
-                onDestroy,
-                container,
-                proportions = false,
-                custom,
-                rotatorAnchor,
-                rotatorOffset = 50,
-                showNormal = true
-            } = options;
-
-            if (isDef(snap)) {
-                const {
-                    x = 10,
-                    y = 10,
-                    angle
-                } = snap;
-
-                _snap.x = x;
-                _snap.y = y;
-                _snap.angle = isUndef(angle)
-                    ? _snap.angle
-                    : angle * RAD;
-            }
-
-            if (isDef(each)) {
-                const {
-                    move = false,
-                    resize = false,
-                    rotate = false
-                } = each;
-
-                _each.move = move;
-                _each.resize = resize;
-                _each.rotate = rotate;
-            }
-
-            if (isDef(restrict)) {
-                _restrict = restrict === 'parent'
-                    ? el.parentNode
-                    : helper(restrict)[0] || document.body;
-            }
-
-            _cursorMove = cursorMove;
-            _cursorResize = cursorResize;
-            _cursorRotate = cursorRotate;
-            _axis = axis;
-
-            _container = isDef(container) && helper(container)[0]
-                ? helper(container)[0]
-                : _container;
-
-            _rotationPoint = rotationPoint;
-            _proportions = proportions;
-
-            _draggable = draggable;
-            _resizable = resizable;
-            _rotatable = rotatable;
-            _scalable = scalable;
-            _applyTranslate = applyTranslate;
-
-            _custom = (typeof custom === 'object' && custom) || null;
-            _rotatorAnchor = rotatorAnchor || null;
-            _rotatorOffset = rotatorOffset;
-            _showNormal = showNormal;
-
-            _onInit = createMethod(onInit);
-            _onDrop = createMethod(onDrop);
-            _onMove = createMethod(onMove);
-            _onResize = createMethod(onResize);
-            _onRotate = createMethod(onRotate);
-            _onDestroy = createMethod(onDestroy);
-        }
+        const {
+            each = {
+                move: false,
+                resize: false,
+                rotate: false
+            },
+            snap = {
+                x: 10,
+                y: 10,
+                angle: 10
+            },
+            axis = 'xy',
+            cursorMove = 'auto',
+            cursorResize = 'auto',
+            cursorRotate = 'auto',
+            rotationPoint = false,
+            restrict,
+            draggable = true,
+            resizable = true,
+            rotatable = true,
+            scalable = false,
+            applyTranslate = false,
+            onInit = () => { },
+            onDrop = () => { },
+            onMove = () => { },
+            onResize = () => { },
+            onRotate = () => { },
+            onDestroy = () => { },
+            container = el.parentNode,
+            proportions = false,
+            rotatorAnchor = null,
+            rotatorOffset = 50,
+            showNormal = true,
+            custom
+        } = options;
 
         this.options = {
-            axis: _axis,
-            cursorMove: _cursorMove,
-            cursorRotate: _cursorRotate,
-            cursorResize: _cursorResize,
-            rotationPoint: _rotationPoint,
-            restrict: _restrict,
-            container: _container,
-            snap: _snap,
-            each: _each,
-            proportions: _proportions,
-            draggable: _draggable,
-            resizable: _resizable,
-            rotatable: _rotatable,
-            scalable: _scalable,
-            applyTranslate: _applyTranslate,
-            custom: _custom,
-            rotatorAnchor: _rotatorAnchor,
-            rotatorOffset: _rotatorOffset,
-            showNormal: _showNormal
+            axis,
+            cursorMove,
+            cursorRotate,
+            cursorResize,
+            rotationPoint,
+            restrict: restrict
+                ? helper(restrict)[0] || document.body
+                : null,
+            container: helper(container)[0],
+            snap: {
+                ...snap,
+                angle: snap.angle * RAD
+            },
+            each,
+            proportions,
+            draggable,
+            resizable,
+            rotatable,
+            scalable,
+            applyTranslate,
+            custom: (typeof custom === 'object' && custom) || null,
+            rotatorAnchor,
+            rotatorOffset,
+            showNormal
         };
 
         this.proxyMethods = {
-            onInit: _onInit,
-            onDrop: _onDrop,
-            onMove: _onMove,
-            onResize: _onResize,
-            onRotate: _onRotate,
-            onDestroy: _onDestroy
+            onInit: createMethod(onInit),
+            onDrop: createMethod(onDrop),
+            onMove: createMethod(onMove),
+            onResize: createMethod(onResize),
+            onRotate: createMethod(onRotate),
+            onDestroy: createMethod(onDestroy)
         };
 
-        this.subscribe(_each);
+        this.subscribe(each);
     }
 
     _animate() {
@@ -1914,6 +1826,7 @@ const getAbsoluteOffset = (elem, container = document.body) => {
 };
 
 const { E_MOUSEDOWN: E_MOUSEDOWN$1, E_TOUCHSTART: E_TOUCHSTART$1 } = CLIENT_EVENTS_CONSTANTS;
+
 class Draggable extends Transformable {
 
     _init(el) {
@@ -2273,8 +2186,8 @@ class Draggable extends Transformable {
                     } = {}
                 } = {},
                 box: {
-                    width: cw,
-                    height: ch
+                    width: boxWidth,
+                    height: boxHeight
                 },
                 revX,
                 revY,
@@ -2290,16 +2203,16 @@ class Draggable extends Transformable {
 
         const getScale = (distX, distY) => {
             const ratio = doW || (!doW && !doH)
-                ? (cw + distX) / cw
-                : (ch + distY) / ch;
+                ? (boxWidth + distX) / boxWidth
+                : (boxHeight + distY) / boxHeight;
 
-            const newWidth = proportions ? cw * ratio : cw + distX,
-                newHeight = proportions ? ch * ratio : ch + distY;
+            const newWidth = proportions ? boxWidth * ratio : boxWidth + distX,
+                newHeight = proportions ? boxHeight * ratio : boxHeight + distY;
 
-            const scaleX = newWidth / cw,
-                scaleY = newHeight / ch;
+            const scaleX = newWidth / boxWidth,
+                scaleY = newHeight / boxHeight;
 
-            return [scaleX, scaleY];
+            return [scaleX, scaleY, newWidth, newHeight];
         };
 
         const getScaleMatrix = (scaleX, scaleY) => {
@@ -2311,57 +2224,74 @@ class Draggable extends Transformable {
             );
         };
 
-        const preScaleMatrix = multiplyMatrix(
-            getScaleMatrix(...getScale(dx, dy)),
-            matrix
-        );
+        const getTranslateMatrix = (scM, ctm) => {
+            const translateX = scM[0][3];
+            const translateY = scM[1][3];
+
+            const trMatrix = createTranslateMatrix(
+                translateX,
+                translateY
+            );
+
+            const inverted = createTranslateMatrix(
+                translateX * (revX ? -1 : 1),
+                translateY * (revY ? -1 : 1)
+            );
+
+            return multiplyMatrix(
+                multiplyMatrix(inverted, ctm),
+                matrixInvert(trMatrix)
+            );
+        };
+
+        const [
+            pScaleX,
+            pScaleY,
+            pWidth,
+            pHeight
+        ] = getScale(dx, dy);
+
+        const preScaleMatrix = getScaleMatrix(pScaleX, pScaleY);
+
+        const preResultMatrix = scalable
+            ? multiplyMatrix(preScaleMatrix, matrix)
+            : getTranslateMatrix(preScaleMatrix, matrix);
+
+        this.storage.cached.box = {
+            width: pWidth,
+            height: pHeight
+        };
 
         const { x: restX, y: restY } = restrict
-            ? this._restrictHandler(preScaleMatrix)
+            ? this._restrictHandler(preResultMatrix)
             : { x: null, y: null };
 
-        const newDx = ((restX !== null) || (proportions && restY !== null) && restrict)
-            ? nextDx
-            : dx;
-        const newDy = ((restY !== null) || (proportions && restX !== null) && restrict)
-            ? nextDy
-            : dy;
+        const isBounding = (restX !== null || restY !== null) && restrict;
 
-        const [scaleX, scaleY] = getScale(newDx, newDy);
-        const newWidth = proportions ? cw * scaleX : cw + newDx,
-            newHeight = proportions ? ch * scaleY : ch + newDy;
+        const newDx = isBounding ? nextDx : dx;
+        const newDy = isBounding ? nextDy : dy;
+
+        const [
+            scaleX,
+            scaleY,
+            newWidth,
+            newHeight
+        ] = getScale(newDx, newDy);
 
         if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
 
         const scaleMatrix = getScaleMatrix(scaleX, scaleY);
-        const resultMatrix = multiplyMatrix(scaleMatrix, matrix);
+        const resultMatrix = scalable
+            ? multiplyMatrix(scaleMatrix, matrix)
+            : getTranslateMatrix(scaleMatrix, matrix);
 
-        if (scalable) {
-            helper(el).css(
-                matrixToCSS(flatMatrix(resultMatrix))
-            );
-        } else {
-            const trMatrix = createTranslateMatrix(
-                scaleMatrix[0][3],
-                scaleMatrix[1][3]
-            );
-
-            const inverted = createTranslateMatrix(
-                scaleMatrix[0][3] *= revX ? -1 : 1,
-                scaleMatrix[1][3] *= revY ? -1 : 1
-            );
-
-            const result = multiplyMatrix(
-                multiplyMatrix(inverted, matrix),
-                matrixInvert(trMatrix)
-            );
-
-            helper(el).css({
+        helper(el).css({
+            ...matrixToCSS(flatMatrix(resultMatrix)),
+            ...(!scalable && {
                 width: `${newWidth}px`,
-                height: `${newHeight}px`,
-                ...matrixToCSS(flatMatrix(result))
-            });
-        }
+                height: `${newHeight}px`
+            })
+        });
 
         applyTransformToHandles(
             storage,
@@ -2558,15 +2488,6 @@ class Draggable extends Transformable {
         const scaleX = doH ? 0 : (revX ? -hW : hW),
             scaleY = doW ? 0 : (revY ? -hH : hH);
 
-        const originTransform = cHandle ? getTransform(cHandle) : createIdentityMatrix();
-
-        const {
-            translate: {
-                x: originX,
-                y: originY
-            }
-        } = decompose(getCurrentTransformMatrix(cHandle));
-
         // real element's center
         const [cenX, cenY] = multiplyMatrixAndPoint(
             ctm,
@@ -2580,6 +2501,17 @@ class Draggable extends Transformable {
 
         const globalCenterX = cenX + glLeft;
         const globalCenterY = cenY + glTop;
+
+        const originTransform = cHandle ? getTransform(cHandle) : createIdentityMatrix();
+
+        const {
+            translate: {
+                x: originX,
+                y: originY
+            }
+        } = cHandle
+            ? decompose(getCurrentTransformMatrix(cHandle))
+            : { translate: { x: globalCenterX, y: globalCenterY } };
 
         // search distance between el's center and rotation handle
         const [distX, distY] = multiplyMatrixAndPoint(
@@ -2632,10 +2564,7 @@ class Draggable extends Transformable {
                     parentMatrix: matrixInvert(dropTranslate(parentMatrix))
                 },
                 rotate: {
-                    translateMatrix: createTranslateMatrix(
-                        elX,
-                        elY
-                    )
+                    translateMatrix: createTranslateMatrix(elX, elY)
                 }
             },
             scaleX,
@@ -2755,15 +2684,38 @@ class Draggable extends Transformable {
         const {
             el,
             options: {
+                scalable,
                 restrict
             },
             storage: {
-                box
+                box,
+                box: {
+                    width,
+                    height
+                },
+                cached: {
+                    box: {
+                        width: nextWidth = width,
+                        height: nextHeight = height
+                    } = {}
+                } = {}
             }
         } = this;
 
-        const matrix = getCurrentTransformMatrix(el, restrict, transformMatrix);
-        return getBoundingRect(el, restrict, matrix, box);
+        const nextBox = scalable
+            ? box
+            : {
+                ...box,
+                width: nextWidth,
+                height: nextHeight
+            };
+
+        return getBoundingRect(
+            el,
+            restrict,
+            getCurrentTransformMatrix(el, restrict, transformMatrix),
+            nextBox
+        );
     }
 
     get controls() {
@@ -2826,7 +2778,6 @@ const applyTransformToHandles = (storage, options, data) => {
         wrapper,
         handles,
         transform: {
-            //ctm,
             wrapperMatrix = getCurrentTransformMatrix(wrapper, wrapper.parentNode)
         } = {},
         center
@@ -2843,11 +2794,10 @@ const applyTransformToHandles = (storage, options, data) => {
     } = options;
 
     const {
-        //boxMatrix,
-        el
+        el,
+        el: { offsetHeight, offsetWidth }
     } = data;
 
-    const { offsetHeight, offsetWidth } = el;
     const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
 
     const matrix = multiplyMatrix(
@@ -2942,16 +2892,7 @@ const applyTransformToHandles = (storage, options, data) => {
     }
 
     const resizingHandles = {
-        tl: finalVertices.tl,
-        tr: finalVertices.tr,
-        br: finalVertices.br,
-        bl: finalVertices.bl,
-        tc: finalVertices.tc,
-        bc: finalVertices.bc,
-        ml: finalVertices.ml,
-        mr: finalVertices.mr,
-        center: finalVertices.center
-        // rotator
+        ...finalVertices
     };
 
     const resizingEdges = {
@@ -4247,7 +4188,7 @@ class DraggableSVG extends Transformable {
             const scaleX = newWidth / boxWidth,
                 scaleY = newHeight / boxHeight;
 
-            return [scaleX, scaleY];
+            return [scaleX, scaleY, newWidth, newHeight];
         };
 
         const getScaleMatrix = (scaleX, scaleY) => {
@@ -4266,16 +4207,17 @@ class DraggableSVG extends Transformable {
             ? this._restrictHandler(preScaledMatrix)
             : { x: null, y: null };
 
-        const newDx = ((restX !== null) || (proportions && restY !== null) && restrict)
-            ? nextDx
-            : dx;
-        const newDy = ((restY !== null) || (proportions && restX !== null) && restrict)
-            ? nextDy
-            : dy;
+        const isBounding = (restX !== null || restY !== null) && restrict;
 
-        const [scaleX, scaleY] = getScale(newDx, newDy);
-        const newWidth = proportions ? boxWidth * scaleX : boxWidth + newDx,
-            newHeight = proportions ? boxHeight * scaleY : boxHeight + newDy;
+        const newDx = isBounding ? nextDx : dx;
+        const newDy = isBounding ? nextDy : dy;
+
+        const [
+            scaleX,
+            scaleY,
+            newWidth,
+            newHeight
+        ] = getScale(newDx, newDy);
 
         if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
 
@@ -4548,7 +4490,7 @@ class DraggableSVG extends Transformable {
         });
 
         const center = {
-            ...this.storage.center || {},
+            ...(this.storage.center || {}),
             x: rotationPoint ? bcx : rcx,
             y: rotationPoint ? bcy : rcy,
             elX: elcx,

@@ -1153,166 +1153,98 @@
         }
       }, {
         key: "_processOptions",
-        value: function _processOptions(options) {
+        value: function _processOptions() {
+          var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
           var el = this.el;
           addClass(el, "".concat(LIB_CLASS_PREFIX, "drag"));
-          var _snap = {
-            x: 10,
-            y: 10,
-            angle: 10 * RAD
-          };
-          var _each = {
+          var _options$each = options.each,
+              each = _options$each === void 0 ? {
             move: false,
             resize: false,
             rotate: false
-          };
-
-          var _restrict = null,
-              _proportions = false,
-              _axis = 'xy',
-              _cursorMove = 'auto',
-              _cursorResize = 'auto',
-              _cursorRotate = 'auto',
-              _rotationPoint = false,
-              _draggable = true,
-              _resizable = true,
-              _rotatable = true,
-              _scalable = false,
-              _applyTranslate = false,
-              _rotatorAnchor = null,
-              _rotatorOffset = 50,
-              _showNormal = true,
-              _custom = null,
-              _onInit = function _onInit() {},
-              _onMove = function _onMove() {},
-              _onRotate = function _onRotate() {},
-              _onResize = function _onResize() {},
-              _onDrop = function _onDrop() {},
-              _onDestroy = function _onDestroy() {};
-
-          var _container = el.parentNode;
-
-          if (isDef(options)) {
-            var snap = options.snap,
-                each = options.each,
-                _options$axis = options.axis,
-                axis = _options$axis === void 0 ? 'xy' : _options$axis,
-                _options$cursorMove = options.cursorMove,
-                cursorMove = _options$cursorMove === void 0 ? 'auto' : _options$cursorMove,
-                _options$cursorResize = options.cursorResize,
-                cursorResize = _options$cursorResize === void 0 ? 'auto' : _options$cursorResize,
-                _options$cursorRotate = options.cursorRotate,
-                cursorRotate = _options$cursorRotate === void 0 ? 'auto' : _options$cursorRotate,
-                _options$rotationPoin = options.rotationPoint,
-                rotationPoint = _options$rotationPoin === void 0 ? false : _options$rotationPoin,
-                restrict = options.restrict,
-                _options$draggable = options.draggable,
-                draggable = _options$draggable === void 0 ? true : _options$draggable,
-                _options$resizable = options.resizable,
-                resizable = _options$resizable === void 0 ? true : _options$resizable,
-                _options$rotatable = options.rotatable,
-                rotatable = _options$rotatable === void 0 ? true : _options$rotatable,
-                _options$scalable = options.scalable,
-                scalable = _options$scalable === void 0 ? false : _options$scalable,
-                _options$applyTransla = options.applyTranslate,
-                applyTranslate = _options$applyTransla === void 0 ? false : _options$applyTransla,
-                onInit = options.onInit,
-                onDrop = options.onDrop,
-                onMove = options.onMove,
-                onResize = options.onResize,
-                onRotate = options.onRotate,
-                onDestroy = options.onDestroy,
-                container = options.container,
-                _options$proportions = options.proportions,
-                proportions = _options$proportions === void 0 ? false : _options$proportions,
-                custom = options.custom,
-                rotatorAnchor = options.rotatorAnchor,
-                _options$rotatorOffse = options.rotatorOffset,
-                rotatorOffset = _options$rotatorOffse === void 0 ? 50 : _options$rotatorOffse,
-                _options$showNormal = options.showNormal,
-                showNormal = _options$showNormal === void 0 ? true : _options$showNormal;
-
-            if (isDef(snap)) {
-              var _snap$x = snap.x,
-                  x = _snap$x === void 0 ? 10 : _snap$x,
-                  _snap$y = snap.y,
-                  y = _snap$y === void 0 ? 10 : _snap$y,
-                  angle = snap.angle;
-              _snap.x = x;
-              _snap.y = y;
-              _snap.angle = isUndef(angle) ? _snap.angle : angle * RAD;
-            }
-
-            if (isDef(each)) {
-              var _each$move = each.move,
-                  move = _each$move === void 0 ? false : _each$move,
-                  _each$resize = each.resize,
-                  resize = _each$resize === void 0 ? false : _each$resize,
-                  _each$rotate = each.rotate,
-                  rotate = _each$rotate === void 0 ? false : _each$rotate;
-              _each.move = move;
-              _each.resize = resize;
-              _each.rotate = rotate;
-            }
-
-            if (isDef(restrict)) {
-              _restrict = restrict === 'parent' ? el.parentNode : helper(restrict)[0] || document.body;
-            }
-
-            _cursorMove = cursorMove;
-            _cursorResize = cursorResize;
-            _cursorRotate = cursorRotate;
-            _axis = axis;
-            _container = isDef(container) && helper(container)[0] ? helper(container)[0] : _container;
-            _rotationPoint = rotationPoint;
-            _proportions = proportions;
-            _draggable = draggable;
-            _resizable = resizable;
-            _rotatable = rotatable;
-            _scalable = scalable;
-            _applyTranslate = applyTranslate;
-            _custom = _typeof(custom) === 'object' && custom || null;
-            _rotatorAnchor = rotatorAnchor || null;
-            _rotatorOffset = rotatorOffset;
-            _showNormal = showNormal;
-            _onInit = createMethod(onInit);
-            _onDrop = createMethod(onDrop);
-            _onMove = createMethod(onMove);
-            _onResize = createMethod(onResize);
-            _onRotate = createMethod(onRotate);
-            _onDestroy = createMethod(onDestroy);
-          }
-
+          } : _options$each,
+              _options$snap = options.snap,
+              snap = _options$snap === void 0 ? {
+            x: 10,
+            y: 10,
+            angle: 10
+          } : _options$snap,
+              _options$axis = options.axis,
+              axis = _options$axis === void 0 ? 'xy' : _options$axis,
+              _options$cursorMove = options.cursorMove,
+              cursorMove = _options$cursorMove === void 0 ? 'auto' : _options$cursorMove,
+              _options$cursorResize = options.cursorResize,
+              cursorResize = _options$cursorResize === void 0 ? 'auto' : _options$cursorResize,
+              _options$cursorRotate = options.cursorRotate,
+              cursorRotate = _options$cursorRotate === void 0 ? 'auto' : _options$cursorRotate,
+              _options$rotationPoin = options.rotationPoint,
+              rotationPoint = _options$rotationPoin === void 0 ? false : _options$rotationPoin,
+              restrict = options.restrict,
+              _options$draggable = options.draggable,
+              draggable = _options$draggable === void 0 ? true : _options$draggable,
+              _options$resizable = options.resizable,
+              resizable = _options$resizable === void 0 ? true : _options$resizable,
+              _options$rotatable = options.rotatable,
+              rotatable = _options$rotatable === void 0 ? true : _options$rotatable,
+              _options$scalable = options.scalable,
+              scalable = _options$scalable === void 0 ? false : _options$scalable,
+              _options$applyTransla = options.applyTranslate,
+              applyTranslate = _options$applyTransla === void 0 ? false : _options$applyTransla,
+              _options$onInit = options.onInit,
+              onInit = _options$onInit === void 0 ? function () {} : _options$onInit,
+              _options$onDrop = options.onDrop,
+              onDrop = _options$onDrop === void 0 ? function () {} : _options$onDrop,
+              _options$onMove = options.onMove,
+              onMove = _options$onMove === void 0 ? function () {} : _options$onMove,
+              _options$onResize = options.onResize,
+              onResize = _options$onResize === void 0 ? function () {} : _options$onResize,
+              _options$onRotate = options.onRotate,
+              onRotate = _options$onRotate === void 0 ? function () {} : _options$onRotate,
+              _options$onDestroy = options.onDestroy,
+              onDestroy = _options$onDestroy === void 0 ? function () {} : _options$onDestroy,
+              _options$container = options.container,
+              container = _options$container === void 0 ? el.parentNode : _options$container,
+              _options$proportions = options.proportions,
+              proportions = _options$proportions === void 0 ? false : _options$proportions,
+              _options$rotatorAncho = options.rotatorAnchor,
+              rotatorAnchor = _options$rotatorAncho === void 0 ? null : _options$rotatorAncho,
+              _options$rotatorOffse = options.rotatorOffset,
+              rotatorOffset = _options$rotatorOffse === void 0 ? 50 : _options$rotatorOffse,
+              _options$showNormal = options.showNormal,
+              showNormal = _options$showNormal === void 0 ? true : _options$showNormal,
+              custom = options.custom;
           this.options = {
-            axis: _axis,
-            cursorMove: _cursorMove,
-            cursorRotate: _cursorRotate,
-            cursorResize: _cursorResize,
-            rotationPoint: _rotationPoint,
-            restrict: _restrict,
-            container: _container,
-            snap: _snap,
-            each: _each,
-            proportions: _proportions,
-            draggable: _draggable,
-            resizable: _resizable,
-            rotatable: _rotatable,
-            scalable: _scalable,
-            applyTranslate: _applyTranslate,
-            custom: _custom,
-            rotatorAnchor: _rotatorAnchor,
-            rotatorOffset: _rotatorOffset,
-            showNormal: _showNormal
+            axis: axis,
+            cursorMove: cursorMove,
+            cursorRotate: cursorRotate,
+            cursorResize: cursorResize,
+            rotationPoint: rotationPoint,
+            restrict: restrict ? helper(restrict)[0] || document.body : null,
+            container: helper(container)[0],
+            snap: _objectSpread2({}, snap, {
+              angle: snap.angle * RAD
+            }),
+            each: each,
+            proportions: proportions,
+            draggable: draggable,
+            resizable: resizable,
+            rotatable: rotatable,
+            scalable: scalable,
+            applyTranslate: applyTranslate,
+            custom: _typeof(custom) === 'object' && custom || null,
+            rotatorAnchor: rotatorAnchor,
+            rotatorOffset: rotatorOffset,
+            showNormal: showNormal
           };
           this.proxyMethods = {
-            onInit: _onInit,
-            onDrop: _onDrop,
-            onMove: _onMove,
-            onResize: _onResize,
-            onRotate: _onRotate,
-            onDestroy: _onDestroy
+            onInit: createMethod(onInit),
+            onDrop: createMethod(onDrop),
+            onMove: createMethod(onMove),
+            onResize: createMethod(onResize),
+            onRotate: createMethod(onRotate),
+            onDestroy: createMethod(onDestroy)
           };
-          this.subscribe(_each);
+          this.subscribe(each);
         }
       }, {
         key: "_animate",
@@ -1336,10 +1268,10 @@
               revX = storage.revX,
               revY = storage.revY;
           var snap = options.snap,
-              _options$each = options.each,
-              moveEach = _options$each.move,
-              resizeEach = _options$each.resize,
-              rotateEach = _options$each.rotate,
+              _options$each2 = options.each,
+              moveEach = _options$each2.move,
+              resizeEach = _options$each2.resize,
+              rotateEach = _options$each2.rotate,
               draggable = options.draggable,
               resizable = options.resizable,
               rotatable = options.rotatable;
@@ -2471,8 +2403,8 @@
               _this$storage3$cached4 = _this$storage3$cached2.dy,
               nextDy = _this$storage3$cached4 === void 0 ? dy : _this$storage3$cached4,
               _this$storage3$box = _this$storage3.box,
-              cw = _this$storage3$box.width,
-              ch = _this$storage3$box.height,
+              boxWidth = _this$storage3$box.width,
+              boxHeight = _this$storage3$box.height,
               revX = _this$storage3.revX,
               revY = _this$storage3.revY,
               doW = _this$storage3.doW,
@@ -2483,12 +2415,12 @@
               restrict = _this$options3.restrict;
 
           var getScale = function getScale(distX, distY) {
-            var ratio = doW || !doW && !doH ? (cw + distX) / cw : (ch + distY) / ch;
-            var newWidth = proportions ? cw * ratio : cw + distX,
-                newHeight = proportions ? ch * ratio : ch + distY;
-            var scaleX = newWidth / cw,
-                scaleY = newHeight / ch;
-            return [scaleX, scaleY];
+            var ratio = doW || !doW && !doH ? (boxWidth + distX) / boxWidth : (boxHeight + distY) / boxHeight;
+            var newWidth = proportions ? boxWidth * ratio : boxWidth + distX,
+                newHeight = proportions ? boxHeight * ratio : boxHeight + distY;
+            var scaleX = newWidth / boxWidth,
+                scaleY = newHeight / boxHeight;
+            return [scaleX, scaleY, newWidth, newHeight];
           };
 
           var getScaleMatrix = function getScaleMatrix(scaleX, scaleY) {
@@ -2496,41 +2428,53 @@
             return multiplyMatrix(multiplyMatrix(translateMatrix, scaleMatrix), matrixInvert(translateMatrix));
           };
 
-          var preScaleMatrix = multiplyMatrix(getScaleMatrix.apply(void 0, _toConsumableArray(getScale(dx, dy))), matrix);
+          var getTranslateMatrix = function getTranslateMatrix(scM, ctm) {
+            var translateX = scM[0][3];
+            var translateY = scM[1][3];
+            var trMatrix = createTranslateMatrix(translateX, translateY);
+            var inverted = createTranslateMatrix(translateX * (revX ? -1 : 1), translateY * (revY ? -1 : 1));
+            return multiplyMatrix(multiplyMatrix(inverted, ctm), matrixInvert(trMatrix));
+          };
 
-          var _ref8 = restrict ? this._restrictHandler(preScaleMatrix) : {
+          var _getScale = getScale(dx, dy),
+              _getScale2 = _slicedToArray(_getScale, 4),
+              pScaleX = _getScale2[0],
+              pScaleY = _getScale2[1],
+              pWidth = _getScale2[2],
+              pHeight = _getScale2[3];
+
+          var preScaleMatrix = getScaleMatrix(pScaleX, pScaleY);
+          var preResultMatrix = scalable ? multiplyMatrix(preScaleMatrix, matrix) : getTranslateMatrix(preScaleMatrix, matrix);
+          this.storage.cached.box = {
+            width: pWidth,
+            height: pHeight
+          };
+
+          var _ref8 = restrict ? this._restrictHandler(preResultMatrix) : {
             x: null,
             y: null
           },
               restX = _ref8.x,
               restY = _ref8.y;
 
-          var newDx = restX !== null || proportions && restY !== null && restrict ? nextDx : dx;
-          var newDy = restY !== null || proportions && restX !== null && restrict ? nextDy : dy;
+          var isBounding = (restX !== null || restY !== null) && restrict;
+          var newDx = isBounding ? nextDx : dx;
+          var newDy = isBounding ? nextDy : dy;
 
-          var _getScale = getScale(newDx, newDy),
-              _getScale2 = _slicedToArray(_getScale, 2),
-              scaleX = _getScale2[0],
-              scaleY = _getScale2[1];
+          var _getScale3 = getScale(newDx, newDy),
+              _getScale4 = _slicedToArray(_getScale3, 4),
+              scaleX = _getScale4[0],
+              scaleY = _getScale4[1],
+              newWidth = _getScale4[2],
+              newHeight = _getScale4[3];
 
-          var newWidth = proportions ? cw * scaleX : cw + newDx,
-              newHeight = proportions ? ch * scaleY : ch + newDy;
           if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
           var scaleMatrix = getScaleMatrix(scaleX, scaleY);
-          var resultMatrix = multiplyMatrix(scaleMatrix, matrix);
-
-          if (scalable) {
-            helper(el).css(matrixToCSS(flatMatrix(resultMatrix)));
-          } else {
-            var trMatrix = createTranslateMatrix(scaleMatrix[0][3], scaleMatrix[1][3]);
-            var inverted = createTranslateMatrix(scaleMatrix[0][3] *= revX ? -1 : 1, scaleMatrix[1][3] *= revY ? -1 : 1);
-            var result = multiplyMatrix(multiplyMatrix(inverted, matrix), matrixInvert(trMatrix));
-            helper(el).css(_objectSpread2({
-              width: "".concat(newWidth, "px"),
-              height: "".concat(newHeight, "px")
-            }, matrixToCSS(flatMatrix(result))));
-          }
-
+          var resultMatrix = scalable ? multiplyMatrix(scaleMatrix, matrix) : getTranslateMatrix(scaleMatrix, matrix);
+          helper(el).css(_objectSpread2({}, matrixToCSS(flatMatrix(resultMatrix)), {}, !scalable && {
+            width: "".concat(newWidth, "px"),
+            height: "".concat(newHeight, "px")
+          }));
           applyTransformToHandles(storage, this.options, {
             el: el,
             boxMatrix: resultMatrix
@@ -2672,14 +2616,7 @@
           var hW = elWidth / 2,
               hH = elHeight / 2;
           var scaleX = doH ? 0 : revX ? -hW : hW,
-              scaleY = doW ? 0 : revY ? -hH : hH;
-          var originTransform = cHandle ? getTransform(cHandle) : createIdentityMatrix();
-
-          var _decompose = decompose(getCurrentTransformMatrix(cHandle)),
-              _decompose$translate = _decompose.translate,
-              originX = _decompose$translate.x,
-              originY = _decompose$translate.y; // real element's center
-
+              scaleY = doW ? 0 : revY ? -hH : hH; // real element's center
 
           var _multiplyMatrixAndPoi7 = multiplyMatrixAndPoint(ctm, [hW, hH, 0, 1]),
               _multiplyMatrixAndPoi8 = _slicedToArray(_multiplyMatrixAndPoi7, 2),
@@ -2687,7 +2624,19 @@
               cenY = _multiplyMatrixAndPoi8[1];
 
           var globalCenterX = cenX + glLeft;
-          var globalCenterY = cenY + glTop; // search distance between el's center and rotation handle
+          var globalCenterY = cenY + glTop;
+          var originTransform = cHandle ? getTransform(cHandle) : createIdentityMatrix();
+
+          var _ref13 = cHandle ? decompose(getCurrentTransformMatrix(cHandle)) : {
+            translate: {
+              x: globalCenterX,
+              y: globalCenterY
+            }
+          },
+              _ref13$translate = _ref13.translate,
+              originX = _ref13$translate.x,
+              originY = _ref13$translate.y; // search distance between el's center and rotation handle
+
 
           var _multiplyMatrixAndPoi9 = multiplyMatrixAndPoint(multiplyMatrix(matrixInvert(dropTranslate(ctm)), dropTranslate(originTransform)), [originX - globalCenterX, originY - globalCenterY, 0, 1]),
               _multiplyMatrixAndPoi10 = _slicedToArray(_multiplyMatrixAndPoi9, 2),
@@ -2702,10 +2651,10 @@
 
           var containerBox = multiplyMatrixAndPoint(dropTranslate(containerMatrix), [offsetWidth, offsetHeight, 0, 1]);
 
-          var _decompose2 = decompose(getCurrentTransformMatrix(el, el.parentNode)),
-              _decompose2$scale = _decompose2.scale,
-              sX = _decompose2$scale.sX,
-              sY = _decompose2$scale.sY;
+          var _decompose = decompose(getCurrentTransformMatrix(el, el.parentNode)),
+              _decompose$scale = _decompose.scale,
+              sX = _decompose$scale.sX,
+              sY = _decompose$scale.sY;
 
           var transform = {
             auxiliary: {
@@ -2809,10 +2758,27 @@
         value: function getBoundingRect() {
           var transformMatrix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
           var el = this.el,
-              restrict = this.options.restrict,
-              box = this.storage.box;
-          var matrix = getCurrentTransformMatrix(el, restrict, transformMatrix);
-          return _getBoundingRect(el, restrict, matrix, box);
+              _this$options5 = this.options,
+              scalable = _this$options5.scalable,
+              restrict = _this$options5.restrict,
+              _this$storage8 = this.storage,
+              box = _this$storage8.box,
+              _this$storage8$box = _this$storage8.box,
+              width = _this$storage8$box.width,
+              height = _this$storage8$box.height,
+              _this$storage8$cached = _this$storage8.cached;
+          _this$storage8$cached = _this$storage8$cached === void 0 ? {} : _this$storage8$cached;
+          var _this$storage8$cached2 = _this$storage8$cached.box;
+          _this$storage8$cached2 = _this$storage8$cached2 === void 0 ? {} : _this$storage8$cached2;
+          var _this$storage8$cached3 = _this$storage8$cached2.width,
+              nextWidth = _this$storage8$cached3 === void 0 ? width : _this$storage8$cached3,
+              _this$storage8$cached4 = _this$storage8$cached2.height,
+              nextHeight = _this$storage8$cached4 === void 0 ? height : _this$storage8$cached4;
+          var nextBox = scalable ? box : _objectSpread2({}, box, {
+            width: nextWidth,
+            height: nextHeight
+          });
+          return _getBoundingRect(el, restrict, getCurrentTransformMatrix(el, restrict, transformMatrix), nextBox);
         }
       }, {
         key: "controls",
@@ -2824,10 +2790,10 @@
       return Draggable;
     }(Transformable);
 
-    var createHandler = function createHandler(_ref13) {
-      var _ref14 = _slicedToArray(_ref13, 2),
-          x = _ref14[0],
-          y = _ref14[1];
+    var createHandler = function createHandler(_ref14) {
+      var _ref15 = _slicedToArray(_ref14, 2),
+          x = _ref15[0],
+          y = _ref15[1];
 
       var key = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'handler';
       var style = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
@@ -2838,12 +2804,12 @@
       return element;
     };
 
-    var renderLine = function renderLine(_ref15, key) {
-      var _ref16 = _slicedToArray(_ref15, 3),
-          pt1 = _ref16[0],
-          pt2 = _ref16[1],
-          _ref16$ = _ref16[2],
-          thickness = _ref16$ === void 0 ? 1 : _ref16$;
+    var renderLine = function renderLine(_ref16, key) {
+      var _ref17 = _slicedToArray(_ref16, 3),
+          pt1 = _ref17[0],
+          pt2 = _ref17[1],
+          _ref17$ = _ref17[2],
+          thickness = _ref17$ === void 0 ? 1 : _ref17$;
 
       var _getLineAttrs = getLineAttrs(pt1, pt2, thickness),
           cx = _getLineAttrs.cx,
@@ -2899,9 +2865,10 @@
           rotatorOffset = options.rotatorOffset,
           rotatorAnchor = options.rotatorAnchor,
           container = options.container;
-      var el = data.el;
-      var offsetHeight = el.offsetHeight,
-          offsetWidth = el.offsetWidth;
+      var el = data.el,
+          _data$el = data.el,
+          offsetHeight = _data$el.offsetHeight,
+          offsetWidth = _data$el.offsetWidth;
 
       var _getAbsoluteOffset7 = getAbsoluteOffset(el, container),
           _getAbsoluteOffset8 = _slicedToArray(_getAbsoluteOffset7, 2),
@@ -2924,20 +2891,20 @@
         center: [offsetWidth / 2, offsetHeight / 2, 0, 1]
       });
 
-      var finalVertices = Object.entries(vertices).reduce(function (nextVerteces, _ref17) {
-        var _ref18 = _slicedToArray(_ref17, 2),
-            key = _ref18[0],
-            vertex = _ref18[1];
+      var finalVertices = Object.entries(vertices).reduce(function (nextVerteces, _ref18) {
+        var _ref19 = _slicedToArray(_ref18, 2),
+            key = _ref19[0],
+            vertex = _ref19[1];
 
         return [].concat(_toConsumableArray(nextVerteces), [[key, multiplyMatrixAndPoint(matrix, vertex)]]);
-      }, []).reduce(function (vertices, _ref19) {
-        var _ref20 = _slicedToArray(_ref19, 2),
-            key = _ref20[0],
-            _ref20$ = _slicedToArray(_ref20[1], 4),
-            x = _ref20$[0],
-            y = _ref20$[1],
-            z = _ref20$[2],
-            w = _ref20$[3];
+      }, []).reduce(function (vertices, _ref20) {
+        var _ref21 = _slicedToArray(_ref20, 2),
+            key = _ref21[0],
+            _ref21$ = _slicedToArray(_ref21[1], 4),
+            x = _ref21$[0],
+            y = _ref21$[1],
+            z = _ref21$[2],
+            w = _ref21$[3];
 
         vertices[key] = [x + offsetLeft, y + offsetTop, z, w];
         return vertices;
@@ -2984,18 +2951,7 @@
         };
       }
 
-      var resizingHandles = {
-        tl: finalVertices.tl,
-        tr: finalVertices.tr,
-        br: finalVertices.br,
-        bl: finalVertices.bl,
-        tc: finalVertices.tc,
-        bc: finalVertices.bc,
-        ml: finalVertices.ml,
-        mr: finalVertices.mr,
-        center: finalVertices.center // rotator
-
-      };
+      var resizingHandles = _objectSpread2({}, finalVertices);
 
       var resizingEdges = _objectSpread2({
         te: [finalVertices.tl, finalVertices.tr],
@@ -3045,7 +3001,7 @@
           offsetLeft = _getAbsoluteOffset10[0],
           offsetTop = _getAbsoluteOffset10[1];
 
-      var _ref21 = box || {
+      var _ref22 = box || {
         width: el.offsetWidth,
         height: el.offsetHeight,
         offset: {
@@ -3053,21 +3009,21 @@
           top: offsetTop
         }
       },
-          width = _ref21.width,
-          height = _ref21.height,
-          _ref21$offset = _ref21.offset,
-          left = _ref21$offset.left,
-          top = _ref21$offset.top;
+          width = _ref22.width,
+          height = _ref22.height,
+          _ref22$offset = _ref22.offset,
+          left = _ref22$offset.left,
+          top = _ref22$offset.top;
 
       var vertices = [[0, 0, 0, 1], [width, 0, 0, 1], [0, height, 0, 1], [width, height, 0, 1]];
       return vertices.reduce(function (nextVerteces, vertex) {
         return [].concat(_toConsumableArray(nextVerteces), [multiplyMatrixAndPoint(ctm, vertex)]);
-      }, []).map(function (_ref22) {
-        var _ref23 = _slicedToArray(_ref22, 4),
-            x = _ref23[0],
-            y = _ref23[1],
-            z = _ref23[2],
-            w = _ref23[3];
+      }, []).map(function (_ref23) {
+        var _ref24 = _slicedToArray(_ref23, 4),
+            x = _ref24[0],
+            y = _ref24[1],
+            z = _ref24[2],
+            w = _ref24[3];
 
         return [x + left, y + top, z, w];
       });
@@ -4104,7 +4060,7 @@
                 newHeight = proportions ? boxHeight * ratio : boxHeight + distY;
             var scaleX = newWidth / boxWidth,
                 scaleY = newHeight / boxHeight;
-            return [scaleX, scaleY];
+            return [scaleX, scaleY, newWidth, newHeight];
           };
 
           var getScaleMatrix = function getScaleMatrix(scaleX, scaleY) {
@@ -4121,16 +4077,17 @@
               restX = _ref6.x,
               restY = _ref6.y;
 
-          var newDx = restX !== null || proportions && restY !== null && restrict ? nextDx : dx;
-          var newDy = restY !== null || proportions && restX !== null && restrict ? nextDy : dy;
+          var isBounding = (restX !== null || restY !== null) && restrict;
+          var newDx = isBounding ? nextDx : dx;
+          var newDy = isBounding ? nextDy : dy;
 
           var _getScale = getScale(newDx, newDy),
-              _getScale2 = _slicedToArray(_getScale, 2),
+              _getScale2 = _slicedToArray(_getScale, 4),
               scaleX = _getScale2[0],
-              scaleY = _getScale2[1];
+              scaleY = _getScale2[1],
+              newWidth = _getScale2[2],
+              newHeight = _getScale2[3];
 
-          var newWidth = proportions ? boxWidth * scaleX : boxWidth + newDx,
-              newHeight = proportions ? boxHeight * scaleY : boxHeight + newDy;
           if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
           var scaleMatrix = getScaleMatrix(scaleX, scaleY);
           var resultMatrix = matrix.multiply(scaleMatrix);

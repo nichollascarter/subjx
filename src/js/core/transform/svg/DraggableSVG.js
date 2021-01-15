@@ -543,7 +543,7 @@ export default class DraggableSVG extends Transformable {
             const scaleX = newWidth / boxWidth,
                 scaleY = newHeight / boxHeight;
 
-            return [scaleX, scaleY];
+            return [scaleX, scaleY, newWidth, newHeight];
         };
 
         const getScaleMatrix = (scaleX, scaleY) => {
@@ -562,16 +562,17 @@ export default class DraggableSVG extends Transformable {
             ? this._restrictHandler(preScaledMatrix)
             : { x: null, y: null };
 
-        const newDx = ((restX !== null) || (proportions && restY !== null) && restrict)
-            ? nextDx
-            : dx;
-        const newDy = ((restY !== null) || (proportions && restX !== null) && restrict)
-            ? nextDy
-            : dy;
+        const isBounding = (restX !== null || restY !== null) && restrict;
 
-        const [scaleX, scaleY] = getScale(newDx, newDy);
-        const newWidth = proportions ? boxWidth * scaleX : boxWidth + newDx,
-            newHeight = proportions ? boxHeight * scaleY : boxHeight + newDy;
+        const newDx = isBounding ? nextDx : dx;
+        const newDy = isBounding ? nextDy : dy;
+
+        const [
+            scaleX,
+            scaleY,
+            newWidth,
+            newHeight
+        ] = getScale(newDx, newDy);
 
         if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
 
@@ -844,7 +845,7 @@ export default class DraggableSVG extends Transformable {
         });
 
         const center = {
-            ...this.storage.center || {},
+            ...(this.storage.center || {}),
             x: rotationPoint ? bcx : rcx,
             y: rotationPoint ? bcy : rcy,
             elX: elcx,

@@ -105,172 +105,84 @@ export default class Transformable extends SubjectModel {
         this._emitEvent(E_RESIZE, finalArgs);
     }
 
-    _processOptions(options) {
+    _processOptions(options = {}) {
         const { el } = this;
 
         addClass(el, `${LIB_CLASS_PREFIX}drag`);
 
-        const _snap = {
-            x: 10,
-            y: 10,
-            angle: 10 * RAD
-        };
-
-        const _each = {
-            move: false,
-            resize: false,
-            rotate: false
-        };
-
-        let _restrict = null,
-            _proportions = false,
-            _axis = 'xy',
-            _cursorMove = 'auto',
-            _cursorResize = 'auto',
-            _cursorRotate = 'auto',
-            _rotationPoint = false,
-            _draggable = true,
-            _resizable = true,
-            _rotatable = true,
-            _scalable = false,
-            _applyTranslate = false,
-            _rotatorAnchor = null,
-            _rotatorOffset = 50,
-            _showNormal = true,
-            _custom = null,
-            _onInit = () => { },
-            _onMove = () => { },
-            _onRotate = () => { },
-            _onResize = () => { },
-            _onDrop = () => { },
-            _onDestroy = () => { };
-
-        let _container = el.parentNode;
-
-        if (isDef(options)) {
-            const {
-                snap,
-                each,
-                axis = 'xy',
-                cursorMove = 'auto',
-                cursorResize = 'auto',
-                cursorRotate = 'auto',
-                rotationPoint = false,
-                restrict,
-                draggable = true,
-                resizable = true,
-                rotatable = true,
-                scalable = false,
-                applyTranslate = false,
-                onInit,
-                onDrop,
-                onMove,
-                onResize,
-                onRotate,
-                onDestroy,
-                container,
-                proportions = false,
-                custom,
-                rotatorAnchor,
-                rotatorOffset = 50,
-                showNormal = true
-            } = options;
-
-            if (isDef(snap)) {
-                const {
-                    x = 10,
-                    y = 10,
-                    angle
-                } = snap;
-
-                _snap.x = x;
-                _snap.y = y;
-                _snap.angle = isUndef(angle)
-                    ? _snap.angle
-                    : angle * RAD;
-            }
-
-            if (isDef(each)) {
-                const {
-                    move = false,
-                    resize = false,
-                    rotate = false
-                } = each;
-
-                _each.move = move;
-                _each.resize = resize;
-                _each.rotate = rotate;
-            }
-
-            if (isDef(restrict)) {
-                _restrict = restrict === 'parent'
-                    ? el.parentNode
-                    : helper(restrict)[0] || document.body;
-            }
-
-            _cursorMove = cursorMove;
-            _cursorResize = cursorResize;
-            _cursorRotate = cursorRotate;
-            _axis = axis;
-
-            _container = isDef(container) && helper(container)[0]
-                ? helper(container)[0]
-                : _container;
-
-            _rotationPoint = rotationPoint;
-            _proportions = proportions;
-
-            _draggable = draggable;
-            _resizable = resizable;
-            _rotatable = rotatable;
-            _scalable = scalable;
-            _applyTranslate = applyTranslate;
-
-            _custom = (typeof custom === 'object' && custom) || null;
-            _rotatorAnchor = rotatorAnchor || null;
-            _rotatorOffset = rotatorOffset;
-            _showNormal = showNormal;
-
-            _onInit = createMethod(onInit);
-            _onDrop = createMethod(onDrop);
-            _onMove = createMethod(onMove);
-            _onResize = createMethod(onResize);
-            _onRotate = createMethod(onRotate);
-            _onDestroy = createMethod(onDestroy);
-        }
+        const {
+            each = {
+                move: false,
+                resize: false,
+                rotate: false
+            },
+            snap = {
+                x: 10,
+                y: 10,
+                angle: 10
+            },
+            axis = 'xy',
+            cursorMove = 'auto',
+            cursorResize = 'auto',
+            cursorRotate = 'auto',
+            rotationPoint = false,
+            restrict,
+            draggable = true,
+            resizable = true,
+            rotatable = true,
+            scalable = false,
+            applyTranslate = false,
+            onInit = () => { },
+            onDrop = () => { },
+            onMove = () => { },
+            onResize = () => { },
+            onRotate = () => { },
+            onDestroy = () => { },
+            container = el.parentNode,
+            proportions = false,
+            rotatorAnchor = null,
+            rotatorOffset = 50,
+            showNormal = true,
+            custom
+        } = options;
 
         this.options = {
-            axis: _axis,
-            cursorMove: _cursorMove,
-            cursorRotate: _cursorRotate,
-            cursorResize: _cursorResize,
-            rotationPoint: _rotationPoint,
-            restrict: _restrict,
-            container: _container,
-            snap: _snap,
-            each: _each,
-            proportions: _proportions,
-            draggable: _draggable,
-            resizable: _resizable,
-            rotatable: _rotatable,
-            scalable: _scalable,
-            applyTranslate: _applyTranslate,
-            custom: _custom,
-            rotatorAnchor: _rotatorAnchor,
-            rotatorOffset: _rotatorOffset,
-            showNormal: _showNormal
+            axis,
+            cursorMove,
+            cursorRotate,
+            cursorResize,
+            rotationPoint,
+            restrict: restrict
+                ? helper(restrict)[0] || document.body
+                : null,
+            container: helper(container)[0],
+            snap: {
+                ...snap,
+                angle: snap.angle * RAD
+            },
+            each,
+            proportions,
+            draggable,
+            resizable,
+            rotatable,
+            scalable,
+            applyTranslate,
+            custom: (typeof custom === 'object' && custom) || null,
+            rotatorAnchor,
+            rotatorOffset,
+            showNormal
         };
 
         this.proxyMethods = {
-            onInit: _onInit,
-            onDrop: _onDrop,
-            onMove: _onMove,
-            onResize: _onResize,
-            onRotate: _onRotate,
-            onDestroy: _onDestroy
+            onInit: createMethod(onInit),
+            onDrop: createMethod(onDrop),
+            onMove: createMethod(onMove),
+            onResize: createMethod(onResize),
+            onRotate: createMethod(onRotate),
+            onDestroy: createMethod(onDestroy)
         };
 
-        this.subscribe(_each);
+        this.subscribe(each);
     }
 
     _animate() {
