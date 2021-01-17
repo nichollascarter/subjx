@@ -1,6 +1,6 @@
 /*@license
 * Drag/Rotate/Resize Library
-* Released under the MIT license, 2018-2020
+* Released under the MIT license, 2018-2021
 * Karen Sarksyan
 * nichollascarter@gmail.com
 */
