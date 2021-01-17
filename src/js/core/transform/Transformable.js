@@ -19,8 +19,7 @@ import {
 
 import {
     addClass,
-    removeClass,
-    getOffset
+    removeClass
 } from '../util/css-util';
 
 const {
@@ -364,7 +363,7 @@ export default class Transformable extends SubjectModel {
             observable,
             storage,
             storage: { handles },
-            options: { axis, restrict, each },
+            options: { axis, each },
             el
         } = this;
 
@@ -432,10 +431,6 @@ export default class Transformable extends SubjectModel {
             doSetCenter,
             onExecution: true,
             cursor: null,
-            elementOffset: getOffset(el),
-            restrictOffset: isDef(restrict)
-                ? getOffset(restrict)
-                : null,
             dox: /\x/.test(axis) && (doResize
                 ?
                 handle.is(handles.ml) ||

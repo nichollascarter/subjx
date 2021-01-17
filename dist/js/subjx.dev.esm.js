@@ -286,6 +286,7 @@ const EMITTER_EVENTS = [
 ];
 
 const CSS_PREFIXES = [
+    '',
     '-webkit-',
     '-moz-',
     '-ms-',
@@ -1083,7 +1084,7 @@ class Transformable extends SubjectModel {
             observable,
             storage,
             storage: { handles },
-            options: { axis, restrict, each },
+            options: { axis, each },
             el
         } = this;
 
@@ -1151,10 +1152,6 @@ class Transformable extends SubjectModel {
             doSetCenter,
             onExecution: true,
             cursor: null,
-            elementOffset: getOffset(el),
-            restrictOffset: isDef(restrict)
-                ? getOffset(restrict)
-                : null,
             dox: /\x/.test(axis) && (doResize
                 ?
                 handle.is(handles.ml) ||
@@ -1754,7 +1751,7 @@ const decompose = (m) => {
 };
 
 const getTransform = (el) => {
-    const matrixString = getStyle(el, 'transform');
+    const matrixString = getStyle(el, 'transform') || 'none';
     const matrix = createIdentityMatrix();
 
     if (matrixString === 'none') return matrix;
@@ -1780,8 +1777,8 @@ const getTransform = (el) => {
 };
 
 const getTransformOrigin = (el, allowBorderOffset) => {
-    const transformOrigin = getStyle(el, 'transform-origin') || '';
-    const values = transformOrigin.split(' ');
+    const transformOrigin = getStyle(el, 'transform-origin');
+    const values = transformOrigin ? transformOrigin.split(' ') : [];
 
     const out = [
         allowBorderOffset ? -el.clientLeft : 0,

@@ -197,7 +197,7 @@ export const decompose = (m) => {
 };
 
 export const getTransform = (el) => {
-    const matrixString = getStyle(el, 'transform');
+    const matrixString = getStyle(el, 'transform') || 'none';
     const matrix = createIdentityMatrix();
 
     if (matrixString === 'none') return matrix;
@@ -223,8 +223,8 @@ export const getTransform = (el) => {
 };
 
 export const getTransformOrigin = (el, allowBorderOffset) => {
-    const transformOrigin = getStyle(el, 'transform-origin') || '';
-    const values = transformOrigin.split(' ');
+    const transformOrigin = getStyle(el, 'transform-origin');
+    const values = transformOrigin ? transformOrigin.split(' ') : [];
 
     const out = [
         allowBorderOffset ? -el.clientLeft : 0,

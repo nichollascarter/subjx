@@ -36,6 +36,7 @@ const EMITTER_EVENTS = [
 ];
 
 export const CSS_PREFIXES = [
+    '',
     '-webkit-',
     '-moz-',
     '-ms-',

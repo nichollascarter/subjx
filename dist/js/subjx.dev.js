@@ -586,7 +586,7 @@
     var E_SET_POINT_START = 'setPointStart';
     var E_SET_POINT_END = 'setPointEnd';
     var EMITTER_EVENTS = [E_DRAG_START, E_DRAG,, E_DRAG_END, E_RESIZE_START, E_RESIZE, E_RESIZE_END, E_ROTATE_START, E_ROTATE, E_ROTATE_END, E_SET_POINT_START, E_SET_POINT_END];
-    var CSS_PREFIXES = ['-webkit-', '-moz-', '-ms-', '-o-'];
+    var CSS_PREFIXES = ['', '-webkit-', '-moz-', '-ms-', '-o-'];
     var ON_GETSTATE = 'ongetstate';
     var ON_APPLY = 'onapply';
     var ON_MOVE = 'onmove';
@@ -1375,7 +1375,6 @@
               handles = this.storage.handles,
               _this$options = this.options,
               axis = _this$options.axis,
-              restrict = _this$options.restrict,
               each = _this$options.each,
               el = this.el;
           var isTarget = Object.values(handles).some(function (hdl) {
@@ -1444,8 +1443,6 @@
             doSetCenter: doSetCenter,
             onExecution: true,
             cursor: null,
-            elementOffset: getOffset(el),
-            restrictOffset: isDef(restrict) ? getOffset(restrict) : null,
             dox: /\x/.test(axis) && (doResize ? handle.is(handles.ml) || handle.is(handles.mr) || handle.is(handles.tl) || handle.is(handles.tr) || handle.is(handles.bl) || handle.is(handles.br) || handle.is(handles.le) || handle.is(handles.re) : true),
             doy: /\y/.test(axis) && (doResize ? handle.is(handles.br) || handle.is(handles.bl) || handle.is(handles.bc) || handle.is(handles.tr) || handle.is(handles.tl) || handle.is(handles.tc) || handle.is(handles.te) || handle.is(handles.be) : true),
             cached: {}
@@ -2031,7 +2028,7 @@
       };
     };
     var getTransform = function getTransform(el) {
-      var matrixString = getStyle(el, 'transform');
+      var matrixString = getStyle(el, 'transform') || 'none';
       var matrix = createIdentityMatrix();
       if (matrixString === 'none') return matrix;
       var values = matrixString.split(/\s*[(),]\s*/).slice(1, -1);
@@ -2049,8 +2046,8 @@
       return matrix;
     };
     var getTransformOrigin = function getTransformOrigin(el, allowBorderOffset) {
-      var transformOrigin = getStyle(el, 'transform-origin') || '';
-      var values = transformOrigin.split(' ');
+      var transformOrigin = getStyle(el, 'transform-origin');
+      var values = transformOrigin ? transformOrigin.split(' ') : [];
       var out = [allowBorderOffset ? -el.clientLeft : 0, allowBorderOffset ? -el.clientTop : 0, 0, 1];
 
       for (var i = 0; i < values.length; ++i) {
