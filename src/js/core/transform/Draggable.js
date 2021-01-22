@@ -219,24 +219,6 @@ export default class Draggable extends Transformable {
         ));
     }
 
-    _destroy() {
-        const {
-            el,
-            storage: {
-                controls,
-                wrapper
-            }
-        } = this;
-
-        [el, controls].map(target => (
-            helper(target)
-                .off(E_MOUSEDOWN, this._onMouseDown)
-                .off(E_TOUCHSTART, this._onTouchStart)
-        ));
-
-        wrapper.parentNode.removeChild(wrapper);
-    }
-
     _pointToElement({ x, y }) {
         const { transform: { ctm } } = this.storage;
         const matrix = matrixInvert(ctm);

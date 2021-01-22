@@ -6,7 +6,8 @@ import {
     LIB_CLASS_PREFIX,
     NOTIFIER_CONSTANTS,
     EVENT_EMITTER_CONSTANTS,
-    TRANSFORM_HANDLES_CONSTANTS
+    TRANSFORM_HANDLES_CONSTANTS,
+    CLIENT_EVENTS_CONSTANTS
 } from '../consts';
 
 import {
@@ -45,6 +46,14 @@ const {
 } = EVENT_EMITTER_CONSTANTS;
 
 const { TRANSFORM_HANDLES_KEYS, TRANSFORM_EDGES_KEYS } = TRANSFORM_HANDLES_CONSTANTS;
+const {
+    E_MOUSEDOWN,
+    E_TOUCHSTART,
+    E_MOUSEMOVE,
+    E_MOUSEUP,
+    E_TOUCHMOVE,
+    E_TOUCHEND
+} = CLIENT_EVENTS_CONSTANTS;
 
 const {
     TOP_LEFT,
@@ -509,7 +518,7 @@ export default class Transformable extends SubjectModel {
     }
 
     _moving(e) {
-        const { storage, options } = this;
+        const { storage = {}, options } = this;
 
         if (!storage.isTarget) return;
 
@@ -687,6 +696,24 @@ export default class Transformable extends SubjectModel {
         };
     }
 
+    _destroy() {
+        const {
+            el,
+            storage: {
+                controls,
+                wrapper
+            }
+        } = this;
+
+        [el, controls].map(target => (
+            helper(target)
+                .off(E_MOUSEDOWN, this._onMouseDown)
+                .off(E_TOUCHSTART, this._onTouchStart)
+        ));
+
+        wrapper.parentNode.removeChild(wrapper);
+    }
+
     notifyMove() {
         this._drag(...arguments);
     }
@@ -761,10 +788,19 @@ export default class Transformable extends SubjectModel {
 
         if (isUndef(storage)) return;
 
+        // unexpected case
+        if (storage.onExecution) {
+            helper(document)
+                .off(E_MOUSEMOVE, this._onMouseMove)
+                .off(E_MOUSEUP, this._onMouseUp)
+                .off(E_TOUCHMOVE, this._onTouchMove)
+                .off(E_TOUCHEND, this._onTouchEnd);
+        }
+
         removeClass(el, `${LIB_CLASS_PREFIX}drag`);
 
-        this._destroy();
         this.unsubscribe();
+        this._destroy();
 
         proxyMethods.onDestroy.call(this, el);
         delete this.storage;

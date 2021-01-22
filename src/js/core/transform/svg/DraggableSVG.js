@@ -253,24 +253,6 @@ export default class DraggableSVG extends Transformable {
         ));
     }
 
-    _destroy() {
-        const {
-            el,
-            storage: {
-                controls,
-                wrapper
-            }
-        } = this;
-
-        [el, controls].map(target => (
-            helper(target)
-                .off(E_MOUSEDOWN, this._onMouseDown)
-                .off(E_TOUCHSTART, this._onTouchStart)
-        ));
-
-        wrapper.parentNode.removeChild(wrapper);
-    }
-
     _cursorPoint({ clientX, clientY }) {
         const { container } = this.options;
 
