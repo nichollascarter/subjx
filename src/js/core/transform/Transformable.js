@@ -147,6 +147,7 @@ export default class Transformable extends SubjectModel {
             onRotate = () => { },
             onDestroy = () => { },
             container = el.parentNode,
+            controlsContainer = container,
             proportions = false,
             rotatorAnchor = null,
             rotatorOffset = 50,
@@ -164,6 +165,7 @@ export default class Transformable extends SubjectModel {
                 ? helper(restrict)[0] || document.body
                 : null,
             container: helper(container)[0],
+            controlsContainer: helper(controlsContainer)[0],
             snap: {
                 ...snap,
                 angle: snap.angle * RAD

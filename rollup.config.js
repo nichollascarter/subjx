@@ -5,7 +5,10 @@ import postcss from 'rollup-plugin-postcss';
 import { terser } from 'rollup-plugin-terser';
 import { uglify } from 'rollup-plugin-uglify';
 import { eslint } from 'rollup-plugin-eslint';
+import serve from 'rollup-plugin-serve';
+import livereload from 'rollup-plugin-livereload';
 
+// eslint-disable-next-line no-undef
 const env = process.env.NODE_ENV || 'production';
 const prod = env === 'production';
 let libraryName = 'subjx';
@@ -30,7 +33,9 @@ const plugins = [
         exclude: 'node_modules/**',
         throwOnError: prod
     }),
-    resolve()
+    resolve(),
+    !prod && serve(['public', 'dist']),
+    !prod && livereload('dist')
 ];
 
 const uglifyPlugin = () => {

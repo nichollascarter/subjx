@@ -4,6 +4,7 @@
 * Karen Sarksyan
 * nichollascarter@gmail.com
 */
+(function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(window.document);
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
@@ -1072,6 +1073,12 @@
         E_ROTATE_END$1 = EVENT_EMITTER_CONSTANTS.E_ROTATE_END;
     var TRANSFORM_HANDLES_KEYS$1 = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_HANDLES_KEYS,
         TRANSFORM_EDGES_KEYS$1 = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_EDGES_KEYS;
+    var E_MOUSEDOWN$1 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
+        E_TOUCHSTART$1 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART,
+        E_MOUSEMOVE$2 = CLIENT_EVENTS_CONSTANTS.E_MOUSEMOVE,
+        E_MOUSEUP$2 = CLIENT_EVENTS_CONSTANTS.E_MOUSEUP,
+        E_TOUCHMOVE$2 = CLIENT_EVENTS_CONSTANTS.E_TOUCHMOVE,
+        E_TOUCHEND$2 = CLIENT_EVENTS_CONSTANTS.E_TOUCHEND;
     var TOP_LEFT = TRANSFORM_HANDLES_KEYS$1.TOP_LEFT,
         TOP_CENTER = TRANSFORM_HANDLES_KEYS$1.TOP_CENTER,
         TOP_RIGHT = TRANSFORM_HANDLES_KEYS$1.TOP_RIGHT,
@@ -1204,6 +1211,8 @@
               onDestroy = _options$onDestroy === void 0 ? function () {} : _options$onDestroy,
               _options$container = options.container,
               container = _options$container === void 0 ? el.parentNode : _options$container,
+              _options$controlsCont = options.controlsContainer,
+              controlsContainer = _options$controlsCont === void 0 ? container : _options$controlsCont,
               _options$proportions = options.proportions,
               proportions = _options$proportions === void 0 ? false : _options$proportions,
               _options$rotatorAncho = options.rotatorAnchor,
@@ -1221,6 +1230,7 @@
             rotationPoint: rotationPoint,
             restrict: restrict ? helper(restrict)[0] || document.body : null,
             container: helper(container)[0],
+            controlsContainer: helper(controlsContainer)[0],
             snap: _objectSpread2({}, snap, {
               angle: snap.angle * RAD
             }),
@@ -1483,7 +1493,8 @@
       }, {
         key: "_moving",
         value: function _moving(e) {
-          var storage = this.storage,
+          var _this$storage = this.storage,
+              storage = _this$storage === void 0 ? {} : _this$storage,
               options = this.options;
           if (!storage.isTarget) return;
 
@@ -1525,13 +1536,13 @@
           var each = this.options.each,
               observable = this.observable,
               storage = this.storage,
-              _this$storage = this.storage,
-              doResize = _this$storage.doResize,
-              doDrag = _this$storage.doDrag,
-              doRotate = _this$storage.doRotate,
-              frame = _this$storage.frame,
-              radius = _this$storage.handles.radius,
-              isTarget = _this$storage.isTarget,
+              _this$storage2 = this.storage,
+              doResize = _this$storage2.doResize,
+              doDrag = _this$storage2.doDrag,
+              doRotate = _this$storage2.doRotate,
+              frame = _this$storage2.frame,
+              radius = _this$storage2.handles.radius,
+              isTarget = _this$storage2.isTarget,
               proxyMethods = this.proxyMethods;
           if (!isTarget) return;
           var actionName = doResize ? E_RESIZE$1 : doDrag ? E_DRAG$2 : E_ROTATE$1;
@@ -1643,6 +1654,20 @@
           };
         }
       }, {
+        key: "_destroy",
+        value: function _destroy() {
+          var _this2 = this;
+
+          var el = this.el,
+              _this$storage3 = this.storage,
+              controls = _this$storage3.controls,
+              wrapper = _this$storage3.wrapper;
+          [el, controls].map(function (target) {
+            return helper(target).off(E_MOUSEDOWN$1, _this2._onMouseDown).off(E_TOUCHSTART$1, _this2._onTouchStart);
+          });
+          wrapper.parentNode.removeChild(wrapper);
+        }
+      }, {
         key: "notifyMove",
         value: function notifyMove() {
           this._drag.apply(this, arguments);
@@ -1732,11 +1757,11 @@
       }, {
         key: "unsubscribe",
         value: function unsubscribe() {
-          var _this2 = this;
+          var _this3 = this;
 
           var ob = this.observable;
           NOTIFIER_EVENTS$1.map(function (eventName) {
-            return ob.unsubscribe(eventName, _this2);
+            return ob.unsubscribe(eventName, _this3);
           });
         }
       }, {
@@ -1745,12 +1770,17 @@
           var storage = this.storage,
               proxyMethods = this.proxyMethods,
               el = this.el;
-          if (isUndef(storage)) return;
+          if (isUndef(storage)) return; // unexpected case
+
+          if (storage.onExecution) {
+            helper(document).off(E_MOUSEMOVE$2, this._onMouseMove).off(E_MOUSEUP$2, this._onMouseUp).off(E_TOUCHMOVE$2, this._onTouchMove).off(E_TOUCHEND$2, this._onTouchEnd);
+          }
+
           removeClass(el, "".concat(LIB_CLASS_PREFIX, "drag"));
+          this.unsubscribe();
 
           this._destroy();
 
-          this.unsubscribe();
           proxyMethods.onDestroy.call(this, el);
           delete this.storage;
         }
@@ -2080,8 +2110,8 @@
       return [left, top, 0, 1];
     };
 
-    var E_MOUSEDOWN$1 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
-        E_TOUCHSTART$1 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
+    var E_MOUSEDOWN$2 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
+        E_TOUCHSTART$2 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
 
     var Draggable = /*#__PURE__*/function (_Transformable) {
       _inherits(Draggable, _Transformable);
@@ -2102,6 +2132,7 @@
           var _this$options = this.options,
               rotationPoint = _this$options.rotationPoint,
               container = _this$options.container,
+              controlsContainer = _this$options.controlsContainer,
               resizable = _this$options.resizable,
               rotatable = _this$options.rotatable,
               showNormal = _this$options.showNormal,
@@ -2241,7 +2272,7 @@
           mapHandlers(resizingEdges, renderLine);
           mapHandlers(allHandles, createHandler);
           wrapper.appendChild(controls);
-          container.appendChild(wrapper);
+          controlsContainer.appendChild(wrapper);
           this.storage = {
             wrapper: wrapper,
             controls: controls,
@@ -2253,22 +2284,8 @@
             cached: {}
           };
           [el, controls].map(function (target) {
-            return helper(target).on(E_MOUSEDOWN$1, _this._onMouseDown).on(E_TOUCHSTART$1, _this._onTouchStart);
+            return helper(target).on(E_MOUSEDOWN$2, _this._onMouseDown).on(E_TOUCHSTART$2, _this._onTouchStart);
           });
-        }
-      }, {
-        key: "_destroy",
-        value: function _destroy() {
-          var _this2 = this;
-
-          var el = this.el,
-              _this$storage = this.storage,
-              controls = _this$storage.controls,
-              wrapper = _this$storage.wrapper;
-          [el, controls].map(function (target) {
-            return helper(target).off(E_MOUSEDOWN$1, _this2._onMouseDown).off(E_TOUCHSTART$1, _this2._onTouchStart);
-          });
-          wrapper.parentNode.removeChild(wrapper);
         }
       }, {
         key: "_pointToElement",
@@ -2357,11 +2374,11 @@
         key: "_apply",
         value: function _apply() {
           var element = this.el,
-              _this$storage2 = this.storage,
-              cached = _this$storage2.cached,
-              controls = _this$storage2.controls,
-              matrix = _this$storage2.transform.matrix,
-              center = _this$storage2.center,
+              _this$storage = this.storage,
+              cached = _this$storage.cached,
+              controls = _this$storage.controls,
+              matrix = _this$storage.transform.matrix,
+              center = _this$storage.center,
               applyTranslate = this.options.applyTranslate;
           var $controls = helper(controls);
           if (isUndef(cached)) return;
@@ -2388,25 +2405,25 @@
         value: function _processResize(dx, dy) {
           var el = this.el,
               storage = this.storage,
-              _this$storage3 = this.storage,
-              _this$storage3$transf = _this$storage3.transform,
-              matrix = _this$storage3$transf.matrix,
-              translateMatrix = _this$storage3$transf.auxiliary.scale.translateMatrix,
-              _this$storage3$cached = _this$storage3.cached;
-          _this$storage3$cached = _this$storage3$cached === void 0 ? {} : _this$storage3$cached;
-          var _this$storage3$cached2 = _this$storage3$cached.dist;
-          _this$storage3$cached2 = _this$storage3$cached2 === void 0 ? {} : _this$storage3$cached2;
-          var _this$storage3$cached3 = _this$storage3$cached2.dx,
-              nextDx = _this$storage3$cached3 === void 0 ? dx : _this$storage3$cached3,
-              _this$storage3$cached4 = _this$storage3$cached2.dy,
-              nextDy = _this$storage3$cached4 === void 0 ? dy : _this$storage3$cached4,
-              _this$storage3$box = _this$storage3.box,
-              boxWidth = _this$storage3$box.width,
-              boxHeight = _this$storage3$box.height,
-              revX = _this$storage3.revX,
-              revY = _this$storage3.revY,
-              doW = _this$storage3.doW,
-              doH = _this$storage3.doH,
+              _this$storage2 = this.storage,
+              _this$storage2$transf = _this$storage2.transform,
+              matrix = _this$storage2$transf.matrix,
+              translateMatrix = _this$storage2$transf.auxiliary.scale.translateMatrix,
+              _this$storage2$cached = _this$storage2.cached;
+          _this$storage2$cached = _this$storage2$cached === void 0 ? {} : _this$storage2$cached;
+          var _this$storage2$cached2 = _this$storage2$cached.dist;
+          _this$storage2$cached2 = _this$storage2$cached2 === void 0 ? {} : _this$storage2$cached2;
+          var _this$storage2$cached3 = _this$storage2$cached2.dx,
+              nextDx = _this$storage2$cached3 === void 0 ? dx : _this$storage2$cached3,
+              _this$storage2$cached4 = _this$storage2$cached2.dy,
+              nextDy = _this$storage2$cached4 === void 0 ? dy : _this$storage2$cached4,
+              _this$storage2$box = _this$storage2.box,
+              boxWidth = _this$storage2$box.width,
+              boxHeight = _this$storage2$box.height,
+              revX = _this$storage2.revX,
+              revY = _this$storage2.revY,
+              doW = _this$storage2.doW,
+              doH = _this$storage2.doH,
               _this$options3 = this.options,
               proportions = _this$options3.proportions,
               scalable = _this$options3.scalable,
@@ -2492,21 +2509,21 @@
         value: function _processMove(dx, dy) {
           var el = this.el,
               storage = this.storage,
-              _this$storage4 = this.storage,
-              wrapper = _this$storage4.wrapper,
-              _this$storage4$transf = _this$storage4.transform,
-              matrix = _this$storage4$transf.matrix,
-              wrapperMatrix = _this$storage4$transf.wrapperMatrix,
-              parentMatrix = _this$storage4$transf.auxiliary.translate.parentMatrix,
-              center = _this$storage4.center,
-              _this$storage4$cached = _this$storage4.cached;
-          _this$storage4$cached = _this$storage4$cached === void 0 ? {} : _this$storage4$cached;
-          var _this$storage4$cached2 = _this$storage4$cached.dist;
-          _this$storage4$cached2 = _this$storage4$cached2 === void 0 ? {} : _this$storage4$cached2;
-          var _this$storage4$cached3 = _this$storage4$cached2.dx,
-              nextDx = _this$storage4$cached3 === void 0 ? dx : _this$storage4$cached3,
-              _this$storage4$cached4 = _this$storage4$cached2.dy,
-              nextDy = _this$storage4$cached4 === void 0 ? dy : _this$storage4$cached4,
+              _this$storage3 = this.storage,
+              wrapper = _this$storage3.wrapper,
+              _this$storage3$transf = _this$storage3.transform,
+              matrix = _this$storage3$transf.matrix,
+              wrapperMatrix = _this$storage3$transf.wrapperMatrix,
+              parentMatrix = _this$storage3$transf.auxiliary.translate.parentMatrix,
+              center = _this$storage3.center,
+              _this$storage3$cached = _this$storage3.cached;
+          _this$storage3$cached = _this$storage3$cached === void 0 ? {} : _this$storage3$cached;
+          var _this$storage3$cached2 = _this$storage3$cached.dist;
+          _this$storage3$cached2 = _this$storage3$cached2 === void 0 ? {} : _this$storage3$cached2;
+          var _this$storage3$cached3 = _this$storage3$cached2.dx,
+              nextDx = _this$storage3$cached3 === void 0 ? dx : _this$storage3$cached3,
+              _this$storage3$cached4 = _this$storage3$cached2.dy,
+              nextDy = _this$storage3$cached4 === void 0 ? dy : _this$storage3$cached4,
               restrict = this.options.restrict;
 
           var _multiplyMatrixAndPoi3 = multiplyMatrixAndPoint(parentMatrix, [dx, dy, 0, 1]),
@@ -2583,11 +2600,11 @@
               doW = _ref11.doW,
               doH = _ref11.doH;
           var el = this.el,
-              _this$storage5 = this.storage,
-              cHandle = _this$storage5.handles.center,
-              parent = _this$storage5.parent,
-              wrapper = _this$storage5.wrapper,
-              oldCenter = _this$storage5.center,
+              _this$storage4 = this.storage,
+              cHandle = _this$storage4.handles.center,
+              parent = _this$storage4.parent,
+              wrapper = _this$storage4.wrapper,
+              oldCenter = _this$storage4.center,
               _this$options4 = this.options,
               container = _this$options4.container,
               restrict = _this$options4.restrict,
@@ -2705,9 +2722,9 @@
       }, {
         key: "_moveCenterHandle",
         value: function _moveCenterHandle(x, y) {
-          var _this$storage6 = this.storage,
-              center = _this$storage6.handles.center,
-              matrix = _this$storage6.center.matrix;
+          var _this$storage5 = this.storage,
+              center = _this$storage5.handles.center,
+              matrix = _this$storage5.center.matrix;
           var resultMatrix = multiplyMatrix(matrix, createTranslateMatrix(x, y));
           helper(center).css(_objectSpread2({}, matrixToCSS(flatMatrix(resultMatrix))));
           this.storage.center.isShifted = true;
@@ -2719,9 +2736,9 @@
               _this$el = this.el,
               offsetHeight = _this$el.offsetHeight,
               offsetWidth = _this$el.offsetWidth,
-              _this$storage7 = this.storage,
-              wrapper = _this$storage7.wrapper,
-              center = _this$storage7.handles.center,
+              _this$storage6 = this.storage,
+              wrapper = _this$storage6.wrapper,
+              center = _this$storage6.handles.center,
               container = this.options.container;
           if (!center) return;
 
@@ -2759,19 +2776,19 @@
               _this$options5 = this.options,
               scalable = _this$options5.scalable,
               restrict = _this$options5.restrict,
-              _this$storage8 = this.storage,
-              box = _this$storage8.box,
-              _this$storage8$box = _this$storage8.box,
-              width = _this$storage8$box.width,
-              height = _this$storage8$box.height,
-              _this$storage8$cached = _this$storage8.cached;
-          _this$storage8$cached = _this$storage8$cached === void 0 ? {} : _this$storage8$cached;
-          var _this$storage8$cached2 = _this$storage8$cached.box;
-          _this$storage8$cached2 = _this$storage8$cached2 === void 0 ? {} : _this$storage8$cached2;
-          var _this$storage8$cached3 = _this$storage8$cached2.width,
-              nextWidth = _this$storage8$cached3 === void 0 ? width : _this$storage8$cached3,
-              _this$storage8$cached4 = _this$storage8$cached2.height,
-              nextHeight = _this$storage8$cached4 === void 0 ? height : _this$storage8$cached4;
+              _this$storage7 = this.storage,
+              box = _this$storage7.box,
+              _this$storage7$box = _this$storage7.box,
+              width = _this$storage7$box.width,
+              height = _this$storage7$box.height,
+              _this$storage7$cached = _this$storage7.cached;
+          _this$storage7$cached = _this$storage7$cached === void 0 ? {} : _this$storage7$cached;
+          var _this$storage7$cached2 = _this$storage7$cached.box;
+          _this$storage7$cached2 = _this$storage7$cached2 === void 0 ? {} : _this$storage7$cached2;
+          var _this$storage7$cached3 = _this$storage7$cached2.width,
+              nextWidth = _this$storage7$cached3 === void 0 ? width : _this$storage7$cached3,
+              _this$storage7$cached4 = _this$storage7$cached2.height,
+              nextHeight = _this$storage7$cached4 === void 0 ? height : _this$storage7$cached4;
           var nextBox = scalable ? box : _objectSpread2({}, box, {
             width: nextWidth,
             height: nextHeight
@@ -3650,8 +3667,8 @@
 
     var E_DRAG$3 = EVENT_EMITTER_CONSTANTS.E_DRAG,
         E_RESIZE$2 = EVENT_EMITTER_CONSTANTS.E_RESIZE;
-    var E_MOUSEDOWN$2 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
-        E_TOUCHSTART$2 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
+    var E_MOUSEDOWN$3 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
+        E_TOUCHSTART$3 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
 
     var DraggableSVG = /*#__PURE__*/function (_Transformable) {
       _inherits(DraggableSVG, _Transformable);
@@ -3672,6 +3689,7 @@
           var _this$options = this.options,
               rotationPoint = _this$options.rotationPoint,
               container = _this$options.container,
+              controlsContainer = _this$options.controlsContainer,
               resizable = _this$options.resizable,
               rotatable = _this$options.rotatable,
               rotatorAnchor = _this$options.rotatorAnchor,
@@ -3809,7 +3827,7 @@
             controls.appendChild(handles[key]);
           });
           wrapper.appendChild(controls);
-          container.appendChild(wrapper);
+          controlsContainer.appendChild(wrapper);
           this.storage = {
             wrapper: wrapper,
             controls: controls,
@@ -3821,22 +3839,8 @@
             cached: {}
           };
           [el, controls].map(function (target) {
-            return helper(target).on(E_MOUSEDOWN$2, _this._onMouseDown).on(E_TOUCHSTART$2, _this._onTouchStart);
+            return helper(target).on(E_MOUSEDOWN$3, _this._onMouseDown).on(E_TOUCHSTART$3, _this._onTouchStart);
           });
-        }
-      }, {
-        key: "_destroy",
-        value: function _destroy() {
-          var _this2 = this;
-
-          var el = this.el,
-              _this$storage = this.storage,
-              controls = _this$storage.controls,
-              wrapper = _this$storage.wrapper;
-          [el, controls].map(function (target) {
-            return helper(target).off(E_MOUSEDOWN$2, _this2._onMouseDown).off(E_TOUCHSTART$2, _this2._onTouchStart);
-          });
-          wrapper.parentNode.removeChild(wrapper);
         }
       }, {
         key: "_cursorPoint",
@@ -3850,7 +3854,10 @@
         key: "_restrictHandler",
         value: function _restrictHandler(matrix) {
           var containerMatrix = this.storage.transform.containerMatrix,
-              restrict = this.options.restrict;
+              _this$options2 = this.options,
+              container = _this$options2.container,
+              _this$options2$restri = _this$options2.restrict,
+              restrict = _this$options2$restri === void 0 ? container : _this$options2$restri;
           var restrictX = null,
               restrictY = null;
 
@@ -3920,16 +3927,16 @@
         value: function _apply(actionName) {
           var element = this.el,
               storage = this.storage,
-              _this$storage2 = this.storage,
-              bBox = _this$storage2.bBox,
-              cached = _this$storage2.cached,
-              transform = _this$storage2.transform,
-              center = _this$storage2.center,
+              _this$storage = this.storage,
+              bBox = _this$storage.bBox,
+              cached = _this$storage.cached,
+              transform = _this$storage.transform,
+              center = _this$storage.center,
               options = this.options,
-              _this$options2 = this.options,
-              container = _this$options2.container,
-              scalable = _this$options2.scalable,
-              applyDragging = _this$options2.applyTranslate;
+              _this$options3 = this.options,
+              container = _this$options3.container,
+              scalable = _this$options3.scalable,
+              applyDragging = _this$options3.applyTranslate;
           var matrix = transform.matrix,
               parentMatrix = transform.parentMatrix,
               ctm = transform.ctm;
@@ -4025,29 +4032,29 @@
         value: function _processResize(dx, dy) {
           var el = this.el,
               storage = this.storage,
-              _this$storage3 = this.storage,
-              _this$storage3$bBox = _this$storage3.bBox,
-              boxWidth = _this$storage3$bBox.width,
-              boxHeight = _this$storage3$bBox.height,
-              revX = _this$storage3.revX,
-              revY = _this$storage3.revY,
-              doW = _this$storage3.doW,
-              doH = _this$storage3.doH,
-              _this$storage3$transf = _this$storage3.transform,
-              matrix = _this$storage3$transf.matrix,
-              translateMatrix = _this$storage3$transf.auxiliary.scale.translateMatrix,
-              _this$storage3$cached = _this$storage3.cached;
-          _this$storage3$cached = _this$storage3$cached === void 0 ? {} : _this$storage3$cached;
-          var _this$storage3$cached2 = _this$storage3$cached.dist;
-          _this$storage3$cached2 = _this$storage3$cached2 === void 0 ? {} : _this$storage3$cached2;
-          var _this$storage3$cached3 = _this$storage3$cached2.dx,
-              nextDx = _this$storage3$cached3 === void 0 ? dx : _this$storage3$cached3,
-              _this$storage3$cached4 = _this$storage3$cached2.dy,
-              nextDy = _this$storage3$cached4 === void 0 ? dy : _this$storage3$cached4,
-              _this$options3 = this.options,
-              proportions = _this$options3.proportions,
-              scalable = _this$options3.scalable,
-              restrict = _this$options3.restrict;
+              _this$storage2 = this.storage,
+              _this$storage2$bBox = _this$storage2.bBox,
+              boxWidth = _this$storage2$bBox.width,
+              boxHeight = _this$storage2$bBox.height,
+              revX = _this$storage2.revX,
+              revY = _this$storage2.revY,
+              doW = _this$storage2.doW,
+              doH = _this$storage2.doH,
+              _this$storage2$transf = _this$storage2.transform,
+              matrix = _this$storage2$transf.matrix,
+              translateMatrix = _this$storage2$transf.auxiliary.scale.translateMatrix,
+              _this$storage2$cached = _this$storage2.cached;
+          _this$storage2$cached = _this$storage2$cached === void 0 ? {} : _this$storage2$cached;
+          var _this$storage2$cached2 = _this$storage2$cached.dist;
+          _this$storage2$cached2 = _this$storage2$cached2 === void 0 ? {} : _this$storage2$cached2;
+          var _this$storage2$cached3 = _this$storage2$cached2.dx,
+              nextDx = _this$storage2$cached3 === void 0 ? dx : _this$storage2$cached3,
+              _this$storage2$cached4 = _this$storage2$cached2.dy,
+              nextDy = _this$storage2$cached4 === void 0 ? dy : _this$storage2$cached4,
+              _this$options4 = this.options,
+              proportions = _this$options4.proportions,
+              scalable = _this$options4.scalable,
+              restrict = _this$options4.restrict;
 
           var _el$getBBox = el.getBBox(),
               x = _el$getBBox.x,
@@ -4124,24 +4131,24 @@
         key: "_processMove",
         value: function _processMove(dx, dy) {
           var storage = this.storage,
-              _this$storage4 = this.storage,
-              wrapper = _this$storage4.wrapper,
-              center = _this$storage4.center,
-              _this$storage4$transf = _this$storage4.transform,
-              matrix = _this$storage4$transf.matrix,
-              _this$storage4$transf2 = _this$storage4$transf.auxiliary.translate,
-              translateMatrix = _this$storage4$transf2.translateMatrix,
-              wrapperTranslateMatrix = _this$storage4$transf2.wrapperTranslateMatrix,
-              wrapperMatrix = _this$storage4$transf.wrapperMatrix,
-              parentMatrix = _this$storage4$transf.parentMatrix,
-              _this$storage4$cached = _this$storage4.cached;
-          _this$storage4$cached = _this$storage4$cached === void 0 ? {} : _this$storage4$cached;
-          var _this$storage4$cached2 = _this$storage4$cached.dist;
-          _this$storage4$cached2 = _this$storage4$cached2 === void 0 ? {} : _this$storage4$cached2;
-          var _this$storage4$cached3 = _this$storage4$cached2.dx,
-              nextDx = _this$storage4$cached3 === void 0 ? dx : _this$storage4$cached3,
-              _this$storage4$cached4 = _this$storage4$cached2.dy,
-              nextDy = _this$storage4$cached4 === void 0 ? dy : _this$storage4$cached4,
+              _this$storage3 = this.storage,
+              wrapper = _this$storage3.wrapper,
+              center = _this$storage3.center,
+              _this$storage3$transf = _this$storage3.transform,
+              matrix = _this$storage3$transf.matrix,
+              _this$storage3$transf2 = _this$storage3$transf.auxiliary.translate,
+              translateMatrix = _this$storage3$transf2.translateMatrix,
+              wrapperTranslateMatrix = _this$storage3$transf2.wrapperTranslateMatrix,
+              wrapperMatrix = _this$storage3$transf.wrapperMatrix,
+              parentMatrix = _this$storage3$transf.parentMatrix,
+              _this$storage3$cached = _this$storage3.cached;
+          _this$storage3$cached = _this$storage3$cached === void 0 ? {} : _this$storage3$cached;
+          var _this$storage3$cached2 = _this$storage3$cached.dist;
+          _this$storage3$cached2 = _this$storage3$cached2 === void 0 ? {} : _this$storage3$cached2;
+          var _this$storage3$cached3 = _this$storage3$cached2.dx,
+              nextDx = _this$storage3$cached3 === void 0 ? dx : _this$storage3$cached3,
+              _this$storage3$cached4 = _this$storage3$cached2.dy,
+              nextDy = _this$storage3$cached4 === void 0 ? dy : _this$storage3$cached4,
               restrict = this.options.restrict;
           parentMatrix.e = parentMatrix.f = 0;
 
@@ -4192,15 +4199,15 @@
       }, {
         key: "_processRotate",
         value: function _processRotate(radians) {
-          var _this$storage5 = this.storage,
-              wrapper = _this$storage5.wrapper,
-              _this$storage5$transf = _this$storage5.transform,
-              matrix = _this$storage5$transf.matrix,
-              wrapperMatrix = _this$storage5$transf.wrapperMatrix,
-              parentMatrix = _this$storage5$transf.parentMatrix,
-              _this$storage5$transf2 = _this$storage5$transf.auxiliary.rotate,
-              translateMatrix = _this$storage5$transf2.translateMatrix,
-              wrapperTranslateMatrix = _this$storage5$transf2.wrapperTranslateMatrix,
+          var _this$storage4 = this.storage,
+              wrapper = _this$storage4.wrapper,
+              _this$storage4$transf = _this$storage4.transform,
+              matrix = _this$storage4$transf.matrix,
+              wrapperMatrix = _this$storage4$transf.wrapperMatrix,
+              parentMatrix = _this$storage4$transf.parentMatrix,
+              _this$storage4$transf2 = _this$storage4$transf.auxiliary.rotate,
+              translateMatrix = _this$storage4$transf2.translateMatrix,
+              wrapperTranslateMatrix = _this$storage4$transf2.wrapperTranslateMatrix,
               restrict = this.options.restrict;
           var cos = floatToFixed(Math.cos(radians)),
               sin = floatToFixed(Math.sin(radians));
@@ -4231,14 +4238,14 @@
               doW = _ref9.doW,
               doH = _ref9.doH;
           var element = this.el,
-              _this$storage6 = this.storage,
-              wrapper = _this$storage6.wrapper,
-              parent = _this$storage6.parent,
-              cHandle = _this$storage6.handles.center,
-              _this$options4 = this.options,
-              container = _this$options4.container,
-              restrict = _this$options4.restrict,
-              rotationPoint = _this$options4.rotationPoint;
+              _this$storage5 = this.storage,
+              wrapper = _this$storage5.wrapper,
+              parent = _this$storage5.parent,
+              cHandle = _this$storage5.handles.center,
+              _this$options5 = this.options,
+              container = _this$options5.container,
+              restrict = _this$options5.restrict,
+              rotationPoint = _this$options5.rotationPoint;
           var eBBox = element.getBBox();
           var elX = eBBox.x,
               elY = eBBox.y,
@@ -4309,8 +4316,7 @@
             wrapperMatrix: wrapperMatrix,
             containerMatrix: containerMatrix,
             scX: Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b),
-            scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d),
-            containerBox: container.getBBox()
+            scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d)
           };
           return {
             transform: transform,
@@ -4325,13 +4331,13 @@
       }, {
         key: "_moveCenterHandle",
         value: function _moveCenterHandle(dx, dy) {
-          var _this$storage7 = this.storage,
-              _this$storage7$handle = _this$storage7.handles,
-              center = _this$storage7$handle.center,
-              radius = _this$storage7$handle.radius,
-              _this$storage7$center = _this$storage7.center,
-              hx = _this$storage7$center.hx,
-              hy = _this$storage7$center.hy;
+          var _this$storage6 = this.storage,
+              _this$storage6$handle = _this$storage6.handles,
+              center = _this$storage6$handle.center,
+              radius = _this$storage6$handle.radius,
+              _this$storage6$center = _this$storage6.center,
+              hx = _this$storage6$center.hx,
+              hy = _this$storage6$center.hy;
           if (isUndef(center)) return;
           var mx = hx + dx,
               my = hy + dy;
@@ -4345,15 +4351,15 @@
         key: "resetCenterPoint",
         value: function resetCenterPoint() {
           var el = this.el,
-              _this$storage8 = this.storage,
-              _this$storage8$bBox = _this$storage8.bBox,
-              boxWidth = _this$storage8$bBox.width,
-              boxHeight = _this$storage8$bBox.height,
-              boxLeft = _this$storage8$bBox.x,
-              boxTop = _this$storage8$bBox.y,
-              _this$storage8$handle = _this$storage8.handles,
-              center = _this$storage8$handle.center,
-              radius = _this$storage8$handle.radius;
+              _this$storage7 = this.storage,
+              _this$storage7$bBox = _this$storage7.bBox,
+              boxWidth = _this$storage7$bBox.width,
+              boxHeight = _this$storage7$bBox.height,
+              boxLeft = _this$storage7$bBox.x,
+              boxTop = _this$storage7$bBox.y,
+              _this$storage7$handle = _this$storage7.handles,
+              center = _this$storage7$handle.center,
+              radius = _this$storage7$handle.radius;
           if (!center) return;
           var matrix = getTransformToElement(el, el.parentNode);
 
@@ -4397,9 +4403,9 @@
         key: "getBoundingRect",
         value: function getBoundingRect(transformMatrix) {
           var el = this.el,
-              container = this.options.container,
+              restrict = this.options.restrict,
               bBox = this.storage.bBox;
-          return _getBoundingRect$1(el, getTransformToElement(el.parentNode, container).multiply(transformMatrix), bBox);
+          return _getBoundingRect$1(el, getTransformToElement(el.parentNode, restrict).multiply(transformMatrix), bBox);
         }
       }, {
         key: "controls",
@@ -4959,8 +4965,8 @@
     }
 
     var EMITTER_EVENTS$2 = EVENT_EMITTER_CONSTANTS.EMITTER_EVENTS;
-    var E_MOUSEDOWN$3 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
-        E_TOUCHSTART$3 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
+    var E_MOUSEDOWN$4 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
+        E_TOUCHSTART$4 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
 
     var Cloneable = /*#__PURE__*/function (_SubjectModel) {
       _inherits(Cloneable, _SubjectModel);
@@ -4999,7 +5005,7 @@
             css: css,
             parent: isDef(appendTo) ? helper(appendTo)[0] : document.body
           };
-          $el.on(E_MOUSEDOWN$3, this._onMouseDown).on(E_TOUCHSTART$3, this._onTouchStart);
+          $el.on(E_MOUSEDOWN$4, this._onMouseDown).on(E_TOUCHSTART$4, this._onTouchStart);
           EMITTER_EVENTS$2.slice(0, 3).forEach(function (eventName) {
             _this2.eventDispatcher.registerEvent(eventName);
           });
@@ -5140,7 +5146,7 @@
               proxyMethods = this.proxyMethods,
               el = this.el;
           if (isUndef(storage)) return;
-          helper(el).off(E_MOUSEDOWN$3, this._onMouseDown).off(E_TOUCHSTART$3, this._onTouchStart);
+          helper(el).off(E_MOUSEDOWN$4, this._onMouseDown).off(E_TOUCHSTART$4, this._onTouchStart);
           proxyMethods.onDestroy.call(this, el);
           delete this.storage;
         }

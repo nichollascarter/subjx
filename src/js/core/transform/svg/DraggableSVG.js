@@ -35,6 +35,7 @@ export default class DraggableSVG extends Transformable {
         const {
             rotationPoint,
             container,
+            controlsContainer,
             resizable,
             rotatable,
             rotatorAnchor,
@@ -230,7 +231,7 @@ export default class DraggableSVG extends Transformable {
         });
 
         wrapper.appendChild(controls);
-        container.appendChild(wrapper);
+        controlsContainer.appendChild(wrapper);
 
         this.storage = {
             wrapper,
@@ -271,7 +272,8 @@ export default class DraggableSVG extends Transformable {
                 }
             },
             options: {
-                restrict
+                container,
+                restrict = container
             }
         } = this;
 
@@ -863,8 +865,7 @@ export default class DraggableSVG extends Transformable {
             wrapperMatrix,
             containerMatrix,
             scX: Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b),
-            scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d),
-            containerBox: container.getBBox()
+            scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d)
         };
 
         return {
@@ -965,7 +966,7 @@ export default class DraggableSVG extends Transformable {
         const {
             el,
             options: {
-                container
+                restrict
             },
             storage: {
                 bBox
@@ -974,7 +975,7 @@ export default class DraggableSVG extends Transformable {
 
         return getBoundingRect(
             el,
-            getTransformToElement(el.parentNode, container).multiply(transformMatrix),
+            getTransformToElement(el.parentNode, restrict).multiply(transformMatrix),
             bBox
         );
     }

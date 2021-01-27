@@ -138,7 +138,8 @@ xDraggable.resetCenterPoint();
 
 |Property|Description|Type|Default|
 |--|--|--|--|
-| **container** | Transformation coordinate system. "controls" append to this element | `'selector', element` | - |
+| **container** | Transformation coordinate system | `'selector', element`
+| **controlsContainer** | "controls" append to this element | `'selector', element` | - |
 | **axis** | Constrain movement along an axis | `string` | 'xy' |
 | **snap** | Snapping to grid in pixels/radians | `object` | { x: 10, y: 10, angle: 10 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |

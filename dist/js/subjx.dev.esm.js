@@ -4,6 +4,7 @@
 * Karen Sarksyan
 * nichollascarter@gmail.com
 */
+(function(l, r) { if (l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (window.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(window.document);
 const requestAnimFrame =
     window.requestAnimationFrame ||
     window.mozRequestAnimationFrame ||
@@ -766,6 +767,14 @@ const {
 } = EVENT_EMITTER_CONSTANTS;
 
 const { TRANSFORM_HANDLES_KEYS: TRANSFORM_HANDLES_KEYS$1, TRANSFORM_EDGES_KEYS: TRANSFORM_EDGES_KEYS$1 } = TRANSFORM_HANDLES_CONSTANTS;
+const {
+    E_MOUSEDOWN: E_MOUSEDOWN$1,
+    E_TOUCHSTART: E_TOUCHSTART$1,
+    E_MOUSEMOVE: E_MOUSEMOVE$2,
+    E_MOUSEUP: E_MOUSEUP$2,
+    E_TOUCHMOVE: E_TOUCHMOVE$2,
+    E_TOUCHEND: E_TOUCHEND$2
+} = CLIENT_EVENTS_CONSTANTS;
 
 const {
     TOP_LEFT,
@@ -859,6 +868,7 @@ class Transformable extends SubjectModel {
             onRotate = () => { },
             onDestroy = () => { },
             container = el.parentNode,
+            controlsContainer = container,
             proportions = false,
             rotatorAnchor = null,
             rotatorOffset = 50,
@@ -876,6 +886,7 @@ class Transformable extends SubjectModel {
                 ? helper(restrict)[0] || document.body
                 : null,
             container: helper(container)[0],
+            controlsContainer: helper(controlsContainer)[0],
             snap: {
                 ...snap,
                 angle: snap.angle * RAD
@@ -1230,7 +1241,7 @@ class Transformable extends SubjectModel {
     }
 
     _moving(e) {
-        const { storage, options } = this;
+        const { storage = {}, options } = this;
 
         if (!storage.isTarget) return;
 
@@ -1408,6 +1419,24 @@ class Transformable extends SubjectModel {
         };
     }
 
+    _destroy() {
+        const {
+            el,
+            storage: {
+                controls,
+                wrapper
+            }
+        } = this;
+
+        [el, controls].map(target => (
+            helper(target)
+                .off(E_MOUSEDOWN$1, this._onMouseDown)
+                .off(E_TOUCHSTART$1, this._onTouchStart)
+        ));
+
+        wrapper.parentNode.removeChild(wrapper);
+    }
+
     notifyMove() {
         this._drag(...arguments);
     }
@@ -1482,10 +1511,19 @@ class Transformable extends SubjectModel {
 
         if (isUndef(storage)) return;
 
+        // unexpected case
+        if (storage.onExecution) {
+            helper(document)
+                .off(E_MOUSEMOVE$2, this._onMouseMove)
+                .off(E_MOUSEUP$2, this._onMouseUp)
+                .off(E_TOUCHMOVE$2, this._onTouchMove)
+                .off(E_TOUCHEND$2, this._onTouchEnd);
+        }
+
         removeClass(el, `${LIB_CLASS_PREFIX}drag`);
 
-        this._destroy();
         this.unsubscribe();
+        this._destroy();
 
         proxyMethods.onDestroy.call(this, el);
         delete this.storage;
@@ -1822,7 +1860,7 @@ const getAbsoluteOffset = (elem, container = document.body) => {
     return [left, top, 0, 1];
 };
 
-const { E_MOUSEDOWN: E_MOUSEDOWN$1, E_TOUCHSTART: E_TOUCHSTART$1 } = CLIENT_EVENTS_CONSTANTS;
+const { E_MOUSEDOWN: E_MOUSEDOWN$2, E_TOUCHSTART: E_TOUCHSTART$2 } = CLIENT_EVENTS_CONSTANTS;
 
 class Draggable extends Transformable {
 
@@ -1830,6 +1868,7 @@ class Draggable extends Transformable {
         const {
             rotationPoint,
             container,
+            controlsContainer,
             resizable,
             rotatable,
             showNormal,
@@ -1997,7 +2036,7 @@ class Draggable extends Transformable {
         mapHandlers(allHandles, createHandler);
 
         wrapper.appendChild(controls);
-        container.appendChild(wrapper);
+        controlsContainer.appendChild(wrapper);
 
         this.storage = {
             wrapper,
@@ -2015,27 +2054,9 @@ class Draggable extends Transformable {
 
         [el, controls].map(target => (
             helper(target)
-                .on(E_MOUSEDOWN$1, this._onMouseDown)
-                .on(E_TOUCHSTART$1, this._onTouchStart)
+                .on(E_MOUSEDOWN$2, this._onMouseDown)
+                .on(E_TOUCHSTART$2, this._onTouchStart)
         ));
-    }
-
-    _destroy() {
-        const {
-            el,
-            storage: {
-                controls,
-                wrapper
-            }
-        } = this;
-
-        [el, controls].map(target => (
-            helper(target)
-                .off(E_MOUSEDOWN$1, this._onMouseDown)
-                .off(E_TOUCHSTART$1, this._onTouchStart)
-        ));
-
-        wrapper.parentNode.removeChild(wrapper);
     }
 
     _pointToElement({ x, y }) {
@@ -3670,7 +3691,7 @@ const resizePath = (params) => {
 };
 
 const { E_DRAG: E_DRAG$3, E_RESIZE: E_RESIZE$2 } = EVENT_EMITTER_CONSTANTS;
-const { E_MOUSEDOWN: E_MOUSEDOWN$2, E_TOUCHSTART: E_TOUCHSTART$2 } = CLIENT_EVENTS_CONSTANTS;
+const { E_MOUSEDOWN: E_MOUSEDOWN$3, E_TOUCHSTART: E_TOUCHSTART$3 } = CLIENT_EVENTS_CONSTANTS;
 
 class DraggableSVG extends Transformable {
 
@@ -3678,6 +3699,7 @@ class DraggableSVG extends Transformable {
         const {
             rotationPoint,
             container,
+            controlsContainer,
             resizable,
             rotatable,
             rotatorAnchor,
@@ -3873,7 +3895,7 @@ class DraggableSVG extends Transformable {
         });
 
         wrapper.appendChild(controls);
-        container.appendChild(wrapper);
+        controlsContainer.appendChild(wrapper);
 
         this.storage = {
             wrapper,
@@ -3891,27 +3913,9 @@ class DraggableSVG extends Transformable {
 
         [el, controls].map(target => (
             helper(target)
-                .on(E_MOUSEDOWN$2, this._onMouseDown)
-                .on(E_TOUCHSTART$2, this._onTouchStart)
+                .on(E_MOUSEDOWN$3, this._onMouseDown)
+                .on(E_TOUCHSTART$3, this._onTouchStart)
         ));
-    }
-
-    _destroy() {
-        const {
-            el,
-            storage: {
-                controls,
-                wrapper
-            }
-        } = this;
-
-        [el, controls].map(target => (
-            helper(target)
-                .off(E_MOUSEDOWN$2, this._onMouseDown)
-                .off(E_TOUCHSTART$2, this._onTouchStart)
-        ));
-
-        wrapper.parentNode.removeChild(wrapper);
     }
 
     _cursorPoint({ clientX, clientY }) {
@@ -3932,7 +3936,8 @@ class DraggableSVG extends Transformable {
                 }
             },
             options: {
-                restrict
+                container,
+                restrict = container
             }
         } = this;
 
@@ -4524,8 +4529,7 @@ class DraggableSVG extends Transformable {
             wrapperMatrix,
             containerMatrix,
             scX: Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b),
-            scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d),
-            containerBox: container.getBBox()
+            scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d)
         };
 
         return {
@@ -4626,7 +4630,7 @@ class DraggableSVG extends Transformable {
         const {
             el,
             options: {
-                container
+                restrict
             },
             storage: {
                 bBox
@@ -4635,7 +4639,7 @@ class DraggableSVG extends Transformable {
 
         return getBoundingRect$1(
             el,
-            getTransformToElement(el.parentNode, container).multiply(transformMatrix),
+            getTransformToElement(el.parentNode, restrict).multiply(transformMatrix),
             bBox
         );
     }
@@ -5239,7 +5243,7 @@ function drag(options, obInstance) {
 }
 
 const { EMITTER_EVENTS: EMITTER_EVENTS$2 } = EVENT_EMITTER_CONSTANTS;
-const { E_MOUSEDOWN: E_MOUSEDOWN$3, E_TOUCHSTART: E_TOUCHSTART$3 } = CLIENT_EVENTS_CONSTANTS;
+const { E_MOUSEDOWN: E_MOUSEDOWN$4, E_TOUCHSTART: E_TOUCHSTART$4 } = CLIENT_EVENTS_CONSTANTS;
 
 class Cloneable extends SubjectModel {
 
@@ -5271,8 +5275,8 @@ class Cloneable extends SubjectModel {
             parent: isDef(appendTo) ? helper(appendTo)[0] : document.body
         };
 
-        $el.on(E_MOUSEDOWN$3, this._onMouseDown)
-            .on(E_TOUCHSTART$3, this._onTouchStart);
+        $el.on(E_MOUSEDOWN$4, this._onMouseDown)
+            .on(E_TOUCHSTART$4, this._onTouchStart);
 
         EMITTER_EVENTS$2.slice(0, 3).forEach((eventName) => {
             this.eventDispatcher.registerEvent(eventName);
@@ -5448,8 +5452,8 @@ class Cloneable extends SubjectModel {
         if (isUndef(storage)) return;
 
         helper(el)
-            .off(E_MOUSEDOWN$3, this._onMouseDown)
-            .off(E_TOUCHSTART$3, this._onTouchStart);
+            .off(E_MOUSEDOWN$4, this._onMouseDown)
+            .off(E_TOUCHSTART$4, this._onTouchStart);
 
         proxyMethods.onDestroy.call(this, el);
         delete this.storage;

@@ -29,6 +29,7 @@ export default class Draggable extends Transformable {
         const {
             rotationPoint,
             container,
+            controlsContainer,
             resizable,
             rotatable,
             showNormal,
@@ -196,7 +197,7 @@ export default class Draggable extends Transformable {
         mapHandlers(allHandles, createHandler);
 
         wrapper.appendChild(controls);
-        container.appendChild(wrapper);
+        controlsContainer.appendChild(wrapper);
 
         this.storage = {
             wrapper,
