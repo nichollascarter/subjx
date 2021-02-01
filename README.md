@@ -138,8 +138,8 @@ xDraggable.resetCenterPoint();
 
 |Property|Description|Type|Default|
 |--|--|--|--|
-| **container** | Transformation coordinate system | `'selector', element`
-| **controlsContainer** | "controls" append to this element | `'selector', element` | - |
+| **container** | Transformation coordinate system | `'selector'`/ `element` | element.parentNode |
+| **controlsContainer** | "controls" append to this element | `'selector'`/ `element` | element.parentNode |
 | **axis** | Constrain movement along an axis | `string` | 'xy' |
 | **snap** | Snapping to grid in pixels/radians | `object` | { x: 10, y: 10, angle: 10 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
@@ -148,8 +148,8 @@ xDraggable.resetCenterPoint();
 | **resizable** | Allow or deny an action | `boolean` | true |
 | **rotatable** | Allow or deny an action | `boolean` | true |
 | **scalable** | Applies scaling only to root element | `boolean` | false |
-| **restrict** | Restricts element dragging/resizing/rotation | `'selector' | element` | - |
-| **rotatorAnchor** | Rotator anchor direction | `string: 'n' | 's' | 'w' | 'e'` | 'e' |
+| **restrict** | Restricts element dragging/resizing/rotation | `'selector'` / `element` | - |
+| **rotatorAnchor** | Rotator anchor direction | `string`: 'n' / 's' / 'w' / 'e' | 'e' |
 | **rotatorOffset** | Rotator offset  | `number` | 50 |
 
 #### Notice: In most cases, it is recommended to use 'proportions' option
