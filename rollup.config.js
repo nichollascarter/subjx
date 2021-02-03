@@ -10,7 +10,7 @@ import livereload from 'rollup-plugin-livereload';
 
 // eslint-disable-next-line no-undef
 const { NODE_ENV = 'production', LIVE_MODE = 'disable' } = process.env;
-const liveMode = LIVE_MODE || 'disable';
+const liveMode = LIVE_MODE === 'enable';
 const prod = NODE_ENV === 'production';
 let libraryName = 'subjx';
 
@@ -34,14 +34,7 @@ const plugins = [
         exclude: 'node_modules/**',
         throwOnError: prod
     }),
-    resolve(),
-    ...(!prod && (liveMode === 'enable')
-        ? [
-            serve(['public', 'dist']),
-            livereload('dist')
-        ]
-        : []
-    )
+    resolve()
 ];
 
 const uglifyPlugin = () => {
@@ -59,6 +52,14 @@ const uglifyPlugin = () => {
 const uglifyESMPlugin = () => {
     return terser();
 };
+
+const umdPlugins = [
+    babel({
+        exclude: 'node_modules/**',
+        presets: ['@babel/preset-env']
+    }),
+    prod && uglifyPlugin()
+];
 
 export default [
     {
@@ -88,11 +89,26 @@ export default [
         }],
         plugins: [
             ...plugins,
-            babel({
-                exclude: 'node_modules/**',
-                presets: ['@babel/preset-env']
-            }),
-            prod && uglifyPlugin()
+            ...umdPlugins
         ]
-    }
+    },
+    ...(
+        liveMode
+            ? [{
+                input: './src/js/index.js',
+                output: [{
+                    name: 'subjx',
+                    file: `public/${libraryName}.js`,
+                    format: 'umd',
+                    banner
+                }],
+                plugins: [
+                    ...plugins,
+                    serve(['public', 'dist']),
+                    livereload('dist'),
+                    ...umdPlugins
+                ]
+            }]
+            : []
+    )
 ];
