@@ -9,8 +9,9 @@ import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
 
 // eslint-disable-next-line no-undef
-const env = process.env.NODE_ENV || 'production';
-const prod = env === 'production';
+const { NODE_ENV = 'production', LIVE_MODE = 'disable' } = process.env;
+const liveMode = LIVE_MODE || 'disable';
+const prod = NODE_ENV === 'production';
 let libraryName = 'subjx';
 
 const banner = `/*@license
@@ -34,8 +35,13 @@ const plugins = [
         throwOnError: prod
     }),
     resolve(),
-    !prod && serve(['public', 'dist']),
-    !prod && livereload('dist')
+    ...(!prod && (liveMode === 'enable')
+        ? [
+            serve(['public', 'dist']),
+            livereload('dist')
+        ]
+        : []
+    )
 ];
 
 const uglifyPlugin = () => {
