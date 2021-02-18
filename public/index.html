@@ -118,7 +118,8 @@
         cursorResize: 'pointer'
     };
 
-    const Draggables = subjx('.draggable').drag(options);
+    const $draggables = document.getElementsByClassName('draggable');
+    const Draggables = subjx($draggables).drag(options);
 
     Draggables.forEach(item => {
         const { controls } = item;

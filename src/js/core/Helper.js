@@ -24,11 +24,10 @@ export default class Helper {
                 this[count] = params[count];
             }
         } else if (isIterable(params)) {
-            this.length = 0;
+            this.length = params.length;
             for (let count = 0; count < this.length; count++) {
-                if (params.nodeType === 1) {
+                if (params[count].nodeType === 1) {
                     this[count] = params[count];
-                    this.length++;
                 }
             }
         } else {
@@ -196,7 +195,7 @@ function isIterable(obj) {
             ) ||
             isDef(obj.forEach) ||
             (
-                typeof (obj.length) === "number" &&
+                typeof (obj.length) === 'number' &&
                 (obj.length === 0 ||
                     (obj.length > 0 &&
                         (obj.length - 1) in obj)

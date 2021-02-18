@@ -194,11 +194,13 @@
     }
 
     function _createSuper(Derived) {
-      return function () {
+      var hasNativeReflectConstruct = _isNativeReflectConstruct();
+
+      return function _createSuperInternal() {
         var Super = _getPrototypeOf(Derived),
             result;
 
-        if (_isNativeReflectConstruct()) {
+        if (hasNativeReflectConstruct) {
           var NewTarget = _getPrototypeOf(this).constructor;
 
           result = Reflect.construct(Super, arguments, NewTarget);
@@ -262,7 +264,7 @@
       if (typeof o === "string") return _arrayLikeToArray(o, minLen);
       var n = Object.prototype.toString.call(o).slice(8, -1);
       if (n === "Object" && o.constructor) n = o.constructor.name;
-      if (n === "Map" || n === "Set") return Array.from(n);
+      if (n === "Map" || n === "Set") return Array.from(o);
       if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
     }
 
@@ -282,9 +284,12 @@
       throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
     }
 
-    function _createForOfIteratorHelper(o) {
+    function _createForOfIteratorHelper(o, allowArrayLike) {
+      var it;
+
       if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
-        if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) {
+        if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+          if (it) o = it;
           var i = 0;
 
           var F = function () {};
@@ -310,8 +315,7 @@
         throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
       }
 
-      var it,
-          normalCompletion = true,
+      var normalCompletion = true,
           didErr = false,
           err;
       return {
@@ -386,12 +390,11 @@
             this[_count] = params[_count];
           }
         } else if (isIterable(params)) {
-          this.length = 0;
+          this.length = params.length;
 
           for (var _count2 = 0; _count2 < this.length; _count2++) {
-            if (params.nodeType === 1) {
+            if (params[_count2].nodeType === 1) {
               this[_count2] = params[_count2];
-              this.length++;
             }
           }
         } else {
@@ -558,7 +561,7 @@
     }
 
     function isIterable(obj) {
-      return isDef(obj) && _typeof(obj) === 'object' && (Array.isArray(obj) || isDef(window.Symbol) && typeof obj[window.Symbol.iterator] === 'function' || isDef(obj.forEach) || typeof obj.length === "number" && (obj.length === 0 || obj.length > 0 && obj.length - 1 in obj));
+      return isDef(obj) && _typeof(obj) === 'object' && (Array.isArray(obj) || isDef(window.Symbol) && typeof obj[window.Symbol.iterator] === 'function' || isDef(obj.forEach) || typeof obj.length === 'number' && (obj.length === 0 || obj.length > 0 && obj.length - 1 in obj));
     }
 
     function helper(params) {
@@ -1148,7 +1151,7 @@
 
           var finalValues = this._processResize(dx, dy);
 
-          var finalArgs = _objectSpread2({}, finalValues, {
+          var finalArgs = _objectSpread2(_objectSpread2({}, finalValues), {}, {
             dx: dx,
             dy: dy
           }, rest);
@@ -1230,7 +1233,7 @@
             restrict: restrict ? helper(restrict)[0] || document.body : null,
             container: helper(container)[0],
             controlsContainer: helper(controlsContainer)[0],
-            snap: _objectSpread2({}, snap, {
+            snap: _objectSpread2(_objectSpread2({}, snap), {}, {
               angle: snap.angle * RAD
             }),
             each: each,
@@ -1456,7 +1459,7 @@
             doy: /\y/.test(axis) && (doResize ? handle.is(handles.br) || handle.is(handles.bl) || handle.is(handles.bc) || handle.is(handles.tr) || handle.is(handles.tl) || handle.is(handles.tc) || handle.is(handles.te) || handle.is(handles.be) : true),
             cached: {}
           };
-          this.storage = _objectSpread2({}, storage, {}, nextStorage);
+          this.storage = _objectSpread2(_objectSpread2({}, storage), nextStorage);
           var eventArgs = {
             clientX: clientX,
             clientY: clientY
@@ -1613,7 +1616,7 @@
               clientY = _this$_cursorPoint3.y;
 
           var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);
-          return _objectSpread2({}, _computed, {}, rest, {
+          return _objectSpread2(_objectSpread2(_objectSpread2({}, _computed), rest), {}, {
             handle: Object.values(handles).some(function (hdl) {
               return helper(e.target).is(hdl);
             }) ? handle : helper(el),
@@ -1721,7 +1724,7 @@
           if (triggerEvent) {
             var recalc = this._getState(rest);
 
-            this.storage = _objectSpread2({}, this.storage, {}, recalc);
+            this.storage = _objectSpread2(_objectSpread2({}, this.storage), recalc);
 
             this._emitEvent("".concat(actionName, "Start"), {
               clientX: clientX,
@@ -1790,7 +1793,7 @@
               dy = _ref8.dy;
           var draggable = this.options.draggable;
           if (!draggable) return;
-          this.storage = _objectSpread2({}, this.storage, {}, this._getState({
+          this.storage = _objectSpread2(_objectSpread2({}, this.storage), this._getState({
             revX: false,
             revY: false,
             doW: false,
@@ -1819,7 +1822,7 @@
               doH = _ref9$doH === void 0 ? false : _ref9$doH;
           var resizable = this.options.resizable;
           if (!resizable) return;
-          this.storage = _objectSpread2({}, this.storage, {}, this._getState({
+          this.storage = _objectSpread2(_objectSpread2({}, this.storage), this._getState({
             revX: revX,
             revY: revY,
             doW: doW,
@@ -1839,7 +1842,7 @@
           var delta = _ref10.delta;
           var rotatable = this.options.rotatable;
           if (!rotatable) return;
-          this.storage = _objectSpread2({}, this.storage, {}, this._getState({
+          this.storage = _objectSpread2(_objectSpread2({}, this.storage), this._getState({
             revX: false,
             revY: false,
             doW: false,
@@ -2229,7 +2232,7 @@
               controls.appendChild(radius);
             }
 
-            rotationHandles = _objectSpread2({}, rotationHandles, {
+            rotationHandles = _objectSpread2(_objectSpread2({}, rotationHandles), {}, {
               normal: normalLine,
               radius: radius
             });
@@ -2253,7 +2256,7 @@
           } : {};
           var nextCenter = hasOrigin ? [].concat(_toConsumableArray(originRotation), [0, 1]) : finalVertices.center;
 
-          var allHandles = _objectSpread2({}, resizingHandles, {
+          var allHandles = _objectSpread2(_objectSpread2({}, resizingHandles), {}, {
             center: rotationPoint && rotatable ? nextCenter : undefined,
             rotator: rotator
           });
@@ -2275,7 +2278,7 @@
           this.storage = {
             wrapper: wrapper,
             controls: controls,
-            handles: _objectSpread2({}, handles, {}, rotationHandles),
+            handles: _objectSpread2(_objectSpread2({}, handles), rotationHandles),
             parent: el.parentNode,
             center: {
               isShifted: hasOrigin
@@ -2485,7 +2488,7 @@
           if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
           var scaleMatrix = getScaleMatrix(scaleX, scaleY);
           var resultMatrix = scalable ? multiplyMatrix(scaleMatrix, matrix) : getTranslateMatrix(scaleMatrix, matrix);
-          helper(el).css(_objectSpread2({}, matrixToCSS(flatMatrix(resultMatrix)), {}, !scalable && {
+          helper(el).css(_objectSpread2(_objectSpread2({}, matrixToCSS(flatMatrix(resultMatrix))), !scalable && {
             width: "".concat(newWidth, "px"),
             height: "".concat(newHeight, "px")
           }));
@@ -2705,7 +2708,7 @@
                 top: glTop
               }
             },
-            center: _objectSpread2({}, oldCenter, {
+            center: _objectSpread2(_objectSpread2({}, oldCenter), {}, {
               x: globalCenterX,
               y: globalCenterY,
               elX: elX,
@@ -2788,7 +2791,7 @@
               nextWidth = _this$storage7$cached3 === void 0 ? width : _this$storage7$cached3,
               _this$storage7$cached4 = _this$storage7$cached2.height,
               nextHeight = _this$storage7$cached4 === void 0 ? height : _this$storage7$cached4;
-          var nextBox = scalable ? box : _objectSpread2({}, box, {
+          var nextBox = scalable ? box : _objectSpread2(_objectSpread2({}, box), {}, {
             width: nextWidth,
             height: nextHeight
           });
@@ -2993,7 +2996,7 @@
         });
       });
 
-      var allHandles = _objectSpread2({}, resizable && resizingHandles, {}, rotationHandles);
+      var allHandles = _objectSpread2(_objectSpread2({}, resizable && resizingHandles), rotationHandles);
 
       Object.keys(allHandles).forEach(function (key) {
         var hdl = allHandles[key];
@@ -3728,7 +3731,7 @@
                 x = _ref2$[0],
                 y = _ref2$[1];
 
-            return _objectSpread2({}, nextRes, _defineProperty({}, key, pointTo(elCTM, x, y)));
+            return _objectSpread2(_objectSpread2({}, nextRes), {}, _defineProperty({}, key, pointTo(elCTM, x, y)));
           }, {});
           var handles = {};
           var rotationHandles = {},
@@ -3783,13 +3786,13 @@
               controls.appendChild(radius);
             }
 
-            rotationHandles = _objectSpread2({}, rotationHandles, {
+            rotationHandles = _objectSpread2(_objectSpread2({}, rotationHandles), {}, {
               normal: normalLine,
               radius: radius
             });
           }
 
-          var resizingHandles = resizable ? _objectSpread2({}, nextVertices, {
+          var resizingHandles = resizable ? _objectSpread2(_objectSpread2({}, nextVertices), {}, {
             rotator: rotator
           }) : {};
           var resizingEdges = {
@@ -3806,7 +3809,7 @@
           });
           var nextCenter = hasOrigin ? pointTo(createSVGMatrix(), originRotation[0], originRotation[1]) : nextVertices.center;
 
-          var allHandles = _objectSpread2({}, resizingHandles, {
+          var allHandles = _objectSpread2(_objectSpread2({}, resizingHandles), {}, {
             center: rotationPoint && rotatable ? nextCenter : undefined
           });
 
@@ -3830,7 +3833,7 @@
           this.storage = {
             wrapper: wrapper,
             controls: controls,
-            handles: _objectSpread2({}, handles, {}, rotationHandles),
+            handles: _objectSpread2(_objectSpread2({}, handles), rotationHandles),
             parent: el.parentNode,
             center: {
               isShifted: hasOrigin
@@ -4105,7 +4108,7 @@
             el.setAttribute('transform', matrixToString(resultMatrix));
           }
 
-          storage.cached = _objectSpread2({}, storage.cached, {
+          storage.cached = _objectSpread2(_objectSpread2({}, storage.cached), {}, {
             scaleX: scaleX,
             scaleY: scaleY,
             transformMatrix: scaleMatrix,
@@ -4283,7 +4286,7 @@
             storeElementAttributes(child);
           });
 
-          var center = _objectSpread2({}, this.storage.center || {}, {
+          var center = _objectSpread2(_objectSpread2({}, this.storage.center || {}), {}, {
             x: rotationPoint ? bcx : rcx,
             y: rotationPoint ? bcy : rcy,
             elX: elcx,
