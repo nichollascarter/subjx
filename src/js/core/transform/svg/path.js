@@ -15,11 +15,11 @@ const parsePath = (path) => {
     const serialized = [];
 
     while ((match = dRE.exec(path))) {
-        const cmd = match[1];
+        const [, cmd, params] = match;
         const upCmd = cmd.toUpperCase();
 
         // normalize the data
-        const data = match[2]
+        const data = params
             .replace(/([^e])-/g, '$1 -')
             .replace(/ +/g, ' ');
 
@@ -83,7 +83,7 @@ export const movePath = (params) => {
                         firstCommand = false;
                     }
                     break;
-                }              
+                }
                 case 'A': {
                     for (let k = 0, len = values.length; k < len; k += 7) {
                         const set = values.slice(k, k + 7);
@@ -289,7 +289,7 @@ export const resizePath = (params) => {
                             x: resX1,
                             y: resY1
                         } = pointTo(
-                            mtrx,                          
+                            mtrx,
                             x1,
                             y1
                         );

@@ -1,4 +1,13 @@
 import { isDef, isUndef } from '../util/util';
+import { NOTIFIER_CONSTANTS } from '../consts';
+
+const {
+    ON_GETSTATE,
+    ON_APPLY,
+    ON_MOVE,
+    ON_RESIZE,
+    ON_ROTATE
+} = NOTIFIER_CONSTANTS;
 
 export default class Observable {
 
@@ -38,24 +47,24 @@ export default class Observable {
             if (source === observer) return;
             switch (eventName) {
 
-                case 'onmove':
+                case ON_MOVE:
                     observer.notifyMove(data);
                     break;
-                case 'onrotate':
+                case ON_ROTATE:
                     observer.notifyRotate(data);
                     break;
-                case 'onresize':
+                case ON_RESIZE:
                     observer.notifyResize(data);
                     break;
-                case 'onapply':
+                case ON_APPLY:
                     observer.notifyApply(data);
                     break;
-                case 'ongetstate':
+                case ON_GETSTATE:
                     observer.notifyGetState(data);
                     break;
                 default:
                     break;
-            
+
             }
         });
     }

@@ -1,6 +1,14 @@
 import { helper } from './Helper';
 import EventDispatcher from './EventDispatcher';
+import { EVENT_EMITTER_CONSTANTS, CLIENT_EVENTS_CONSTANTS } from './consts';
 
+const { E_DRAG } = EVENT_EMITTER_CONSTANTS;
+const {
+    E_MOUSEMOVE,
+    E_MOUSEUP,
+    E_TOUCHMOVE,
+    E_TOUCHEND
+} = CLIENT_EVENTS_CONSTANTS;
 export default class SubjectModel {
 
     constructor(el) {
@@ -36,7 +44,7 @@ export default class SubjectModel {
     _destroy() {
         throwNotImplementedError();
     }
-    
+
     _processOptions() {
         throwNotImplementedError();
     }
@@ -68,7 +76,7 @@ export default class SubjectModel {
         };
 
         this.proxyMethods.onMove.call(this, finalArgs);
-        this._emitEvent('drag', finalArgs);
+        this._emitEvent(E_DRAG, finalArgs);
     }
 
     _draw() {
@@ -78,15 +86,15 @@ export default class SubjectModel {
     _onMouseDown(e) {
         this._start(e);
         helper(document)
-            .on('mousemove', this._onMouseMove)
-            .on('mouseup', this._onMouseUp);
+            .on(E_MOUSEMOVE, this._onMouseMove)
+            .on(E_MOUSEUP, this._onMouseUp);
     }
 
     _onTouchStart(e) {
         this._start(e.touches[0]);
         helper(document)
-            .on('touchmove', this._onTouchMove)
-            .on('touchend', this._onTouchEnd);
+            .on(E_TOUCHMOVE, this._onTouchMove)
+            .on(E_TOUCHEND, this._onTouchEnd);
     }
 
     _onMouseMove(e) {
@@ -111,8 +119,8 @@ export default class SubjectModel {
 
     _onMouseUp(e) {
         helper(document)
-            .off('mousemove', this._onMouseMove)
-            .off('mouseup', this._onMouseUp);
+            .off(E_MOUSEMOVE, this._onMouseMove)
+            .off(E_MOUSEUP, this._onMouseUp);
 
         this._end(
             e,
@@ -122,8 +130,8 @@ export default class SubjectModel {
 
     _onTouchEnd(e) {
         helper(document)
-            .off('touchmove', this._onTouchMove)
-            .off('touchend', this._onTouchEnd);
+            .off(E_TOUCHMOVE, this._onTouchMove)
+            .off(E_TOUCHEND, this._onTouchEnd);
 
         if (e.touches.length === 0) {
             this._end(

@@ -1,4 +1,4 @@
-export const requestAnimFrame = 
+export const requestAnimFrame =
     window.requestAnimationFrame ||
     window.mozRequestAnimationFrame ||
     window.webkitRequestAnimationFrame ||
@@ -24,17 +24,11 @@ export const {
 export const { warn } = console;
 /* eslint-disable no-console */
 
-export const isDef = (val) => {
-    return val !== undefined && val !== null;
-};
+export const isDef = val => val !== undefined && val !== null;
 
-export const isUndef = (val) => {
-    return val === undefined || val === null;
-};
+export const isUndef = val => val === undefined || val === null;
 
-export const isFunc = (val) => {
-    return typeof val === 'function';
-};
+export const isFunc = val => typeof val === 'function';
 
 export const createMethod = (fn) => {
     return isFunc(fn)

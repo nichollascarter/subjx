@@ -1,201 +1,269 @@
-import { floatToFixed } from './common';
+import { getStyle } from '../util/css-util';
 
-export const matrixTransform = ({ x, y }, matrix) => {
-    const [a, b, c, d, e, f] = matrix;
+export const cloneMatrix = m => m.map(item => [...item]);
 
-    return {
-        x: a * x + c * y + e,
-        y: b * x + d * y + f
-    };
+export const flatMatrix = (m) => (
+    m.reduce((flat, _, i) => ([...flat, m[0][i], m[1][i], m[2][i], m[3][i]]), [])
+);
+
+export const createIdentityMatrix = (n = 4) => (
+    [...Array(n)].map((_, i, a) => a.map(() => +!i--))
+);
+
+export const createTranslateMatrix = (x, y, z = 0) => (
+    createIdentityMatrix().map((item, i) => {
+        item[3] = [x, y, z, 1][i];
+        return item;
+    })
+);
+
+export const createScaleMatrix = (x, y, z = 1, w = 1) => (
+    createIdentityMatrix().map((item, i) => {
+        item[i] = [x, y, z, w][i];
+        return item;
+    })
+);
+
+export const createRotateMatrix = (sin, cos) => {
+    const res = createIdentityMatrix();
+
+    res[0][0] = cos;
+    res[0][1] = -sin;
+    res[1][0] = sin;
+    res[1][1] = cos;
+
+    return res;
 };
 
-//http://blog.acipo.com/matrix-inversion-in-javascript/
-export const matrixInvert = (ctm) => {
-    // I use Guassian Elimination to calculate the inverse:
-    // (1) 'augment' the matrix (left) by the identity (on the right)
-    // (2) Turn the matrix on the left into the identity by elemetry row ops
-    // (3) The matrix on the right is the inverse (was the identity matrix)
-    // There are 3 elemtary row ops: (I combine b and c in my code)
-    // (a) Swap 2 rows
-    // (b) Multiply a row by a scalar
-    // (c) Add 2 rows
-
-    const M = [
-        [ctm[0], ctm[2], ctm[4]],
-        [ctm[1], ctm[3], ctm[5]],
-        [0, 0, 1]
-    ];
-
-    //if the matrix isn't square: exit (error)
-    if (M.length !== M[0].length) {
-        return;
-    }
-
-    //create the identity matrix (I), and a copy (C) of the original
-    const dim = M.length;
-
-    const I = [],
-        C = [];
-
-    for (let i = 0; i < dim; i += 1) {
-        // Create the row
-        I[I.length] = [];
-        C[C.length] = [];
-        for (let j = 0; j < dim; j += 1) {
-            //if we're on the diagonal, put a 1 (for identity)
-            if (i == j) {
-                I[i][j] = 1;
-            } else {
-                I[i][j] = 0;
-            }
-
-            // Also, make the copy of the original
-            C[i][j] = M[i][j];
-        }
-    }
-
-    // Perform elementary row operations
-    for (let i = 0; i < dim; i += 1) {
-        // get the element e on the diagonal
-        let e = C[i][i];
-
-        // if we have a 0 on the diagonal (we'll need to swap with a lower row)
-        if (e === 0) {
-            //look through every row below the i'th row
-            for (let ii = i + 1; ii < dim; ii += 1) {
-                //if the ii'th row has a non-0 in the i'th col
-                if (C[ii][i] !== 0) {
-                    //it would make the diagonal have a non-0 so swap it
-                    for (let j = 0; j < dim; j++) {
-                        e = C[i][j]; //temp store i'th row
-                        C[i][j] = C[ii][j]; //replace i'th row by ii'th
-                        C[ii][j] = e; //repace ii'th by temp
-                        e = I[i][j]; //temp store i'th row
-                        I[i][j] = I[ii][j]; //replace i'th row by ii'th
-                        I[ii][j] = e; //repace ii'th by temp
-                    }
-                    //don't bother checking other rows since we've swapped
-                    break;
-                }
-            }
-            //get the new diagonal
-            e = C[i][i];
-            //if it's still 0, not invertable (error)
-            if (e === 0) {
-                return;
-            }
-        }
-
-        // Scale this row down by e (so we have a 1 on the diagonal)
-        for (let j = 0; j < dim; j++) {
-            C[i][j] = C[i][j] / e; //apply to original matrix
-            I[i][j] = I[i][j] / e; //apply to identity
-        }
-
-        // Subtract this row (scaled appropriately for each row) from ALL of
-        // the other rows so that there will be 0's in this column in the
-        // rows above and below this one
-        for (let ii = 0; ii < dim; ii++) {
-            // Only apply to other rows (we want a 1 on the diagonal)
-            if (ii == i) {
-                continue;
-            }
-
-            // We want to change this element to 0
-            e = C[ii][i];
-
-            // Subtract (the row above(or below) scaled by e) from (the
-            // current row) but start at the i'th column and assume all the
-            // stuff left of diagonal is 0 (which it should be if we made this
-            // algorithm correctly)
-            for (let j = 0; j < dim; j++) {
-                C[ii][j] -= e * C[i][j]; //apply to original matrix
-                I[ii][j] -= e * I[i][j]; //apply to identity
-            }
-        }
-    }
-
-    //we've done all operations, C should be the identity
-    //matrix I should be the inverse:
-    return [
-        I[0][0], I[1][0],
-        I[0][1], I[1][1],
-        I[0][2], I[1][2]
-    ];
+export const dropTranslate = (matrix, clone = true) => {
+    const nextMatrix = clone ? cloneMatrix(matrix) : matrix;
+    nextMatrix[0][3] = nextMatrix[1][3] = nextMatrix[2][3] = 0;
+    return nextMatrix;
 };
 
-export const multiplyMatrix = (
-    [a1, b1, c1, d1, e1, f1], 
-    [a2, b2, c2, d2, e2, f2]
-) => {
-    const m1 = [
-        [a1, c1, e1],
-        [b1, d1, f1],
-        [0, 0, 1]
-    ];
+export const multiplyMatrixAndPoint = (mat, point) => {
+    const out = [];
 
-    const m2 = [
-        [a2, c2, e2],
-        [b2, d2, f2],
-        [0, 0, 1]
-    ];
+    for (let i = 0, len = mat.length; i < len; ++i) {
+        let sum = 0;
+        for (let j = 0; j < len; ++j) {
+            sum += +mat[i][j] * point[j];
+        }
+        out[i] = sum;
+    }
 
+    return out;
+};
+
+export const multiplyMatrix = (m1, m2) => {
     const result = [];
 
     for (let j = 0; j < m2.length; j++) {
         result[j] = [];
+
         for (let k = 0; k < m1[0].length; k++) {
             let sum = 0;
+
             for (let i = 0; i < m1.length; i++) {
                 sum += m1[i][k] * m2[j][i];
             }
             result[j].push(sum);
         }
     }
-
-    return [
-        result[0][0], result[1][0],
-        result[0][1], result[1][1],
-        result[0][2], result[1][2]
-    ];
+    return result;
 };
 
-export const rotatedTopLeft = (
-    x,
-    y,
-    width,
-    height,
-    rotationAngle,
-    revX,
-    revY,
-    doW,
-    doH
-) => {
-    const hw = parseFloat(width) / 2,
-        hh = parseFloat(height) / 2;
+export const matrixInvert = (matrix) => {
+    const _A = cloneMatrix(matrix);
 
-    const cx = x + hw,
-        cy = y + hh;
+    let temp,
+        N = _A.length,
+        E = [];
 
-    const dx = x - cx,
-        dy = y - cy;
+    for (let i = 0; i < N; i++)
+        E[i] = [];
 
-    const originalTopLeftAngle = Math.atan2(doW ? 0 : dy, doH ? 0 : dx);
-    const rotatedTopLeftAngle = originalTopLeftAngle + rotationAngle;
+    for (let i = 0; i < N; i++)
+        for (let j = 0; j < N; j++) {
+            E[i][j] = 0;
+            if (i == j)
+                E[i][j] = 1;
+        }
 
-    const radius = Math.sqrt(Math.pow(doH ? 0 : hw, 2) + Math.pow(doW ? 0 : hh, 2));
+    for (let k = 0; k < N; k++) {
+        temp = _A[k][k];
 
-    let cos = Math.cos(rotatedTopLeftAngle),
-        sin = Math.sin(rotatedTopLeftAngle);
+        for (let j = 0; j < N; j++) {
+            _A[k][j] /= temp;
+            E[k][j] /= temp;
+        }
 
-    cos = revX === true ? -cos : cos;
-    sin = revY === true ? -sin : sin;
+        for (let i = k + 1; i < N; i++) {
+            temp = _A[i][k];
 
-    const rx = cx + radius * cos,
-        ry = cy + radius * sin;
+            for (let j = 0; j < N; j++) {
+                _A[i][j] -= _A[k][j] * temp;
+                E[i][j] -= E[k][j] * temp;
+            }
+        }
+    }
+
+    for (let k = N - 1; k > 0; k--) {
+        for (let i = k - 1; i >= 0; i--) {
+            temp = _A[i][k];
+
+            for (let j = 0; j < N; j++) {
+                _A[i][j] -= _A[k][j] * temp;
+                E[i][j] -= E[k][j] * temp;
+            }
+        }
+    }
+
+    for (let i = 0; i < N; i++)
+        for (let j = 0; j < N; j++)
+            _A[i][j] = E[i][j];
+
+    return _A;
+};
+
+export const computeTransformMatrix = (tx, [x, y, z]) => {
+    const preMul = createTranslateMatrix(-x, -y, -z);
+    const postMul = createTranslateMatrix(x, y, z);
+
+    return multiplyMatrix(
+        multiplyMatrix(preMul, tx),
+        postMul
+    );
+};
+
+export const getCurrentTransformMatrix = (el, container = document.body, newTransform) => {
+    let matrix = createIdentityMatrix();
+    let node = el;
+
+    // set predefined matrix if we need to find new CTM
+    let nodeTx = newTransform || getTransform(node);
+    let allowBorderOffset = false;
+
+    while (node && node instanceof Element) {
+        //const nodeTx = getTransform(node);
+        const nodeTxOrigin = getTransformOrigin(node, allowBorderOffset);
+
+        matrix = multiplyMatrix(
+            matrix,
+            computeTransformMatrix(nodeTx, nodeTxOrigin)
+        );
+
+        allowBorderOffset = true;
+        if (node === container || node.offsetParent === null) break;
+        node = node.offsetParent;
+        nodeTx = getTransform(node);
+    }
+
+    return matrix;
+};
+
+export const decompose = (m) => {
+    const sX = Math.sqrt(m[0][0] * m[0][0] + m[1][0] * m[1][0] + m[2][0] * m[2][0]),
+        sY = Math.sqrt(m[0][1] * m[0][1] + m[1][1] * m[1][1] + m[2][1] * m[2][1]),
+        sZ = Math.sqrt(m[0][2] * m[0][2] + m[1][2] * m[1][2] + m[2][2] * m[2][2]);
+
+    let rX = Math.atan2(-m[0][3] / sZ, m[1][3] / sZ),
+        rY = Math.asin(m[3][1] / sZ),
+        rZ = Math.atan2(-m[3][0] / sY, m[0][0] / sX);
+
+    if (m[0][1] === 1 || m[0][1] === -1) {
+        rX = 0;
+        rY = m[0][1] * -Math.PI / 2;
+        rZ = m[0][1] * Math.atan2(m[1][1] / sY, m[0][1] / sY);
+    }
 
     return {
-        left: floatToFixed(rx),
-        top: floatToFixed(ry)
+        rotate: {
+            x: rX,
+            y: rY,
+            z: rZ
+        },
+        translate: {
+            x: m[0][3] / sX,
+            y: m[1][3] / sY,
+            z: m[2][3] / sZ
+        },
+        scale: {
+            sX,
+            sY,
+            sZ
+        }
     };
+};
+
+export const getTransform = (el) => {
+    const matrixString = getStyle(el, 'transform') || 'none';
+    const matrix = createIdentityMatrix();
+
+    if (matrixString === 'none') return matrix;
+
+    const values = matrixString.split(/\s*[(),]\s*/).slice(1, -1);
+
+    if (values.length === 16) {
+        for (let i = 0; i < 4; ++i) {
+            for (let j = 0; j < 4; ++j) {
+                matrix[j][i] = +values[i * 4 + j];
+            }
+        }
+    } else {
+        return [
+            [+values[0], +values[2], 0, +values[4]],
+            [+values[1], +values[3], 0, +values[5]],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ];
+    }
+
+    return matrix;
+};
+
+export const getTransformOrigin = (el, allowBorderOffset) => {
+    const transformOrigin = getStyle(el, 'transform-origin');
+    const values = transformOrigin ? transformOrigin.split(' ') : [];
+
+    const out = [
+        allowBorderOffset ? -el.clientLeft : 0,
+        allowBorderOffset ? -el.clientTop : 0,
+        0,
+        1
+    ];
+
+    for (let i = 0; i < values.length; ++i) {
+        out[i] += parseFloat(values[i]);
+    }
+
+    return out;
+};
+
+export const getAbsoluteOffset = (elem, container = document.body) => {
+    let top = 0, left = 0;
+
+    let allowBorderOffset = false;
+    while (elem) {
+        const parentTx = getCurrentTransformMatrix(elem.offsetParent);
+
+        const [offsetLeft, offsetTop] = multiplyMatrixAndPoint(
+            dropTranslate(parentTx, false),
+            [
+                elem.offsetLeft + (allowBorderOffset ? elem.clientLeft : 0),
+                elem.offsetTop + (allowBorderOffset ? elem.clientTop : 0),
+                0,
+                1
+            ]
+        );
+
+        left += offsetLeft;
+        top += offsetTop;
+
+        if (container === elem) break;
+        allowBorderOffset = true;
+        elem = elem.offsetParent;
+    }
+
+    return [left, top, 0, 1];
 };

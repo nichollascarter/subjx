@@ -2,36 +2,40 @@
 import resolve from 'rollup-plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
 import postcss from 'rollup-plugin-postcss';
-import { terser } from "rollup-plugin-terser";
+import { terser } from 'rollup-plugin-terser';
 import { uglify } from 'rollup-plugin-uglify';
 import { eslint } from 'rollup-plugin-eslint';
+import serve from 'rollup-plugin-serve';
+import livereload from 'rollup-plugin-livereload';
 
-const env = process.env.NODE_ENV || 'production';
-const prod = env === 'production';
-let libraryName = "subjx";
+// eslint-disable-next-line no-undef
+const { NODE_ENV = 'production', LIVE_MODE = 'disable' } = process.env;
+const liveMode = LIVE_MODE === 'enable';
+const prod = NODE_ENV === 'production';
+let libraryName = 'subjx';
 
 const banner = `/*@license
 * Drag/Rotate/Resize Library
-* Released under the MIT license, 2018-2020
+* Released under the MIT license, 2018-2021
 * Karen Sarksyan
 * nichollascarter@gmail.com
 */`;
 
-const plugins = [
-    postcss({
-        minimize: true,
-        extract: "dist/style/subjx.css"
-    }),
-    eslint({
-        exclude: 'node_modules/**',
-        throwOnError: true
-    }),
-    resolve()
-];
-
 if (!prod) {
     libraryName += '.dev';
 }
+
+const plugins = [
+    postcss({
+        minimize: true,
+        extract: 'dist/style/subjx.css'
+    }),
+    eslint({
+        exclude: 'node_modules/**',
+        throwOnError: prod
+    }),
+    resolve()
+];
 
 const uglifyPlugin = () => {
     return uglify({
@@ -48,6 +52,14 @@ const uglifyPlugin = () => {
 const uglifyESMPlugin = () => {
     return terser();
 };
+
+const umdPlugins = [
+    babel({
+        exclude: 'node_modules/**',
+        presets: ['@babel/preset-env']
+    }),
+    prod && uglifyPlugin()
+];
 
 export default [
     {
@@ -77,11 +89,26 @@ export default [
         }],
         plugins: [
             ...plugins,
-            babel({
-                exclude: 'node_modules/**',
-                presets: ["@babel/preset-env"]
-            }),
-            prod && uglifyPlugin()
+            ...umdPlugins
         ]
-    }
+    },
+    ...(
+        liveMode
+            ? [{
+                input: './src/js/index.js',
+                output: [{
+                    name: 'subjx',
+                    file: `public/${libraryName}.js`,
+                    format: 'umd',
+                    banner
+                }],
+                plugins: [
+                    ...plugins,
+                    serve(['public', 'dist']),
+                    livereload('dist'),
+                    ...umdPlugins
+                ]
+            }]
+            : []
+    )
 ];

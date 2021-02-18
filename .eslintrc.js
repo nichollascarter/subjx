@@ -13,7 +13,8 @@ module.exports = {
     },
     "env": {
         "es6": true,
-        "browser": true
+        "browser": true,
+        "jest": true
     },
     "rules": {
         "no-const-assign": "error",
@@ -35,6 +36,7 @@ module.exports = {
             "imports": "never",
             "exports": "never",
             "functions": "never"
-        }]
+        }],
+        "no-trailing-spaces": "error"
     }
 };

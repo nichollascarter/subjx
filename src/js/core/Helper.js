@@ -24,11 +24,10 @@ export default class Helper {
                 this[count] = params[count];
             }
         } else if (isIterable(params)) {
-            this.length = 0;
+            this.length = params.length;
             for (let count = 0; count < this.length; count++) {
-                if (params.nodeType === 1) {
+                if (params[count].nodeType === 1) {
                     this[count] = params[count];
-                    this.length++;
                 }
             }
         } else {
@@ -93,8 +92,8 @@ export default class Helper {
             if (typeof (arguments[1]) !== 'string') {
                 if (document.addEventListener) {
                     this[len].addEventListener(
-                        arguments[0], 
-                        arguments[1], 
+                        arguments[0],
+                        arguments[1],
                         arguments[2] || { passive: false }
                     );
                 } else if (document.attachEvent) {
@@ -104,11 +103,11 @@ export default class Helper {
                 }
             } else {
                 listenerDelegate(
-                    this[len], 
-                    arguments[0], 
-                    arguments[1], 
-                    arguments[2], 
-                    arguments[3], 
+                    this[len],
+                    arguments[0],
+                    arguments[1],
+                    arguments[2],
+                    arguments[3],
                     true
                 );
             }
@@ -143,7 +142,7 @@ export default class Helper {
 
     is(selector) {
         if (isUndef(selector)) return false;
-        
+
         const _sel = helper(selector);
         let len = this.length;
 
@@ -196,7 +195,7 @@ function isIterable(obj) {
             ) ||
             isDef(obj.forEach) ||
             (
-                typeof (obj.length) === "number" &&
+                typeof (obj.length) === 'number' &&
                 (obj.length === 0 ||
                     (obj.length > 0 &&
                         (obj.length - 1) in obj)

@@ -56,25 +56,25 @@
             <rect class="drag-svg" x="709" y="451" rx="10" ry="10" width="30" height="30" stroke="black"
                 fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></rect>
 
-            <circle class="drag-svg" cx="1032" cy="392" r="20" stroke="red" fill="transparent" stroke-width="5"
+            <circle cx="1032" cy="392" r="20" stroke="red" fill="transparent" stroke-width="5"
                 transform="matrix(1,0,0,1,0,0)">
             </circle>
-            <ellipse class="drag-svg" cx="598" cy="462" rx="22.000000000000004" ry="17" stroke="red" fill="transparent"
+            <ellipse cx="598" cy="462" rx="22.000000000000004" ry="17" stroke="red" fill="transparent"
                 stroke-width="5" transform="matrix(1,0,0,1,0,0)"></ellipse>
 
-            <line class="drag-svg" x1="866" x2="906" y1="440" y2="480" stroke="orange" fill="transparent"
+            <line  x1="866" x2="906" y1="440" y2="480" stroke="orange" fill="transparent"
                 stroke-width="5" transform="matrix(1,0,0,1,0,0)"></line>
-            <polyline class="drag-svg" points="839 313 844 323 849 318 854 333 859 328 864 343 869 338 874 353 879 348"
+            <polyline points="839 313 844 323 849 318 854 333 859 328 864 343 869 338 874 353 879 348"
                 stroke="orange" fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></polyline>
 
-            <polygon class="drag-svg"
+            <polygon
                 points="596 311 601 331 616 331 606 341 611 356 596 346 581 356 586 341 576 331 591 331" stroke="green"
                 fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></polygon>
 
-            <path class="drag-svg" d="M691,331 Q711,306,721,331 T761,331 " fill="none" stroke="blue" stroke-width="5">
+            <path d="M691,331 Q711,306,721,331 T761,331 " fill="none" stroke="blue" stroke-width="5">
             </path>
 
-            <text class="drag-svg">
+            <text>
                 Test
             </text>
 
@@ -152,10 +152,10 @@
         <div id="stack"
             style="overflow: auto; box-sizing: border-box; width:100%; height:100%;position: relative; border-top: #32B5FE 1px dashed">
             <div id="container" style="box-sizing: border-box; width:100%; height:100%;position: relative;">
-                <div class='draggable' style='top:150px; left:100px;'>
+                <div style='top:150px; left:100px;'>
                     <span class="draggable-text"></span>
                 </div>
-                <div class='draggable' style='top:150px; left:400px;'>
+                <div style='top:150px; left:400px;'>
                     <span class="draggable-text"></span>
                 </div>
             </div>
@@ -240,21 +240,22 @@
         container: '#svg-container',
         restrict: '#svg-container',
         proportions: true,
-        //rotationPoint: true,
+        rotationPoint: true,
         //themeColor: 'white',
+        scalable: true,
         each: {
             resize: true,
-            // move: true,
-            // rotate: true
+            move: true,
+            rotate: true
         },
         snap: {
             x: 20,
             y: 20,
             angle: 25
         },
-        // cursorMove: 'move',
-        // cursorRotate: 'crosshair',
-        // cursorResize: 'pointer',
+        cursorMove: 'move',
+        cursorRotate: 'crosshair',
+        cursorResize: 'pointer',
         ...methods
     };
 
@@ -307,12 +308,12 @@
         rotationPoint: true,
         proportions: true,
         each: {
-            move: true,
-            resize: true
+            //move: true,
+            //resize: true
         },
         snap: {
-            x: 40,
-            y: 40,
+            x: 0,
+            y: 0,
             angle: 0
         },
         cursorMove: 'move',

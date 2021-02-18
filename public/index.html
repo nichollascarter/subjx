@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" href="style/subjx.css" />
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        .page {
+            height: 100vh;
+            min-height: 100vh;
+            /* background-color: #000000c4; */
+        }
+
+        .draggable {
+            position: absolute;
+            width: 150px;
+            height: 70px;
+            background-color: #ffff007a;
+            box-sizing: border-box;
+            /* transform-origin: 0 0; */
+        }
+
+        .draggable-text {
+            position: relative;
+            display: block;
+            font-size: large;
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .clonable {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            left: 0;
+        }
+        .vertex {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-sizing: border-box;
+            background: #00a8ff;
+            margin-top: -7px;
+            margin-left: -7px;
+        }
+        #container {
+            position: absolute;
+        }
+    </style>
+    <script src="subjx.dev.js" type="text/javascript" charset="utf-8"></script>
+    <title>Demo</title>
+</head>
+
+<body>
+    
+    <div class="page">
+        <div id="stack"
+            style="position: fixed; overflow: auto; box-sizing: border-box; width:100%; height:100%;border-top: #32B5FE 1px dashed">
+            <div id="container" style="position: absolute; box-sizing: border-box; width:100%; height:100%;">
+                <div id="world" style="box-sizing: border-box; width:100%; height:100%; position: absolute; transform: scale(0.8); border: #32B5FE 1px dashed">
+                    <div style="position: absolute; width: 200px; height:500px; transform: translateX(10px)">
+                        <div style="top: 10px; left: 20px; position: absolute; width: 200px; height:500px; transform: scaleZ(0.5) rotateZ(25deg)">
+                            <div class='draggable' style='position: absolute; border: 1px solid red; top:150px; left:150px; transform: scaleX(1.5) scaleY(1.5) rotateX(-125deg) translateX(10px)'>
+                                <span class="draggable-text"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class='draggable' style='top:150px; left:400px;'>  
+                    </div>
+                </div>
+            </div>
+            <div class='clone clonable' style='background-color:yellow;top:0;'></div>
+            <div class='clone-styled clonable' style='background-color:green;top:55px;'></div>
+            <div class='clone-clear clonable' style='background-color:red;top:110px;'></div>
+        </div>
+    </div>
+</body>
+
+<script>
+
+    // create Observable instance
+    const obs = subjx.createObservable();
+
+    const options = {
+        container: '#container',
+        restrict: '#world',
+        rotationPoint: true,
+        rotatorAnchor: 's',
+        rotatorOffset: 30,
+        //rotatable: false,
+        // resizable: false,
+        // applyTranslate: true,
+        //scalable: true,
+        //proportions: true,
+        //draggable: false,
+        each: {
+           // move: true,
+           // resize: true
+        },
+        snap: {
+            x: 0,
+            y: 0,
+            angle: 0
+        },
+        cursorMove: 'move',
+        cursorRotate: 'crosshair',
+        cursorResize: 'pointer'
+    };
+
+    const $draggables = document.getElementsByClassName('draggable');
+    const Draggables = subjx($draggables).drag(options);
+
+    Draggables.forEach(item => {
+        const { controls } = item;
+        subjx(controls).on('dblclick', () => {
+            item.disable();
+            Draggables.splice(Draggables.indexOf(item), 1);
+        });
+    });
+
+    subjx('.draggable').on('dblclick', e => {
+        if (e.currentTarget.classList.contains('sjx-drag')) return;
+        const [xDraggable] = subjx(e.currentTarget).drag(options);
+
+        Draggables.push(xDraggable);
+        // adding event to controls
+        const controls = xDraggable.controls;
+        subjx(controls).on('dblclick', () => {
+            xDraggable.disable();
+        });
+    });
+
+    const onDrop = function (e, el) {
+        const stack = subjx('#container')[0],
+            offset = stack.getBoundingClientRect(),
+            div = document.createElement('div');
+
+        div.style.top = `${e.clientY - offset.top}px`;
+        div.style.left = `${e.clientX - offset.left}px`;
+
+        div.classList.add('draggable');
+
+        stack.appendChild(div);
+
+        Draggables.push(
+            ...subjx(div).drag()
+        );
+    };
+
+    subjx('.clone').clone({
+        stack: '#container',
+        appendTo: '#stack',
+        onDrop
+    });
+
+    subjx('.clone-styled').clone({
+        stack: '#container',
+        appendTo: '#stack',
+        style: {
+            border: '1px dashed green',
+            background: 'transparent'
+        },
+        onDrop
+    });
+
+    subjx('.clone-clear').on('click', () => {
+        Draggables.forEach(item => {
+            item.disable();
+            item.el.parentNode.removeChild(item.el);
+        });
+        Draggables.splice(0, Draggables.length);
+    });
+
+</script>
+
+</html>
