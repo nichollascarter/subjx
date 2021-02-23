@@ -4167,20 +4167,22 @@
               restX = _ref7.x,
               restY = _ref7.y;
 
+          var newDx = restX !== null && restrict ? nextDx : dx;
+          var newDy = restY !== null && restrict ? nextDy : dy;
           storage.cached.dist = {
-            dx: restX !== null && restrict ? nextDx : dx,
-            dy: restY !== null && restrict ? nextDy : dy
+            dx: newDx,
+            dy: newDy
           };
 
-          var _pointTo2 = pointTo(parentMatrix.inverse(), nextDx, nextDy),
+          var _pointTo2 = pointTo(parentMatrix.inverse(), newDx, newDy),
               nx = _pointTo2.x,
               ny = _pointTo2.y;
 
           translateMatrix.e = nx;
           translateMatrix.f = ny;
           var moveElementMtrx = translateMatrix.multiply(matrix);
-          wrapperTranslateMatrix.e = nextDx;
-          wrapperTranslateMatrix.f = nextDy;
+          wrapperTranslateMatrix.e = newDx;
+          wrapperTranslateMatrix.f = newDy;
           var moveWrapperMtrx = wrapperTranslateMatrix.multiply(wrapperMatrix);
           wrapper.setAttribute('transform', matrixToString(moveWrapperMtrx));
           this.el.setAttribute('transform', matrixToString(moveElementMtrx));
@@ -4189,7 +4191,7 @@
             var centerTransformMatrix = wrapperMatrix.inverse();
             centerTransformMatrix.e = centerTransformMatrix.f = 0;
 
-            var _pointTo3 = pointTo(centerTransformMatrix, nextDx, nextDy),
+            var _pointTo3 = pointTo(centerTransformMatrix, newDx, newDy),
                 cx = _pointTo3.x,
                 cy = _pointTo3.y;
 
