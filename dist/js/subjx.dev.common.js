@@ -4306,15 +4306,18 @@ class DraggableSVG extends Transformable {
             ? this._restrictHandler(preTranslateMatrix)
             : { x: null, y: null };
 
+        const newDx = restX !== null && restrict ? nextDx : dx;
+        const newDy = restY !== null && restrict ? nextDy : dy;
+
         storage.cached.dist = {
-            dx: restX !== null && restrict ? nextDx : dx,
-            dy: restY !== null && restrict ? nextDy : dy
+            dx: newDx,
+            dy: newDy
         };
 
         const { x: nx, y: ny } = pointTo(
             parentMatrix.inverse(),
-            nextDx,
-            nextDy
+            newDx,
+            newDy
         );
 
         translateMatrix.e = nx;
@@ -4322,8 +4325,8 @@ class DraggableSVG extends Transformable {
 
         const moveElementMtrx = translateMatrix.multiply(matrix);
 
-        wrapperTranslateMatrix.e = nextDx;
-        wrapperTranslateMatrix.f = nextDy;
+        wrapperTranslateMatrix.e = newDx;
+        wrapperTranslateMatrix.f = newDy;
 
         const moveWrapperMtrx = wrapperTranslateMatrix.multiply(wrapperMatrix);
 
@@ -4342,8 +4345,8 @@ class DraggableSVG extends Transformable {
             centerTransformMatrix.e = centerTransformMatrix.f = 0;
             const { x: cx, y: cy } = pointTo(
                 centerTransformMatrix,
-                nextDx,
-                nextDy
+                newDx,
+                newDy
             );
 
             this._moveCenterHandle(-cx, -cy);
