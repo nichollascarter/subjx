@@ -2222,12 +2222,12 @@
 
             var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? Math.atan2(finalVertices.bl[1] - finalVertices.tl[1], finalVertices.bl[0] - finalVertices.tl[0]) : Math.atan2(finalVertices.tl[1] - finalVertices.tr[1], finalVertices.tl[0] - finalVertices.tr[0]);
             rotator = [anchor.x - rotatorOffset * factor * Math.cos(theta), anchor.y - rotatorOffset * factor * Math.sin(theta)];
-            var normalLine = showNormal ? renderLine([[anchor.x, anchor.y], rotator]) : null;
+            var normalLine = showNormal ? renderLine([[anchor.x, anchor.y], rotator], 'normal') : null;
             if (showNormal) controls.appendChild(normalLine);
             var radius = null;
 
             if (rotationPoint) {
-              radius = renderLine([finalVertices.center, finalVertices.center]);
+              radius = renderLine([finalVertices.center, finalVertices.center], 'radius');
               addClass(radius, 'sjx-hidden');
               controls.appendChild(radius);
             }
@@ -3771,7 +3771,7 @@
               x: anchor.x - rotatorOffset * factor * Math.cos(theta),
               y: anchor.y - rotatorOffset * factor * Math.sin(theta)
             };
-            var normalLine = showNormal ? renderLine$1([anchor, rotator], THEME_COLOR, 'norm') : null;
+            var normalLine = showNormal ? renderLine$1([anchor, rotator], THEME_COLOR, 'normal') : null;
             if (showNormal) controls.appendChild(normalLine);
             var radius = null;
 
@@ -3792,14 +3792,21 @@
             });
           }
 
-          var resizingHandles = resizable ? _objectSpread2(_objectSpread2({}, nextVertices), {}, {
-            rotator: rotator
-          }) : {};
+          var resizingHandles = resizable ? {
+            tl: nextVertices.tl,
+            tr: nextVertices.tr,
+            br: nextVertices.br,
+            bl: nextVertices.bl,
+            tc: nextVertices.tc,
+            bc: nextVertices.bc,
+            ml: nextVertices.ml,
+            mr: nextVertices.mr
+          } : {};
           var resizingEdges = {
-            te: [resizingHandles.tl, resizingHandles.tr],
-            be: [resizingHandles.bl, resizingHandles.br],
-            le: [resizingHandles.tl, resizingHandles.bl],
-            re: [resizingHandles.tr, resizingHandles.br]
+            te: [nextVertices.tl, nextVertices.tr],
+            be: [nextVertices.bl, nextVertices.br],
+            le: [nextVertices.tl, nextVertices.bl],
+            re: [nextVertices.tr, nextVertices.br]
           };
           Object.keys(resizingEdges).forEach(function (key) {
             var data = resizingEdges[key];
@@ -3810,6 +3817,7 @@
           var nextCenter = hasOrigin ? pointTo(createSVGMatrix(), originRotation[0], originRotation[1]) : nextVertices.center;
 
           var allHandles = _objectSpread2(_objectSpread2({}, resizingHandles), {}, {
+            rotator: rotator,
             center: rotationPoint && rotatable ? nextCenter : undefined
           });
 
@@ -4248,8 +4256,7 @@
               cHandle = _this$storage5.handles.center,
               _this$options5 = this.options,
               container = _this$options5.container,
-              restrict = _this$options5.restrict,
-              rotationPoint = _this$options5.rotationPoint;
+              restrict = _this$options5.restrict;
           var eBBox = element.getBBox();
           var elX = eBBox.x,
               elY = eBBox.y,
@@ -4265,15 +4272,15 @@
               scaleY = elY + elH * (doW ? 0.5 : revY ? 1 : 0);
           var elCenterX = elX + elW / 2,
               elCenterY = elY + elH / 2;
-          var centerX = rotationPoint ? cHandle.cx.baseVal.value : elCenterX;
-          var centerY = rotationPoint ? cHandle.cy.baseVal.value : elCenterY; // c-handle's coordinates
+          var centerX = cHandle ? cHandle.cx.baseVal.value : elCenterX;
+          var centerY = cHandle ? cHandle.cy.baseVal.value : elCenterY; // c-handle's coordinates
 
           var _pointTo4 = pointTo(boxCTM, centerX, centerY),
               bcx = _pointTo4.x,
               bcy = _pointTo4.y; // element's center coordinates
 
 
-          var _ref10 = rotationPoint ? pointTo(parentMatrixInverted, bcx, bcy) : pointTo(elMatrix, elCenterX, elCenterY),
+          var _ref10 = cHandle ? pointTo(parentMatrixInverted, bcx, bcy) : pointTo(elMatrix, elCenterX, elCenterY),
               elcx = _ref10.x,
               elcy = _ref10.y; // box's center coordinates
 
@@ -4289,12 +4296,12 @@
           });
 
           var center = _objectSpread2(_objectSpread2({}, this.storage.center || {}), {}, {
-            x: rotationPoint ? bcx : rcx,
-            y: rotationPoint ? bcy : rcy,
+            x: cHandle ? bcx : rcx,
+            y: cHandle ? bcy : rcy,
             elX: elcx,
             elY: elcy,
-            hx: rotationPoint ? cHandle.cx.baseVal.value : null,
-            hy: rotationPoint ? cHandle.cy.baseVal.value : null
+            hx: cHandle ? cHandle.cx.baseVal.value : null,
+            hy: cHandle ? cHandle.cy.baseVal.value : null
           });
 
           var containerMatrix = restrict ? getTransformToElement(restrict, restrict.parentNode) : getTransformToElement(container, container.parentNode);
