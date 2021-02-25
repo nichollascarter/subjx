@@ -1969,7 +1969,7 @@ class Draggable extends Transformable {
             ];
 
             const normalLine = showNormal
-                ? renderLine([[anchor.x, anchor.y], rotator])
+                ? renderLine([[anchor.x, anchor.y], rotator], 'normal')
                 : null;
 
             if (showNormal) controls.appendChild(normalLine);
@@ -1977,7 +1977,7 @@ class Draggable extends Transformable {
             let radius = null;
 
             if (rotationPoint) {
-                radius = renderLine([finalVertices.center, finalVertices.center]);
+                radius = renderLine([finalVertices.center, finalVertices.center], 'radius');
                 addClass(radius, 'sjx-hidden');
 
                 controls.appendChild(radius);
@@ -3801,7 +3801,7 @@ class DraggableSVG extends Transformable {
             };
 
             const normalLine = showNormal
-                ? renderLine$1([anchor, rotator], THEME_COLOR, 'norm')
+                ? renderLine$1([anchor, rotator], THEME_COLOR, 'normal')
                 : null;
 
             if (showNormal) controls.appendChild(normalLine);
@@ -3831,16 +3831,22 @@ class DraggableSVG extends Transformable {
 
         const resizingHandles = resizable ?
             {
-                ...nextVertices,
-                rotator
+                tl: nextVertices.tl,
+                tr: nextVertices.tr,
+                br: nextVertices.br,
+                bl: nextVertices.bl,
+                tc: nextVertices.tc,
+                bc: nextVertices.bc,
+                ml: nextVertices.ml,
+                mr: nextVertices.mr
             }
             : {};
 
         const resizingEdges = {
-            te: [resizingHandles.tl, resizingHandles.tr],
-            be: [resizingHandles.bl, resizingHandles.br],
-            le: [resizingHandles.tl, resizingHandles.bl],
-            re: [resizingHandles.tr, resizingHandles.br]
+            te: [nextVertices.tl, nextVertices.tr],
+            be: [nextVertices.bl, nextVertices.br],
+            le: [nextVertices.tl, nextVertices.bl],
+            re: [nextVertices.tr, nextVertices.br]
         };
 
         Object.keys(resizingEdges).forEach(key => {
@@ -3866,6 +3872,7 @@ class DraggableSVG extends Transformable {
 
         const allHandles = {
             ...resizingHandles,
+            rotator,
             center: rotationPoint && rotatable
                 ? nextCenter
                 : undefined
@@ -4428,8 +4435,7 @@ class DraggableSVG extends Transformable {
             },
             options: {
                 container,
-                restrict,
-                rotationPoint
+                restrict
             }
         } = this;
 
@@ -4456,10 +4462,10 @@ class DraggableSVG extends Transformable {
         const elCenterX = elX + elW / 2,
             elCenterY = elY + elH / 2;
 
-        const centerX = rotationPoint
+        const centerX = cHandle
             ? cHandle.cx.baseVal.value
             : elCenterX;
-        const centerY = rotationPoint
+        const centerY = cHandle
             ? cHandle.cy.baseVal.value
             : elCenterY;
 
@@ -4471,7 +4477,7 @@ class DraggableSVG extends Transformable {
         );
 
         // element's center coordinates
-        const { x: elcx, y: elcy } = rotationPoint
+        const { x: elcx, y: elcy } = cHandle
             ? pointTo(
                 parentMatrixInverted,
                 bcx,
@@ -4498,12 +4504,12 @@ class DraggableSVG extends Transformable {
 
         const center = {
             ...(this.storage.center || {}),
-            x: rotationPoint ? bcx : rcx,
-            y: rotationPoint ? bcy : rcy,
+            x: cHandle ? bcx : rcx,
+            y: cHandle ? bcy : rcy,
             elX: elcx,
             elY: elcy,
-            hx: rotationPoint ? cHandle.cx.baseVal.value : null,
-            hy: rotationPoint ? cHandle.cy.baseVal.value : null
+            hx: cHandle ? cHandle.cx.baseVal.value : null,
+            hy: cHandle ? cHandle.cy.baseVal.value : null
         };
 
         const containerMatrix = restrict

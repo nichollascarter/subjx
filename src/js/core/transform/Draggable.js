@@ -130,7 +130,7 @@ export default class Draggable extends Transformable {
             ];
 
             const normalLine = showNormal
-                ? renderLine([[anchor.x, anchor.y], rotator])
+                ? renderLine([[anchor.x, anchor.y], rotator], 'normal')
                 : null;
 
             if (showNormal) controls.appendChild(normalLine);
@@ -138,7 +138,7 @@ export default class Draggable extends Transformable {
             let radius = null;
 
             if (rotationPoint) {
-                radius = renderLine([finalVertices.center, finalVertices.center]);
+                radius = renderLine([finalVertices.center, finalVertices.center], 'radius');
                 addClass(radius, 'sjx-hidden');
 
                 controls.appendChild(radius);
