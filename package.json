@@ -9,7 +9,6 @@
         "url": "https://github.com/nichollascarter/subjx.git"
     },
     "main": "index.js",
-    "module": "index.esm.js",
     "scripts": {
         "dev": "jest --coverage && cross-env NODE_ENV=development rollup -c",
         "build": "jest --coverage && cross-env NODE_ENV=production rollup -c",
