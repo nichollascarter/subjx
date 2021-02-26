@@ -3000,7 +3000,7 @@ const createElement = (classNames = []) => {
 };
 
 const svgPoint = createSVGElement('svg').createSVGPoint();
-const floatRE = /[+-]?\d+(\.\d+)?/g;
+const sepRE = /\s*,\s*|\s+/g;
 
 const allowedElements = [
     'circle', 'ellipse',
@@ -3130,8 +3130,13 @@ const isGroup = (element) => (
     element.tagName.toLowerCase() === 'g'
 );
 
+const normalizeString = (str = '') => (
+    str.replace(/([^e])-/g, '$1 -')
+        .replace(/ +/g, ' ')
+);
+
 const parsePoints = (pts) => (
-    pts.match(floatRE).reduce(
+    normalizeString(pts).split(sepRE).reduce(
         (result, _, index, array) => {
             if (index % 2 === 0) {
                 result.push(array.slice(index, index + 2));
@@ -3143,7 +3148,6 @@ const parsePoints = (pts) => (
 );
 
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
-const sepRE = /\s*,\s*|\s+/g;
 
 const parsePath = (path) => {
     let match = dRE.lastIndex = 0;
@@ -3154,10 +3158,7 @@ const parsePath = (path) => {
         const [, cmd, params] = match;
         const upCmd = cmd.toUpperCase();
 
-        // normalize the data
-        const data = params
-            .replace(/([^e])-/g, '$1 -')
-            .replace(/ +/g, ' ');
+        const data = normalizeString(params);
 
         serialized.push({
             relative: cmd !== upCmd,
@@ -4911,8 +4912,8 @@ const applyResize = (element, data) => {
                     Number(item[1])
                 );
 
-                item[0] = x;
-                item[1] = y;
+                item[0] = floatToFixed(x);
+                item[1] = floatToFixed(y);
 
                 return item.join(' ');
             }).join(' ');

@@ -1249,8 +1249,8 @@ const applyResize = (element, data) => {
                     Number(item[1])
                 );
 
-                item[0] = x;
-                item[1] = y;
+                item[0] = floatToFixed(x);
+                item[1] = floatToFixed(y);
 
                 return item.join(' ');
             }).join(' ');

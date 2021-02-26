@@ -3056,7 +3056,7 @@
     };
 
     var svgPoint = createSVGElement('svg').createSVGPoint();
-    var floatRE = /[+-]?\d+(\.\d+)?/g;
+    var sepRE = /\s*,\s*|\s+/g;
     var allowedElements = ['circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text', 'g', 'foreignobject', 'use'];
     function createSVGElement(name) {
       var classNames = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
@@ -3162,8 +3162,12 @@
     var isGroup = function isGroup(element) {
       return element.tagName.toLowerCase() === 'g';
     };
+    var normalizeString = function normalizeString() {
+      var str = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+      return str.replace(/([^e])-/g, '$1 -').replace(/ +/g, ' ');
+    };
     var parsePoints = function parsePoints(pts) {
-      return pts.match(floatRE).reduce(function (result, _, index, array) {
+      return normalizeString(pts).split(sepRE).reduce(function (result, _, index, array) {
         if (index % 2 === 0) {
           result.push(array.slice(index, index + 2));
         }
@@ -3173,7 +3177,6 @@
     };
 
     var dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
-    var sepRE = /\s*,\s*|\s+/g;
 
     var parsePath = function parsePath(path) {
       var match = dRE.lastIndex = 0;
@@ -3185,9 +3188,8 @@
             cmd = _match2[1],
             params = _match2[2];
 
-        var upCmd = cmd.toUpperCase(); // normalize the data
-
-        var data = params.replace(/([^e])-/g, '$1 -').replace(/ +/g, ' ');
+        var upCmd = cmd.toUpperCase();
+        var data = normalizeString(params);
         serialized.push({
           relative: cmd !== upCmd,
           key: upCmd,
@@ -4620,8 +4622,8 @@
                   x = _pointTo14.x,
                   y = _pointTo14.y;
 
-              item[0] = x;
-              item[1] = y;
+              item[0] = floatToFixed(x);
+              item[1] = floatToFixed(y);
               return item.join(' ');
             }).join(' ');
             attrs.push(['points', result]);

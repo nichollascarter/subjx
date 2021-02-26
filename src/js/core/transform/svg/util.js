@@ -6,7 +6,7 @@ import {
 import { addClass } from '../../util/css-util';
 
 const svgPoint = createSVGElement('svg').createSVGPoint();
-const floatRE = /[+-]?\d+(\.\d+)?/g;
+export const sepRE = /\s*,\s*|\s+/g;
 
 const allowedElements = [
     'circle', 'ellipse',
@@ -146,8 +146,13 @@ export const isGroup = (element) => (
     element.tagName.toLowerCase() === 'g'
 );
 
+export const normalizeString = (str = '') => (
+    str.replace(/([^e])-/g, '$1 -')
+        .replace(/ +/g, ' ')
+);
+
 export const parsePoints = (pts) => (
-    pts.match(floatRE).reduce(
+    normalizeString(pts).split(sepRE).reduce(
         (result, _, index, array) => {
             if (index % 2 === 0) {
                 result.push(array.slice(index, index + 2));

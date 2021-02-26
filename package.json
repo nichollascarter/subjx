@@ -9,6 +9,7 @@
         "url": "https://github.com/nichollascarter/subjx.git"
     },
     "main": "index.js",
+    "module": "index.esm.js",
     "scripts": {
         "dev": "jest --coverage && cross-env NODE_ENV=development rollup -c",
         "build": "jest --coverage && cross-env NODE_ENV=production rollup -c",
@@ -49,6 +50,20 @@
         "LICENSE",
         "README.md",
         "index.js",
+        "index.esm.js",
         "dist/"
+    ],
+    "keywords": [
+        "subjx",
+        "svg",
+        "resize",
+        "scale",
+        "drag",
+        "rotate",
+        "vanilla-js",
+        "resizable",
+        "scalable",
+        "draggable",
+        "rotatable"
     ]
 }
