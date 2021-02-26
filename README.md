@@ -7,7 +7,7 @@
 </p>
 
 <h3 align="middle">
-    Touch-enabled draggable, resizable, rotatable library for creating drag-n-drop applications.
+    Draggable, resizable, rotatable library for creating drag-n-drop applications.
 </h3>
 
 ## Demos
@@ -140,10 +140,10 @@ xDraggable.resetCenterPoint();
 |--|--|--|--|
 | **container** | Transformation coordinate system | `'selector'`/ `element` | element.parentNode |
 | **controlsContainer** | "controls" append to this element | `'selector'`/ `element` | element.parentNode |
-| **axis** | Constrain movement along an axis | `string` | 'xy' |
+| **axis** | Constrain movement along an axis | `string`: 'x' / 'y' / 'xy' | 'xy' |
 | **snap** | Snapping to grid in pixels/radians | `object` | { x: 10, y: 10, angle: 10 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
-| **proportions** | Keep aspect ratio when resizing | `boolean` | true |
+| **proportions** | Keep aspect ratio when resizing | `boolean` | false |
 | **draggable** | Allow or deny an action | `boolean` | true |
 | **resizable** | Allow or deny an action | `boolean` | true |
 | **rotatable** | Allow or deny an action | `boolean` | true |

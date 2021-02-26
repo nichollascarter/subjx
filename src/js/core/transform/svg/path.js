@@ -3,11 +3,12 @@ import { floatToFixed } from '../common';
 
 import {
     pointTo,
-    cloneMatrix
+    cloneMatrix,
+    normalizeString,
+    sepRE
 } from './util';
 
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
-const sepRE = /\s*,\s*|\s+/g;
 
 const parsePath = (path) => {
     let match = dRE.lastIndex = 0;
@@ -18,10 +19,7 @@ const parsePath = (path) => {
         const [, cmd, params] = match;
         const upCmd = cmd.toUpperCase();
 
-        // normalize the data
-        const data = params
-            .replace(/([^e])-/g, '$1 -')
-            .replace(/ +/g, ' ');
+        const data = normalizeString(params);
 
         serialized.push({
             relative: cmd !== upCmd,
