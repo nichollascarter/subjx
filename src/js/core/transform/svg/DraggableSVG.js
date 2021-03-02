@@ -5,7 +5,6 @@ import { floatToFixed, getMinMaxOf2DIndex } from '../common';
 import { movePath, resizePath } from './path';
 
 import {
-    MIN_SIZE,
     THEME_COLOR,
     EVENT_EMITTER_CONSTANTS,
     CLIENT_EVENTS_CONSTANTS
@@ -565,8 +564,6 @@ export default class DraggableSVG extends Transformable {
             newWidth,
             newHeight
         ] = getScale(newDx, newDy);
-
-        if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
 
         const scaleMatrix = getScaleMatrix(scaleX, scaleY);
         const resultMatrix = matrix.multiply(scaleMatrix);

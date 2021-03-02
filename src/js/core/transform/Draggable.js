@@ -458,12 +458,18 @@ export default class Draggable extends Transformable {
             newHeight
         ] = getScale(newDx, newDy);
 
-        if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
-
         const scaleMatrix = getScaleMatrix(scaleX, scaleY);
         const resultMatrix = scalable
             ? multiplyMatrix(scaleMatrix, matrix)
             : getTranslateMatrix(scaleMatrix, matrix);
+
+        if (newWidth <= MIN_SIZE || newHeight <= MIN_SIZE) {
+            return {
+                transform: resultMatrix,
+                width: newWidth,
+                height: newHeight
+            };
+        };
 
         helper(el).css({
             ...matrixToCSS(flatMatrix(resultMatrix)),

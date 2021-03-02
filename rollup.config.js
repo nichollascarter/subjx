@@ -12,7 +12,7 @@ import livereload from 'rollup-plugin-livereload';
 const { NODE_ENV = 'production', LIVE_MODE = 'disable' } = process.env;
 const liveMode = LIVE_MODE === 'enable';
 const prod = NODE_ENV === 'production';
-let libraryName = 'subjx';
+const libraryName = 'subjx';
 
 const banner = `/*@license
 * Drag/Rotate/Resize Library
@@ -21,8 +21,11 @@ const banner = `/*@license
 * nichollascarter@gmail.com
 */`;
 
+const input = './src/js/index.js';
+let libraryFileName = libraryName;
+
 if (!prod) {
-    libraryName += '.dev';
+    libraryFileName += '.dev';
 }
 
 const plugins = [
@@ -37,8 +40,8 @@ const plugins = [
     resolve()
 ];
 
-const uglifyPlugin = () => {
-    return uglify({
+const uglifyPlugin = () => (
+    uglify({
         compress:
         {
             evaluate: false
@@ -46,44 +49,54 @@ const uglifyPlugin = () => {
         output: {
             preamble: banner
         }
-    });
-};
+    })
+);
 
-const uglifyESMPlugin = () => {
-    return terser();
-};
+const uglifyESMPlugin = () => terser();
 
-const umdPlugins = [
+const babelPlugins = [
     babel({
         exclude: 'node_modules/**',
         presets: ['@babel/preset-env']
-    }),
+    })
+];
+
+const umdPlugins = [
+    ...babelPlugins,
     prod && uglifyPlugin()
 ];
 
 export default [
-    {
-        input: './src/js/index.js',
+    ...(prod ? [{
+        input,
         output: [{
             file: `dist/js/${libraryName}.esm.js`,
             format: 'esm',
             banner
-        },
-        {
-            file: `dist/js/${libraryName}.common.js`,
+        }],
+        plugins: [
+            ...plugins,
+            ...babelPlugins
+        ]
+    }] : []),
+    {
+        input,
+        output: [{
+            file: `dist/js/${libraryFileName}.common.js`,
             format: 'cjs',
             banner
         }],
         plugins: [
             ...plugins,
+            ...babelPlugins,
             prod && uglifyESMPlugin()
         ]
     },
     {
-        input: './src/js/index.js',
+        input,
         output: [{
-            name: 'subjx',
-            file: `dist/js/${libraryName}.js`,
+            name: libraryName,
+            file: `dist/js/${libraryFileName}.js`,
             format: 'umd',
             banner
         }],
@@ -95,10 +108,10 @@ export default [
     ...(
         liveMode
             ? [{
-                input: './src/js/index.js',
+                input,
                 output: [{
-                    name: 'subjx',
-                    file: `public/${libraryName}.js`,
+                    name: libraryName,
+                    file: `public/${libraryFileName}.js`,
                     format: 'umd',
                     banner
                 }],
