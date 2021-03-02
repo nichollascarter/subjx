@@ -2485,9 +2485,16 @@
               newWidth = _getScale4[2],
               newHeight = _getScale4[3];
 
-          if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
           var scaleMatrix = getScaleMatrix(scaleX, scaleY);
           var resultMatrix = scalable ? multiplyMatrix(scaleMatrix, matrix) : getTranslateMatrix(scaleMatrix, matrix);
+
+          if (newWidth <= MIN_SIZE || newHeight <= MIN_SIZE) {
+            return {
+              transform: resultMatrix,
+              width: newWidth,
+              height: newHeight
+            };
+          }
           helper(el).css(_objectSpread2(_objectSpread2({}, matrixToCSS(flatMatrix(resultMatrix))), !scalable && {
             width: "".concat(newWidth, "px"),
             height: "".concat(newHeight, "px")
@@ -4106,7 +4113,6 @@
               newWidth = _getScale2[2],
               newHeight = _getScale2[3];
 
-          if (Math.abs(newWidth) <= MIN_SIZE || Math.abs(newHeight) <= MIN_SIZE) return;
           var scaleMatrix = getScaleMatrix(scaleX, scaleY);
           var resultMatrix = matrix.multiply(scaleMatrix);
           var deltaW = newWidth - boxWidth,
