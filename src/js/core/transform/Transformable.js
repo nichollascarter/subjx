@@ -83,7 +83,7 @@ export default class Transformable extends SubjectModel {
         this.observable = observable;
 
         EMITTER_EVENTS.forEach(eventName => this.eventDispatcher.registerEvent(eventName));
-        this.enable(options);
+        super.enable(options);
     }
 
     _cursorPoint() {
@@ -98,7 +98,7 @@ export default class Transformable extends SubjectModel {
             ...rest
         };
         this.proxyMethods.onRotate.call(this, finalArgs);
-        this._emitEvent(E_ROTATE, finalArgs);
+        super._emitEvent(E_ROTATE, finalArgs);
     }
 
     _resize({ dx, dy, ...rest }) {
@@ -110,7 +110,7 @@ export default class Transformable extends SubjectModel {
             ...rest
         };
         this.proxyMethods.onResize.call(this, finalArgs);
-        this._emitEvent(E_RESIZE, finalArgs);
+        super._emitEvent(E_RESIZE, finalArgs);
     }
 
     _processOptions(options = {}) {
@@ -299,7 +299,7 @@ export default class Transformable extends SubjectModel {
                 clientY
             };
 
-            self._drag(
+            super._drag(
                 args
             );
 
@@ -478,11 +478,11 @@ export default class Transformable extends SubjectModel {
         };
 
         if (doResize) {
-            this._emitEvent(E_RESIZE_START, eventArgs);
+            super._emitEvent(E_RESIZE_START, eventArgs);
         } else if (doRotate) {
-            this._emitEvent(E_ROTATE_START, eventArgs);
+            super._emitEvent(E_ROTATE_START, eventArgs);
         } else if (doDrag) {
-            this._emitEvent(E_DRAG_START, eventArgs);
+            super._emitEvent(E_DRAG_START, eventArgs);
         }
 
         const {
@@ -597,11 +597,11 @@ export default class Transformable extends SubjectModel {
         proxyMethods.onDrop.call(this, eventArgs);
 
         if (doResize) {
-            this._emitEvent(E_RESIZE_END, eventArgs);
+            super._emitEvent(E_RESIZE_END, eventArgs);
         } else if (doRotate) {
-            this._emitEvent(E_ROTATE_END, eventArgs);
+            super._emitEvent(E_ROTATE_END, eventArgs);
         } else if (doDrag) {
-            this._emitEvent(E_DRAG_END, eventArgs);
+            super._emitEvent(E_DRAG_END, eventArgs);
         }
 
         const {
@@ -717,7 +717,7 @@ export default class Transformable extends SubjectModel {
     }
 
     notifyMove() {
-        this._drag(...arguments);
+        super._drag(...arguments);
     }
 
     notifyRotate({ radians, ...rest }) {
@@ -741,7 +741,7 @@ export default class Transformable extends SubjectModel {
         this.proxyMethods.onDrop.call(this, { clientX, clientY });
         if (triggerEvent) {
             this._apply(actionName);
-            this._emitEvent(`${actionName}End`, { clientX, clientY });
+            super._emitEvent(`${actionName}End`, { clientX, clientY });
         }
     }
 
@@ -753,7 +753,7 @@ export default class Transformable extends SubjectModel {
                 ...this.storage,
                 ...recalc
             };
-            this._emitEvent(`${actionName}Start`, { clientX, clientY });
+            super._emitEvent(`${actionName}Start`, { clientX, clientY });
         }
     }
 
@@ -822,7 +822,7 @@ export default class Transformable extends SubjectModel {
             })
         };
 
-        this._drag({ dx, dy });
+        super._drag({ dx, dy });
         this._apply(E_DRAG);
     }
 

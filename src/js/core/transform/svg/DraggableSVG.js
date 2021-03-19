@@ -250,6 +250,10 @@ export default class DraggableSVG extends Transformable {
             center: {
                 isShifted: hasOrigin
             },
+            transform: {
+                ctm: elCTM
+            },
+            bBox: elBBox,
             cached: {}
         };
 
@@ -374,17 +378,19 @@ export default class DraggableSVG extends Transformable {
         const {
             scaleX,
             scaleY,
-            dx,
-            dy,
-            ox,
-            oy,
+            dist: {
+                dx,
+                dy,
+                ox,
+                oy
+            } = {},
             transformMatrix
         } = cached;
 
         if (actionName === E_DRAG) {
-            if (!applyDragging || (dx === 0 && dy === 0)) return;
+            if (!applyDragging || (!dx && !dy)) return;
 
-            const eM = createTranslateMatrix(dx, dy);
+            const eM = createTranslateMatrix(ox, oy);
 
             const translateMatrix = eM
                 .multiply(matrix)
@@ -416,15 +422,14 @@ export default class DraggableSVG extends Transformable {
                         const ctm = parentMatrix.inverse();
                         ctm.e = ctm.f = 0;
 
-                        applyTranslate(child, {
-                            ...pointTo(ctm, ox, oy)
-                        });
+                        const { x, y } = pointTo(ctm, ox, oy);
+                        applyTranslate(child, { x, y });
                     }
                 });
             } else {
                 applyTranslate(element, {
-                    x: dx,
-                    y: dy
+                    x: ox,
+                    y: oy
                 });
             }
         }
@@ -649,16 +654,18 @@ export default class DraggableSVG extends Transformable {
         const newDx = restX !== null && restrict ? nextDx : dx;
         const newDy = restY !== null && restrict ? nextDy : dy;
 
-        storage.cached.dist = {
-            dx: newDx,
-            dy: newDy
-        };
-
         const { x: nx, y: ny } = pointTo(
             parentMatrix.inverse(),
             newDx,
             newDy
         );
+
+        storage.cached.dist = {
+            dx: floatToFixed(newDx),
+            dy: floatToFixed(newDy),
+            ox: floatToFixed(nx),
+            oy: floatToFixed(ny)
+        };
 
         translateMatrix.e = nx;
         translateMatrix.f = ny;
@@ -975,13 +982,16 @@ export default class DraggableSVG extends Transformable {
                 restrict
             },
             storage: {
-                bBox
+                bBox,
+                transform: {
+                    ctm
+                } = {}
             }
         } = this;
 
         return getBoundingRect(
             el,
-            getTransformToElement(el.parentNode, restrict).multiply(transformMatrix),
+            getTransformToElement(el.parentNode, restrict).multiply(transformMatrix || ctm),
             bBox
         );
     }

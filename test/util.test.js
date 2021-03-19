@@ -1,11 +1,11 @@
-const {
+import {
     isDef,
     isUndef,
     isFunc,
     createMethod,
     requestAnimFrame,
     cancelAnimFrame
-} = require('../src/js/core/util/util');
+} from '../src/js/core/util/util';
 
 describe('isDef func', () => {
     it('Check defined value returns true', () => {
@@ -55,6 +55,6 @@ describe('animate func', () => {
     it('Check requestAnimFrame returns 1', () => {
         const frameId = requestAnimFrame(() => { });
         cancelAnimFrame(frameId);
-        expect(frameId).toBe(1);
+        expect(frameId).toBe(17);
     });
 });

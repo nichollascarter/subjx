@@ -151,8 +151,9 @@ export const normalizeString = (str = '') => (
         .replace(/ +/g, ' ')
 );
 
+// example "101.3,175.5 92.3,162 110.3,162 		"
 export const parsePoints = (pts) => (
-    normalizeString(pts).split(sepRE).reduce(
+    normalizeString(pts).trim().split(sepRE).reduce(
         (result, _, index, array) => {
             if (index % 2 === 0) {
                 result.push(array.slice(index, index + 2));
