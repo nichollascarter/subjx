@@ -1,21 +1,21 @@
-const {
+import {
     getOffset,
     addClass,
     removeClass,
     matrixToCSS,
     getStyle
-} = require('../src/js/core/util/css-util');
+} from '../src/js/core/util/css-util';
 
-const {
+import {
     createIdentityMatrix,
     flatMatrix
-} = require('../src/js/core/transform/matrix');
+} from '../src/js/core/transform/matrix';
 
 document.body.innerHTML = `
     <div id="empty-class" class="removal" style="display: block"><div>
 `;
 
-const domElement = document.getElementById("empty-class");
+const domElement = document.getElementById('empty-class');
 
 describe('dom class test', () => {
     it('adds new class to element', () => {

@@ -210,6 +210,15 @@ export default class Draggable extends Transformable {
             center: {
                 isShifted: hasOrigin
             },
+            transform: {
+                ctm: matrix
+            },
+            box: {
+                width: offsetWidth,
+                height: offsetHeight,
+                left: offsetLeft,
+                top: offsetTop
+            },
             cached: {}
         };
 
@@ -568,7 +577,9 @@ export default class Draggable extends Transformable {
 
         storage.cached.dist = {
             dx: newDx,
-            dy: newDy
+            dy: newDy,
+            ox: nx,
+            oy: ny
         };
 
         if (center.isShifted) {

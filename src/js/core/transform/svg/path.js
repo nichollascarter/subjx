@@ -220,7 +220,7 @@ export const resizePath = (params) => {
             switch (cmd) {
 
                 case 'A': {
-                //A rx ry x-axis-rotation large-arc-flag sweep-flag x y
+                    //A rx ry x-axis-rotation large-arc-flag sweep-flag x y
                     const coordinates = [];
 
                     for (let k = 0, len = values.length; k < len; k += 7) {
@@ -271,7 +271,7 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'C': {
-                //C x1 y1, x2 y2, x y (or c dx1 dy1, dx2 dy2, dx dy)
+                    //C x1 y1, x2 y2, x y (or c dx1 dy1, dx2 dy2, dx dy)
                     const coordinates = [];
 
                     for (let k = 0, len = values.length; k < len; k += 6) {
@@ -326,7 +326,7 @@ export const resizePath = (params) => {
                 // this command makes impossible free transform within group
                 // todo: use proportional resizing only or need to be converted to L
                 case 'H': {
-                // H x (or h dx)
+                    // H x (or h dx)
                     const coordinates = [];
 
                     for (let k = 0, len = values.length; k < len; k += 1) {
@@ -357,7 +357,7 @@ export const resizePath = (params) => {
                 // this command makes impossible free transform within group
                 // todo: use proportional resizing only or need to be converted to L
                 case 'V': {
-                // V y (or v dy)
+                    // V y (or v dy)
                     const coordinates = [];
 
                     for (let k = 0, len = values.length; k < len; k += 1) {
@@ -387,8 +387,8 @@ export const resizePath = (params) => {
                 }
                 case 'T':
                 case 'L': {
-                // T x y (or t dx dy)
-                // L x y (or l dx dy)
+                    // T x y (or t dx dy)
+                    // L x y (or l dx dy)
                     const coordinates = [];
 
                     for (let k = 0, len = values.length; k < len; k += 2) {
@@ -419,7 +419,7 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'M': {
-                // M x y (or dx dy)
+                    // M x y (or dx dy)
                     const coordinates = [];
 
                     for (let k = 0, len = values.length; k < len; k += 2) {
@@ -452,7 +452,7 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'Q': {
-                //Q x1 y1, x y (or q dx1 dy1, dx dy)
+                    //Q x1 y1, x y (or q dx1 dy1, dx dy)
                     const coordinates = [];
 
                     for (let k = 0, len = values.length; k < len; k += 4) {
@@ -494,7 +494,7 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'S': {
-                //S x2 y2, x y (or s dx2 dy2, dx dy)
+                    //S x2 y2, x y (or s dx2 dy2, dx dy)
                     const coordinates = [];
 
                     for (let k = 0, len = values.length; k < len; k += 4) {
