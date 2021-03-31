@@ -1,11 +1,6 @@
-import {
-    warn,
-    forEach,
-    isUndef
-} from './../../util/util';
+import { warn, forEach } from './../../util/util';
 import { addClass } from '../../util/css-util';
 
-const svgPoint = createSVGElement('svg').createSVGPoint();
 export const sepRE = /\s*,\s*|\s+/g;
 
 const allowedElements = [
@@ -22,6 +17,13 @@ export function createSVGElement(name, classNames = []) {
     classNames.forEach(className => addClass(element, className));
     return element;
 }
+
+export const createSVGPoint = (x, y) => {
+    const pt = createSVGElement('svg').createSVGPoint();
+    pt.x = x;
+    pt.y = y;
+    return pt;
+};
 
 export const checkChildElements = (element) => {
     const arrOfElements = [];
@@ -90,9 +92,7 @@ export const matrixToString = (m) => {
 };
 
 export const pointTo = (ctm, x, y) => {
-    svgPoint.x = x;
-    svgPoint.y = y;
-    return svgPoint.matrixTransform(ctm);
+    return createSVGPoint(x, y).matrixTransform(ctm);
 };
 
 export const cloneMatrix = (b) => {
@@ -116,16 +116,6 @@ export const isIdentity = (matrix) => {
         d === 1 &&
         e === 0 &&
         f === 0;
-};
-
-export const createPoint = (_, x, y) => {
-    if (isUndef(x) || isUndef(y)) {
-        return null;
-    }
-    const pt = createSVGElement('svg').createSVGPoint();
-    pt.x = x;
-    pt.y = y;
-    return pt;
 };
 
 export const checkElement = (el) => {

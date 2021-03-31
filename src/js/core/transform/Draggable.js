@@ -1,6 +1,6 @@
 import { helper } from '../Helper';
 import Transformable from './Transformable';
-import { floatToFixed, getMinMaxOf2DIndex } from './common';
+import { floatToFixed, getMinMaxOfArray } from './common';
 import { isDef, isUndef } from '../util/util';
 import { addClass, matrixToCSS } from '../util/css-util';
 import { MIN_SIZE, CLIENT_EVENTS_CONSTANTS } from '../consts';
@@ -23,6 +23,8 @@ import {
 
 const { E_MOUSEDOWN, E_TOUCHSTART } = CLIENT_EVENTS_CONSTANTS;
 
+const { keys, entries, values } = Object;
+
 export default class Draggable extends Transformable {
 
     _init(el) {
@@ -32,12 +34,15 @@ export default class Draggable extends Transformable {
             controlsContainer,
             resizable,
             rotatable,
-            showNormal,
-            rotatorOffset,
-            rotatorAnchor
+            showNormal
         } = this.options;
 
-        const { offsetHeight, offsetWidth } = el;
+        const {
+            offsetLeft: elOffsetLeft,
+            offsetTop: elOffsetTop,
+            offsetHeight,
+            offsetWidth
+        } = el;
 
         const wrapper = createElement(['sjx-wrapper']);
         const controls = createElement(['sjx-controls']);
@@ -57,78 +62,15 @@ export default class Draggable extends Transformable {
 
         const hasOrigin = originRotation.every(val => !isNaN(val));
 
-        const vertices = {
-            tl: [0, 0, 0, 1],
-            bl: [0, offsetHeight, 0, 1],
-            br: [offsetWidth, offsetHeight, 0, 1],
-            tr: [offsetWidth, 0, 0, 1],
-            tc: [offsetWidth / 2, 0, 0, 1],
-            ml: [0, offsetHeight / 2, 0, 1],
-            bc: [offsetWidth / 2, offsetHeight, 0, 1],
-            mr: [offsetWidth, offsetHeight / 2, 0, 1],
-            center: [offsetWidth / 2, offsetHeight / 2, 0, 1]
-        };
+        const {
+            rotator = null,
+            anchor = null,
+            ...finalVertices
+        } = this._calculateVertices(matrix);
 
-        const finalVertices = Object.entries(vertices)
-            .reduce((nextVerteces, [key, vertex]) => (
-                [...nextVerteces, [key, multiplyMatrixAndPoint(matrix, vertex)]]
-            ), [])
-            .reduce((vertices, [key, [x, y, z, w]]) => {
-                vertices[key] = [
-                    x + offsetLeft,
-                    y + offsetTop,
-                    z,
-                    w
-                ];
-                return vertices;
-            }, {});
-
-        let rotationHandles = {},
-            rotator = null;
+        let rotationHandles = {};
 
         if (rotatable) {
-            const anchor = {};
-            let factor = 1;
-
-            switch (rotatorAnchor) {
-
-                case 'n':
-                    anchor.x = finalVertices.tc[0];
-                    anchor.y = finalVertices.tc[1];
-                    break;
-                case 's':
-                    anchor.x = finalVertices.bc[0];
-                    anchor.y = finalVertices.bc[1];
-                    factor = -1;
-                    break;
-                case 'w':
-                    anchor.x = finalVertices.ml[0];
-                    anchor.y = finalVertices.ml[1];
-                    factor = -1;
-                    break;
-                case 'e':
-                default:
-                    anchor.x = finalVertices.mr[0];
-                    anchor.y = finalVertices.mr[1];
-                    break;
-
-            }
-
-            const theta = rotatorAnchor === 'n' || rotatorAnchor === 's'
-                ? Math.atan2(
-                    finalVertices.bl[1] - finalVertices.tl[1],
-                    finalVertices.bl[0] - finalVertices.tl[0]
-                )
-                : Math.atan2(
-                    finalVertices.tl[1] - finalVertices.tr[1],
-                    finalVertices.tl[0] - finalVertices.tr[0]
-                );
-
-            rotator = [
-                anchor.x - (rotatorOffset * factor) * Math.cos(theta),
-                anchor.y - (rotatorOffset * factor) * Math.sin(theta)
-            ];
-
             const normalLine = showNormal
                 ? renderLine([[anchor.x, anchor.y], rotator], 'normal')
                 : null;
@@ -184,7 +126,7 @@ export default class Draggable extends Transformable {
         };
 
         const mapHandlers = (obj, renderFunc) => (
-            Object.keys(obj).map(key => {
+            keys(obj).map(key => {
                 const data = obj[key];
                 if (isUndef(data)) return;
                 const handler = renderFunc(data, key);
@@ -213,11 +155,15 @@ export default class Draggable extends Transformable {
             transform: {
                 ctm: matrix
             },
-            box: {
+            bBox: {
                 width: offsetWidth,
                 height: offsetHeight,
-                left: offsetLeft,
-                top: offsetTop
+                left: elOffsetLeft,
+                top: elOffsetTop,
+                offset: {
+                    left: offsetLeft,
+                    top: offsetTop
+                }
             },
             cached: {}
         };
@@ -270,7 +216,7 @@ export default class Draggable extends Transformable {
         );
     }
 
-    _restrictHandler(matrix) {
+    _getRestrictedBBox(force = false) {
         const {
             storage: {
                 transform: {
@@ -283,30 +229,13 @@ export default class Draggable extends Transformable {
             }
         } = this;
 
-        let restrictX = null,
-            restrictY = null;
+        const restrictEl = restrict || container;
 
-        const containerBox = getBoundingRect(restrict, container, containerMatrix);
-        const elBox = this.getBoundingRect(matrix);
-
-        const [minX, maxX] = getMinMaxOf2DIndex(containerBox, 0);
-        const [minY, maxY] = getMinMaxOf2DIndex(containerBox, 1);
-
-        for (let i = 0, len = elBox.length; i < len; i++) {
-            const [x, y] = elBox[i];
-
-            if (x < minX || x > maxX) {
-                restrictX = x;
-            }
-            if (y < minY || y > maxY) {
-                restrictY = y;
-            }
-        }
-
-        return {
-            x: restrictX,
-            y: restrictY
-        };
+        return getBoundingRect(
+            restrictEl,
+            container,
+            force ? getCurrentTransformMatrix(restrictEl, container) : containerMatrix
+        );
     }
 
     _apply() {
@@ -357,7 +286,6 @@ export default class Draggable extends Transformable {
 
     _processResize(dx, dy) {
         const {
-            el,
             storage,
             storage: {
                 transform: {
@@ -374,7 +302,7 @@ export default class Draggable extends Transformable {
                         dy: nextDy = dy
                     } = {}
                 } = {},
-                box: {
+                bBox: {
                     width: boxWidth,
                     height: boxHeight
                 },
@@ -446,7 +374,7 @@ export default class Draggable extends Transformable {
             ? multiplyMatrix(preScaleMatrix, matrix)
             : getTranslateMatrix(preScaleMatrix, matrix);
 
-        this.storage.cached.box = {
+        this.storage.cached.bBox = {
             width: pWidth,
             height: pHeight
         };
@@ -480,7 +408,7 @@ export default class Draggable extends Transformable {
             };
         };
 
-        helper(el).css({
+        this._updateElementView({
             ...matrixToCSS(flatMatrix(resultMatrix)),
             ...(!scalable && {
                 width: `${newWidth}px`,
@@ -488,11 +416,8 @@ export default class Draggable extends Transformable {
             })
         });
 
-        applyTransformToHandles(
-            storage,
-            this.options,
+        this._applyTransformToHandles(
             {
-                el,
                 boxMatrix: resultMatrix
             }
         );
@@ -511,10 +436,8 @@ export default class Draggable extends Transformable {
 
     _processMove(dx, dy) {
         const {
-            el,
             storage,
             storage: {
-                wrapper,
                 transform: {
                     matrix,
                     wrapperMatrix,
@@ -572,8 +495,8 @@ export default class Draggable extends Transformable {
         const elStyle = matrixToCSS(flatMatrix(moveElementMtrx));
         const wrapperStyle = matrixToCSS(flatMatrix(moveWrapperMtrx));
 
-        helper(el).css(elStyle);
-        helper(wrapper).css(wrapperStyle);
+        this._updateElementView(elStyle);
+        this._updateWrapperView(wrapperStyle);
 
         storage.cached.dist = {
             dx: newDx,
@@ -597,7 +520,6 @@ export default class Draggable extends Transformable {
 
     _processRotate(radians) {
         const {
-            el,
             storage: {
                 transform: {
                     matrix,
@@ -631,18 +553,11 @@ export default class Draggable extends Transformable {
 
         if (isDef(restX) || isDef(restY)) return resultMatrix;
 
-        helper(el).css(
+        this._updateElementView(
             matrixToCSS(flatMatrix(resultMatrix))
         );
 
-        applyTransformToHandles(
-            this.storage,
-            this.options,
-            {
-                el,
-                boxMatrix: resultMatrix
-            }
-        );
+        this._applyTransformToHandles({ boxMatrix: resultMatrix });
 
         return resultMatrix;
     }
@@ -786,7 +701,7 @@ export default class Draggable extends Transformable {
 
         return {
             transform,
-            box: {
+            bBox: {
                 width: elWidth,
                 height: elHeight,
                 left: elOffsetLeft,
@@ -831,6 +746,194 @@ export default class Draggable extends Transformable {
         this.storage.center.isShifted = true;
     }
 
+    _updateElementView(css) {
+        helper(this.el).css(css);
+    }
+
+    _updateWrapperView(css) {
+        helper(this.storage.wrapper).css(css);
+    }
+
+    _calculateVertices(transform) {
+        const {
+            el: element,
+            options: {
+                rotatable,
+                rotatorAnchor,
+                rotatorOffset,
+                container
+            }
+        } = this;
+
+        const { offsetHeight, offsetWidth } = element;
+        const [offsetLeft, offsetTop] = getAbsoluteOffset(element, container);
+
+        const vertices = {
+            tl: [0, 0, 0, 1],
+            bl: [0, offsetHeight, 0, 1],
+            br: [offsetWidth, offsetHeight, 0, 1],
+            tr: [offsetWidth, 0, 0, 1],
+            tc: [offsetWidth / 2, 0, 0, 1],
+            ml: [0, offsetHeight / 2, 0, 1],
+            bc: [offsetWidth / 2, offsetHeight, 0, 1],
+            mr: [offsetWidth, offsetHeight / 2, 0, 1],
+            center: [offsetWidth / 2, offsetHeight / 2, 0, 1]
+        };
+
+        const finalVertices = entries(vertices)
+            .reduce((nextVertices, [key, vertex]) => (
+                [
+                    ...nextVertices,
+                    [key, multiplyMatrixAndPoint(transform || getCurrentTransformMatrix(element, container), vertex)]
+                ]
+            ), [])
+            .reduce((vertices, [key, [x, y, z, w]]) => {
+                vertices[key] = [
+                    x + offsetLeft,
+                    y + offsetTop,
+                    z,
+                    w
+                ];
+                return vertices;
+            }, {});
+
+        let rotator = null;
+
+        if (rotatable) {
+            const anchor = {};
+            let factor = 1;
+
+            switch (rotatorAnchor) {
+
+                case 'n':
+                    anchor.x = finalVertices.tc[0];
+                    anchor.y = finalVertices.tc[1];
+                    break;
+                case 's':
+                    anchor.x = finalVertices.bc[0];
+                    anchor.y = finalVertices.bc[1];
+                    factor = -1;
+                    break;
+                case 'w':
+                    anchor.x = finalVertices.ml[0];
+                    anchor.y = finalVertices.ml[1];
+                    factor = -1;
+                    break;
+                case 'e':
+                default:
+                    anchor.x = finalVertices.mr[0];
+                    anchor.y = finalVertices.mr[1];
+                    break;
+
+            }
+
+            const theta = rotatorAnchor === 'n' || rotatorAnchor === 's'
+                ? Math.atan2(
+                    finalVertices.bl[1] - finalVertices.tl[1],
+                    finalVertices.bl[0] - finalVertices.tl[0]
+                )
+                : Math.atan2(
+                    finalVertices.tl[1] - finalVertices.tr[1],
+                    finalVertices.tl[0] - finalVertices.tr[0]
+                );
+
+            rotator = [
+                anchor.x - (rotatorOffset * factor) * Math.cos(theta),
+                anchor.y - (rotatorOffset * factor) * Math.sin(theta)
+            ];
+
+            finalVertices.rotator = rotator;
+            finalVertices.anchor = anchor;
+        }
+
+        return finalVertices;
+    }
+
+    _applyTransformToHandles() {
+        const { el } = this;
+
+        const {
+            wrapper,
+            handles,
+            transform: {
+                wrapperMatrix = getCurrentTransformMatrix(wrapper, wrapper.parentNode)
+            } = {},
+            center: { isShifted }
+        } = this.storage;
+
+        const {
+            rotatable,
+            resizable,
+            showNormal,
+            container
+        } = this.options;
+
+        const matrix = multiplyMatrix(
+            getCurrentTransformMatrix(el, container), // better to find result matrix instead of calculated
+            matrixInvert(wrapperMatrix)
+        );
+
+        const {
+            anchor = null,
+            center,
+            ...finalVertices
+        } = this._calculateVertices(matrix);
+
+        let normalLine = null;
+        let rotationHandles = {};
+
+        if (rotatable) {
+            normalLine = showNormal
+                ? [[anchor.x, anchor.y], finalVertices.rotator]
+                : null;
+
+            rotationHandles = {
+                rotator: finalVertices.rotator
+            };
+        }
+
+        const resizingEdges = {
+            te: [finalVertices.tl, finalVertices.tr],
+            be: [finalVertices.bl, finalVertices.br],
+            le: [finalVertices.tl, finalVertices.bl],
+            re: [finalVertices.tr, finalVertices.br],
+            ...(showNormal && normalLine && { normal: normalLine })
+        };
+
+        keys(resizingEdges).forEach(key => {
+            const [pt1, pt2] = resizingEdges[key];
+
+            const {
+                cx,
+                cy,
+                length,
+                theta
+            } = getLineAttrs(pt1, pt2);
+
+            helper(handles[key]).css({
+                transform: `translate(${cx}px, ${cy}px) rotate(${theta}deg)`,
+                width: `${length}px`
+            });
+        });
+
+        const allHandles = {
+            ...(resizable && finalVertices),
+            ...rotationHandles,
+            ...((!isShifted && Boolean(center)) && { center })
+        };
+
+        keys(allHandles).forEach(key => {
+            const hdl = handles[key];
+            const attr = allHandles[key];
+            if (isUndef(attr) || isUndef(hdl)) return;
+
+            const [x, y] = attr;
+            helper(hdl).css({
+                transform: `translate(${x}px, ${y}px)`
+            });
+        });
+    }
+
     resetCenterPoint() {
         const {
             el,
@@ -867,22 +970,20 @@ export default class Draggable extends Transformable {
     }
 
     fitControlsToSize() {
-        const {
-            el,
-            storage: {
-                wrapper
-            }
-        } = this;
+        const identityMatrix = createIdentityMatrix();
 
-        wrapper.removeAttribute('transform');
-
-        applyTransformToHandles(
-            this.storage,
-            this.options,
-            {
-                el
+        this.storage = {
+            ...this.storage,
+            transform: {
+                ...(this.storage.transform || {}),
+                wrapperMatrix: identityMatrix
             }
+        };
+
+        this._updateWrapperView(
+            matrixToCSS(flatMatrix(identityMatrix))
         );
+        this._applyTransformToHandles();
     }
 
     getBoundingRect(transformMatrix = null) {
@@ -890,16 +991,17 @@ export default class Draggable extends Transformable {
             el,
             options: {
                 scalable,
-                restrict
+                restrict,
+                container
             },
             storage: {
-                box,
-                box: {
+                bBox,
+                bBox: {
                     width,
                     height
                 },
                 cached: {
-                    box: {
+                    bBox: {
                         width: nextWidth = width,
                         height: nextHeight = height
                     } = {}
@@ -908,23 +1010,92 @@ export default class Draggable extends Transformable {
         } = this;
 
         const nextBox = scalable
-            ? box
+            ? bBox
             : {
-                ...box,
+                ...bBox,
                 width: nextWidth,
                 height: nextHeight
             };
 
+        const restrictEl = restrict || container;
+
         return getBoundingRect(
             el,
-            restrict,
-            getCurrentTransformMatrix(el, restrict, transformMatrix),
+            restrictEl,
+            getCurrentTransformMatrix(el, restrictEl, transformMatrix),
             nextBox
         );
     }
 
-    get controls() {
-        return this.storage.wrapper;
+    applyAlignment(direction) {
+        const { options: { container } } = this;
+
+        const {
+            // eslint-disable-next-line no-unused-vars
+            anchor, rotator, center,
+            ...vertices
+        } = this._calculateVertices();
+
+        const restrictBBox = this._getRestrictedBBox(true);
+
+        const nextVertices = values(vertices);
+
+        const [
+            [minX, maxX],
+            [minY, maxY]
+        ] = getMinMaxOfArray(restrictBBox);
+
+        const [
+            [elMinX, elMaxX],
+            [elMinY, elMaxY]
+        ] = getMinMaxOfArray(nextVertices);
+
+        const getXDir = () => {
+            switch (true) {
+
+                case /[l]/.test(direction):
+                    return minX - elMinX;
+                case /[r]/.test(direction):
+                    return maxX - elMaxX;
+                case /[h]/.test(direction):
+                    return ((maxX + minX) / 2) - ((elMaxX + elMinX) / 2);
+                default:
+                    return 0;
+
+            }
+        };
+
+        const getYDir = () => {
+            switch (true) {
+
+                case /[t]/.test(direction):
+                    return minY - elMinY;
+                case /[b]/.test(direction):
+                    return maxY - elMaxY;
+                case /[v]/.test(direction):
+                    return ((maxY + minY) / 2) - ((elMaxY + elMinY) / 2);
+                default:
+                    return 0;
+
+            }
+        };
+
+        const [x, y] = multiplyMatrixAndPoint(
+            matrixInvert(
+                dropTranslate(getCurrentTransformMatrix(this.el.parentNode, container))
+            ),
+            [getXDir(), getYDir(), 0, 1]
+        );
+
+        const moveElementMtrx = multiplyMatrix(
+            getTransform(this.el),
+            createTranslateMatrix(x, y)
+        );
+
+        this._updateElementView(
+            matrixToCSS(flatMatrix(moveElementMtrx))
+        );
+        this.fitControlsToSize();
     }
 
 }
@@ -978,169 +1149,7 @@ const getLineAttrs = (pt1, pt2, thickness = 1) => {
     };
 };
 
-const applyTransformToHandles = (storage, options, data) => {
-    const {
-        wrapper,
-        handles,
-        transform: {
-            wrapperMatrix = getCurrentTransformMatrix(wrapper, wrapper.parentNode)
-        } = {},
-        center
-    } = storage;
-
-    const {
-        rotationPoint,
-        rotatable,
-        resizable,
-        showNormal,
-        rotatorOffset,
-        rotatorAnchor,
-        container
-    } = options;
-
-    const {
-        el,
-        el: { offsetHeight, offsetWidth }
-    } = data;
-
-    const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
-
-    const matrix = multiplyMatrix(
-        getCurrentTransformMatrix(el, container), // better to find result matrix instead of calculated
-        matrixInvert(wrapperMatrix)
-    );
-
-    const vertices = {
-        tl: [0, 0, 0, 1],
-        tr: [offsetWidth, 0, 0, 1],
-        bl: [0, offsetHeight, 0, 1],
-        br: [offsetWidth, offsetHeight, 0, 1],
-        tc: [offsetWidth / 2, 0, 0, 1],
-        ml: [0, offsetHeight / 2, 0, 1],
-        bc: [offsetWidth / 2, offsetHeight, 0, 1],
-        mr: [offsetWidth, offsetHeight / 2, 0, 1],
-        ...(rotationPoint && rotatable && !center.isShifted &&
-            { center: [offsetWidth / 2, offsetHeight / 2, 0, 1] }
-        )
-    };
-
-    const finalVertices = Object.entries(vertices)
-        .reduce((nextVerteces, [key, vertex]) => (
-            [...nextVerteces, [key, multiplyMatrixAndPoint(matrix, vertex)]]
-        ), [])
-        .reduce((vertices, [key, [x, y, z, w]]) => {
-            vertices[key] = [
-                x + offsetLeft,
-                y + offsetTop,
-                z,
-                w
-            ];
-            return vertices;
-        }, {});
-
-    let normalLine = null;
-    let rotationHandles = {};
-
-    if (rotatable) {
-        const anchor = {};
-        let factor = 1;
-        let rotator = [];
-
-        switch (rotatorAnchor) {
-
-            case 'n':
-                anchor.x = finalVertices.tc[0];
-                anchor.y = finalVertices.tc[1];
-                break;
-            case 's':
-                anchor.x = finalVertices.bc[0];
-                anchor.y = finalVertices.bc[1];
-                factor = -1;
-                break;
-            case 'w':
-                anchor.x = finalVertices.ml[0];
-                anchor.y = finalVertices.ml[1];
-                factor = -1;
-                break;
-            case 'e':
-            default:
-                anchor.x = finalVertices.mr[0];
-                anchor.y = finalVertices.mr[1];
-                break;
-
-        }
-
-        const theta = rotatorAnchor === 'n' || rotatorAnchor === 's'
-            ? Math.atan2(
-                finalVertices.bl[1] - finalVertices.tl[1],
-                finalVertices.bl[0] - finalVertices.tl[0]
-            )
-            : Math.atan2(
-                finalVertices.tl[1] - finalVertices.tr[1],
-                finalVertices.tl[0] - finalVertices.tr[0]
-            );
-
-        const nextRotatorOffset = rotatorOffset * factor;
-
-        rotator = [
-            anchor.x - nextRotatorOffset * Math.cos(theta),
-            anchor.y - nextRotatorOffset * Math.sin(theta)
-        ];
-
-        normalLine = showNormal
-            ? [[anchor.x, anchor.y], rotator]
-            : null;
-
-        rotationHandles = {
-            rotator
-        };
-    }
-
-    const resizingHandles = {
-        ...finalVertices
-    };
-
-    const resizingEdges = {
-        te: [finalVertices.tl, finalVertices.tr],
-        be: [finalVertices.bl, finalVertices.br],
-        le: [finalVertices.tl, finalVertices.bl],
-        re: [finalVertices.tr, finalVertices.br],
-        ...(showNormal && normalLine && { normal: normalLine })
-    };
-
-    Object.keys(resizingEdges).forEach(key => {
-        const [pt1, pt2] = resizingEdges[key];
-
-        const {
-            cx,
-            cy,
-            length,
-            theta
-        } = getLineAttrs(pt1, pt2);
-
-        helper(handles[key]).css({
-            transform: `translate(${cx}px, ${cy}px) rotate(${theta}deg)`,
-            width: `${length}px`
-        });
-    });
-
-    const allHandles = {
-        ...(resizable && resizingHandles),
-        ...rotationHandles
-    };
-
-    Object.keys(allHandles).forEach(key => {
-        const hdl = allHandles[key];
-        if (!hdl) return;
-
-        const [x, y] = hdl;
-        helper(handles[key]).css({
-            transform: `translate(${x}px, ${y}px)`
-        });
-    });
-};
-
-const getBoundingRect = (el, container, ctm, box) => {
+const getBoundingRect = (el, container, ctm, bBox) => {
     const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
     const {
         width,
@@ -1149,7 +1158,7 @@ const getBoundingRect = (el, container, ctm, box) => {
             left,
             top
         }
-    } = box || {
+    } = bBox || {
         width: el.offsetWidth,
         height: el.offsetHeight,
         offset: {

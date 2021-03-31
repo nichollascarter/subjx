@@ -5,6 +5,38 @@ import {
 
 import { createSVGMatrix } from '../src/js/core/transform/svg/util';
 
+const createElementNS = document.createElementNS;
+
+beforeEach(() => {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+    document.createElementNS = () => {
+        const el = svg;
+
+        el.createSVGPoint = () => {
+            return {
+                x: 0,
+                y: 0,
+                matrixTransform: () => {
+                    return { x: 0, y: 0 };
+                }
+            };
+        };
+
+        el.createSVGMatrix = () => {
+            return {
+                a: 1, b: 0, c: 0, d: 1, e: 0, f: 0
+            };
+        };
+
+        return el;
+    };
+});
+
+afterEach(() => {
+    document.createElementNS = createElementNS;
+});
+
 const paths = [
     'M10 10 H 90 V 90 H 10 L 10 10',
     'M10 10 h 80 v 80 h -80 Z',

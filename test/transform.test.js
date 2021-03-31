@@ -1,7 +1,7 @@
 const {
     snapToGrid,
     floatToFixed,
-    getMinMaxOf2DIndex
+    getMinMaxOfArray
 } = require('../src/js/core/transform/common');
 
 describe('snapToGrid func', () => {
@@ -24,7 +24,7 @@ describe('floatToFixed func', () => {
     });
 });
 
-describe('getMinMaxOf2DIndex func', () => {
+describe('getMinMaxOfArray func', () => {
     it('returns min and max values', () => {
         const values = [
             [100, 2, 0, 1],
@@ -32,7 +32,7 @@ describe('getMinMaxOf2DIndex func', () => {
         ];
 
         expect(
-            getMinMaxOf2DIndex(values, 0)
-        ).toMatchObject([-1, 100]);
+            getMinMaxOfArray(values)
+        ).toMatchObject([[-1, 100], [2, 5]]);
     });
 });
