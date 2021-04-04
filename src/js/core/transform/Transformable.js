@@ -1,6 +1,6 @@
 import { helper } from '../Helper';
 import SubjectModel from '../SubjectModel';
-import { snapToGrid, RAD } from './common';
+import { getMinMaxOfArray, snapToGrid, RAD } from './common';
 
 import {
     LIB_CLASS_PREFIX,
@@ -72,6 +72,8 @@ const {
     LEFT_EDGE,
     RIGHT_EDGE
 } = TRANSFORM_EDGES_KEYS;
+
+const { keys, values } = Object;
 
 export default class Transformable extends SubjectModel {
 
@@ -378,7 +380,7 @@ export default class Transformable extends SubjectModel {
             el
         } = this;
 
-        const isTarget = Object.values(handles).some((hdl) => helper(e.target).is(hdl)) ||
+        const isTarget = values(handles).some((hdl) => helper(e.target).is(hdl)) ||
             el.contains(e.target);
 
         storage.isTarget = isTarget;
@@ -387,7 +389,7 @@ export default class Transformable extends SubjectModel {
 
         const computed = this._compute(e, el);
 
-        Object.keys(computed).map(prop => storage[prop] = computed[prop]);
+        keys(computed).map(prop => storage[prop] = computed[prop]);
 
         const {
             onRightEdge,
@@ -664,7 +666,7 @@ export default class Transformable extends SubjectModel {
         return {
             ..._computed,
             ...rest,
-            handle: Object.values(handles).some(hdl => helper(e.target).is(hdl))
+            handle: values(handles).some(hdl => helper(e.target).is(hdl))
                 ? handle
                 : helper(el),
             pressang
@@ -695,6 +697,36 @@ export default class Transformable extends SubjectModel {
             onBottomEdge,
             doW,
             doH
+        };
+    }
+
+    _restrictHandler(matrix) {
+        let restrictX = null,
+            restrictY = null;
+
+        const elBox = this.getBoundingRect(matrix);
+
+        const containerBBox = this._getRestrictedBBox();
+
+        const [
+            [minX, maxX],
+            [minY, maxY]
+        ] = getMinMaxOfArray(containerBBox);
+
+        for (let i = 0, len = elBox.length; i < len; i++) {
+            const [x, y] = elBox[i];
+
+            if (x < minX || x > maxX) {
+                restrictX = x;
+            }
+            if (y < minY || y > maxY) {
+                restrictY = y;
+            }
+        }
+
+        return {
+            x: restrictX,
+            y: restrictY
         };
     }
 
@@ -867,6 +899,10 @@ export default class Transformable extends SubjectModel {
 
         this._rotate({ radians: delta });
         this._apply(E_ROTATE);
+    }
+
+    get controls() {
+        return this.storage.wrapper;
     }
 
 }

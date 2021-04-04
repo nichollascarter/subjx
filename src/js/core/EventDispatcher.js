@@ -30,7 +30,7 @@ export default class EventDispatcher {
         this.events[eventName].callbacks.forEach((cb) => {
             cb.call(ctx, eventArgs);
         });
-    };
+    }
 
     addEventListener(eventName, cb) {
         this.events[eventName].registerCallback(cb);

@@ -36,7 +36,7 @@ Including via a `<script>` tag:
 
 ## Get started
 
- Main function `subjx` returns `Subjx` instance which based on elements finded by
+ Main function `subjx` returns array of `Subjx` instances which based on elements finded by
  passed parameters:
 
 ```javascript
@@ -66,8 +66,9 @@ xDraggables.forEach(item => {
 ### "Draggable" API
 
 ```javascript
-// getter returns root DOM element of "controls"
 const [xDraggable] = xDraggables;
+
+// getter returns root DOM element of 'controls'
 xDraggable.controls;
 
 // provides access to useful options
@@ -124,10 +125,11 @@ xDraggable.exeRotate({
     delta // radians
 });
 
-// SVG elements methods
+// Align element inside container: ['t', 'l', 'r', 'b', 'v', 'h']
+xDraggable.applyAlignment('tr');
 
-// Useful when SVG element's container was transformed from outside
-// call this method when applying scale or viewBox values changing
+// Call this method when applying scale or viewBox values changing
+// useful when element's container was transformed from outside
 xDraggable.fitControlsToSize();
 
 // Returns rotation point handle to default position
@@ -138,9 +140,9 @@ xDraggable.resetCenterPoint();
 
 |Property|Description|Type|Default|
 |--|--|--|--|
-| **container** | Transformation coordinate system | `'selector'`/ `element` | element.parentNode |
-| **controlsContainer** | "controls" append to this element | `'selector'`/ `element` | element.parentNode |
-| **axis** | Constrain movement along an axis | `string`: 'x' / 'y' / 'xy' | 'xy' |
+| **container** | Transformation coordinate system | `'selector'` \| `element` | element.parentNode |
+| **controlsContainer** | "controls" append to this element | `'selector'` \| `element` | element.parentNode |
+| **axis** | Constrain movement along an axis | `string`: 'x' \| 'y' \| 'xy' | 'xy' |
 | **snap** | Snapping to grid in pixels/radians | `object` | { x: 10, y: 10, angle: 10 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
 | **proportions** | Keep aspect ratio when resizing | `boolean` | false |
@@ -148,8 +150,8 @@ xDraggable.resetCenterPoint();
 | **resizable** | Allow or deny an action | `boolean` | true |
 | **rotatable** | Allow or deny an action | `boolean` | true |
 | **scalable** | Applies scaling only to root element | `boolean` | false |
-| **restrict** | Restricts element dragging/resizing/rotation | `'selector'` / `element` | - |
-| **rotatorAnchor** | Rotator anchor direction | `string`: 'n' / 's' / 'w' / 'e' | 'e' |
+| **restrict** | Restricts element dragging/resizing/rotation | `'selector'` \| `element` | - |
+| **rotatorAnchor** | Rotator anchor direction | `string`: 'n' \| 's' \| 'w' \| 'e' | 'e' |
 | **rotatorOffset** | Rotator offset  | `number` | 50 |
 
 #### Notice: In most cases, it is recommended to use 'proportions' option
