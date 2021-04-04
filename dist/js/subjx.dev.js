@@ -999,11 +999,22 @@
       var size = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 6;
       return Number(val.toFixed(size));
     };
-    var getMinMaxOf2DIndex = function getMinMaxOf2DIndex(arr, idx) {
-      var axisValues = arr.map(function (e) {
-        return e[idx];
-      });
-      return [Math.min.apply(Math, _toConsumableArray(axisValues)), Math.max.apply(Math, _toConsumableArray(axisValues))];
+    var getMinMaxOfArray = function getMinMaxOfArray(arr) {
+      var length = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 2;
+      var res = [];
+
+      var _loop = function _loop(i) {
+        var axisValues = arr.map(function (e) {
+          return e[i];
+        });
+        res.push([Math.min.apply(Math, _toConsumableArray(axisValues)), Math.max.apply(Math, _toConsumableArray(axisValues))]);
+      };
+
+      for (var i = 0; i < length; i++) {
+        _loop(i);
+      }
+
+      return res;
     };
 
     var getOffset = function getOffset(node) {
@@ -1119,6 +1130,8 @@
         BOTTOM_EDGE = TRANSFORM_EDGES_KEYS$1.BOTTOM_EDGE,
         LEFT_EDGE = TRANSFORM_EDGES_KEYS$1.LEFT_EDGE,
         RIGHT_EDGE = TRANSFORM_EDGES_KEYS$1.RIGHT_EDGE;
+    var keys = Object.keys,
+        values = Object.values;
 
     var Transformable = /*#__PURE__*/function (_SubjectModel) {
       _inherits(Transformable, _SubjectModel);
@@ -1415,7 +1428,7 @@
               axis = _this$options.axis,
               each = _this$options.each,
               el = this.el;
-          var isTarget = Object.values(handles).some(function (hdl) {
+          var isTarget = values(handles).some(function (hdl) {
             return helper(e.target).is(hdl);
           }) || el.contains(e.target);
           storage.isTarget = isTarget;
@@ -1423,7 +1436,7 @@
 
           var computed = this._compute(e, el);
 
-          Object.keys(computed).map(function (prop) {
+          keys(computed).map(function (prop) {
             return storage[prop] = computed[prop];
           });
           var onRightEdge = computed.onRightEdge,
@@ -1643,7 +1656,7 @@
 
           var pressang = Math.atan2(clientY - _computed.center.y, clientX - _computed.center.x);
           return _objectSpread2({}, _computed, {}, rest, {
-            handle: Object.values(handles).some(function (hdl) {
+            handle: values(handles).some(function (hdl) {
               return helper(e.target).is(hdl);
             }) ? handle : helper(el),
             pressang: pressang
@@ -1679,6 +1692,43 @@
             onBottomEdge: onBottomEdge,
             doW: doW,
             doH: doH
+          };
+        }
+      }, {
+        key: "_restrictHandler",
+        value: function _restrictHandler(matrix) {
+          var restrictX = null,
+              restrictY = null;
+          var elBox = this.getBoundingRect(matrix);
+
+          var containerBBox = this._getRestrictedBBox();
+
+          var _getMinMaxOfArray = getMinMaxOfArray(containerBBox),
+              _getMinMaxOfArray2 = _slicedToArray(_getMinMaxOfArray, 2),
+              _getMinMaxOfArray2$ = _slicedToArray(_getMinMaxOfArray2[0], 2),
+              minX = _getMinMaxOfArray2$[0],
+              maxX = _getMinMaxOfArray2$[1],
+              _getMinMaxOfArray2$2 = _slicedToArray(_getMinMaxOfArray2[1], 2),
+              minY = _getMinMaxOfArray2$2[0],
+              maxY = _getMinMaxOfArray2$2[1];
+
+          for (var i = 0, len = elBox.length; i < len; i++) {
+            var _elBox$i = _slicedToArray(elBox[i], 2),
+                x = _elBox$i[0],
+                y = _elBox$i[1];
+
+            if (x < minX || x > maxX) {
+              restrictX = x;
+            }
+
+            if (y < minY || y > maxY) {
+              restrictY = y;
+            }
+          }
+
+          return {
+            x: restrictX,
+            y: restrictY
           };
         }
       }, {
@@ -1880,6 +1930,11 @@
           });
 
           this._apply(E_ROTATE$1);
+        }
+      }, {
+        key: "controls",
+        get: function get() {
+          return this.storage.wrapper;
         }
       }]);
 
@@ -2140,6 +2195,9 @@
 
     var E_MOUSEDOWN$2 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
         E_TOUCHSTART$2 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
+    var keys$1 = Object.keys,
+        entries = Object.entries,
+        values$1 = Object.values;
 
     var Draggable = /*#__PURE__*/function (_Transformable) {
       _inherits(Draggable, _Transformable);
@@ -2163,10 +2221,10 @@
               controlsContainer = _this$options.controlsContainer,
               resizable = _this$options.resizable,
               rotatable = _this$options.rotatable,
-              showNormal = _this$options.showNormal,
-              rotatorOffset = _this$options.rotatorOffset,
-              rotatorAnchor = _this$options.rotatorAnchor;
-          var offsetHeight = el.offsetHeight,
+              showNormal = _this$options.showNormal;
+          var elOffsetLeft = el.offsetLeft,
+              elOffsetTop = el.offsetTop,
+              offsetHeight = el.offsetHeight,
               offsetWidth = el.offsetWidth;
           var wrapper = createElement(['sjx-wrapper']);
           var controls = createElement(['sjx-controls']);
@@ -2185,69 +2243,17 @@
           var hasOrigin = originRotation.every(function (val) {
             return !isNaN(val);
           });
-          var vertices = {
-            tl: [0, 0, 0, 1],
-            bl: [0, offsetHeight, 0, 1],
-            br: [offsetWidth, offsetHeight, 0, 1],
-            tr: [offsetWidth, 0, 0, 1],
-            tc: [offsetWidth / 2, 0, 0, 1],
-            ml: [0, offsetHeight / 2, 0, 1],
-            bc: [offsetWidth / 2, offsetHeight, 0, 1],
-            mr: [offsetWidth, offsetHeight / 2, 0, 1],
-            center: [offsetWidth / 2, offsetHeight / 2, 0, 1]
-          };
-          var finalVertices = Object.entries(vertices).reduce(function (nextVerteces, _ref) {
-            var _ref2 = _slicedToArray(_ref, 2),
-                key = _ref2[0],
-                vertex = _ref2[1];
 
-            return [].concat(_toConsumableArray(nextVerteces), [[key, multiplyMatrixAndPoint(matrix, vertex)]]);
-          }, []).reduce(function (vertices, _ref3) {
-            var _ref4 = _slicedToArray(_ref3, 2),
-                key = _ref4[0],
-                _ref4$ = _slicedToArray(_ref4[1], 4),
-                x = _ref4$[0],
-                y = _ref4$[1],
-                z = _ref4$[2],
-                w = _ref4$[3];
+          var _this$_calculateVerti = this._calculateVertices(matrix),
+              _this$_calculateVerti2 = _this$_calculateVerti.rotator,
+              rotator = _this$_calculateVerti2 === void 0 ? null : _this$_calculateVerti2,
+              _this$_calculateVerti3 = _this$_calculateVerti.anchor,
+              anchor = _this$_calculateVerti3 === void 0 ? null : _this$_calculateVerti3,
+              finalVertices = _objectWithoutProperties(_this$_calculateVerti, ["rotator", "anchor"]);
 
-            vertices[key] = [x + offsetLeft, y + offsetTop, z, w];
-            return vertices;
-          }, {});
-          var rotationHandles = {},
-              rotator = null;
+          var rotationHandles = {};
 
           if (rotatable) {
-            var anchor = {};
-            var factor = 1;
-
-            switch (rotatorAnchor) {
-              case 'n':
-                anchor.x = finalVertices.tc[0];
-                anchor.y = finalVertices.tc[1];
-                break;
-
-              case 's':
-                anchor.x = finalVertices.bc[0];
-                anchor.y = finalVertices.bc[1];
-                factor = -1;
-                break;
-
-              case 'w':
-                anchor.x = finalVertices.ml[0];
-                anchor.y = finalVertices.ml[1];
-                factor = -1;
-                break;
-
-              case 'e':
-              default:
-                anchor.x = finalVertices.mr[0];
-                anchor.y = finalVertices.mr[1];
-                break;
-            }
-
-            var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? Math.atan2(finalVertices.bl[1] - finalVertices.tl[1], finalVertices.bl[0] - finalVertices.tl[0]) : Math.atan2(finalVertices.tl[1] - finalVertices.tr[1], finalVertices.tl[0] - finalVertices.tr[0]);
-            rotator = [anchor.x - rotatorOffset * factor * Math.cos(theta), anchor.y - rotatorOffset * factor * Math.sin(theta)];
             var normalLine = showNormal ? renderLine([[anchor.x, anchor.y], rotator], 'normal') : null;
             if (showNormal) controls.appendChild(normalLine);
             var radius = null;
@@ -2288,7 +2294,7 @@
           });
 
           var mapHandlers = function mapHandlers(obj, renderFunc) {
-            return Object.keys(obj).map(function (key) {
+            return keys$1(obj).map(function (key) {
               var data = obj[key];
               if (isUndef(data)) return;
               var handler = renderFunc(data, key);
@@ -2312,11 +2318,15 @@
             transform: {
               ctm: matrix
             },
-            box: {
+            bBox: {
               width: offsetWidth,
               height: offsetHeight,
-              left: offsetLeft,
-              top: offsetTop
+              left: elOffsetLeft,
+              top: elOffsetTop,
+              offset: {
+                left: offsetLeft,
+                top: offsetTop
+              }
             },
             cached: {}
           };
@@ -2326,18 +2336,18 @@
         }
       }, {
         key: "_pointToElement",
-        value: function _pointToElement(_ref5) {
-          var x = _ref5.x,
-              y = _ref5.y;
+        value: function _pointToElement(_ref) {
+          var x = _ref.x,
+              y = _ref.y;
           var ctm = this.storage.transform.ctm;
           var matrix = matrixInvert(ctm);
           return this._applyMatrixToPoint(dropTranslate(matrix, false), x, y);
         }
       }, {
         key: "_pointToControls",
-        value: function _pointToControls(_ref6) {
-          var x = _ref6.x,
-              y = _ref6.y;
+        value: function _pointToControls(_ref2) {
+          var x = _ref2.x,
+              y = _ref2.y;
           var wrapperMatrix = this.storage.transform.wrapperMatrix;
           var matrix = matrixInvert(wrapperMatrix);
           return this._applyMatrixToPoint(dropTranslate(matrix, false), x, y);
@@ -2357,55 +2367,23 @@
         }
       }, {
         key: "_cursorPoint",
-        value: function _cursorPoint(_ref7) {
-          var clientX = _ref7.clientX,
-              clientY = _ref7.clientY;
+        value: function _cursorPoint(_ref3) {
+          var clientX = _ref3.clientX,
+              clientY = _ref3.clientY;
           var container = this.options.container;
           var globalMatrix = getCurrentTransformMatrix(container);
           return this._applyMatrixToPoint(matrixInvert(globalMatrix), clientX, clientY);
         }
       }, {
-        key: "_restrictHandler",
-        value: function _restrictHandler(matrix) {
+        key: "_getRestrictedBBox",
+        value: function _getRestrictedBBox() {
+          var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
           var containerMatrix = this.storage.transform.containerMatrix,
               _this$options2 = this.options,
               restrict = _this$options2.restrict,
               container = _this$options2.container;
-          var restrictX = null,
-              restrictY = null;
-
-          var containerBox = _getBoundingRect(restrict, container, containerMatrix);
-
-          var elBox = this.getBoundingRect(matrix);
-
-          var _getMinMaxOf2DIndex = getMinMaxOf2DIndex(containerBox, 0),
-              _getMinMaxOf2DIndex2 = _slicedToArray(_getMinMaxOf2DIndex, 2),
-              minX = _getMinMaxOf2DIndex2[0],
-              maxX = _getMinMaxOf2DIndex2[1];
-
-          var _getMinMaxOf2DIndex3 = getMinMaxOf2DIndex(containerBox, 1),
-              _getMinMaxOf2DIndex4 = _slicedToArray(_getMinMaxOf2DIndex3, 2),
-              minY = _getMinMaxOf2DIndex4[0],
-              maxY = _getMinMaxOf2DIndex4[1];
-
-          for (var i = 0, len = elBox.length; i < len; i++) {
-            var _elBox$i = _slicedToArray(elBox[i], 2),
-                x = _elBox$i[0],
-                y = _elBox$i[1];
-
-            if (x < minX || x > maxX) {
-              restrictX = x;
-            }
-
-            if (y < minY || y > maxY) {
-              restrictY = y;
-            }
-          }
-
-          return {
-            x: restrictX,
-            y: restrictY
-          };
+          var restrictEl = restrict || container;
+          return _getBoundingRect(restrictEl, container, force ? getCurrentTransformMatrix(restrictEl, container) : containerMatrix);
         }
       }, {
         key: "_apply",
@@ -2440,8 +2418,7 @@
       }, {
         key: "_processResize",
         value: function _processResize(dx, dy) {
-          var el = this.el,
-              storage = this.storage,
+          var storage = this.storage,
               _this$storage2 = this.storage,
               _this$storage2$transf = _this$storage2.transform,
               matrix = _this$storage2$transf.matrix,
@@ -2454,9 +2431,9 @@
               nextDx = _this$storage2$cached3 === void 0 ? dx : _this$storage2$cached3,
               _this$storage2$cached4 = _this$storage2$cached2.dy,
               nextDy = _this$storage2$cached4 === void 0 ? dy : _this$storage2$cached4,
-              _this$storage2$box = _this$storage2.box,
-              boxWidth = _this$storage2$box.width,
-              boxHeight = _this$storage2$box.height,
+              _this$storage2$bBox = _this$storage2.bBox,
+              boxWidth = _this$storage2$bBox.width,
+              boxHeight = _this$storage2$bBox.height,
               revX = _this$storage2.revX,
               revY = _this$storage2.revY,
               doW = _this$storage2.doW,
@@ -2497,17 +2474,17 @@
 
           var preScaleMatrix = getScaleMatrix(pScaleX, pScaleY);
           var preResultMatrix = scalable ? multiplyMatrix(preScaleMatrix, matrix) : getTranslateMatrix(preScaleMatrix, matrix);
-          this.storage.cached.box = {
+          this.storage.cached.bBox = {
             width: pWidth,
             height: pHeight
           };
 
-          var _ref8 = restrict ? this._restrictHandler(preResultMatrix) : {
+          var _ref4 = restrict ? this._restrictHandler(preResultMatrix) : {
             x: null,
             y: null
           },
-              restX = _ref8.x,
-              restY = _ref8.y;
+              restX = _ref4.x,
+              restY = _ref4.y;
 
           var isBounding = (restX !== null || restY !== null) && restrict;
           var newDx = isBounding ? nextDx : dx;
@@ -2530,14 +2507,16 @@
               height: newHeight
             };
           }
-          helper(el).css(_objectSpread2({}, matrixToCSS(flatMatrix(resultMatrix)), {}, !scalable && {
+
+          this._updateElementView(_objectSpread2({}, matrixToCSS(flatMatrix(resultMatrix)), {}, !scalable && {
             width: "".concat(newWidth, "px"),
             height: "".concat(newHeight, "px")
           }));
-          applyTransformToHandles(storage, this.options, {
-            el: el,
+
+          this._applyTransformToHandles({
             boxMatrix: resultMatrix
           });
+
           storage.cached.dist = {
             dx: newDx,
             dy: newDy
@@ -2551,10 +2530,8 @@
       }, {
         key: "_processMove",
         value: function _processMove(dx, dy) {
-          var el = this.el,
-              storage = this.storage,
+          var storage = this.storage,
               _this$storage3 = this.storage,
-              wrapper = _this$storage3.wrapper,
               _this$storage3$transf = _this$storage3.transform,
               matrix = _this$storage3$transf.matrix,
               wrapperMatrix = _this$storage3$transf.wrapperMatrix,
@@ -2577,12 +2554,12 @@
 
           var preTranslateMatrix = multiplyMatrix(matrix, createTranslateMatrix(x, y));
 
-          var _ref9 = restrict ? this._restrictHandler(preTranslateMatrix) : {
+          var _ref5 = restrict ? this._restrictHandler(preTranslateMatrix) : {
             x: null,
             y: null
           },
-              restX = _ref9.x,
-              restY = _ref9.y;
+              restX = _ref5.x,
+              restY = _ref5.y;
 
           var newDx = restX !== null && restrict ? nextDx : dx,
               newDy = restY !== null && restrict ? nextDy : dy;
@@ -2596,8 +2573,11 @@
           var moveWrapperMtrx = multiplyMatrix(wrapperMatrix, createTranslateMatrix(newDx, newDy));
           var elStyle = matrixToCSS(flatMatrix(moveElementMtrx));
           var wrapperStyle = matrixToCSS(flatMatrix(moveWrapperMtrx));
-          helper(el).css(elStyle);
-          helper(wrapper).css(wrapperStyle);
+
+          this._updateElementView(elStyle);
+
+          this._updateWrapperView(wrapperStyle);
+
           storage.cached.dist = {
             dx: newDx,
             dy: newDy,
@@ -2612,8 +2592,7 @@
       }, {
         key: "_processRotate",
         value: function _processRotate(radians) {
-          var el = this.el,
-              _this$storage$transfo = this.storage.transform,
+          var _this$storage$transfo = this.storage.transform,
               matrix = _this$storage$transfo.matrix,
               translateMatrix = _this$storage$transfo.auxiliary.rotate.translateMatrix,
               restrict = this.options.restrict;
@@ -2623,28 +2602,30 @@
           var transformMatrix = multiplyMatrix(multiplyMatrix(matrixInvert(translateMatrix), rotationMatrix), translateMatrix);
           var resultMatrix = multiplyMatrix(matrix, transformMatrix);
 
-          var _ref10 = restrict ? this._restrictHandler(resultMatrix) : {
+          var _ref6 = restrict ? this._restrictHandler(resultMatrix) : {
             x: null,
             y: null
           },
-              restX = _ref10.x,
-              restY = _ref10.y;
+              restX = _ref6.x,
+              restY = _ref6.y;
 
           if (isDef(restX) || isDef(restY)) return resultMatrix;
-          helper(el).css(matrixToCSS(flatMatrix(resultMatrix)));
-          applyTransformToHandles(this.storage, this.options, {
-            el: el,
+
+          this._updateElementView(matrixToCSS(flatMatrix(resultMatrix)));
+
+          this._applyTransformToHandles({
             boxMatrix: resultMatrix
           });
+
           return resultMatrix;
         }
       }, {
         key: "_getState",
-        value: function _getState(_ref11) {
-          var revX = _ref11.revX,
-              revY = _ref11.revY,
-              doW = _ref11.doW,
-              doH = _ref11.doH;
+        value: function _getState(_ref7) {
+          var revX = _ref7.revX,
+              revY = _ref7.revY,
+              doW = _ref7.doW,
+              doH = _ref7.doH;
           var el = this.el,
               _this$storage4 = this.storage,
               cHandle = _this$storage4.handles.center,
@@ -2656,9 +2637,9 @@
               restrict = _this$options4.restrict,
               scalable = _this$options4.scalable;
 
-          var _ref12 = restrict || container,
-              offsetWidth = _ref12.offsetWidth,
-              offsetHeight = _ref12.offsetHeight;
+          var _ref8 = restrict || container,
+              offsetWidth = _ref8.offsetWidth,
+              offsetHeight = _ref8.offsetHeight;
 
           var _getAbsoluteOffset3 = getAbsoluteOffset(el, container),
               _getAbsoluteOffset4 = _slicedToArray(_getAbsoluteOffset3, 2),
@@ -2688,15 +2669,15 @@
           var globalCenterY = cenY + glTop;
           var originTransform = cHandle ? getTransform(cHandle) : createIdentityMatrix();
 
-          var _ref13 = cHandle ? decompose(getCurrentTransformMatrix(cHandle)) : {
+          var _ref9 = cHandle ? decompose(getCurrentTransformMatrix(cHandle)) : {
             translate: {
               x: globalCenterX,
               y: globalCenterY
             }
           },
-              _ref13$translate = _ref13.translate,
-              originX = _ref13$translate.x,
-              originY = _ref13$translate.y; // search distance between el's center and rotation handle
+              _ref9$translate = _ref9.translate,
+              originX = _ref9$translate.x,
+              originY = _ref9$translate.y; // search distance between el's center and rotation handle
 
 
           var _multiplyMatrixAndPoi9 = multiplyMatrixAndPoint(multiplyMatrix(matrixInvert(dropTranslate(ctm)), dropTranslate(originTransform)), [originX - globalCenterX, originY - globalCenterY, 0, 1]),
@@ -2742,7 +2723,7 @@
           };
           return {
             transform: transform,
-            box: {
+            bBox: {
               width: elWidth,
               height: elHeight,
               left: elOffsetLeft,
@@ -2776,22 +2757,197 @@
           this.storage.center.isShifted = true;
         }
       }, {
+        key: "_updateElementView",
+        value: function _updateElementView(css) {
+          helper(this.el).css(css);
+        }
+      }, {
+        key: "_updateWrapperView",
+        value: function _updateWrapperView(css) {
+          helper(this.storage.wrapper).css(css);
+        }
+      }, {
+        key: "_calculateVertices",
+        value: function _calculateVertices(transform) {
+          var element = this.el,
+              _this$options5 = this.options,
+              rotatable = _this$options5.rotatable,
+              rotatorAnchor = _this$options5.rotatorAnchor,
+              rotatorOffset = _this$options5.rotatorOffset,
+              container = _this$options5.container;
+          var offsetHeight = element.offsetHeight,
+              offsetWidth = element.offsetWidth;
+
+          var _getAbsoluteOffset5 = getAbsoluteOffset(element, container),
+              _getAbsoluteOffset6 = _slicedToArray(_getAbsoluteOffset5, 2),
+              offsetLeft = _getAbsoluteOffset6[0],
+              offsetTop = _getAbsoluteOffset6[1];
+
+          var vertices = {
+            tl: [0, 0, 0, 1],
+            bl: [0, offsetHeight, 0, 1],
+            br: [offsetWidth, offsetHeight, 0, 1],
+            tr: [offsetWidth, 0, 0, 1],
+            tc: [offsetWidth / 2, 0, 0, 1],
+            ml: [0, offsetHeight / 2, 0, 1],
+            bc: [offsetWidth / 2, offsetHeight, 0, 1],
+            mr: [offsetWidth, offsetHeight / 2, 0, 1],
+            center: [offsetWidth / 2, offsetHeight / 2, 0, 1]
+          };
+          var finalVertices = entries(vertices).reduce(function (nextVertices, _ref10) {
+            var _ref11 = _slicedToArray(_ref10, 2),
+                key = _ref11[0],
+                vertex = _ref11[1];
+
+            return [].concat(_toConsumableArray(nextVertices), [[key, multiplyMatrixAndPoint(transform || getCurrentTransformMatrix(element, container), vertex)]]);
+          }, []).reduce(function (vertices, _ref12) {
+            var _ref13 = _slicedToArray(_ref12, 2),
+                key = _ref13[0],
+                _ref13$ = _slicedToArray(_ref13[1], 4),
+                x = _ref13$[0],
+                y = _ref13$[1],
+                z = _ref13$[2],
+                w = _ref13$[3];
+
+            vertices[key] = [x + offsetLeft, y + offsetTop, z, w];
+            return vertices;
+          }, {});
+          var rotator = null;
+
+          if (rotatable) {
+            var anchor = {};
+            var factor = 1;
+
+            switch (rotatorAnchor) {
+              case 'n':
+                anchor.x = finalVertices.tc[0];
+                anchor.y = finalVertices.tc[1];
+                break;
+
+              case 's':
+                anchor.x = finalVertices.bc[0];
+                anchor.y = finalVertices.bc[1];
+                factor = -1;
+                break;
+
+              case 'w':
+                anchor.x = finalVertices.ml[0];
+                anchor.y = finalVertices.ml[1];
+                factor = -1;
+                break;
+
+              case 'e':
+              default:
+                anchor.x = finalVertices.mr[0];
+                anchor.y = finalVertices.mr[1];
+                break;
+            }
+
+            var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? Math.atan2(finalVertices.bl[1] - finalVertices.tl[1], finalVertices.bl[0] - finalVertices.tl[0]) : Math.atan2(finalVertices.tl[1] - finalVertices.tr[1], finalVertices.tl[0] - finalVertices.tr[0]);
+            rotator = [anchor.x - rotatorOffset * factor * Math.cos(theta), anchor.y - rotatorOffset * factor * Math.sin(theta)];
+            finalVertices.rotator = rotator;
+            finalVertices.anchor = anchor;
+          }
+
+          return finalVertices;
+        }
+      }, {
+        key: "_applyTransformToHandles",
+        value: function _applyTransformToHandles() {
+          var el = this.el;
+          var _this$storage6 = this.storage,
+              wrapper = _this$storage6.wrapper,
+              handles = _this$storage6.handles,
+              _this$storage6$transf = _this$storage6.transform;
+          _this$storage6$transf = _this$storage6$transf === void 0 ? {} : _this$storage6$transf;
+          var _this$storage6$transf2 = _this$storage6$transf.wrapperMatrix,
+              wrapperMatrix = _this$storage6$transf2 === void 0 ? getCurrentTransformMatrix(wrapper, wrapper.parentNode) : _this$storage6$transf2,
+              isShifted = _this$storage6.center.isShifted;
+          var _this$options6 = this.options,
+              rotatable = _this$options6.rotatable,
+              resizable = _this$options6.resizable,
+              showNormal = _this$options6.showNormal,
+              container = _this$options6.container;
+          var matrix = multiplyMatrix(getCurrentTransformMatrix(el, container), // better to find result matrix instead of calculated
+          matrixInvert(wrapperMatrix));
+
+          var _this$_calculateVerti4 = this._calculateVertices(matrix),
+              _this$_calculateVerti5 = _this$_calculateVerti4.anchor,
+              anchor = _this$_calculateVerti5 === void 0 ? null : _this$_calculateVerti5,
+              center = _this$_calculateVerti4.center,
+              finalVertices = _objectWithoutProperties(_this$_calculateVerti4, ["anchor", "center"]);
+
+          var normalLine = null;
+          var rotationHandles = {};
+
+          if (rotatable) {
+            normalLine = showNormal ? [[anchor.x, anchor.y], finalVertices.rotator] : null;
+            rotationHandles = {
+              rotator: finalVertices.rotator
+            };
+          }
+
+          var resizingEdges = _objectSpread2({
+            te: [finalVertices.tl, finalVertices.tr],
+            be: [finalVertices.bl, finalVertices.br],
+            le: [finalVertices.tl, finalVertices.bl],
+            re: [finalVertices.tr, finalVertices.br]
+          }, showNormal && normalLine && {
+            normal: normalLine
+          });
+
+          keys$1(resizingEdges).forEach(function (key) {
+            var _resizingEdges$key = _slicedToArray(resizingEdges[key], 2),
+                pt1 = _resizingEdges$key[0],
+                pt2 = _resizingEdges$key[1];
+
+            var _getLineAttrs = getLineAttrs(pt1, pt2),
+                cx = _getLineAttrs.cx,
+                cy = _getLineAttrs.cy,
+                length = _getLineAttrs.length,
+                theta = _getLineAttrs.theta;
+
+            helper(handles[key]).css({
+              transform: "translate(".concat(cx, "px, ").concat(cy, "px) rotate(").concat(theta, "deg)"),
+              width: "".concat(length, "px")
+            });
+          });
+
+          var allHandles = _objectSpread2({}, resizable && finalVertices, {}, rotationHandles, {}, !isShifted && Boolean(center) && {
+            center: center
+          });
+
+          keys$1(allHandles).forEach(function (key) {
+            var hdl = handles[key];
+            var attr = allHandles[key];
+            if (isUndef(attr) || isUndef(hdl)) return;
+
+            var _attr = _slicedToArray(attr, 2),
+                x = _attr[0],
+                y = _attr[1];
+
+            helper(hdl).css({
+              transform: "translate(".concat(x, "px, ").concat(y, "px)")
+            });
+          });
+        }
+      }, {
         key: "resetCenterPoint",
         value: function resetCenterPoint() {
           var el = this.el,
               _this$el = this.el,
               offsetHeight = _this$el.offsetHeight,
               offsetWidth = _this$el.offsetWidth,
-              _this$storage6 = this.storage,
-              wrapper = _this$storage6.wrapper,
-              center = _this$storage6.handles.center,
+              _this$storage7 = this.storage,
+              wrapper = _this$storage7.wrapper,
+              center = _this$storage7.handles.center,
               container = this.options.container;
           if (!center) return;
 
-          var _getAbsoluteOffset5 = getAbsoluteOffset(el, container),
-              _getAbsoluteOffset6 = _slicedToArray(_getAbsoluteOffset5, 2),
-              offsetLeft = _getAbsoluteOffset6[0],
-              offsetTop = _getAbsoluteOffset6[1];
+          var _getAbsoluteOffset7 = getAbsoluteOffset(el, container),
+              _getAbsoluteOffset8 = _slicedToArray(_getAbsoluteOffset7, 2),
+              offsetLeft = _getAbsoluteOffset8[0],
+              offsetTop = _getAbsoluteOffset8[1];
 
           var matrix = multiplyMatrix(getCurrentTransformMatrix(el, container), matrixInvert(getCurrentTransformMatrix(wrapper, wrapper.parentNode)));
 
@@ -2807,44 +2963,121 @@
       }, {
         key: "fitControlsToSize",
         value: function fitControlsToSize() {
-          var el = this.el,
-              wrapper = this.storage.wrapper;
-          wrapper.removeAttribute('transform');
-          applyTransformToHandles(this.storage, this.options, {
-            el: el
+          var identityMatrix = createIdentityMatrix();
+          this.storage = _objectSpread2({}, this.storage, {
+            transform: _objectSpread2({}, this.storage.transform || {}, {
+              wrapperMatrix: identityMatrix
+            })
           });
+
+          this._updateWrapperView(matrixToCSS(flatMatrix(identityMatrix)));
+
+          this._applyTransformToHandles();
         }
       }, {
         key: "getBoundingRect",
         value: function getBoundingRect() {
           var transformMatrix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
           var el = this.el,
-              _this$options5 = this.options,
-              scalable = _this$options5.scalable,
-              restrict = _this$options5.restrict,
-              _this$storage7 = this.storage,
-              box = _this$storage7.box,
-              _this$storage7$box = _this$storage7.box,
-              width = _this$storage7$box.width,
-              height = _this$storage7$box.height,
-              _this$storage7$cached = _this$storage7.cached;
-          _this$storage7$cached = _this$storage7$cached === void 0 ? {} : _this$storage7$cached;
-          var _this$storage7$cached2 = _this$storage7$cached.box;
-          _this$storage7$cached2 = _this$storage7$cached2 === void 0 ? {} : _this$storage7$cached2;
-          var _this$storage7$cached3 = _this$storage7$cached2.width,
-              nextWidth = _this$storage7$cached3 === void 0 ? width : _this$storage7$cached3,
-              _this$storage7$cached4 = _this$storage7$cached2.height,
-              nextHeight = _this$storage7$cached4 === void 0 ? height : _this$storage7$cached4;
-          var nextBox = scalable ? box : _objectSpread2({}, box, {
+              _this$options7 = this.options,
+              scalable = _this$options7.scalable,
+              restrict = _this$options7.restrict,
+              container = _this$options7.container,
+              _this$storage8 = this.storage,
+              bBox = _this$storage8.bBox,
+              _this$storage8$bBox = _this$storage8.bBox,
+              width = _this$storage8$bBox.width,
+              height = _this$storage8$bBox.height,
+              _this$storage8$cached = _this$storage8.cached;
+          _this$storage8$cached = _this$storage8$cached === void 0 ? {} : _this$storage8$cached;
+          var _this$storage8$cached2 = _this$storage8$cached.bBox;
+          _this$storage8$cached2 = _this$storage8$cached2 === void 0 ? {} : _this$storage8$cached2;
+          var _this$storage8$cached3 = _this$storage8$cached2.width,
+              nextWidth = _this$storage8$cached3 === void 0 ? width : _this$storage8$cached3,
+              _this$storage8$cached4 = _this$storage8$cached2.height,
+              nextHeight = _this$storage8$cached4 === void 0 ? height : _this$storage8$cached4;
+          var nextBox = scalable ? bBox : _objectSpread2({}, bBox, {
             width: nextWidth,
             height: nextHeight
           });
-          return _getBoundingRect(el, restrict, getCurrentTransformMatrix(el, restrict, transformMatrix), nextBox);
+          var restrictEl = restrict || container;
+          return _getBoundingRect(el, restrictEl, getCurrentTransformMatrix(el, restrictEl, transformMatrix), nextBox);
         }
       }, {
-        key: "controls",
-        get: function get() {
-          return this.storage.wrapper;
+        key: "applyAlignment",
+        value: function applyAlignment(direction) {
+          var container = this.options.container;
+
+          var _this$_calculateVerti6 = this._calculateVertices(),
+              anchor = _this$_calculateVerti6.anchor,
+              rotator = _this$_calculateVerti6.rotator,
+              center = _this$_calculateVerti6.center,
+              vertices = _objectWithoutProperties(_this$_calculateVerti6, ["anchor", "rotator", "center"]);
+
+          var restrictBBox = this._getRestrictedBBox(true);
+
+          var nextVertices = values$1(vertices);
+
+          var _getMinMaxOfArray = getMinMaxOfArray(restrictBBox),
+              _getMinMaxOfArray2 = _slicedToArray(_getMinMaxOfArray, 2),
+              _getMinMaxOfArray2$ = _slicedToArray(_getMinMaxOfArray2[0], 2),
+              minX = _getMinMaxOfArray2$[0],
+              maxX = _getMinMaxOfArray2$[1],
+              _getMinMaxOfArray2$2 = _slicedToArray(_getMinMaxOfArray2[1], 2),
+              minY = _getMinMaxOfArray2$2[0],
+              maxY = _getMinMaxOfArray2$2[1];
+
+          var _getMinMaxOfArray3 = getMinMaxOfArray(nextVertices),
+              _getMinMaxOfArray4 = _slicedToArray(_getMinMaxOfArray3, 2),
+              _getMinMaxOfArray4$ = _slicedToArray(_getMinMaxOfArray4[0], 2),
+              elMinX = _getMinMaxOfArray4$[0],
+              elMaxX = _getMinMaxOfArray4$[1],
+              _getMinMaxOfArray4$2 = _slicedToArray(_getMinMaxOfArray4[1], 2),
+              elMinY = _getMinMaxOfArray4$2[0],
+              elMaxY = _getMinMaxOfArray4$2[1];
+
+          var getXDir = function getXDir() {
+            switch (true) {
+              case /[l]/.test(direction):
+                return minX - elMinX;
+
+              case /[r]/.test(direction):
+                return maxX - elMaxX;
+
+              case /[h]/.test(direction):
+                return (maxX + minX) / 2 - (elMaxX + elMinX) / 2;
+
+              default:
+                return 0;
+            }
+          };
+
+          var getYDir = function getYDir() {
+            switch (true) {
+              case /[t]/.test(direction):
+                return minY - elMinY;
+
+              case /[b]/.test(direction):
+                return maxY - elMaxY;
+
+              case /[v]/.test(direction):
+                return (maxY + minY) / 2 - (elMaxY + elMinY) / 2;
+
+              default:
+                return 0;
+            }
+          };
+
+          var _multiplyMatrixAndPoi15 = multiplyMatrixAndPoint(matrixInvert(dropTranslate(getCurrentTransformMatrix(this.el.parentNode, container))), [getXDir(), getYDir(), 0, 1]),
+              _multiplyMatrixAndPoi16 = _slicedToArray(_multiplyMatrixAndPoi15, 2),
+              x = _multiplyMatrixAndPoi16[0],
+              y = _multiplyMatrixAndPoi16[1];
+
+          var moveElementMtrx = multiplyMatrix(getTransform(this.el), createTranslateMatrix(x, y));
+
+          this._updateElementView(matrixToCSS(flatMatrix(moveElementMtrx)));
+
+          this.fitControlsToSize();
         }
       }]);
 
@@ -2872,11 +3105,11 @@
           _ref17$ = _ref17[2],
           thickness = _ref17$ === void 0 ? 1 : _ref17$;
 
-      var _getLineAttrs = getLineAttrs(pt1, pt2, thickness),
-          cx = _getLineAttrs.cx,
-          cy = _getLineAttrs.cy,
-          length = _getLineAttrs.length,
-          theta = _getLineAttrs.theta;
+      var _getLineAttrs2 = getLineAttrs(pt1, pt2, thickness),
+          cx = _getLineAttrs2.cx,
+          cy = _getLineAttrs2.cy,
+          length = _getLineAttrs2.length,
+          theta = _getLineAttrs2.theta;
 
       var line = createElement(['sjx-hdl-line', "sjx-hdl-".concat(key)]);
       helper(line).css({
@@ -2911,158 +3144,13 @@
       };
     };
 
-    var applyTransformToHandles = function applyTransformToHandles(storage, options, data) {
-      var wrapper = storage.wrapper,
-          handles = storage.handles,
-          _storage$transform = storage.transform;
-      _storage$transform = _storage$transform === void 0 ? {} : _storage$transform;
-      var _storage$transform$wr = _storage$transform.wrapperMatrix,
-          wrapperMatrix = _storage$transform$wr === void 0 ? getCurrentTransformMatrix(wrapper, wrapper.parentNode) : _storage$transform$wr,
-          center = storage.center;
-      var rotationPoint = options.rotationPoint,
-          rotatable = options.rotatable,
-          resizable = options.resizable,
-          showNormal = options.showNormal,
-          rotatorOffset = options.rotatorOffset,
-          rotatorAnchor = options.rotatorAnchor,
-          container = options.container;
-      var el = data.el,
-          _data$el = data.el,
-          offsetHeight = _data$el.offsetHeight,
-          offsetWidth = _data$el.offsetWidth;
-
-      var _getAbsoluteOffset7 = getAbsoluteOffset(el, container),
-          _getAbsoluteOffset8 = _slicedToArray(_getAbsoluteOffset7, 2),
-          offsetLeft = _getAbsoluteOffset8[0],
-          offsetTop = _getAbsoluteOffset8[1];
-
-      var matrix = multiplyMatrix(getCurrentTransformMatrix(el, container), // better to find result matrix instead of calculated
-      matrixInvert(wrapperMatrix));
-
-      var vertices = _objectSpread2({
-        tl: [0, 0, 0, 1],
-        tr: [offsetWidth, 0, 0, 1],
-        bl: [0, offsetHeight, 0, 1],
-        br: [offsetWidth, offsetHeight, 0, 1],
-        tc: [offsetWidth / 2, 0, 0, 1],
-        ml: [0, offsetHeight / 2, 0, 1],
-        bc: [offsetWidth / 2, offsetHeight, 0, 1],
-        mr: [offsetWidth, offsetHeight / 2, 0, 1]
-      }, rotationPoint && rotatable && !center.isShifted && {
-        center: [offsetWidth / 2, offsetHeight / 2, 0, 1]
-      });
-
-      var finalVertices = Object.entries(vertices).reduce(function (nextVerteces, _ref18) {
-        var _ref19 = _slicedToArray(_ref18, 2),
-            key = _ref19[0],
-            vertex = _ref19[1];
-
-        return [].concat(_toConsumableArray(nextVerteces), [[key, multiplyMatrixAndPoint(matrix, vertex)]]);
-      }, []).reduce(function (vertices, _ref20) {
-        var _ref21 = _slicedToArray(_ref20, 2),
-            key = _ref21[0],
-            _ref21$ = _slicedToArray(_ref21[1], 4),
-            x = _ref21$[0],
-            y = _ref21$[1],
-            z = _ref21$[2],
-            w = _ref21$[3];
-
-        vertices[key] = [x + offsetLeft, y + offsetTop, z, w];
-        return vertices;
-      }, {});
-      var normalLine = null;
-      var rotationHandles = {};
-
-      if (rotatable) {
-        var anchor = {};
-        var factor = 1;
-        var rotator = [];
-
-        switch (rotatorAnchor) {
-          case 'n':
-            anchor.x = finalVertices.tc[0];
-            anchor.y = finalVertices.tc[1];
-            break;
-
-          case 's':
-            anchor.x = finalVertices.bc[0];
-            anchor.y = finalVertices.bc[1];
-            factor = -1;
-            break;
-
-          case 'w':
-            anchor.x = finalVertices.ml[0];
-            anchor.y = finalVertices.ml[1];
-            factor = -1;
-            break;
-
-          case 'e':
-          default:
-            anchor.x = finalVertices.mr[0];
-            anchor.y = finalVertices.mr[1];
-            break;
-        }
-
-        var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? Math.atan2(finalVertices.bl[1] - finalVertices.tl[1], finalVertices.bl[0] - finalVertices.tl[0]) : Math.atan2(finalVertices.tl[1] - finalVertices.tr[1], finalVertices.tl[0] - finalVertices.tr[0]);
-        var nextRotatorOffset = rotatorOffset * factor;
-        rotator = [anchor.x - nextRotatorOffset * Math.cos(theta), anchor.y - nextRotatorOffset * Math.sin(theta)];
-        normalLine = showNormal ? [[anchor.x, anchor.y], rotator] : null;
-        rotationHandles = {
-          rotator: rotator
-        };
-      }
-
-      var resizingHandles = _objectSpread2({}, finalVertices);
-
-      var resizingEdges = _objectSpread2({
-        te: [finalVertices.tl, finalVertices.tr],
-        be: [finalVertices.bl, finalVertices.br],
-        le: [finalVertices.tl, finalVertices.bl],
-        re: [finalVertices.tr, finalVertices.br]
-      }, showNormal && normalLine && {
-        normal: normalLine
-      });
-
-      Object.keys(resizingEdges).forEach(function (key) {
-        var _resizingEdges$key = _slicedToArray(resizingEdges[key], 2),
-            pt1 = _resizingEdges$key[0],
-            pt2 = _resizingEdges$key[1];
-
-        var _getLineAttrs2 = getLineAttrs(pt1, pt2),
-            cx = _getLineAttrs2.cx,
-            cy = _getLineAttrs2.cy,
-            length = _getLineAttrs2.length,
-            theta = _getLineAttrs2.theta;
-
-        helper(handles[key]).css({
-          transform: "translate(".concat(cx, "px, ").concat(cy, "px) rotate(").concat(theta, "deg)"),
-          width: "".concat(length, "px")
-        });
-      });
-
-      var allHandles = _objectSpread2({}, resizable && resizingHandles, {}, rotationHandles);
-
-      Object.keys(allHandles).forEach(function (key) {
-        var hdl = allHandles[key];
-        if (!hdl) return;
-
-        var _hdl = _slicedToArray(hdl, 2),
-            x = _hdl[0],
-            y = _hdl[1];
-
-        helper(handles[key]).css({
-          transform: "translate(".concat(x, "px, ").concat(y, "px)")
-        });
-      });
-    };
-
-    var _getBoundingRect = function _getBoundingRect(el, container, ctm, box) {
+    var _getBoundingRect = function _getBoundingRect(el, container, ctm, bBox) {
       var _getAbsoluteOffset9 = getAbsoluteOffset(el, container),
           _getAbsoluteOffset10 = _slicedToArray(_getAbsoluteOffset9, 2),
           offsetLeft = _getAbsoluteOffset10[0],
           offsetTop = _getAbsoluteOffset10[1];
 
-      var _ref22 = box || {
+      var _ref18 = bBox || {
         width: el.offsetWidth,
         height: el.offsetHeight,
         offset: {
@@ -3070,21 +3158,21 @@
           top: offsetTop
         }
       },
-          width = _ref22.width,
-          height = _ref22.height,
-          _ref22$offset = _ref22.offset,
-          left = _ref22$offset.left,
-          top = _ref22$offset.top;
+          width = _ref18.width,
+          height = _ref18.height,
+          _ref18$offset = _ref18.offset,
+          left = _ref18$offset.left,
+          top = _ref18$offset.top;
 
       var vertices = [[0, 0, 0, 1], [width, 0, 0, 1], [0, height, 0, 1], [width, height, 0, 1]];
       return vertices.reduce(function (nextVerteces, vertex) {
         return [].concat(_toConsumableArray(nextVerteces), [multiplyMatrixAndPoint(ctm, vertex)]);
-      }, []).map(function (_ref23) {
-        var _ref24 = _slicedToArray(_ref23, 4),
-            x = _ref24[0],
-            y = _ref24[1],
-            z = _ref24[2],
-            w = _ref24[3];
+      }, []).map(function (_ref19) {
+        var _ref20 = _slicedToArray(_ref19, 4),
+            x = _ref20[0],
+            y = _ref20[1],
+            z = _ref20[2],
+            w = _ref20[3];
 
         return [x + left, y + top, z, w];
       });
@@ -3099,7 +3187,6 @@
       return element;
     };
 
-    var svgPoint = createSVGElement('svg').createSVGPoint();
     var sepRE = /\s*,\s*|\s+/g;
     var allowedElements = ['circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text', 'g', 'foreignobject', 'use'];
     function createSVGElement(name) {
@@ -3110,6 +3197,12 @@
       });
       return element;
     }
+    var createSVGPoint = function createSVGPoint(x, y) {
+      var pt = createSVGElement('svg').createSVGPoint();
+      pt.x = x;
+      pt.y = y;
+      return pt;
+    };
     var checkChildElements = function checkChildElements(element) {
       var arrOfElements = [];
 
@@ -3170,9 +3263,7 @@
       return "matrix(".concat(a, ",").concat(b, ",").concat(c, ",").concat(d, ",").concat(e, ",").concat(f, ")");
     };
     var pointTo = function pointTo(ctm, x, y) {
-      svgPoint.x = x;
-      svgPoint.y = y;
-      return svgPoint.matrixTransform(ctm);
+      return createSVGPoint(x, y).matrixTransform(ctm);
     };
     var cloneMatrix$1 = function cloneMatrix(b) {
       var a = createSVGMatrix();
@@ -3718,6 +3809,9 @@
         E_RESIZE$2 = EVENT_EMITTER_CONSTANTS.E_RESIZE;
     var E_MOUSEDOWN$3 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
         E_TOUCHSTART$3 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
+    var keys$2 = Object.keys,
+        entries$1 = Object.entries,
+        values$2 = Object.values;
 
     var DraggableSVG = /*#__PURE__*/function (_Transformable) {
       _inherits(DraggableSVG, _Transformable);
@@ -3741,15 +3835,9 @@
               controlsContainer = _this$options.controlsContainer,
               resizable = _this$options.resizable,
               rotatable = _this$options.rotatable,
-              rotatorAnchor = _this$options.rotatorAnchor,
-              rotatorOffset = _this$options.rotatorOffset,
               showNormal = _this$options.showNormal,
               custom = _this$options.custom;
           var elBBox = el.getBBox();
-          var bX = elBBox.x,
-              bY = elBBox.y,
-              bW = elBBox.width,
-              bH = elBBox.height;
           var wrapper = createSVGElement('g', ['sjx-svg-wrapper']);
           var controls = createSVGElement('g', ['sjx-svg-controls']);
           var originRotation = ['data-sjx-cx', 'data-sjx-cy'].map(function (attr) {
@@ -3759,65 +3847,19 @@
           var hasOrigin = originRotation.every(function (val) {
             return !isNaN(val);
           });
-          var vertices = {
-            tl: [bX, bY],
-            tr: [bX + bW, bY],
-            mr: [bX + bW, bY + bH / 2],
-            ml: [bX, bY + bH / 2],
-            tc: [bX + bW / 2, bY],
-            bc: [bX + bW / 2, bY + bH],
-            br: [bX + bW, bY + bH],
-            bl: [bX, bY + bH],
-            center: [bX + bW / 2, bY + bH / 2]
-          };
           var elCTM = getTransformToElement(el, container);
-          var nextVertices = Object.entries(vertices).reduce(function (nextRes, _ref) {
-            var _ref2 = _slicedToArray(_ref, 2),
-                key = _ref2[0],
-                _ref2$ = _slicedToArray(_ref2[1], 2),
-                x = _ref2$[0],
-                y = _ref2$[1];
 
-            return _objectSpread2({}, nextRes, _defineProperty({}, key, pointTo(elCTM, x, y)));
-          }, {});
+          var _this$_calculateVerti = this._calculateVertices(elCTM),
+              _this$_calculateVerti2 = _this$_calculateVerti.rotator,
+              rotator = _this$_calculateVerti2 === void 0 ? null : _this$_calculateVerti2,
+              _this$_calculateVerti3 = _this$_calculateVerti.anchor,
+              anchor = _this$_calculateVerti3 === void 0 ? null : _this$_calculateVerti3,
+              nextVertices = _objectWithoutProperties(_this$_calculateVerti, ["rotator", "anchor"]);
+
           var handles = {};
-          var rotationHandles = {},
-              rotator = null;
+          var rotationHandles = {};
 
           if (rotatable) {
-            var anchor = {};
-            var factor = 1;
-
-            switch (rotatorAnchor) {
-              case 'n':
-                anchor.x = nextVertices.tc.x;
-                anchor.y = nextVertices.tc.y;
-                break;
-
-              case 's':
-                anchor.x = nextVertices.bc.x;
-                anchor.y = nextVertices.bc.y;
-                factor = -1;
-                break;
-
-              case 'w':
-                anchor.x = nextVertices.ml.x;
-                anchor.y = nextVertices.ml.y;
-                factor = -1;
-                break;
-
-              case 'e':
-              default:
-                anchor.x = nextVertices.mr.x;
-                anchor.y = nextVertices.mr.y;
-                break;
-            }
-
-            var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? Math.atan2(nextVertices.bl.y - nextVertices.tl.y, nextVertices.bl.x - nextVertices.tl.x) : Math.atan2(nextVertices.tl.y - nextVertices.tr.y, nextVertices.tl.x - nextVertices.tr.x);
-            rotator = {
-              x: anchor.x - rotatorOffset * factor * Math.cos(theta),
-              y: anchor.y - rotatorOffset * factor * Math.sin(theta)
-            };
             var normalLine = showNormal ? renderLine$1([anchor, rotator], THEME_COLOR, 'normal') : null;
             if (showNormal) controls.appendChild(normalLine);
             var radius = null;
@@ -3855,7 +3897,7 @@
             le: [nextVertices.tl, nextVertices.bl],
             re: [nextVertices.tr, nextVertices.br]
           };
-          Object.keys(resizingEdges).forEach(function (key) {
+          keys$2(resizingEdges).forEach(function (key) {
             var data = resizingEdges[key];
             if (isUndef(data)) return;
             handles[key] = renderLine$1(data, THEME_COLOR, key);
@@ -3868,7 +3910,7 @@
             center: rotationPoint && rotatable ? nextCenter : undefined
           });
 
-          Object.keys(allHandles).forEach(function (key) {
+          keys$2(allHandles).forEach(function (key) {
             var data = allHandles[key];
             if (isUndef(data)) return;
             var x = data.x,
@@ -3897,7 +3939,8 @@
               ctm: elCTM
             },
             bBox: elBBox,
-            cached: {}
+            cached: {},
+            __data__: new WeakMap()
           };
           [el, controls].map(function (target) {
             return helper(target).on(E_MOUSEDOWN$3, _this._onMouseDown).on(E_TOUCHSTART$3, _this._onTouchStart);
@@ -3905,61 +3948,33 @@
         }
       }, {
         key: "_cursorPoint",
-        value: function _cursorPoint(_ref3) {
-          var clientX = _ref3.clientX,
-              clientY = _ref3.clientY;
+        value: function _cursorPoint(_ref) {
+          var clientX = _ref.clientX,
+              clientY = _ref.clientY;
           var container = this.options.container;
           return this._applyMatrixToPoint(container.getScreenCTM().inverse(), clientX, clientY);
         }
       }, {
-        key: "_restrictHandler",
-        value: function _restrictHandler(matrix) {
-          var containerMatrix = this.storage.transform.containerMatrix,
-              _this$options2 = this.options,
-              container = _this$options2.container,
-              _this$options2$restri = _this$options2.restrict,
-              restrict = _this$options2$restri === void 0 ? container : _this$options2$restri;
-          var restrictX = null,
-              restrictY = null;
-
-          var containerBox = _getBoundingRect$1(restrict, containerMatrix);
-
-          var elBox = this.getBoundingRect(matrix);
-
-          var _getMinMaxOf2DIndex = getMinMaxOf2DIndex(containerBox, 0),
-              _getMinMaxOf2DIndex2 = _slicedToArray(_getMinMaxOf2DIndex, 2),
-              minX = _getMinMaxOf2DIndex2[0],
-              maxX = _getMinMaxOf2DIndex2[1];
-
-          var _getMinMaxOf2DIndex3 = getMinMaxOf2DIndex(containerBox, 1),
-              _getMinMaxOf2DIndex4 = _slicedToArray(_getMinMaxOf2DIndex3, 2),
-              minY = _getMinMaxOf2DIndex4[0],
-              maxY = _getMinMaxOf2DIndex4[1];
-
-          for (var i = 0, len = elBox.length; i < len; i++) {
-            var _elBox$i = _slicedToArray(elBox[i], 2),
-                x = _elBox$i[0],
-                y = _elBox$i[1];
-
-            if (x < minX || x > maxX) {
-              restrictX = x;
-            }
-
-            if (y < minY || y > maxY) {
-              restrictY = y;
-            }
-          }
-
-          return {
-            x: restrictX,
-            y: restrictY
-          };
+        key: "_getRestrictedBBox",
+        value: function _getRestrictedBBox() {
+          var force = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+          var _this$storage = this.storage;
+          _this$storage = _this$storage === void 0 ? {} : _this$storage;
+          var _this$storage$transfo = _this$storage.transform;
+          _this$storage$transfo = _this$storage$transfo === void 0 ? {} : _this$storage$transfo;
+          var containerMatrix = _this$storage$transfo.containerMatrix,
+              _this$options2 = this.options;
+          _this$options2 = _this$options2 === void 0 ? {} : _this$options2;
+          var container = _this$options2.container,
+              restrict = _this$options2.restrict;
+          var restrictEl = restrict || container;
+          return _getBoundingRect$1(restrictEl, force ? getTransformToElement(restrictEl, container) : containerMatrix);
         }
       }, {
         key: "_pointToElement",
-        value: function _pointToElement(_ref4) {
-          var x = _ref4.x,
-              y = _ref4.y;
+        value: function _pointToElement(_ref2) {
+          var x = _ref2.x,
+              y = _ref2.y;
           var ctm = this.storage.transform.ctm;
           var matrix = ctm.inverse();
           matrix.e = matrix.f = 0;
@@ -3967,9 +3982,9 @@
         }
       }, {
         key: "_pointToControls",
-        value: function _pointToControls(_ref5) {
-          var x = _ref5.x,
-              y = _ref5.y;
+        value: function _pointToControls(_ref3) {
+          var x = _ref3.x,
+              y = _ref3.y;
           var wrapperMatrix = this.storage.transform.wrapperMatrix;
           var matrix = wrapperMatrix.inverse();
           matrix.e = matrix.f = 0;
@@ -3987,13 +4002,12 @@
         key: "_apply",
         value: function _apply(actionName) {
           var element = this.el,
-              storage = this.storage,
-              _this$storage = this.storage,
-              bBox = _this$storage.bBox,
-              cached = _this$storage.cached,
-              transform = _this$storage.transform,
-              center = _this$storage.center,
-              options = this.options,
+              _this$storage2 = this.storage,
+              bBox = _this$storage2.bBox,
+              cached = _this$storage2.cached,
+              transform = _this$storage2.transform,
+              center = _this$storage2.center,
+              __data__ = _this$storage2.__data__,
               _this$options3 = this.options,
               container = _this$options3.container,
               scalable = _this$options3.scalable,
@@ -4018,7 +4032,8 @@
             if (!applyDragging || !dx && !dy) return;
             var eM = createTranslateMatrix$1(ox, oy);
             var translateMatrix = eM.multiply(matrix).multiply(eM.inverse());
-            element.setAttribute('transform', matrixToString(translateMatrix));
+
+            this._updateElementView(['transform', translateMatrix]);
 
             if (isGroup(element)) {
               var els = checkChildElements(element);
@@ -4069,9 +4084,7 @@
                       scaleY: scaleY,
                       localCTM: localCTM,
                       bBox: bBox,
-                      container: container,
-                      storage: storage,
-                      cached: cached
+                      __data__: __data__
                     });
                   }
                 });
@@ -4085,16 +4098,13 @@
                   scaleY: scaleY,
                   localCTM: localCTM,
                   bBox: bBox,
-                  container: container,
-                  storage: storage,
-                  cached: cached
+                  __data__: __data__
                 });
               }
             }
 
-            applyTransformToHandles$1(storage, options, {
-              boxMatrix: scalable ? ctm.multiply(transformMatrix) : ctm,
-              element: element
+            this._applyTransformToHandles({
+              boxMatrix: scalable ? ctm.multiply(transformMatrix) : ctm
             });
           }
         }
@@ -4103,25 +4113,25 @@
         value: function _processResize(dx, dy) {
           var el = this.el,
               storage = this.storage,
-              _this$storage2 = this.storage,
-              _this$storage2$bBox = _this$storage2.bBox,
-              boxWidth = _this$storage2$bBox.width,
-              boxHeight = _this$storage2$bBox.height,
-              revX = _this$storage2.revX,
-              revY = _this$storage2.revY,
-              doW = _this$storage2.doW,
-              doH = _this$storage2.doH,
-              _this$storage2$transf = _this$storage2.transform,
-              matrix = _this$storage2$transf.matrix,
-              translateMatrix = _this$storage2$transf.auxiliary.scale.translateMatrix,
-              _this$storage2$cached = _this$storage2.cached;
-          _this$storage2$cached = _this$storage2$cached === void 0 ? {} : _this$storage2$cached;
-          var _this$storage2$cached2 = _this$storage2$cached.dist;
-          _this$storage2$cached2 = _this$storage2$cached2 === void 0 ? {} : _this$storage2$cached2;
-          var _this$storage2$cached3 = _this$storage2$cached2.dx,
-              nextDx = _this$storage2$cached3 === void 0 ? dx : _this$storage2$cached3,
-              _this$storage2$cached4 = _this$storage2$cached2.dy,
-              nextDy = _this$storage2$cached4 === void 0 ? dy : _this$storage2$cached4,
+              _this$storage3 = this.storage,
+              _this$storage3$bBox = _this$storage3.bBox,
+              boxWidth = _this$storage3$bBox.width,
+              boxHeight = _this$storage3$bBox.height,
+              revX = _this$storage3.revX,
+              revY = _this$storage3.revY,
+              doW = _this$storage3.doW,
+              doH = _this$storage3.doH,
+              _this$storage3$transf = _this$storage3.transform,
+              matrix = _this$storage3$transf.matrix,
+              translateMatrix = _this$storage3$transf.auxiliary.scale.translateMatrix,
+              _this$storage3$cached = _this$storage3.cached;
+          _this$storage3$cached = _this$storage3$cached === void 0 ? {} : _this$storage3$cached;
+          var _this$storage3$cached2 = _this$storage3$cached.dist;
+          _this$storage3$cached2 = _this$storage3$cached2 === void 0 ? {} : _this$storage3$cached2;
+          var _this$storage3$cached3 = _this$storage3$cached2.dx,
+              nextDx = _this$storage3$cached3 === void 0 ? dx : _this$storage3$cached3,
+              _this$storage3$cached4 = _this$storage3$cached2.dy,
+              nextDy = _this$storage3$cached4 === void 0 ? dy : _this$storage3$cached4,
               _this$options4 = this.options,
               proportions = _this$options4.proportions,
               scalable = _this$options4.scalable,
@@ -4147,12 +4157,12 @@
 
           var preScaledMatrix = matrix.multiply(getScaleMatrix.apply(void 0, _toConsumableArray(getScale(dx, dy))));
 
-          var _ref6 = restrict ? this._restrictHandler(preScaledMatrix) : {
+          var _ref4 = restrict ? this._restrictHandler(preScaledMatrix) : {
             x: null,
             y: null
           },
-              restX = _ref6.x,
-              restY = _ref6.y;
+              restX = _ref4.x,
+              restY = _ref4.y;
 
           var isBounding = (restX !== null || restY !== null) && restrict;
           var newDx = isBounding ? nextDx : dx;
@@ -4173,7 +4183,7 @@
               newY = y - deltaH * (doW ? 0.5 : revY ? 1 : 0);
 
           if (scalable) {
-            el.setAttribute('transform', matrixToString(resultMatrix));
+            this._updateElementView(['transform', resultMatrix]);
           }
 
           storage.cached = _objectSpread2({}, storage.cached, {
@@ -4201,44 +4211,43 @@
         key: "_processMove",
         value: function _processMove(dx, dy) {
           var storage = this.storage,
-              _this$storage3 = this.storage,
-              wrapper = _this$storage3.wrapper,
-              center = _this$storage3.center,
-              _this$storage3$transf = _this$storage3.transform,
-              matrix = _this$storage3$transf.matrix,
-              _this$storage3$transf2 = _this$storage3$transf.auxiliary.translate,
-              translateMatrix = _this$storage3$transf2.translateMatrix,
-              wrapperTranslateMatrix = _this$storage3$transf2.wrapperTranslateMatrix,
-              wrapperMatrix = _this$storage3$transf.wrapperMatrix,
-              parentMatrix = _this$storage3$transf.parentMatrix,
-              _this$storage3$cached = _this$storage3.cached;
-          _this$storage3$cached = _this$storage3$cached === void 0 ? {} : _this$storage3$cached;
-          var _this$storage3$cached2 = _this$storage3$cached.dist;
-          _this$storage3$cached2 = _this$storage3$cached2 === void 0 ? {} : _this$storage3$cached2;
-          var _this$storage3$cached3 = _this$storage3$cached2.dx,
-              nextDx = _this$storage3$cached3 === void 0 ? dx : _this$storage3$cached3,
-              _this$storage3$cached4 = _this$storage3$cached2.dy,
-              nextDy = _this$storage3$cached4 === void 0 ? dy : _this$storage3$cached4,
+              _this$storage4 = this.storage,
+              center = _this$storage4.center,
+              _this$storage4$transf = _this$storage4.transform,
+              matrix = _this$storage4$transf.matrix,
+              _this$storage4$transf2 = _this$storage4$transf.auxiliary.translate,
+              translateMatrix = _this$storage4$transf2.translateMatrix,
+              wrapperTranslateMatrix = _this$storage4$transf2.wrapperTranslateMatrix,
+              parentMatrix = _this$storage4$transf2.parentMatrix,
+              wrapperMatrix = _this$storage4$transf.wrapperMatrix,
+              _this$storage4$cached = _this$storage4.cached;
+          _this$storage4$cached = _this$storage4$cached === void 0 ? {} : _this$storage4$cached;
+          var _this$storage4$cached2 = _this$storage4$cached.dist;
+          _this$storage4$cached2 = _this$storage4$cached2 === void 0 ? {} : _this$storage4$cached2;
+          var _this$storage4$cached3 = _this$storage4$cached2.dx,
+              nextDx = _this$storage4$cached3 === void 0 ? dx : _this$storage4$cached3,
+              _this$storage4$cached4 = _this$storage4$cached2.dy,
+              nextDy = _this$storage4$cached4 === void 0 ? dy : _this$storage4$cached4,
               restrict = this.options.restrict;
           parentMatrix.e = parentMatrix.f = 0;
 
-          var _pointTo2 = pointTo(parentMatrix.inverse(), dx, dy),
+          var _pointTo2 = pointTo(parentMatrix, dx, dy),
               x = _pointTo2.x,
               y = _pointTo2.y;
 
           var preTranslateMatrix = createTranslateMatrix$1(x, y).multiply(matrix);
 
-          var _ref7 = restrict ? this._restrictHandler(preTranslateMatrix) : {
+          var _ref5 = restrict ? this._restrictHandler(preTranslateMatrix) : {
             x: null,
             y: null
           },
-              restX = _ref7.x,
-              restY = _ref7.y;
+              restX = _ref5.x,
+              restY = _ref5.y;
 
           var newDx = restX !== null && restrict ? nextDx : dx;
           var newDy = restY !== null && restrict ? nextDy : dy;
 
-          var _pointTo3 = pointTo(parentMatrix.inverse(), newDx, newDy),
+          var _pointTo3 = pointTo(parentMatrix, newDx, newDy),
               nx = _pointTo3.x,
               ny = _pointTo3.y;
 
@@ -4254,8 +4263,10 @@
           wrapperTranslateMatrix.e = newDx;
           wrapperTranslateMatrix.f = newDy;
           var moveWrapperMtrx = wrapperTranslateMatrix.multiply(wrapperMatrix);
-          wrapper.setAttribute('transform', matrixToString(moveWrapperMtrx));
-          this.el.setAttribute('transform', matrixToString(moveElementMtrx));
+
+          this._updateWrapperView(moveWrapperMtrx);
+
+          this._updateElementView(['transform', moveElementMtrx]);
 
           if (center.isShifted) {
             var centerTransformMatrix = wrapperMatrix.inverse();
@@ -4273,15 +4284,13 @@
       }, {
         key: "_processRotate",
         value: function _processRotate(radians) {
-          var _this$storage4 = this.storage,
-              wrapper = _this$storage4.wrapper,
-              _this$storage4$transf = _this$storage4.transform,
-              matrix = _this$storage4$transf.matrix,
-              wrapperMatrix = _this$storage4$transf.wrapperMatrix,
-              parentMatrix = _this$storage4$transf.parentMatrix,
-              _this$storage4$transf2 = _this$storage4$transf.auxiliary.rotate,
-              translateMatrix = _this$storage4$transf2.translateMatrix,
-              wrapperTranslateMatrix = _this$storage4$transf2.wrapperTranslateMatrix,
+          var _this$storage$transfo2 = this.storage.transform,
+              matrix = _this$storage$transfo2.matrix,
+              wrapperMatrix = _this$storage$transfo2.wrapperMatrix,
+              parentMatrix = _this$storage$transfo2.parentMatrix,
+              _this$storage$transfo3 = _this$storage$transfo2.auxiliary.rotate,
+              translateMatrix = _this$storage$transfo3.translateMatrix,
+              wrapperTranslateMatrix = _this$storage$transfo3.wrapperTranslateMatrix,
               restrict = this.options.restrict;
           var cos = floatToFixed(Math.cos(radians)),
               sin = floatToFixed(Math.sin(radians));
@@ -4291,31 +4300,37 @@
           var resRotateMatrix = translateMatrix.multiply(resRotMatrix).multiply(translateMatrix.inverse());
           var resultMatrix = resRotateMatrix.multiply(matrix);
 
-          var _ref8 = restrict ? this._restrictHandler(resultMatrix) : {
+          var _ref6 = restrict ? this._restrictHandler(resultMatrix) : {
             x: null,
             y: null
           },
-              restX = _ref8.x,
-              restY = _ref8.y;
+              restX = _ref6.x,
+              restY = _ref6.y;
 
           if (isDef(restX) || isDef(restY)) return resultMatrix;
           var wrapperResultMatrix = wrapperTranslateMatrix.multiply(rotateMatrix).multiply(wrapperTranslateMatrix.inverse()).multiply(wrapperMatrix);
-          wrapper.setAttribute('transform', matrixToString(wrapperResultMatrix));
-          this.el.setAttribute('transform', matrixToString(resultMatrix));
+
+          this._updateWrapperView(wrapperResultMatrix);
+
+          this._updateElementView(['transform', resultMatrix]);
+
           return resultMatrix;
         }
       }, {
         key: "_getState",
-        value: function _getState(_ref9) {
-          var revX = _ref9.revX,
-              revY = _ref9.revY,
-              doW = _ref9.doW,
-              doH = _ref9.doH;
+        value: function _getState(_ref7) {
+          var _this2 = this;
+
+          var revX = _ref7.revX,
+              revY = _ref7.revY,
+              doW = _ref7.doW,
+              doH = _ref7.doH;
           var element = this.el,
               _this$storage5 = this.storage,
               wrapper = _this$storage5.wrapper,
               parent = _this$storage5.parent,
               cHandle = _this$storage5.handles.center,
+              __data__ = _this$storage5.__data__,
               _this$options5 = this.options,
               container = _this$options5.container,
               restrict = _this$options5.restrict;
@@ -4342,19 +4357,23 @@
               bcy = _pointTo5.y; // element's center coordinates
 
 
-          var _ref10 = cHandle ? pointTo(parentMatrixInverted, bcx, bcy) : pointTo(elMatrix, elCenterX, elCenterY),
-              elcx = _ref10.x,
-              elcy = _ref10.y; // box's center coordinates
+          var _ref8 = cHandle ? pointTo(parentMatrixInverted, bcx, bcy) : pointTo(elMatrix, elCenterX, elCenterY),
+              elcx = _ref8.x,
+              elcy = _ref8.y; // box's center coordinates
 
 
           var _pointTo6 = pointTo(ctm, elCenterX, elCenterY),
               rcx = _pointTo6.x,
               rcy = _pointTo6.y;
 
-          storeElementAttributes(this.el);
+          storeElementAttributes(this.el, this.storage);
+
+          __data__["delete"](element);
+
           checkChildElements(element).forEach(function (child) {
-            child.__ctm__ = getTransformToElement(child, child.parentNode);
-            storeElementAttributes(child);
+            __data__["delete"](child);
+
+            storeElementAttributes(child, _this2.storage);
           });
 
           var center = _objectSpread2({}, this.storage.center || {}, {
@@ -4421,18 +4440,230 @@
           this.storage.center.isShifted = true;
         }
       }, {
+        key: "_updateElementView",
+        value: function _updateElementView(_ref9) {
+          var _ref10 = _slicedToArray(_ref9, 2),
+              attr = _ref10[0],
+              value = _ref10[1];
+
+          if (attr === 'transform') {
+            this.el.setAttribute(attr, matrixToString(value));
+          }
+        }
+      }, {
+        key: "_updateWrapperView",
+        value: function _updateWrapperView(matrix) {
+          this.storage.wrapper.setAttribute('transform', matrixToString(matrix));
+        }
+      }, {
+        key: "_calculateVertices",
+        value: function _calculateVertices(transform) {
+          var element = this.el,
+              _this$options6 = this.options,
+              rotatable = _this$options6.rotatable,
+              rotatorAnchor = _this$options6.rotatorAnchor,
+              rotatorOffset = _this$options6.rotatorOffset,
+              container = _this$options6.container;
+
+          var _element$getBBox = element.getBBox(),
+              x = _element$getBBox.x,
+              y = _element$getBBox.y,
+              width = _element$getBBox.width,
+              height = _element$getBBox.height;
+
+          var hW = width / 2,
+              hH = height / 2;
+          var vertices = {
+            tl: [x, y],
+            tr: [x + width, y],
+            mr: [x + width, y + hH],
+            ml: [x, y + hH],
+            tc: [x + hW, y],
+            bc: [x + hW, y + height],
+            br: [x + width, y + height],
+            bl: [x, y + height],
+            center: [x + hW, y + hH]
+          };
+          var nextVertices = entries$1(vertices).reduce(function (nextRes, _ref11) {
+            var _ref12 = _slicedToArray(_ref11, 2),
+                key = _ref12[0],
+                _ref12$ = _slicedToArray(_ref12[1], 2),
+                x = _ref12$[0],
+                y = _ref12$[1];
+
+            nextRes[key] = pointTo(transform || getTransformToElement(element, container), x, y);
+            return nextRes;
+          }, {});
+
+          if (rotatable) {
+            var anchor = {};
+            var factor = 1;
+
+            switch (rotatorAnchor) {
+              case 'n':
+                {
+                  var _nextVertices$tc = nextVertices.tc,
+                      _x = _nextVertices$tc.x,
+                      _y = _nextVertices$tc.y;
+                  anchor.x = _x;
+                  anchor.y = _y;
+                  break;
+                }
+
+              case 's':
+                {
+                  var _nextVertices$bc = nextVertices.bc,
+                      _x2 = _nextVertices$bc.x,
+                      _y2 = _nextVertices$bc.y;
+                  anchor.x = _x2;
+                  anchor.y = _y2;
+                  factor = -1;
+                  break;
+                }
+
+              case 'w':
+                {
+                  var _nextVertices$ml = nextVertices.ml,
+                      _x3 = _nextVertices$ml.x,
+                      _y3 = _nextVertices$ml.y;
+                  anchor.x = _x3;
+                  anchor.y = _y3;
+                  factor = -1;
+                  break;
+                }
+
+              case 'e':
+              default:
+                {
+                  var _nextVertices$mr = nextVertices.mr,
+                      _x4 = _nextVertices$mr.x,
+                      _y4 = _nextVertices$mr.y;
+                  anchor.x = _x4;
+                  anchor.y = _y4;
+                  break;
+                }
+            }
+
+            var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? Math.atan2(nextVertices.bl.y - nextVertices.tl.y, nextVertices.bl.x - nextVertices.tl.x) : Math.atan2(nextVertices.tl.y - nextVertices.tr.y, nextVertices.tl.x - nextVertices.tr.x);
+            var nextRotatorOffset = rotatorOffset * factor;
+            var rotator = {
+              x: anchor.x - nextRotatorOffset * Math.cos(theta),
+              y: anchor.y - nextRotatorOffset * Math.sin(theta)
+            };
+            nextVertices.rotator = rotator;
+            nextVertices.anchor = anchor;
+          }
+
+          return nextVertices;
+        }
+      }, {
+        key: "_applyTransformToHandles",
+        value: function _applyTransformToHandles(_ref13) {
+          var boxMatrix = _ref13.boxMatrix;
+          var element = this.el;
+          var rotatable = this.options.rotatable;
+          var _this$storage7 = this.storage,
+              wrapper = _this$storage7.wrapper,
+              handles = _this$storage7.handles,
+              isShifted = _this$storage7.center.isShifted,
+              _this$storage7$transf = _this$storage7.transform;
+          _this$storage7$transf = _this$storage7$transf === void 0 ? {} : _this$storage7$transf;
+          var _this$storage7$transf2 = _this$storage7$transf.wrapperMatrix,
+              wrapperMatrix = _this$storage7$transf2 === void 0 ? getTransformToElement(wrapper, wrapper.parentNode) : _this$storage7$transf2;
+
+          var _element$getBBox2 = element.getBBox(),
+              x = _element$getBBox2.x,
+              y = _element$getBBox2.y,
+              width = _element$getBBox2.width,
+              height = _element$getBBox2.height;
+
+          var hW = width / 2,
+              hH = height / 2;
+          var resultTransform = wrapperMatrix.inverse().multiply(boxMatrix);
+          var boxCenter = pointTo(resultTransform, x + hW, y + hH);
+
+          var _this$_calculateVerti4 = this._calculateVertices(resultTransform),
+              _this$_calculateVerti5 = _this$_calculateVerti4.anchor,
+              anchor = _this$_calculateVerti5 === void 0 ? null : _this$_calculateVerti5,
+              center = _this$_calculateVerti4.center,
+              nextVertices = _objectWithoutProperties(_this$_calculateVerti4, ["anchor", "center"]);
+
+          var resEdges = {
+            te: [nextVertices.tl, nextVertices.tr],
+            be: [nextVertices.bl, nextVertices.br],
+            le: [nextVertices.tl, nextVertices.bl],
+            re: [nextVertices.tr, nextVertices.br]
+          };
+
+          if (rotatable) {
+            var normal = handles.normal,
+                radius = handles.radius;
+
+            if (isDef(normal)) {
+              normal.x1.baseVal.value = anchor.x;
+              normal.y1.baseVal.value = anchor.y;
+              normal.x2.baseVal.value = nextVertices.rotator.x;
+              normal.y2.baseVal.value = nextVertices.rotator.y;
+            }
+
+            if (isDef(radius)) {
+              radius.x1.baseVal.value = boxCenter.x;
+              radius.y1.baseVal.value = boxCenter.y;
+
+              if (!isShifted) {
+                radius.x2.baseVal.value = boxCenter.x;
+                radius.y2.baseVal.value = boxCenter.y;
+              }
+            }
+          }
+
+          keys$2(resEdges).forEach(function (key) {
+            var hdl = handles[key];
+
+            var _resEdges$key = _slicedToArray(resEdges[key], 2),
+                b = _resEdges$key[0],
+                e = _resEdges$key[1];
+
+            if (isUndef(b) || isUndef(hdl)) return;
+            entries$1({
+              x1: b.x,
+              y1: b.y,
+              x2: e.x,
+              y2: e.y
+            }).map(function (_ref14) {
+              var _ref15 = _slicedToArray(_ref14, 2),
+                  attr = _ref15[0],
+                  value = _ref15[1];
+
+              return hdl.setAttribute(attr, value);
+            });
+          });
+
+          var handlesVertices = _objectSpread2({}, nextVertices, {}, !isShifted && Boolean(center) && {
+            center: center
+          });
+
+          keys$2(handlesVertices).forEach(function (key) {
+            var hdl = handles[key];
+            var attr = handlesVertices[key];
+            if (isUndef(attr) || isUndef(hdl)) return;
+            hdl.setAttribute('cx', attr.x);
+            hdl.setAttribute('cy', attr.y);
+          });
+        }
+      }, {
         key: "resetCenterPoint",
         value: function resetCenterPoint() {
           var el = this.el,
-              _this$storage7 = this.storage,
-              _this$storage7$bBox = _this$storage7.bBox,
-              boxWidth = _this$storage7$bBox.width,
-              boxHeight = _this$storage7$bBox.height,
-              boxLeft = _this$storage7$bBox.x,
-              boxTop = _this$storage7$bBox.y,
-              _this$storage7$handle = _this$storage7.handles,
-              center = _this$storage7$handle.center,
-              radius = _this$storage7$handle.radius;
+              _this$storage8 = this.storage,
+              _this$storage8$bBox = _this$storage8.bBox,
+              boxWidth = _this$storage8$bBox.width,
+              boxHeight = _this$storage8$bBox.height,
+              boxLeft = _this$storage8$bBox.x,
+              boxTop = _this$storage8$bBox.y,
+              _this$storage8$handle = _this$storage8.handles,
+              center = _this$storage8$handle.center,
+              radius = _this$storage8$handle.radius;
           if (!center) return;
           var matrix = getTransformToElement(el, el.parentNode);
 
@@ -4450,53 +4681,124 @@
         key: "fitControlsToSize",
         value: function fitControlsToSize() {
           var el = this.el,
-              wrapper = this.storage.wrapper,
               container = this.options.container;
-
-          var _el$getBBox2 = el.getBBox(),
-              width = _el$getBBox2.width,
-              height = _el$getBBox2.height,
-              x = _el$getBBox2.x,
-              y = _el$getBBox2.y;
-
-          var containerMatrix = getTransformToElement(el, container);
+          var elCTM = getTransformToElement(el, container);
           var identityMatrix = createSVGMatrix();
-          this.storage.transform.wrapperMatrix = identityMatrix;
-          wrapper.setAttribute('transform', matrixToString(identityMatrix));
-          applyTransformToHandles$1(this.storage, this.options, {
-            x: x,
-            y: y,
-            width: width,
-            height: height,
-            boxMatrix: containerMatrix,
-            element: el
+          this.storage = _objectSpread2({}, this.storage, {
+            transform: _objectSpread2({}, this.storage.transform || {}, {
+              wrapperMatrix: identityMatrix
+            })
+          });
+
+          this._updateWrapperView(identityMatrix);
+
+          this._applyTransformToHandles({
+            boxMatrix: elCTM
           });
         }
       }, {
         key: "getBoundingRect",
-        value: function getBoundingRect(transformMatrix) {
+        value: function getBoundingRect() {
+          var transformMatrix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
           var el = this.el,
-              restrict = this.options.restrict,
-              _this$storage8 = this.storage,
-              bBox = _this$storage8.bBox,
-              _this$storage8$transf = _this$storage8.transform;
-          _this$storage8$transf = _this$storage8$transf === void 0 ? {} : _this$storage8$transf;
-          var ctm = _this$storage8$transf.ctm;
-          return _getBoundingRect$1(el, getTransformToElement(el.parentNode, restrict).multiply(transformMatrix || ctm), bBox);
+              _this$options7 = this.options,
+              restrict = _this$options7.restrict,
+              container = _this$options7.container,
+              bBox = this.storage.bBox;
+          var restrictEl = restrict || container;
+          var nextTransform = transformMatrix ? getTransformToElement(el.parentNode, restrictEl).multiply(transformMatrix) : getTransformToElement(el, restrictEl);
+          return _getBoundingRect$1(el, nextTransform, bBox);
         }
       }, {
-        key: "controls",
-        get: function get() {
-          return this.storage.wrapper;
+        key: "applyAlignment",
+        value: function applyAlignment(direction) {
+          var container = this.options.container;
+
+          var _this$_calculateVerti6 = this._calculateVertices(),
+              anchor = _this$_calculateVerti6.anchor,
+              rotator = _this$_calculateVerti6.rotator,
+              center = _this$_calculateVerti6.center,
+              vertices = _objectWithoutProperties(_this$_calculateVerti6, ["anchor", "rotator", "center"]);
+
+          var restrictBBox = this._getRestrictedBBox(true);
+
+          var nextVertices = values$2(vertices).map(function (_ref16) {
+            var x = _ref16.x,
+                y = _ref16.y;
+            return [x, y];
+          });
+
+          var _getMinMaxOfArray = getMinMaxOfArray(restrictBBox),
+              _getMinMaxOfArray2 = _slicedToArray(_getMinMaxOfArray, 2),
+              _getMinMaxOfArray2$ = _slicedToArray(_getMinMaxOfArray2[0], 2),
+              minX = _getMinMaxOfArray2$[0],
+              maxX = _getMinMaxOfArray2$[1],
+              _getMinMaxOfArray2$2 = _slicedToArray(_getMinMaxOfArray2[1], 2),
+              minY = _getMinMaxOfArray2$2[0],
+              maxY = _getMinMaxOfArray2$2[1];
+
+          var _getMinMaxOfArray3 = getMinMaxOfArray(nextVertices),
+              _getMinMaxOfArray4 = _slicedToArray(_getMinMaxOfArray3, 2),
+              _getMinMaxOfArray4$ = _slicedToArray(_getMinMaxOfArray4[0], 2),
+              elMinX = _getMinMaxOfArray4$[0],
+              elMaxX = _getMinMaxOfArray4$[1],
+              _getMinMaxOfArray4$2 = _slicedToArray(_getMinMaxOfArray4[1], 2),
+              elMinY = _getMinMaxOfArray4$2[0],
+              elMaxY = _getMinMaxOfArray4$2[1];
+
+          var getXDir = function getXDir() {
+            switch (true) {
+              case /[l]/.test(direction):
+                return minX - elMinX;
+
+              case /[r]/.test(direction):
+                return maxX - elMaxX;
+
+              case /[h]/.test(direction):
+                return (maxX + minX) / 2 - (elMaxX + elMinX) / 2;
+
+              default:
+                return 0;
+            }
+          };
+
+          var getYDir = function getYDir() {
+            switch (true) {
+              case /[t]/.test(direction):
+                return minY - elMinY;
+
+              case /[b]/.test(direction):
+                return maxY - elMaxY;
+
+              case /[v]/.test(direction):
+                return (maxY + minY) / 2 - (elMaxY + elMinY) / 2;
+
+              default:
+                return 0;
+            }
+          };
+
+          var parentMatrix = getTransformToElement(this.el.parentNode, container);
+          parentMatrix.e = parentMatrix.f = 0;
+
+          var _pointTo8 = pointTo(parentMatrix.inverse(), getXDir(), getYDir()),
+              x = _pointTo8.x,
+              y = _pointTo8.y;
+
+          var moveElementMtrx = createTranslateMatrix$1(x, y).multiply(getTransformToElement(this.el, this.el.parentNode));
+
+          this._updateElementView(['transform', moveElementMtrx]);
+
+          this.fitControlsToSize();
         }
       }]);
 
       return DraggableSVG;
     }(Transformable);
 
-    var applyTranslate = function applyTranslate(element, _ref11) {
-      var x = _ref11.x,
-          y = _ref11.y;
+    var applyTranslate = function applyTranslate(element, _ref17) {
+      var x = _ref17.x,
+          y = _ref17.y;
       var attrs = [];
 
       switch (element.tagName.toLowerCase()) {
@@ -4577,21 +4879,23 @@
           localCTM = data.localCTM,
           _data$bBox = data.bBox,
           boxW = _data$bBox.width,
-          boxH = _data$bBox.height;
+          boxH = _data$bBox.height,
+          __data__ = data.__data__;
       var attrs = [];
+
+      var storedData = __data__.get(element);
 
       switch (element.tagName.toLowerCase()) {
         case 'text':
         case 'tspan':
           {
-            var _element$__data__ = element.__data__,
-                x = _element$__data__.x,
-                y = _element$__data__.y,
-                textLength = _element$__data__.textLength;
+            var x = storedData.x,
+                y = storedData.y,
+                textLength = storedData.textLength;
 
-            var _pointTo8 = pointTo(localCTM, x, y),
-                resX = _pointTo8.x,
-                resY = _pointTo8.y;
+            var _pointTo9 = pointTo(localCTM, x, y),
+                resX = _pointTo9.x,
+                resY = _pointTo9.y;
 
             attrs.push(['x', resX + (scaleX < 0 ? boxW : 0)], ['y', resY - (scaleY < 0 ? boxH : 0)], ['textLength', Math.abs(scaleX * textLength)]);
             break;
@@ -4599,15 +4903,14 @@
 
         case 'circle':
           {
-            var _element$__data__2 = element.__data__,
-                r = _element$__data__2.r,
-                cx = _element$__data__2.cx,
-                cy = _element$__data__2.cy,
+            var r = storedData.r,
+                cx = storedData.cx,
+                cy = storedData.cy,
                 newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-            var _pointTo9 = pointTo(localCTM, cx, cy),
-                _resX3 = _pointTo9.x,
-                _resY3 = _pointTo9.y;
+            var _pointTo10 = pointTo(localCTM, cx, cy),
+                _resX3 = _pointTo10.x,
+                _resY3 = _pointTo10.y;
 
             attrs.push(['r', newR], ['cx', _resX3], ['cy', _resY3]);
             break;
@@ -4617,15 +4920,14 @@
         case 'image':
         case 'rect':
           {
-            var _element$__data__3 = element.__data__,
-                width = _element$__data__3.width,
-                height = _element$__data__3.height,
-                _x = _element$__data__3.x,
-                _y = _element$__data__3.y;
+            var width = storedData.width,
+                height = storedData.height,
+                _x5 = storedData.x,
+                _y5 = storedData.y;
 
-            var _pointTo10 = pointTo(localCTM, _x, _y),
-                _resX4 = _pointTo10.x,
-                _resY4 = _pointTo10.y;
+            var _pointTo11 = pointTo(localCTM, _x5, _y5),
+                _resX4 = _pointTo11.x,
+                _resY4 = _pointTo11.y;
 
             var newWidth = Math.abs(width * scaleX),
                 newHeight = Math.abs(height * scaleY);
@@ -4635,23 +4937,22 @@
 
         case 'ellipse':
           {
-            var _element$__data__4 = element.__data__,
-                rx = _element$__data__4.rx,
-                ry = _element$__data__4.ry,
-                _cx = _element$__data__4.cx,
-                _cy = _element$__data__4.cy;
+            var rx = storedData.rx,
+                ry = storedData.ry,
+                _cx = storedData.cx,
+                _cy = storedData.cy;
 
-            var _pointTo11 = pointTo(localCTM, _cx, _cy),
-                cx1 = _pointTo11.x,
-                cy1 = _pointTo11.y;
+            var _pointTo12 = pointTo(localCTM, _cx, _cy),
+                cx1 = _pointTo12.x,
+                cy1 = _pointTo12.y;
 
             var scaleMatrix = createSVGMatrix();
             scaleMatrix.a = scaleX;
             scaleMatrix.d = scaleY;
 
-            var _pointTo12 = pointTo(scaleMatrix, rx, ry),
-                nRx = _pointTo12.x,
-                nRy = _pointTo12.y;
+            var _pointTo13 = pointTo(scaleMatrix, rx, ry),
+                nRx = _pointTo13.x,
+                nRy = _pointTo13.y;
 
             attrs.push(['rx', Math.abs(nRx)], ['ry', Math.abs(nRy)], ['cx', cx1], ['cy', cy1]);
             break;
@@ -4659,19 +4960,18 @@
 
         case 'line':
           {
-            var _element$__data__5 = element.__data__,
-                resX1 = _element$__data__5.resX1,
-                resY1 = _element$__data__5.resY1,
-                resX2 = _element$__data__5.resX2,
-                resY2 = _element$__data__5.resY2;
+            var resX1 = storedData.resX1,
+                resY1 = storedData.resY1,
+                resX2 = storedData.resX2,
+                resY2 = storedData.resY2;
 
-            var _pointTo13 = pointTo(localCTM, resX1, resY1),
-                resX1_ = _pointTo13.x,
-                resY1_ = _pointTo13.y;
+            var _pointTo14 = pointTo(localCTM, resX1, resY1),
+                resX1_ = _pointTo14.x,
+                resY1_ = _pointTo14.y;
 
-            var _pointTo14 = pointTo(localCTM, resX2, resY2),
-                resX2_ = _pointTo14.x,
-                resY2_ = _pointTo14.y;
+            var _pointTo15 = pointTo(localCTM, resX2, resY2),
+                resX2_ = _pointTo15.x,
+                resY2_ = _pointTo15.y;
 
             attrs.push(['x1', resX1_], ['y1', resY1_], ['x2', resX2_], ['y2', resY2_]);
             break;
@@ -4680,11 +4980,11 @@
         case 'polygon':
         case 'polyline':
           {
-            var points = element.__data__.points;
+            var points = storedData.points;
             var result = parsePoints(points).map(function (item) {
-              var _pointTo15 = pointTo(localCTM, Number(item[0]), Number(item[1])),
-                  x = _pointTo15.x,
-                  y = _pointTo15.y;
+              var _pointTo16 = pointTo(localCTM, Number(item[0]), Number(item[1])),
+                  x = _pointTo16.x,
+                  y = _pointTo16.y;
 
               item[0] = floatToFixed(x);
               item[1] = floatToFixed(y);
@@ -4696,7 +4996,7 @@
 
         case 'path':
           {
-            var path = element.__data__.path;
+            var path = storedData.path;
             attrs.push(['d', resizePath({
               path: path,
               localCTM: localCTM
@@ -4705,153 +5005,12 @@
           }
       }
 
-      attrs.forEach(function (_ref12) {
-        var _ref13 = _slicedToArray(_ref12, 2),
-            key = _ref13[0],
-            value = _ref13[1];
+      attrs.forEach(function (_ref18) {
+        var _ref19 = _slicedToArray(_ref18, 2),
+            key = _ref19[0],
+            value = _ref19[1];
 
         element.setAttribute(key, value);
-      });
-    };
-
-    var applyTransformToHandles$1 = function applyTransformToHandles(storage, options, data) {
-      var rotatable = options.rotatable,
-          rotatorAnchor = options.rotatorAnchor,
-          rotatorOffset = options.rotatorOffset;
-      var wrapper = storage.wrapper,
-          handles = storage.handles,
-          center = storage.center,
-          _storage$transform = storage.transform;
-      _storage$transform = _storage$transform === void 0 ? {} : _storage$transform;
-      var _storage$transform$wr = _storage$transform.wrapperMatrix,
-          wrapperMatrix = _storage$transform$wr === void 0 ? getTransformToElement(wrapper, wrapper.parentNode) : _storage$transform$wr;
-      var boxMatrix = data.boxMatrix,
-          element = data.element;
-
-      var _element$getBBox = element.getBBox(),
-          x = _element$getBBox.x,
-          y = _element$getBBox.y,
-          width = _element$getBBox.width,
-          height = _element$getBBox.height;
-
-      var hW = width / 2,
-          hH = height / 2;
-      var resultTransform = wrapperMatrix.inverse().multiply(boxMatrix);
-      var boxCenter = pointTo(resultTransform, x + hW, y + hH);
-
-      var vertices = _objectSpread2({
-        tl: [x, y],
-        tr: [x + width, y],
-        mr: [x + width, y + hH],
-        ml: [x, y + hH],
-        tc: [x + hW, y],
-        bc: [x + hW, y + height],
-        br: [x + width, y + height],
-        bl: [x, y + height]
-      }, !center.isShifted && {
-        center: [x + hW, y + hH]
-      });
-
-      var nextVertices = Object.entries(vertices).reduce(function (nextRes, _ref14) {
-        var _ref15 = _slicedToArray(_ref14, 2),
-            key = _ref15[0],
-            vertex = _ref15[1];
-
-        nextRes[key] = pointTo(resultTransform, vertex[0], vertex[1]);
-        return nextRes;
-      }, {});
-      var resEdges = {
-        te: [nextVertices.tl, nextVertices.tr],
-        be: [nextVertices.bl, nextVertices.br],
-        le: [nextVertices.tl, nextVertices.bl],
-        re: [nextVertices.tr, nextVertices.br]
-      };
-
-      if (rotatable) {
-        var anchor = {};
-        var factor = 1;
-
-        switch (rotatorAnchor) {
-          case 'n':
-            anchor.x = nextVertices.tc.x;
-            anchor.y = nextVertices.tc.y;
-            break;
-
-          case 's':
-            anchor.x = nextVertices.bc.x;
-            anchor.y = nextVertices.bc.y;
-            factor = -1;
-            break;
-
-          case 'w':
-            anchor.x = nextVertices.ml.x;
-            anchor.y = nextVertices.ml.y;
-            factor = -1;
-            break;
-
-          case 'e':
-          default:
-            anchor.x = nextVertices.mr.x;
-            anchor.y = nextVertices.mr.y;
-            break;
-        }
-
-        var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? Math.atan2(nextVertices.bl.y - nextVertices.tl.y, nextVertices.bl.x - nextVertices.tl.x) : Math.atan2(nextVertices.tl.y - nextVertices.tr.y, nextVertices.tl.x - nextVertices.tr.x);
-        var nextRotatorOffset = rotatorOffset * factor;
-        var rotator = {
-          x: anchor.x - nextRotatorOffset * Math.cos(theta),
-          y: anchor.y - nextRotatorOffset * Math.sin(theta)
-        };
-        var normal = handles.normal,
-            radius = handles.radius;
-
-        if (isDef(normal)) {
-          normal.x1.baseVal.value = anchor.x;
-          normal.y1.baseVal.value = anchor.y;
-          normal.x2.baseVal.value = rotator.x;
-          normal.y2.baseVal.value = rotator.y;
-        }
-
-        if (isDef(radius)) {
-          radius.x1.baseVal.value = boxCenter.x;
-          radius.y1.baseVal.value = boxCenter.y;
-
-          if (!center.isShifted) {
-            radius.x2.baseVal.value = boxCenter.x;
-            radius.y2.baseVal.value = boxCenter.y;
-          }
-        }
-
-        nextVertices.rotator = rotator;
-      }
-
-      Object.keys(resEdges).forEach(function (key) {
-        var hdl = handles[key];
-
-        var _resEdges$key = _slicedToArray(resEdges[key], 2),
-            b = _resEdges$key[0],
-            e = _resEdges$key[1];
-
-        if (isUndef(b) || isUndef(hdl)) return;
-        Object.entries({
-          x1: b.x,
-          y1: b.y,
-          x2: e.x,
-          y2: e.y
-        }).map(function (_ref16) {
-          var _ref17 = _slicedToArray(_ref16, 2),
-              attr = _ref17[0],
-              value = _ref17[1];
-
-          return hdl.setAttribute(attr, value);
-        });
-      });
-      Object.keys(nextVertices).forEach(function (key) {
-        var hdl = handles[key];
-        var attr = nextVertices[key];
-        if (isUndef(attr) || isUndef(hdl)) return;
-        hdl.setAttribute('cx', attr.x);
-        hdl.setAttribute('cy', attr.y);
       });
     };
 
@@ -4867,10 +5026,10 @@
         'fill-opacity': 1,
         'vector-effect': 'non-scaling-stroke'
       };
-      Object.entries(attrs).forEach(function (_ref18) {
-        var _ref19 = _slicedToArray(_ref18, 2),
-            attr = _ref19[0],
-            value = _ref19[1];
+      entries$1(attrs).forEach(function (_ref20) {
+        var _ref21 = _slicedToArray(_ref20, 2),
+            attr = _ref21[0],
+            value = _ref21[1];
 
         return handler.setAttribute(attr, value);
       });
@@ -4883,14 +5042,16 @@
       line.setAttribute('vector-effect', 'non-scaling-stroke');
     };
 
-    var storeElementAttributes = function storeElementAttributes(element) {
+    var storeElementAttributes = function storeElementAttributes(element, storage) {
+      var data = null;
+
       switch (element.tagName.toLowerCase()) {
         case 'text':
           {
             var x = isDef(element.x.baseVal[0]) ? element.x.baseVal[0].value : Number(element.getAttribute('x')) || 0;
             var y = isDef(element.y.baseVal[0]) ? element.y.baseVal[0].value : Number(element.getAttribute('y')) || 0;
             var textLength = isDef(element.textLength.baseVal) ? element.textLength.baseVal.value : Number(element.getAttribute('textLength')) || null;
-            element.__data__ = {
+            data = {
               x: x,
               y: y,
               textLength: textLength
@@ -4903,7 +5064,7 @@
             var r = element.r.baseVal.value,
                 cx = element.cx.baseVal.value,
                 cy = element.cy.baseVal.value;
-            element.__data__ = {
+            data = {
               r: r,
               cx: cx,
               cy: cy
@@ -4917,13 +5078,13 @@
           {
             var width = element.width.baseVal.value,
                 height = element.height.baseVal.value,
-                _x2 = element.x.baseVal.value,
-                _y2 = element.y.baseVal.value;
-            element.__data__ = {
+                _x6 = element.x.baseVal.value,
+                _y6 = element.y.baseVal.value;
+            data = {
               width: width,
               height: height,
-              x: _x2,
-              y: _y2
+              x: _x6,
+              y: _y6
             };
             break;
           }
@@ -4934,7 +5095,7 @@
                 ry = element.ry.baseVal.value,
                 _cx2 = element.cx.baseVal.value,
                 _cy2 = element.cy.baseVal.value;
-            element.__data__ = {
+            data = {
               rx: rx,
               ry: ry,
               cx: _cx2,
@@ -4949,7 +5110,7 @@
                 resY1 = element.y1.baseVal.value,
                 resX2 = element.x2.baseVal.value,
                 resY2 = element.y2.baseVal.value;
-            element.__data__ = {
+            data = {
               resX1: resX1,
               resY1: resY1,
               resX2: resX2,
@@ -4962,7 +5123,7 @@
         case 'polyline':
           {
             var points = element.getAttribute('points');
-            element.__data__ = {
+            data = {
               points: points
             };
             break;
@@ -4971,18 +5132,20 @@
         case 'path':
           {
             var path = element.getAttribute('d');
-            element.__data__ = {
+            data = {
               path: path
             };
             break;
           }
       }
+
+      storage.__data__.set(element, data);
     };
 
-    var renderLine$1 = function renderLine(_ref20, color, key) {
-      var _ref21 = _slicedToArray(_ref20, 2),
-          b = _ref21[0],
-          e = _ref21[1];
+    var renderLine$1 = function renderLine(_ref22, color, key) {
+      var _ref23 = _slicedToArray(_ref22, 2),
+          b = _ref23[0],
+          e = _ref23[1];
 
       var handler = createSVGElement('line', ['sjx-svg-line', "sjx-svg-line-".concat(key)]);
       var attrs = {
@@ -4994,10 +5157,10 @@
         'stroke-width': 1,
         'vector-effect': 'non-scaling-stroke'
       };
-      Object.entries(attrs).forEach(function (_ref22) {
-        var _ref23 = _slicedToArray(_ref22, 2),
-            attr = _ref23[0],
-            value = _ref23[1];
+      entries$1(attrs).forEach(function (_ref24) {
+        var _ref25 = _slicedToArray(_ref24, 2),
+            attr = _ref25[0],
+            value = _ref25[1];
 
         return handler.setAttribute(attr, value);
       });
@@ -5011,14 +5174,14 @@
           width = bBox.width,
           height = bBox.height;
       var vertices = [[x, y], [x + width, y], [x + width, y + height], [x, y + height]];
-      return vertices.map(function (_ref24) {
-        var _ref25 = _slicedToArray(_ref24, 2),
-            l = _ref25[0],
-            t = _ref25[1];
+      return vertices.map(function (_ref26) {
+        var _ref27 = _slicedToArray(_ref26, 2),
+            l = _ref27[0],
+            t = _ref27[1];
 
-        var _pointTo16 = pointTo(ctm, l, t),
-            nx = _pointTo16.x,
-            ny = _pointTo16.y;
+        var _pointTo17 = pointTo(ctm, l, t),
+            nx = _pointTo17.x,
+            ny = _pointTo17.y;
 
         return [nx, ny];
       });
