@@ -222,7 +222,8 @@ export default class Transformable extends SubjectModel {
             doRotate,
             doSetCenter,
             revX,
-            revY
+            revY,
+            mouseEvent
         } = storage;
 
         const {
@@ -269,7 +270,8 @@ export default class Transformable extends SubjectModel {
                 dx,
                 dy,
                 clientX,
-                clientY
+                clientY,
+                mouseEvent
             };
 
             self._resize(args);
@@ -298,7 +300,8 @@ export default class Transformable extends SubjectModel {
                 dx,
                 dy,
                 clientX,
-                clientY
+                clientY,
+                mouseEvent
             };
 
             super._drag(
@@ -328,7 +331,8 @@ export default class Transformable extends SubjectModel {
 
             const args = {
                 clientX,
-                clientY
+                clientY,
+                mouseEvent
             };
 
             self._rotate(
@@ -430,6 +434,7 @@ export default class Transformable extends SubjectModel {
         const { x: bx, y: by } = this._pointToControls({ x, y });
 
         const nextStorage = {
+            mouseEvent: e,
             clientX,
             clientY,
             cx: ex,
@@ -528,7 +533,7 @@ export default class Transformable extends SubjectModel {
 
         const { x, y } = this._cursorPoint(e);
 
-        storage.e = e;
+        storage.mouseEvent = e;
         storage.clientX = x;
         storage.clientY = y;
         storage.doDraw = true;
