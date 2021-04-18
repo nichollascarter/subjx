@@ -53,6 +53,8 @@ const moved = [
     'M90,70 A45,45,0,0,0,135,115 L135,70 Z'
 ];
 
+const pathExample = 'M9.573 2.28L5.593 2.21 5.593 13 4.161 15 4.165 2.29.187 2.29.181.961 9.572.964 9.571 2.29z';
+
 describe('SVG <path/> transform', () => {
     it('Apply move to svg path', () => {
         const result = paths.map((path) => movePath({ path, dx: 10, dy: -10 }));
@@ -63,6 +65,12 @@ describe('SVG <path/> transform', () => {
     it('Apply resize to svg path', () => {
         const result = paths.map((path) => resizePath({ path, localCTM: createSVGMatrix() }));
         expect(result).toBeDefined();
+    });
+
+    it('Apply move to raw path', () => {
+        const result = movePath({ path: pathExample, dx: 0, dy: 0 });
+
+        expect(result).toEqual('M9.573,2.28 L5.593,2.21,5.593,13,4.161,15,4.165,2.29,0.187,2.29,0.181,0.961,9.572,0.964,9.571,2.29 z');
     });
 });
 

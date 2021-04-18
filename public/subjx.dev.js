@@ -1318,7 +1318,8 @@
               doRotate = storage.doRotate,
               doSetCenter = storage.doSetCenter,
               revX = storage.revX,
-              revY = storage.revY;
+              revY = storage.revY,
+              mouseEvent = storage.mouseEvent;
           var snap = options.snap,
               _options$each2 = options.each,
               moveEach = _options$each2.move,
@@ -1350,7 +1351,8 @@
               dx: dx,
               dy: dy,
               clientX: clientX,
-              clientY: clientY
+              clientY: clientY,
+              mouseEvent: mouseEvent
             };
 
             self._resize(args);
@@ -1372,7 +1374,8 @@
               dx: _dx,
               dy: _dy,
               clientX: clientX,
-              clientY: clientY
+              clientY: clientY,
+              mouseEvent: mouseEvent
             };
 
             _get(_getPrototypeOf(Transformable.prototype), "_drag", this).call(this, _args);
@@ -1389,7 +1392,8 @@
             var radians = delta - pressang;
             var _args2 = {
               clientX: clientX,
-              clientY: clientY
+              clientY: clientY,
+              mouseEvent: mouseEvent
             };
 
             self._rotate(_objectSpread2({
@@ -1481,6 +1485,7 @@
               by = _this$_pointToControl2.y;
 
           var nextStorage = {
+            mouseEvent: e,
             clientX: clientX,
             clientY: clientY,
             cx: ex,
@@ -1544,7 +1549,7 @@
               x = _this$_cursorPoint2.x,
               y = _this$_cursorPoint2.y;
 
-          storage.e = e;
+          storage.mouseEvent = e;
           storage.clientX = x;
           storage.clientY = y;
           storage.doDraw = true;
@@ -3300,7 +3305,7 @@
     };
     var normalizeString = function normalizeString() {
       var str = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-      return str.replace(/([^e])-/g, '$1 -').replace(/ +/g, ' ');
+      return str.replace(/[\n\r]/g, '').replace(/([^e])-/g, '$1 -').replace(/ +/g, ' ').replace(/(\d*\.)(\d+)(?=\.)/g, '$1$2 ');
     }; // example "101.3,175.5 92.3,162 110.3,162 		"
 
     var parsePoints = function parsePoints(pts) {
@@ -3529,6 +3534,11 @@
               {
                 //A rx ry x-axis-rotation large-arc-flag sweep-flag x y
                 var coordinates = [];
+                var mtrx = cloneMatrix$1(localCTM);
+
+                if (relative) {
+                  mtrx.e = mtrx.f = 0;
+                }
 
                 for (var k = 0, _len8 = values.length; k < _len8; k += 7) {
                   var _values$slice7 = values.slice(k, k + 7),
@@ -3540,12 +3550,6 @@
                       sweep_flag = _values$slice8[4],
                       x = _values$slice8[5],
                       y = _values$slice8[6];
-
-                  var mtrx = cloneMatrix$1(localCTM);
-
-                  if (relative) {
-                    mtrx.e = mtrx.f = 0;
-                  }
 
                   var _pointTo = pointTo(mtrx, x, y),
                       resX = _pointTo.x,
@@ -3570,6 +3574,12 @@
                 //C x1 y1, x2 y2, x y (or c dx1 dy1, dx2 dy2, dx dy)
                 var _coordinates = [];
 
+                var _mtrx = cloneMatrix$1(localCTM);
+
+                if (relative) {
+                  _mtrx.e = _mtrx.f = 0;
+                }
+
                 for (var _k7 = 0, _len9 = values.length; _k7 < _len9; _k7 += 6) {
                   var _values$slice9 = values.slice(_k7, _k7 + 6),
                       _values$slice10 = _slicedToArray(_values$slice9, 6),
@@ -3579,12 +3589,6 @@
                       y2 = _values$slice10[3],
                       _x2 = _values$slice10[4],
                       _y2 = _values$slice10[5];
-
-                  var _mtrx = cloneMatrix$1(localCTM);
-
-                  if (relative) {
-                    _mtrx.e = _mtrx.f = 0;
-                  }
 
                   var _pointTo3 = pointTo(_mtrx, x1, y1),
                       resX1 = _pointTo3.x,
@@ -3612,16 +3616,16 @@
                 // H x (or h dx)
                 var _coordinates2 = [];
 
+                var _mtrx2 = cloneMatrix$1(localCTM);
+
+                if (relative) {
+                  _mtrx2.e = _mtrx2.f = 0;
+                }
+
                 for (var _k8 = 0, _len10 = values.length; _k8 < _len10; _k8 += 1) {
                   var _values$slice11 = values.slice(_k8, _k8 + 1),
                       _values$slice12 = _slicedToArray(_values$slice11, 1),
                       _x3 = _values$slice12[0];
-
-                  var _mtrx2 = cloneMatrix$1(localCTM);
-
-                  if (relative) {
-                    _mtrx2.e = _mtrx2.f = 0;
-                  }
 
                   var _pointTo6 = pointTo(_mtrx2, _x3, 0),
                       _resX2 = _pointTo6.x;
@@ -3640,16 +3644,16 @@
                 // V y (or v dy)
                 var _coordinates3 = [];
 
+                var _mtrx3 = cloneMatrix$1(localCTM);
+
+                if (relative) {
+                  _mtrx3.e = _mtrx3.f = 0;
+                }
+
                 for (var _k9 = 0, _len11 = values.length; _k9 < _len11; _k9 += 1) {
                   var _values$slice13 = values.slice(_k9, _k9 + 1),
                       _values$slice14 = _slicedToArray(_values$slice13, 1),
                       _y3 = _values$slice14[0];
-
-                  var _mtrx3 = cloneMatrix$1(localCTM);
-
-                  if (relative) {
-                    _mtrx3.e = _mtrx3.f = 0;
-                  }
 
                   var _pointTo7 = pointTo(_mtrx3, 0, _y3),
                       _resY2 = _pointTo7.y;
@@ -3668,17 +3672,17 @@
                 // L x y (or l dx dy)
                 var _coordinates4 = [];
 
+                var _mtrx4 = cloneMatrix$1(localCTM);
+
+                if (relative) {
+                  _mtrx4.e = _mtrx4.f = 0;
+                }
+
                 for (var _k10 = 0, _len12 = values.length; _k10 < _len12; _k10 += 2) {
                   var _values$slice15 = values.slice(_k10, _k10 + 2),
                       _values$slice16 = _slicedToArray(_values$slice15, 2),
                       _x4 = _values$slice16[0],
                       _y4 = _values$slice16[1];
-
-                  var _mtrx4 = cloneMatrix$1(localCTM);
-
-                  if (relative) {
-                    _mtrx4.e = _mtrx4.f = 0;
-                  }
 
                   var _pointTo8 = pointTo(_mtrx4, _x4, _y4),
                       _resX3 = _pointTo8.x,
@@ -3696,17 +3700,17 @@
                 // M x y (or dx dy)
                 var _coordinates5 = [];
 
+                var _mtrx5 = cloneMatrix$1(localCTM);
+
+                if (relative && !firstCommand) {
+                  _mtrx5.e = _mtrx5.f = 0;
+                }
+
                 for (var _k11 = 0, _len13 = values.length; _k11 < _len13; _k11 += 2) {
                   var _values$slice17 = values.slice(_k11, _k11 + 2),
                       _values$slice18 = _slicedToArray(_values$slice17, 2),
                       _x5 = _values$slice18[0],
                       _y5 = _values$slice18[1];
-
-                  var _mtrx5 = cloneMatrix$1(localCTM);
-
-                  if (relative && !firstCommand) {
-                    _mtrx5.e = _mtrx5.f = 0;
-                  }
 
                   var _pointTo9 = pointTo(_mtrx5, _x5, _y5),
                       _resX4 = _pointTo9.x,
@@ -3726,6 +3730,12 @@
                 //Q x1 y1, x y (or q dx1 dy1, dx dy)
                 var _coordinates6 = [];
 
+                var _mtrx6 = cloneMatrix$1(localCTM);
+
+                if (relative) {
+                  _mtrx6.e = _mtrx6.f = 0;
+                }
+
                 for (var _k12 = 0, _len14 = values.length; _k12 < _len14; _k12 += 4) {
                   var _values$slice19 = values.slice(_k12, _k12 + 4),
                       _values$slice20 = _slicedToArray(_values$slice19, 4),
@@ -3733,12 +3743,6 @@
                       _y6 = _values$slice20[1],
                       _x7 = _values$slice20[2],
                       _y7 = _values$slice20[3];
-
-                  var _mtrx6 = cloneMatrix$1(localCTM);
-
-                  if (relative) {
-                    _mtrx6.e = _mtrx6.f = 0;
-                  }
 
                   var _pointTo10 = pointTo(_mtrx6, _x6, _y6),
                       _resX5 = _pointTo10.x,
@@ -3760,6 +3764,12 @@
                 //S x2 y2, x y (or s dx2 dy2, dx dy)
                 var _coordinates7 = [];
 
+                var _mtrx7 = cloneMatrix$1(localCTM);
+
+                if (relative) {
+                  _mtrx7.e = _mtrx7.f = 0;
+                }
+
                 for (var _k13 = 0, _len15 = values.length; _k13 < _len15; _k13 += 4) {
                   var _values$slice21 = values.slice(_k13, _k13 + 4),
                       _values$slice22 = _slicedToArray(_values$slice21, 4),
@@ -3767,12 +3777,6 @@
                       _y8 = _values$slice22[1],
                       _x9 = _values$slice22[2],
                       _y9 = _values$slice22[3];
-
-                  var _mtrx7 = cloneMatrix$1(localCTM);
-
-                  if (relative) {
-                    _mtrx7.e = _mtrx7.f = 0;
-                  }
 
                   var _pointTo12 = pointTo(_mtrx7, _x8, _y8),
                       _resX7 = _pointTo12.x,
