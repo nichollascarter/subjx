@@ -137,7 +137,8 @@ export const isGroup = (element) => (
 );
 
 export const normalizeString = (str = '') => (
-    str.replace(/([^e])-/g, '$1 -')
+    str.replace(/[\n\r]/g, '')
+        .replace(/([^e])-/g, '$1 -')
         .replace(/ +/g, ' ')
         .replace(/(\d*\.)(\d+)(?=\.)/g, '$1$2 ')
 );

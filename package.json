@@ -11,8 +11,9 @@
     "main": "index.js",
     "module": "dist/js/subjx.esm.js",
     "scripts": {
-        "dev": "jest --coverage && cross-env NODE_ENV=development rollup -c",
-        "build": "jest --coverage && cross-env NODE_ENV=production rollup -c",
+        "dev": "cross-env NODE_ENV=development rollup -c",
+        "build": "cross-env NODE_ENV=production rollup -c",
+        "build:all": "yarn lint && yarn test && yarn dev && yarn build",
         "start": "cross-env NODE_ENV=development LIVE_MODE=enable rollup -c -w",
         "lint": "eslint src/ --fix",
         "test": "jest --coverage"
