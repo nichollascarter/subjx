@@ -11,19 +11,17 @@ export default function drag(options, obInstance) {
             ? obInstance
             : new Observable();
 
-        return arrReduce.call(this, (result, item) => {
-            if (!(item instanceof SVGElement)) {
-                result.push(
-                    new Draggable(item, options, Ob)
-                );
-            } else {
+        if (this[0] instanceof SVGElement) {
+            const items = arrReduce.call(this, (result, item) => {
                 if (checkElement(item)) {
-                    result.push(
-                        new DraggableSVG(item, options, Ob)
-                    );
+                    result.push(item);
                 }
-            }
-            return result;
-        }, []);
+                return result;
+            }, []);
+
+            return new DraggableSVG(items, options, Ob);
+        } else {
+            return new Draggable(this, options, Ob);
+        }
     }
 }

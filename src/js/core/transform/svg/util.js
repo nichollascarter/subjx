@@ -28,7 +28,7 @@ export const createSVGPoint = (x, y) => {
 export const checkChildElements = (element) => {
     const arrOfElements = [];
 
-    if (isGroup(element)) {
+    if (isSVGGroup(element)) {
         forEach.call(element.childNodes, item => {
             if (item.nodeType === 1) {
                 const tagName = item.tagName.toLowerCase();
@@ -132,7 +132,7 @@ export const checkElement = (el) => {
     }
 };
 
-export const isGroup = (element) => (
+export const isSVGGroup = (element) => (
     element.tagName.toLowerCase() === 'g'
 );
 

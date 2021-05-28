@@ -1,6 +1,6 @@
 import { helper } from '../../Helper';
 import Transformable from '../Transformable';
-import { isDef, isUndef, isFunc } from '../../util/util';
+import { isDef, isUndef } from '../../util/util';
 import { floatToFixed, getMinMaxOfArray } from '../common';
 import { movePath, resizePath } from './path';
 
@@ -17,7 +17,7 @@ import {
     createTranslateMatrix,
     createRotateMatrix,
     createScaleMatrix,
-    isGroup,
+    isSVGGroup,
     parsePoints,
     getTransformToElement,
     matrixToString,
@@ -32,39 +32,26 @@ const { keys, entries, values } = Object;
 
 export default class DraggableSVG extends Transformable {
 
-    _init(el) {
+    _init(elements) {
         const {
-            rotationPoint,
-            container,
-            controlsContainer,
-            resizable,
-            rotatable,
-            showNormal,
-            custom
-        } = this.options;
-
-        const elBBox = el.getBBox();
+            options: {
+                rotationPoint,
+                container,
+                controlsContainer,
+                resizable,
+                rotatable,
+                showNormal
+            }
+        } = this;
 
         const wrapper = createSVGElement('g', ['sjx-svg-wrapper']);
         const controls = createSVGElement('g', ['sjx-svg-controls']);
-
-        const originRotation = [
-            'data-sjx-cx',
-            'data-sjx-cy'
-        ].map(attr => {
-            const val = el.getAttribute(attr);
-            return isDef(val) ? Number(val) : undefined;
-        });
-
-        const hasOrigin = originRotation.every(val => !isNaN(val));
-
-        const elCTM = getTransformToElement(el, container);
 
         const {
             rotator = null,
             anchor = null,
             ...nextVertices
-        } = this._calculateVertices(elCTM);
+        } = this._getVertices();
 
         const handles = {};
         let rotationHandles = {};
@@ -83,8 +70,8 @@ export default class DraggableSVG extends Transformable {
 
                 radius.x1.baseVal.value = nextVertices.center.x;
                 radius.y1.baseVal.value = nextVertices.center.y;
-                radius.x2.baseVal.value = originRotation[0] || nextVertices.center.x;
-                radius.y2.baseVal.value = originRotation[1] || nextVertices.center.y;
+                radius.x2.baseVal.value = nextVertices.center.x;
+                radius.y2.baseVal.value = nextVertices.center.y;
 
                 setLineStyle(radius, '#fe3232');
                 radius.setAttribute('opacity', 0.5);
@@ -132,11 +119,11 @@ export default class DraggableSVG extends Transformable {
             controls.appendChild(handles[key]);
         });
 
-        const nextCenter = hasOrigin
+        const nextCenter = false
             ? pointTo(
                 createSVGMatrix(),
-                originRotation[0],
-                originRotation[1]
+                0, // originRotation[0],
+                0 //originRotation[1]
             )
             : nextVertices.center;
 
@@ -157,22 +144,35 @@ export default class DraggableSVG extends Transformable {
                 ? '#fe3232'
                 : THEME_COLOR;
 
-            if (isDef(custom) && isFunc(custom[key])) {
-                handles[key] = custom[key](elCTM, elBBox, pointTo);
-            } else {
-                handles[key] = createHandler(
-                    x,
-                    y,
-                    color,
-                    key
-                );
-            }
+            handles[key] = createHandler(
+                x,
+                y,
+                color,
+                key
+            );
 
             controls.appendChild(handles[key]);
         });
 
         wrapper.appendChild(controls);
         controlsContainer.appendChild(wrapper);
+
+        const data = new WeakMap();
+
+        elements.map(element => (
+            data.set(element, {
+                parent: element.parentNode,
+                center: {
+                    isShifted: false
+                },
+                transform: {
+                    ctm: getTransformToElement(element, container)
+                },
+                bBox: element.getBBox(),
+                cached: {},
+                __data__: new WeakMap()
+            })
+        ));
 
         this.storage = {
             wrapper,
@@ -181,19 +181,10 @@ export default class DraggableSVG extends Transformable {
                 ...handles,
                 ...rotationHandles
             },
-            parent: el.parentNode,
-            center: {
-                isShifted: hasOrigin
-            },
-            transform: {
-                ctm: elCTM
-            },
-            bBox: elBBox,
-            cached: {},
-            __data__: new WeakMap()
+            data
         };
 
-        [el, controls].map(target => (
+        [...elements, controls].map(target => (
             helper(target)
                 .on(E_MOUSEDOWN, this._onMouseDown)
                 .on(E_TOUCHSTART, this._onTouchStart)
@@ -231,23 +222,21 @@ export default class DraggableSVG extends Transformable {
         );
     }
 
-    _pointToElement({ x, y }) {
-        const { transform: { ctm } } = this.storage;
-
-        const matrix = ctm.inverse();
-        matrix.e = matrix.f = 0;
+    _pointToTransform({ x, y, matrix }) {
+        const nextMatrix = matrix.inverse();
+        nextMatrix.e = nextMatrix.f = 0;
 
         return this._applyMatrixToPoint(
-            matrix,
+            nextMatrix,
             x,
             y
         );
     }
 
     _pointToControls({ x, y }) {
-        const { transform: { wrapperMatrix } } = this.storage;
+        const { transform: { controlsMatrix } } = this._getCommonState();
 
-        const matrix = wrapperMatrix.inverse();
+        const matrix = controlsMatrix.inverse();
         matrix.e = matrix.f = 0;
 
         return this._applyMatrixToPoint(
@@ -264,17 +253,14 @@ export default class DraggableSVG extends Transformable {
         return pt.matrixTransform(matrix);
     }
 
-    _apply(actionName) {
+    _applyTransformToElement(element, actionName) {
         const {
-            el: element,
             storage: {
-                bBox,
-                cached,
-                transform,
-                center,
-                __data__
+                data,
+                bBox
             },
             options: {
+                isGrouped,
                 container,
                 scalable,
                 applyTranslate: applyDragging
@@ -282,13 +268,16 @@ export default class DraggableSVG extends Transformable {
         } = this;
 
         const {
+            cached,
+            transform,
+            __data__
+        } = data.get(element);
+
+        const {
             matrix,
             parentMatrix,
             ctm
         } = transform;
-
-        element.setAttribute('data-sjx-cx', center.elX);
-        element.setAttribute('data-sjx-cy', center.elY);
 
         if (isUndef(cached)) return;
 
@@ -315,31 +304,30 @@ export default class DraggableSVG extends Transformable {
 
             this._updateElementView(['transform', translateMatrix]);
 
-            if (isGroup(element)) {
-                const els = checkChildElements(element);
+            if (isSVGGroup(element)) {
+                checkChildElements(element)
+                    .map(child => {
+                        const eM = createTranslateMatrix(dx, dy);
 
-                els.forEach(child => {
-                    const eM = createTranslateMatrix(dx, dy);
+                        const translateMatrix = eM
+                            .multiply(getTransformToElement(child, child.parentNode))
+                            .multiply(eM.inverse());
 
-                    const translateMatrix = eM
-                        .multiply(getTransformToElement(child, child.parentNode))
-                        .multiply(eM.inverse());
+                        if (!isIdentity(translateMatrix)) {
+                            child.setAttribute(
+                                'transform',
+                                matrixToString(translateMatrix)
+                            );
+                        }
 
-                    if (!isIdentity(translateMatrix)) {
-                        child.setAttribute(
-                            'transform',
-                            matrixToString(translateMatrix)
-                        );
-                    }
+                        if (!isSVGGroup(child)) {
+                            const ctm = parentMatrix.inverse();
+                            ctm.e = ctm.f = 0;
 
-                    if (!isGroup(child)) {
-                        const ctm = parentMatrix.inverse();
-                        ctm.e = ctm.f = 0;
-
-                        const { x, y } = pointTo(ctm, ox, oy);
-                        applyTranslate(child, { x, y });
-                    }
-                });
+                            const { x, y } = pointTo(ctm, ox, oy);
+                            applyTranslate(child, { x, y });
+                        }
+                    });
             } else {
                 applyTranslate(element, { x: ox, y: oy });
             }
@@ -348,12 +336,15 @@ export default class DraggableSVG extends Transformable {
         if (actionName === E_RESIZE) {
             if (!transformMatrix) return;
             if (!scalable) {
-                if (isGroup(element)) {
+                if (isSVGGroup(element) || isGrouped) {
                     const els = checkChildElements(element);
 
                     els.forEach(child => {
-                        if (!isGroup(child)) {
-                            const childCTM = getTransformToElement(child, element);
+                        if (!isSVGGroup(child)) {
+                            const childCTM = getTransformToElement(
+                                child,
+                                isGrouped ? element.parentNode : element
+                            );
                             const localCTM = childCTM.inverse()
                                 .multiply(transformMatrix)
                                 .multiply(childCTM);
@@ -384,51 +375,51 @@ export default class DraggableSVG extends Transformable {
                     });
                 }
             }
-
-            this._applyTransformToHandles({
-                boxMatrix: scalable
-                    ? ctm.multiply(transformMatrix)
-                    : ctm
-            });
         }
     }
 
-    _processResize(dx, dy) {
+    _processResize(element, { dx, dy }) {
         const {
-            el,
-            storage,
             storage: {
-                bBox: {
-                    width: boxWidth,
-                    height: boxHeight
-                },
                 revX,
                 revY,
                 doW,
                 doH,
-                transform: {
-                    matrix,
-                    auxiliary: {
-                        scale: {
-                            translateMatrix
-                        }
-                    }
-                },
-                cached: {
-                    dist: {
-                        dx: nextDx = dx,
-                        dy: nextDy = dy
-                    } = {}
-                } = {}
+                data,
+                bBox: {
+                    x,
+                    y,
+                    width: boxWidth,
+                    height: boxHeight
+                }
             },
             options: {
+                isGrouped,
                 proportions,
                 scalable,
                 restrict
             }
         } = this;
 
-        const { x, y } = el.getBBox();
+        const elementData = data.get(element);
+
+        const {
+            transform: {
+                matrix,
+                auxiliary: {
+                    scale: {
+                        translateMatrix
+                    }
+                }
+            },
+            cached,
+            cached: {
+                dist: {
+                    dx: nextDx = dx,
+                    dy: nextDy = dy
+                } = {}
+            } = {}
+        } = elementData;
 
         const getScale = (distX, distY) => {
             const ratio = doW || (!doW && !doH)
@@ -473,7 +464,6 @@ export default class DraggableSVG extends Transformable {
         ] = getScale(newDx, newDy);
 
         const scaleMatrix = getScaleMatrix(scaleX, scaleY);
-        const resultMatrix = matrix.multiply(scaleMatrix);
 
         const deltaW = newWidth - boxWidth,
             deltaH = newHeight - boxHeight;
@@ -481,23 +471,30 @@ export default class DraggableSVG extends Transformable {
         const newX = x - deltaW * (doH ? 0.5 : (revX ? 1 : 0)),
             newY = y - deltaH * (doW ? 0.5 : (revY ? 1 : 0));
 
+        const resultMatrix = isGrouped
+            ? scaleMatrix.multiply(matrix)
+            : matrix.multiply(scaleMatrix);
+
         if (scalable) {
-            this._updateElementView(['transform', resultMatrix]);
+            this._updateElementView(element, ['transform', resultMatrix]);
         }
 
-        storage.cached = {
-            ...storage.cached,
-            scaleX,
-            scaleY,
-            transformMatrix: scaleMatrix,
-            resultMatrix,
-            dist: {
-                dx: newDx,
-                dy: newDy
+        data.set(element, {
+            ...elementData,
+            cached: {
+                ...cached,
+                scaleX,
+                scaleY,
+                transformMatrix: scaleMatrix,
+                resultMatrix,
+                dist: {
+                    dx: newDx,
+                    dy: newDy
+                }
             }
-        };
+        });
 
-        this._apply(E_RESIZE);
+        this._applyTransformToElement(element, E_RESIZE);
 
         return {
             x: newX,
@@ -508,33 +505,36 @@ export default class DraggableSVG extends Transformable {
         };
     }
 
-    _processMove(dx, dy) {
+    _processMove(element, { dx, dy }) {
         const {
-            storage,
             storage: {
-                center,
-                transform: {
-                    matrix,
-                    auxiliary: {
-                        translate: {
-                            translateMatrix,
-                            wrapperTranslateMatrix,
-                            parentMatrix
-                        }
-                    },
-                    wrapperMatrix
-                },
-                cached: {
-                    dist: {
-                        dx: nextDx = dx,
-                        dy: nextDy = dy
-                    } = {}
-                } = {}
+                data
             },
             options: {
                 restrict
             }
         } = this;
+
+        const elementStorage = data.get(element);
+
+        const {
+            transform: {
+                matrix,
+                auxiliary: {
+                    translate: {
+                        translateMatrix,
+                        parentMatrix
+                    }
+                }
+            },
+            cached,
+            cached: {
+                dist: {
+                    dx: nextDx = dx,
+                    dy: nextDy = dy
+                } = {}
+            } = {}
+        } = elementStorage;
 
         parentMatrix.e = parentMatrix.f = 0;
         const { x, y } = pointTo(
@@ -558,60 +558,60 @@ export default class DraggableSVG extends Transformable {
             newDy
         );
 
-        storage.cached.dist = {
-            dx: floatToFixed(newDx),
-            dy: floatToFixed(newDy),
-            ox: floatToFixed(nx),
-            oy: floatToFixed(ny)
-        };
+        data.set(element, {
+            ...elementStorage,
+            cached,
+            dist: {
+                dx: floatToFixed(newDx),
+                dy: floatToFixed(newDy),
+                ox: floatToFixed(nx),
+                oy: floatToFixed(ny)
+            }
+        });
 
         translateMatrix.e = nx;
         translateMatrix.f = ny;
 
         const moveElementMtrx = translateMatrix.multiply(matrix);
 
-        wrapperTranslateMatrix.e = newDx;
-        wrapperTranslateMatrix.f = newDy;
+        this._updateElementView(element, ['transform', moveElementMtrx]);
 
-        const moveWrapperMtrx = wrapperTranslateMatrix.multiply(wrapperMatrix);
+        // if (center.isShifted) {
+        //     const centerTransformMatrix = controlsMatrix.inverse();
+        //     centerTransformMatrix.e = centerTransformMatrix.f = 0;
+        //     const { x: cx, y: cy } = pointTo(
+        //         centerTransformMatrix,
+        //         newDx,
+        //         newDy
+        //     );
 
-        this._updateWrapperView(moveWrapperMtrx);
-        this._updateElementView(['transform', moveElementMtrx]);
-
-        if (center.isShifted) {
-            const centerTransformMatrix = wrapperMatrix.inverse();
-            centerTransformMatrix.e = centerTransformMatrix.f = 0;
-            const { x: cx, y: cy } = pointTo(
-                centerTransformMatrix,
-                newDx,
-                newDy
-            );
-
-            this._moveCenterHandle(-cx, -cy);
-        }
+        //     this._moveCenterHandle(-cx, -cy);
+        // }
 
         return moveElementMtrx;
     }
 
-    _processRotate(radians) {
+    _processRotate(element, radians) {
         const {
             storage: {
-                transform: {
-                    matrix,
-                    wrapperMatrix,
-                    parentMatrix,
-                    auxiliary: {
-                        rotate: {
-                            translateMatrix,
-                            wrapperTranslateMatrix
-                        }
-                    }
-                }
+                data
             },
             options: {
                 restrict
             }
         } = this;
+
+        const {
+            transform: {
+                matrix,
+                parentMatrix,
+                auxiliary: {
+                    rotate: {
+                        translateMatrix
+                    }
+                }
+            }
+        } = data.get(element);
 
         const cos = floatToFixed(Math.cos(radians)),
             sin = floatToFixed(Math.sin(radians));
@@ -635,53 +635,57 @@ export default class DraggableSVG extends Transformable {
 
         if (isDef(restX) || isDef(restY)) return resultMatrix;
 
-        const wrapperResultMatrix = wrapperTranslateMatrix
-            .multiply(rotateMatrix)
-            .multiply(wrapperTranslateMatrix.inverse())
-            .multiply(wrapperMatrix);
-
-        this._updateWrapperView(wrapperResultMatrix);
-        this._updateElementView(['transform', resultMatrix]);
+        this._updateElementView(element, ['transform', resultMatrix]);
 
         return resultMatrix;
     }
 
-    _getState({ revX, revY, doW, doH }) {
+    _getElementState(element, { revX, revY, doW, doH }) {
         const {
-            el: element,
+            options: {
+                container
+            },
             storage: {
-                wrapper,
-                parent,
+                data,
+                controls,
                 handles: {
                     center: cHandle
-                },
-                __data__
-            },
-            options: {
-                container,
-                restrict
+                }
             }
         } = this;
 
-        const eBBox = element.getBBox();
+        const storage = data.get(element);
+
+        const {
+            __data__
+        } = storage;
+
+        const bBox = this._getBBox();
 
         const {
             x: elX,
             y: elY,
             width: elW,
             height: elH
-        } = eBBox;
+        } = bBox;
 
-        const elMatrix = getTransformToElement(element, parent),
+        const elMatrix = getTransformToElement(element, element.parentNode),
             ctm = getTransformToElement(element, container),
-            boxCTM = getTransformToElement(wrapper, container),
-            parentMatrix = getTransformToElement(parent, container),
-            wrapperMatrix = getTransformToElement(wrapper, wrapper.parentNode);
+            parentMatrix = getTransformToElement(element.parentNode, container);
 
         const parentMatrixInverted = parentMatrix.inverse();
 
         const scaleX = elX + elW * (doH ? 0.5 : revX ? 1 : 0),
             scaleY = elY + elH * (doW ? 0.5 : revY ? 1 : 0);
+
+        storeElementAttributes(element, storage);
+        __data__.delete(element);
+        checkChildElements(element).forEach(child => {
+            __data__.delete(child);
+            storeElementAttributes(child, storage);
+        });
+
+        const boxCTM = getTransformToElement(controls, container);
 
         const elCenterX = elX + elW / 2,
             elCenterY = elY + elH / 2;
@@ -713,34 +717,6 @@ export default class DraggableSVG extends Transformable {
                 elCenterY
             );
 
-        // box's center coordinates
-        const { x: rcx, y: rcy } = pointTo(
-            ctm,
-            elCenterX,
-            elCenterY
-        );
-
-        storeElementAttributes(this.el, this.storage);
-        __data__.delete(element);
-        checkChildElements(element).forEach(child => {
-            __data__.delete(child);
-            storeElementAttributes(child, this.storage);
-        });
-
-        const center = {
-            ...(this.storage.center || {}),
-            x: cHandle ? bcx : rcx,
-            y: cHandle ? bcy : rcy,
-            elX: elcx,
-            elY: elcy,
-            hx: cHandle ? cHandle.cx.baseVal.value : null,
-            hy: cHandle ? cHandle.cy.baseVal.value : null
-        };
-
-        const containerMatrix = restrict
-            ? getTransformToElement(restrict, restrict.parentNode)
-            : getTransformToElement(container, container.parentNode);
-
         const transform = {
             auxiliary: {
                 scale: {
@@ -749,70 +725,109 @@ export default class DraggableSVG extends Transformable {
                 },
                 translate: {
                     parentMatrix: parentMatrixInverted,
-                    translateMatrix: createSVGMatrix(),
-                    wrapperTranslateMatrix: createSVGMatrix()
+                    translateMatrix: createSVGMatrix()
                 },
                 rotate: {
-                    translateMatrix: createTranslateMatrix(center.elX, center.elY),
-                    wrapperTranslateMatrix: createTranslateMatrix(center.x, center.y)
+                    translateMatrix: createTranslateMatrix(elcx, elcy)
                 }
             },
             matrix: elMatrix,
             ctm,
             parentMatrix,
-            wrapperMatrix,
-            containerMatrix,
             scX: Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b),
             scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d)
         };
 
         return {
             transform,
-            bBox: eBBox,
-            center,
-            revX,
-            revY,
-            doW,
-            doH
+            bBox
         };
     }
 
-    _moveCenterHandle(dx, dy) {
+    _getCommonState() {
         const {
-            handles: { center, radius },
-            center: { hx, hy }
-        } = this.storage;
-
-        if (isUndef(center)) return;
-
-        const mx = hx + dx,
-            my = hy + dy;
-
-        center.cx.baseVal.value = mx;
-        center.cy.baseVal.value = my;
-
-        radius.x2.baseVal.value = mx;
-        radius.y2.baseVal.value = my;
-        this.storage.center.isShifted = true;
-    }
-
-    _updateElementView([attr, value]) {
-        if (attr === 'transform') {
-            this.el.setAttribute(attr, matrixToString(value));
-        }
-    }
-
-    _updateWrapperView(matrix) {
-        this.storage.wrapper.setAttribute(
-            'transform',
-            matrixToString(matrix)
-        );
-    }
-
-    _calculateVertices(transform) {
-        const {
-            el: element,
             options: {
+                container,
+                restrict
+            },
+            storage: {
+                controls,
+                handles: {
+                    center: cHandle
+                }
+            }
+        } = this;
+
+        // const elCenterX = elX + elW / 2,
+        //     elCenterY = elY + elH / 2;
+
+        const boxCTM = getTransformToElement(controls, container);
+
+        const centerX = cHandle
+            ? cHandle.cx.baseVal.value
+            : 0; // elCenterX;
+        const centerY = cHandle
+            ? cHandle.cy.baseVal.value
+            : 0; // elCenterY;
+
+        // c-handle's coordinates
+        const { x: bcx, y: bcy } = pointTo(
+            boxCTM,
+            centerX,
+            centerY
+        );
+
+        // element's center coordinates
+        // const { x: elcx, y: elcy } = cHandle
+        //     ? pointTo(
+        //         parentMatrixInverted,
+        //         bcx,
+        //         bcy
+        //     )
+        //     : pointTo(
+        //         elMatrix,
+        //         elCenterX,
+        //         elCenterY
+        //     );
+
+        // // box's center coordinates
+        // const { x: rcx, y: rcy } = pointTo(
+        //     ctm,
+        //     elCenterX,
+        //     elCenterY
+        // );
+
+        const containerMatrix = restrict
+            ? getTransformToElement(restrict, restrict.parentNode)
+            : getTransformToElement(container, container.parentNode);
+
+        const center = {
+            ...(this.storage.center || {}),
+            x: bcx, // cHandle ? bcx : rcx,
+            y: bcy, // cHandle ? bcy : rcy,
+            // elX: elcx,
+            // elY: elcy,
+            hx: cHandle ? cHandle.cx.baseVal.value : null,
+            hy: cHandle ? cHandle.cy.baseVal.value : null
+        };
+
+        return {
+            transform: {
+                containerMatrix,
+                controlsMatrix: getTransformToElement(controls, controls.parentNode),
+                controlsTranslateMatrix: createSVGMatrix(),
+                wrapperOriginMatrix: createTranslateMatrix(center.x, center.y)
+            },
+            bBox: this._getBBox(),
+            center
+        };
+    }
+
+    _getVertices(transformMatrix = createSVGMatrix()) {
+        const {
+            elements,
+            options: {
+                isGrouped,
                 rotatable,
                 rotatorAnchor,
                 rotatorOffset,
@@ -820,7 +835,7 @@ export default class DraggableSVG extends Transformable {
             }
         } = this;
 
-        const { x, y, width, height } = element.getBBox();
+        const { x, y, width, height } = this._getBBox();
 
         const hW = width / 2,
             hH = height / 2;
@@ -837,10 +852,14 @@ export default class DraggableSVG extends Transformable {
             center: [x + hW, y + hH]
         };
 
+        const nextTransform = isGrouped
+            ? transformMatrix
+            : transformMatrix.multiply(getTransformToElement(elements[0], container));
+
         const nextVertices = entries(vertices)
             .reduce((nextRes, [key, [x, y]]) => {
                 nextRes[key] = pointTo(
-                    transform || getTransformToElement(element, container),
+                    nextTransform,
                     x,
                     y
                 );
@@ -907,38 +926,151 @@ export default class DraggableSVG extends Transformable {
         return nextVertices;
     }
 
-    _applyTransformToHandles({ boxMatrix }) {
-        const { el: element } = this;
-        const { rotatable } = this.options;
-
+    _getBBox() {
         const {
-            wrapper,
-            handles,
-            center: { isShifted },
-            transform: {
-                wrapperMatrix = getTransformToElement(wrapper, wrapper.parentNode)
-            } = {}
+            elements,
+            options: {
+                isGrouped
+            }
+        } = this;
+
+        if (isGrouped) {
+            const groupBBox = elements.reduce((result, element) => {
+                const elCTM = getTransformToElement(element, element.parentNode);
+                return [...result, ...getBoundingRect(element, elCTM)];
+            }, []);
+
+            const [
+                [minX, maxX],
+                [minY, maxY]
+            ] = getMinMaxOfArray(groupBBox);
+
+            return {
+                x: minX,
+                y: minY,
+                width: maxX - minX,
+                height: maxY - minY
+            };
+        } else {
+            return elements[0].getBBox();
+        }
+    }
+
+    _moveCenterHandle(dx, dy) {
+        const {
+            handles: { center, radius },
+            center: { hx, hy }
         } = this.storage;
+
+        if (isUndef(center)) return;
+
+        const mx = hx + dx,
+            my = hy + dy;
+
+        center.cx.baseVal.value = mx;
+        center.cy.baseVal.value = my;
+
+        radius.x2.baseVal.value = mx;
+        radius.y2.baseVal.value = my;
+        this.storage.center.isShifted = true;
+    }
+
+    _processControlsResize() {
+        const {
+            storage: {
+                transform: {
+                    controlsMatrix
+                }
+            }
+        } = this;
+
+        this._applyTransformToHandles({
+            boxMatrix: controlsMatrix.inverse()
+        });
+    }
+
+    _processControlsMove({ dx, dy }) {
+        const {
+            storage: {
+                transform: {
+                    controlsMatrix,
+                    controlsTranslateMatrix
+                }
+            }
+        } = this;
+
+        controlsTranslateMatrix.e = dx;
+        controlsTranslateMatrix.f = dy;
+
+        const moveControlsMtrx = controlsTranslateMatrix.multiply(controlsMatrix);
+
+        this._updateControlsView(moveControlsMtrx);
+    }
+
+    _processControlsRotate({ radians }) {
+        const {
+            storage: {
+                transform: {
+                    controlsMatrix,
+                    wrapperOriginMatrix
+                }
+            }
+        } = this;
+
+        const cos = floatToFixed(Math.cos(radians)),
+            sin = floatToFixed(Math.sin(radians));
+
+        const rotateMatrix = createRotateMatrix(sin, cos);
+
+        const wrapperResultMatrix = wrapperOriginMatrix
+            .multiply(rotateMatrix)
+            .multiply(wrapperOriginMatrix.inverse())
+            .multiply(controlsMatrix);
+
+        this._updateControlsView(wrapperResultMatrix);
+    }
+
+    _updateElementView(element, [attr, value]) {
+        if (attr === 'transform') {
+            element.setAttribute(attr, matrixToString(value));
+        }
+    }
+
+    _updateControlsView(matrix = createSVGMatrix()) {
+        this.storage.controls.setAttribute(
+            'transform',
+            matrixToString(matrix)
+        );
+    }
+
+    _applyTransformToHandles({ boxMatrix = createSVGMatrix() } = {}) {
+        const {
+            options: {
+                rotatable
+            },
+            storage: {
+                handles,
+                center: { isShifted }
+            }
+        } = this;
 
         const {
             x,
             y,
             width,
             height
-        } = element.getBBox();
+        } = this._getBBox();
 
         const hW = width / 2,
             hH = height / 2;
 
-        const resultTransform = wrapperMatrix.inverse().multiply(boxMatrix);
-
-        const boxCenter = pointTo(resultTransform, x + hW, y + hH);
+        const boxCenter = pointTo(boxMatrix, x + hW, y + hH);
 
         const {
             anchor = null,
             center,
             ...nextVertices
-        } = this._calculateVertices(resultTransform);
+        } = this._getVertices(boxMatrix);
 
         const resEdges = {
             te: [nextVertices.tl, nextVertices.tr],
@@ -996,7 +1128,10 @@ export default class DraggableSVG extends Transformable {
 
     resetCenterPoint() {
         const {
-            el,
+            elements,
+            options: {
+                isGrouped
+            },
             storage: {
                 bBox: {
                     width: boxWidth,
@@ -1013,7 +1148,9 @@ export default class DraggableSVG extends Transformable {
 
         if (!center) return;
 
-        const matrix = getTransformToElement(el, el.parentNode);
+        const matrix = isGrouped
+            ? getTransformToElement(elements[0], elements[0].parentNode)
+            : createSVGMatrix;
 
         const { x: cx, y: cy } = pointTo(
             matrix,
@@ -1031,11 +1168,16 @@ export default class DraggableSVG extends Transformable {
 
     fitControlsToSize() {
         const {
-            el,
-            options: { container }
+            elements,
+            options: {
+                isGrouped,
+                container
+            }
         } = this;
 
-        const elCTM = getTransformToElement(el, container);
+        const elCTM = isGrouped
+            ? createSVGMatrix()
+            : getTransformToElement(elements[0], container);
 
         const identityMatrix = createSVGMatrix();
 
@@ -1043,11 +1185,11 @@ export default class DraggableSVG extends Transformable {
             ...this.storage,
             transform: {
                 ...(this.storage.transform || {}),
-                wrapperMatrix: identityMatrix
+                controlsMatrix: identityMatrix
             }
         };
 
-        this._updateWrapperView(identityMatrix);
+        this._updateControlsView(identityMatrix);
         this._applyTransformToHandles({ boxMatrix: elCTM });
     }
 
@@ -1083,7 +1225,7 @@ export default class DraggableSVG extends Transformable {
             // eslint-disable-next-line no-unused-vars
             anchor, rotator, center,
             ...vertices
-        } = this._calculateVertices();
+        } = this._getVertices();
 
         const restrictBBox = this._getRestrictedBBox(true);
 
@@ -1100,7 +1242,7 @@ export default class DraggableSVG extends Transformable {
         ] = getMinMaxOfArray(nextVertices);
 
         const getXDir = () => {
-            switch(true) {
+            switch (true) {
 
                 case /[l]/.test(direction):
                     return minX - elMinX;
@@ -1115,7 +1257,7 @@ export default class DraggableSVG extends Transformable {
         };
 
         const getYDir = () => {
-            switch(true) {
+            switch (true) {
 
                 case /[t]/.test(direction):
                     return minY - elMinY;
@@ -1559,7 +1701,7 @@ const renderLine = ([b, e], color, key) => {
     return handler;
 };
 
-const getBoundingRect = (el, ctm, bBox = el.getBBox()) => {
+const getBoundingRect = (element, ctm, bBox = element.getBBox()) => {
     const { x, y, width, height } = bBox;
 
     const vertices = [
