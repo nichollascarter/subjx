@@ -136,9 +136,9 @@ export const computeTransformMatrix = (tx, [x, y, z]) => {
     );
 };
 
-export const getCurrentTransformMatrix = (el, container = document.body, newTransform) => {
+export const getCurrentTransformMatrix = (element, container = document.body, newTransform) => {
     let matrix = createIdentityMatrix();
-    let node = el;
+    let node = element;
 
     // set predefined matrix if we need to find new CTM
     let nodeTx = newTransform || getTransform(node);
@@ -240,18 +240,19 @@ export const getTransformOrigin = (el, allowBorderOffset) => {
     return out;
 };
 
-export const getAbsoluteOffset = (elem, container = document.body) => {
+export const getAbsoluteOffset = (element, container = document.body) => {
     let top = 0, left = 0;
+    let node = element;
 
     let allowBorderOffset = false;
-    while (elem) {
-        const parentTx = getCurrentTransformMatrix(elem.offsetParent);
+    while (node && node.offsetParent) {
+        const parentTx = getCurrentTransformMatrix(node.offsetParent);
 
         const [offsetLeft, offsetTop] = multiplyMatrixAndPoint(
             dropTranslate(parentTx, false),
             [
-                elem.offsetLeft + (allowBorderOffset ? elem.clientLeft : 0),
-                elem.offsetTop + (allowBorderOffset ? elem.clientTop : 0),
+                node.offsetLeft + (allowBorderOffset ? node.clientLeft : 0),
+                node.offsetTop + (allowBorderOffset ? node.clientTop : 0),
                 0,
                 1
             ]
@@ -260,9 +261,9 @@ export const getAbsoluteOffset = (elem, container = document.body) => {
         left += offsetLeft;
         top += offsetTop;
 
-        if (container === elem) break;
+        if (container === node) break;
         allowBorderOffset = true;
-        elem = elem.offsetParent;
+        node = node.offsetParent;
     }
 
     return [left, top, 0, 1];

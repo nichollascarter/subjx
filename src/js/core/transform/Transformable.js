@@ -15,7 +15,8 @@ import {
     cancelAnimFrame,
     isDef,
     isUndef,
-    createMethod
+    createMethod,
+    noop
 } from '../util/util';
 
 import {
@@ -118,7 +119,7 @@ export default class Transformable extends SubjectModel {
     _processOptions(options = {}) {
         const { elements } = this;
 
-        elements.map((element) => addClass(element, `${LIB_CLASS_PREFIX}drag`));
+        [...elements].map((element) => addClass(element, `${LIB_CLASS_PREFIX}drag`));
 
         const {
             each = {
@@ -142,12 +143,12 @@ export default class Transformable extends SubjectModel {
             rotatable = true,
             scalable = false,
             applyTranslate = false,
-            onInit = () => { },
-            onDrop = () => { },
-            onMove = () => { },
-            onResize = () => { },
-            onRotate = () => { },
-            onDestroy = () => { },
+            onInit = noop,
+            onDrop = noop,
+            onMove = noop,
+            onResize = noop,
+            onRotate = noop,
+            onDestroy = noop,
             container = elements[0].parentNode,
             controlsContainer = container,
             proportions = false,
@@ -259,8 +260,8 @@ export default class Transformable extends SubjectModel {
             elements.map((element) => {
                 const {
                     transform: {
-                        scX,
-                        scY,
+                        // scX,
+                        // scY,
                         ctm
                     }
                 } = data.get(element);
@@ -275,8 +276,8 @@ export default class Transformable extends SubjectModel {
                     )
                     : { x: distX, y: distY };
 
-                let dx = dox ? (revX ? -x : x) : 0;
-                let dy = doy ? (revY ? -y : y) : 0;
+                const dx = dox ? (revX ? -x : x) : 0;
+                const dy = doy ? (revY ? -y : y) : 0;
 
                 self._resize({
                     ...args,
@@ -426,11 +427,7 @@ export default class Transformable extends SubjectModel {
             doH
         } = computed;
 
-        const doResize =
-            onRightEdge ||
-            onBottomEdge ||
-            onTopEdge ||
-            onLeftEdge;
+        const doResize = onRightEdge || onBottomEdge || onTopEdge || onLeftEdge;
 
         const {
             rotator,
@@ -655,7 +652,12 @@ export default class Transformable extends SubjectModel {
     }
 
     _compute(e, elements) {
-        const { handles, data } = this.storage;
+        const {
+            storage: {
+                handles,
+                data
+            } = {}
+        } = this;
 
         const handle = helper(e.target);
 
@@ -672,9 +674,7 @@ export default class Transformable extends SubjectModel {
 
         elements.map(element => {
             const { transform, ...nextData } = this._getElementState(element, { revX, revY, doW, doH });
-            const { x: ex, y: ey } = this._pointToTransform(
-                { x, y, matrix: transform.ctm }
-            );
+            const { x: ex, y: ey } = this._pointToTransform({ x, y, matrix: transform.ctm });
 
             data.set(element, {
                 ...data.get(element),
@@ -774,7 +774,7 @@ export default class Transformable extends SubjectModel {
             storage: {
                 controls,
                 wrapper
-            }
+            } = {}
         } = this;
 
         [...elements, controls].map(target => (
@@ -787,24 +787,35 @@ export default class Transformable extends SubjectModel {
     }
 
     notifyMove() {
-        super._drag(...arguments);
+        const { elements } = this;
+
+        elements.map((element) => (
+            super._drag(element, ...arguments)
+        ));
     }
 
     notifyRotate({ radians, ...rest }) {
         const {
-            snap: { angle }
-        } = this.options;
+            elements,
+            options: {
+                snap: { angle }
+            } = {}
+        } = this;
 
-        this._rotate(
-            {
+        elements.map((element) => (
+            this._rotate(element, {
                 radians: snapToGrid(radians, angle),
                 ...rest
-            }
-        );
+            })
+        ));
     }
 
     notifyResize() {
-        this._resize(...arguments);
+        const { elements } = this;
+
+        elements.map((element) => (
+            this._resize(element, ...arguments)
+        ));
     }
 
     notifyApply({ clientX, clientY, actionName, triggerEvent }) {

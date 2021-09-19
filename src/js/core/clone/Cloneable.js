@@ -8,7 +8,8 @@ import {
     isDef,
     isUndef,
     isFunc,
-    createMethod
+    createMethod,
+    noop
 } from '../util/util';
 
 import {
@@ -21,17 +22,18 @@ const { E_MOUSEDOWN, E_TOUCHSTART } = CLIENT_EVENTS_CONSTANTS;
 
 export default class Cloneable extends SubjectModel {
 
-    constructor(el, options) {
-        super(el);
+    constructor(elements, options) {
+        super(elements);
         this.enable(options);
     }
 
     _init() {
         const {
-            el,
+            elements,
             options
         } = this;
-        const $el = helper(el);
+
+        const $el = helper(elements);
 
         const {
             style,
@@ -44,9 +46,17 @@ export default class Cloneable extends SubjectModel {
             ...style
         };
 
+        const data = new WeakMap();
+
+        elements.map(element => (
+            data.set(element, {
+                parent: isDef(appendTo) ? helper(appendTo)[0] : document.body
+            })
+        ));
+
         this.storage = {
             css,
-            parent: isDef(appendTo) ? helper(appendTo)[0] : document.body
+            data
         };
 
         $el.on(E_MOUSEDOWN, this._onMouseDown)
@@ -61,10 +71,10 @@ export default class Cloneable extends SubjectModel {
         let _style = {},
             _appendTo = null,
             _stack = document,
-            _onInit = () => {},
-            _onMove = () => {},
-            _onDrop = () => {},
-            _onDestroy = () => {};
+            _onInit = noop,
+            _onMove = noop,
+            _onDrop = noop,
+            _onDestroy = noop;
 
         if (isDef(options)) {
             const {
@@ -89,19 +99,18 @@ export default class Cloneable extends SubjectModel {
             _onDrop = isFunc(onDrop)
                 ? function(evt) {
                     const {
-                        clone
-                    } = this.storage;
+                        storage: {
+                            clone
+                        } = {}
+                    } = this;
 
-                    const result = objectsCollide(
-                        clone,
-                        dropZone
-                    );
+                    const result = objectsCollide(clone, dropZone);
 
                     if (result) {
-                        onDrop.call(this, evt, this.el, clone);
+                        onDrop.call(this, evt, this.elements, clone);
                     }
                 }
-                : () => {};
+                : noop;
             _onDestroy = createMethod(onDestroy);
         }
 
@@ -119,23 +128,23 @@ export default class Cloneable extends SubjectModel {
         };
     }
 
-    _start({ clientX, clientY }) {
+    _start({ target, clientX, clientY }) {
         const {
             storage,
-            el
+            storage: {
+                data,
+                css
+            }
         } = this;
 
-        const {
-            parent,
-            css
-        } = storage;
+        const { parent } = data.get(target);
 
         const { left, top } = getOffset(parent);
 
         css.left = `${(clientX - left)}px`;
         css.top = `${(clientY - top)}px`;
 
-        const clone = el.cloneNode(true);
+        const clone = target.cloneNode(true);
         helper(clone).css(css);
 
         storage.clientX = clientX;
@@ -186,7 +195,8 @@ export default class Cloneable extends SubjectModel {
             clientX,
             clientY,
             cx,
-            cy
+            cy,
+            clone
         } = storage;
 
         if (!doDraw) return;
@@ -194,16 +204,19 @@ export default class Cloneable extends SubjectModel {
 
         this._drag(
             {
+                element: clone,
                 dx: clientX - cx,
                 dy: clientY - cy
             }
         );
     }
 
-    _processMove(dx, dy) {
+    _processMove(_, { dx, dy }) {
         const {
-            clone
-        } = this.storage;
+            storage: {
+                clone
+            } = {}
+        } = this;
 
         const translate = `translate(${dx}px, ${dy}px)`;
 
@@ -220,16 +233,16 @@ export default class Cloneable extends SubjectModel {
         const {
             storage,
             proxyMethods,
-            el
+            elements
         } = this;
 
         if (isUndef(storage)) return;
 
-        helper(el)
+        helper(elements)
             .off(E_MOUSEDOWN, this._onMouseDown)
             .off(E_TOUCHSTART, this._onTouchStart);
 
-        proxyMethods.onDestroy.call(this, el);
+        proxyMethods.onDestroy.call(this, elements);
         delete this.storage;
     }
 
