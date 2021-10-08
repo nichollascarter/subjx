@@ -36,7 +36,7 @@ Including via a `<script>` tag:
 
 ## Get started
 
- Main function `subjx` returns array of `Subjx` instances which based on elements finded by
+ Main function `subjx` returns `Subjx` instance which based on elements finded by
  passed parameters:
 
 ```javascript
@@ -54,20 +54,15 @@ const xElem = subjx( 'selector' ) |
 ```javascript
 // enabling tool by `drag` method with the optional parameters
 // by default just call `.drag()`
-const xDraggables = xElem.drag();
+const xDraggable = xElem.drag();
 
-// method always returns array of new Draggable instances
 // for disabling use `disable` method for each object
-xDraggables.forEach(item => {
-    item.disable();
-});
+xDraggable.disable();
 ```
 
 ### "Draggable" API
 
 ```javascript
-const [xDraggable] = xDraggables;
-
 // getter returns root DOM element of 'controls'
 xDraggable.controls;
 
@@ -160,7 +155,7 @@ xDraggable.resetCenterPoint();
 
 ```javascript
 subjx('.draggable').drag({
-    onInit(el) {
+    onInit(elements) {
         // fires on tool activation
     },
     onMove({ clientX, clientY, dx, dy, transform }) {
@@ -235,9 +230,7 @@ subjx('.cloneable').clone({
 Disabling
 
 ```javascript
-xCloneable.forEach(item => {
-    item.disable();
-});
+xCloneable.disable();
 ```
 
 ## License

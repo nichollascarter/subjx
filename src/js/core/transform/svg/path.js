@@ -5,10 +5,38 @@ import {
     pointTo,
     cloneMatrix,
     normalizeString,
-    sepRE
+    sepRE,
+    arrayToChunks
 } from './util';
 
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
+
+const getCommandValuesLength = (cmd) => ([
+    {
+        size: 2,
+        condition: ['M', 'm', 'L', 'l', 'T', 't'].includes(cmd)
+    },
+    {
+        size: 1,
+        condition: ['H', 'h', 'V', 'v'].includes(cmd)
+    },
+    {
+        size: 6,
+        condition: ['C', 'c'].includes(cmd)
+    },
+    {
+        size: 4,
+        condition: ['S', 's', 'Q', 'q'].includes(cmd)
+    },
+    {
+        size: 7,
+        condition: ['A', 'a'].includes(cmd)
+    },
+    {
+        size: 1,
+        condition: true
+    }
+].find(({ condition }) => !!condition));
 
 const parsePath = (path) => {
     let match = dRE.lastIndex = 0;
@@ -29,12 +57,16 @@ const parsePath = (path) => {
             }
         });
 
-        serialized.push({
-            relative: isRelative,
-            key: upCmd,
-            cmd,
-            values
-        });
+        // split big command into multiple commands
+        arrayToChunks(values, getCommandValuesLength(cmd).size)
+            .map(chunkedValues => (
+                serialized.push({
+                    relative: isRelative,
+                    key: upCmd,
+                    cmd,
+                    values: chunkedValues
+                })
+            ));
     }
 
     return reducePathData(absolutizePathData(serialized));
@@ -224,7 +256,7 @@ export const resizePath = (params) => {
             switch (cmd) {
 
                 case 'A': {
-                    //A rx ry x-axis-rotation large-arc-flag sweep-flag x y
+                    // A rx ry x-axis-rotation large-arc-flag sweep-flag x y
                     const coordinates = [];
 
                     const mtrx = cloneMatrix(localCTM);
@@ -234,7 +266,7 @@ export const resizePath = (params) => {
                     }
 
                     for (let k = 0, len = values.length; k < len; k += 7) {
-                        const [rx, ry, x_axis_rot, large_arc_flag, sweep_flag, x, y] =
+                        const [rx, ry, xAxisRot, largeArcFlag, sweepFlag, x, y] =
                             values.slice(k, k + 7);
 
                         const {
@@ -265,9 +297,9 @@ export const resizePath = (params) => {
                         coordinates.unshift(
                             floatToFixed(newRx),
                             floatToFixed(newRy),
-                            x_axis_rot,
-                            large_arc_flag,
-                            sweep_flag
+                            xAxisRot,
+                            largeArcFlag,
+                            sweepFlag
                         );
                     }
 
@@ -275,7 +307,7 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'C': {
-                    //C x1 y1, x2 y2, x y (or c dx1 dy1, dx2 dy2, dx dy)
+                    // C x1 y1, x2 y2, x y (or c dx1 dy1, dx2 dy2, dx dy)
                     const coordinates = [];
 
                     const mtrx = cloneMatrix(localCTM);
@@ -328,7 +360,7 @@ export const resizePath = (params) => {
                     break;
                 }
                 // this command makes impossible free transform within group
-                // todo: use proportional resizing only or need to be converted to L
+                // it will be converted to L
                 case 'H': {
                     // H x (or h dx)
                     const coordinates = [];
@@ -359,7 +391,7 @@ export const resizePath = (params) => {
                     break;
                 }
                 // this command makes impossible free transform within group
-                // todo: use proportional resizing only or need to be converted to L
+                // it will be converted to L
                 case 'V': {
                     // V y (or v dy)
                     const coordinates = [];
@@ -456,7 +488,7 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'Q': {
-                    //Q x1 y1, x y (or q dx1 dy1, dx dy)
+                    // Q x1 y1, x y (or q dx1 dy1, dx dy)
                     const coordinates = [];
 
                     const mtrx = cloneMatrix(localCTM);
@@ -498,7 +530,7 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'S': {
-                    //S x2 y2, x y (or s dx2 dy2, dx dy)
+                    // S x2 y2, x y (or s dx2 dy2, dx dy)
                     const coordinates = [];
 
                     const mtrx = cloneMatrix(localCTM);
@@ -550,28 +582,29 @@ export const resizePath = (params) => {
             str += item.key + res[i].join(',') + space;
         }
 
-        return str;
+        return str.trim();
     } catch (err) {
         warn('Path parsing error: ' + err);
     }
 };
 
 const absolutizePathData = (pathData) => {
-    let currentX = null;
-    let currentY = null;
-
-    let subpathX = null;
-    let subpathY = null;
+    let currentX = null,
+        currentY = null,
+        subpathX = null,
+        subpathY = null;
 
     return pathData.reduce((absolutizedPathData, seg) => {
         const { cmd, values } = seg;
+
+        let nextSeg;
 
         switch (cmd) {
 
             case 'M': {
                 const [x, y] = values;
 
-                absolutizedPathData.push({ key: 'M', values: [x, y] });
+                nextSeg = { key: 'M', values: [x, y] };
 
                 subpathX = x;
                 subpathY = y;
@@ -587,7 +620,7 @@ const absolutizePathData = (pathData) => {
                 const nextX = currentX + x;
                 const nextY = currentY + y;
 
-                absolutizedPathData.push({ key: 'M', values: [nextX, nextY] });
+                nextSeg = { key: 'M', values: [nextX, nextY] };
 
                 subpathX = nextX;
                 subpathY = nextY;
@@ -600,7 +633,7 @@ const absolutizePathData = (pathData) => {
             case 'L': {
                 const [x, y] = values;
 
-                absolutizedPathData.push({ key: 'L', values: [x, y] });
+                nextSeg = { key: 'L', values: [x, y] };
 
                 currentX = x;
                 currentY = y;
@@ -612,7 +645,7 @@ const absolutizePathData = (pathData) => {
                 const nextX = currentX + x;
                 const nextY = currentY + y;
 
-                absolutizedPathData.push({ key: 'L', values: [nextX, nextY] });
+                nextSeg = { key: 'L', values: [nextX, nextY] };
 
                 currentX = nextX;
                 currentY = nextY;
@@ -622,7 +655,7 @@ const absolutizePathData = (pathData) => {
             case 'C': {
                 const [x1, y1, x2, y2, x, y] = values;
 
-                absolutizedPathData.push({ key: 'C', values: [x1, y1, x2, y2, x, y] });
+                nextSeg = { key: 'C', values: [x1, y1, x2, y2, x, y] };
 
                 currentX = x;
                 currentY = y;
@@ -641,7 +674,7 @@ const absolutizePathData = (pathData) => {
                     currentY + y
                 ];
 
-                absolutizedPathData.push({ key: 'C', values: [...nextValues] });
+                nextSeg = { key: 'C', values: [...nextValues] };
 
                 currentX = nextValues[4];
                 currentY = nextValues[5];
@@ -651,7 +684,7 @@ const absolutizePathData = (pathData) => {
             case 'Q': {
                 const [x1, y1, x, y] = values;
 
-                absolutizedPathData.push({ key: 'Q', values: [x1, y1, x, y] });
+                nextSeg = { key: 'Q', values: [x1, y1, x, y] };
 
                 currentX = x;
                 currentY = y;
@@ -678,10 +711,10 @@ const absolutizePathData = (pathData) => {
             case 'A': {
                 const [r1, r2, angle, largeArcFlag, sweepFlag, x, y] = values;
 
-                absolutizedPathData.push({
-                    type: 'A',
+                nextSeg = {
+                    key: 'A',
                     values: [r1, r2, angle, largeArcFlag, sweepFlag, x, y]
-                });
+                };
 
                 currentX = x;
                 currentY = y;
@@ -693,10 +726,10 @@ const absolutizePathData = (pathData) => {
                 const nextX = currentX + x;
                 const nextY = currentY + y;
 
-                absolutizedPathData.push({
-                    type: 'A',
+                nextSeg = {
+                    key: 'A',
                     values: [r1, r2, angle, largeArcFlag, sweepFlag, nextX, nextY]
-                });
+                };
 
                 currentX = nextX;
                 currentY = nextY;
@@ -705,7 +738,7 @@ const absolutizePathData = (pathData) => {
 
             case 'H': {
                 const [x] = values;
-                absolutizedPathData.push({ key: 'H', values: [x] });
+                nextSeg = { key: 'H', values: [x] };
                 currentX = x;
                 break;
             }
@@ -714,14 +747,14 @@ const absolutizePathData = (pathData) => {
                 const [x] = values;
                 const nextX = currentX + x;
 
-                absolutizedPathData.push({ key: 'H', values: [nextX] });
+                nextSeg = { key: 'H', values: [nextX] };
                 currentX = nextX;
                 break;
             }
 
             case 'V': {
                 const [y] = values;
-                absolutizedPathData.push({ key: 'V', values: [y] });
+                nextSeg = { key: 'V', values: [y] };
                 currentY = y;
                 break;
             }
@@ -729,14 +762,14 @@ const absolutizePathData = (pathData) => {
             case 'v': {
                 const [y] = values;
                 const nextY = currentY + y;
-                absolutizedPathData.push({ key: 'V', values: [nextY] });
+                nextSeg = { key: 'V', values: [nextY] };
                 currentY = nextY;
                 break;
             }
             case 'S': {
                 const [x2, y2, x, y] = values;
 
-                absolutizedPathData.push({ key: 'S', values: [x2, y2, x, y] });
+                nextSeg = { key: 'S', values: [x2, y2, x, y] };
 
                 currentX = x;
                 currentY = y;
@@ -753,7 +786,7 @@ const absolutizePathData = (pathData) => {
                     currentY + y
                 ];
 
-                absolutizedPathData.push({ key: 'S', values: [...nextValues] });
+                nextSeg = { key: 'S', values: [...nextValues] };
 
                 currentX = nextValues[2];
                 currentY = nextValues[3];
@@ -763,7 +796,7 @@ const absolutizePathData = (pathData) => {
             case 'T': {
                 const [x, y] = values;
 
-                absolutizedPathData.push({ key: 'T', values: [x, y] });
+                nextSeg = { key: 'T', values: [x, y] };
 
                 currentX = x;
                 currentY = y;
@@ -775,7 +808,7 @@ const absolutizePathData = (pathData) => {
                 const nextX = currentX + x;
                 const nextY = currentY + y;
 
-                absolutizedPathData.push({ key: 'T', values: [nextX, nextY] });
+                nextSeg = { key: 'T', values: [nextX, nextY] };
 
                 currentX = nextX;
                 currentY = nextY;
@@ -784,7 +817,7 @@ const absolutizePathData = (pathData) => {
 
             case 'Z':
             case 'z': {
-                absolutizedPathData.push({ key: 'Z', values: [] });
+                nextSeg = { key: 'Z', values: [] };
 
                 currentX = subpathX;
                 currentY = subpathY;
@@ -793,7 +826,7 @@ const absolutizePathData = (pathData) => {
 
         }
 
-        return absolutizedPathData;
+        return [...absolutizedPathData, nextSeg];
     }, []);
 };
 
@@ -812,12 +845,14 @@ const reducePathData = (pathData) => {
     return pathData.reduce((reducedPathData, seg) => {
         const { key, values } = seg;
 
+        let nextSeg;
+
         switch (key) {
 
             case 'M': {
                 const [x, y] = values;
 
-                reducedPathData.push({ key: 'M', values: [x, y] });
+                nextSeg = [{ key: 'M', values: [x, y] }];
 
                 subpathX = x;
                 subpathY = y;
@@ -830,7 +865,7 @@ const reducePathData = (pathData) => {
             case 'C': {
                 const [x1, y1, x2, y2, x, y] = values;
 
-                reducedPathData.push({ key: 'C', values: [x1, y1, x2, y2, x, y] });
+                nextSeg = [{ key: 'C', values: [x1, y1, x2, y2, x, y] }];
 
                 lastControlX = x2;
                 lastControlY = y2;
@@ -843,7 +878,7 @@ const reducePathData = (pathData) => {
             case 'L': {
                 const [x, y] = values;
 
-                reducedPathData.push({ key: 'L', values: [x, y] });
+                nextSeg = [{ key: 'L', values: [x, y] }];
 
                 currentX = x;
                 currentY = y;
@@ -853,7 +888,7 @@ const reducePathData = (pathData) => {
             case 'H': {
                 const [x] = values;
 
-                reducedPathData.push({ key: 'L', values: [x, currentY] });
+                nextSeg = [{ key: 'L', values: [x, currentY] }];
 
                 currentX = x;
                 break;
@@ -862,7 +897,7 @@ const reducePathData = (pathData) => {
             case 'V': {
                 const [y] = values;
 
-                reducedPathData.push({ key: 'L', values: [currentX, y] });
+                nextSeg = [{ key: 'L', values: [currentX, y] }];
 
                 currentY = y;
                 break;
@@ -881,7 +916,7 @@ const reducePathData = (pathData) => {
                     cy1 = currentY;
                 }
 
-                reducedPathData.push({ key: 'C', values: [cx1, cy1, x2, y2, x, y] });
+                nextSeg = [{ key: 'C', values: [cx1, cy1, x2, y2, x, y] }];
 
                 lastControlX = x2;
                 lastControlY = y2;
@@ -909,7 +944,7 @@ const reducePathData = (pathData) => {
                 const cx2 = x + 2 * (x1 - x) / 3;
                 const cy2 = y + 2 * (y1 - y) / 3;
 
-                reducedPathData.push({ key: 'C', values: [cx1, cy1, cx2, cy2, x, y] });
+                nextSeg = [{ key: 'C', values: [cx1, cy1, cx2, cy2, x, y] }];
 
                 lastControlX = x1;
                 lastControlY = y1;
@@ -927,7 +962,7 @@ const reducePathData = (pathData) => {
                 const cx2 = x + 2 * (x1 - x) / 3;
                 const cy2 = y + 2 * (y1 - y) / 3;
 
-                reducedPathData.push({ key: 'C', values: [cx1, cy1, cx2, cy2, x, y] });
+                nextSeg = [{ key: 'C', values: [cx1, cy1, cx2, cy2, x, y] }];
 
                 lastControlX = x1;
                 lastControlY = y1;
@@ -941,7 +976,7 @@ const reducePathData = (pathData) => {
                 const [r1, r2, angle, largeArcFlag, sweepFlag, x, y] = values;
 
                 if (r1 === 0 || r2 === 0) {
-                    reducedPathData.push({ key: 'C', values: [currentX, currentY, x, y, x, y] });
+                    nextSeg = [{ key: 'C', values: [currentX, currentY, x, y, x, y] }];
 
                     currentX = x;
                     currentY = y;
@@ -949,19 +984,17 @@ const reducePathData = (pathData) => {
                     if (currentX !== x || currentY !== y) {
                         const curves = arcToCubicCurves(currentX, currentY, x, y, r1, r2, angle, largeArcFlag, sweepFlag);
 
-                        curves.forEach((curve) => {
-                            reducedPathData.push({ key: 'C', values: curve });
+                        nextSeg = curves.map(curve => ({ key: 'C', values: curve }));
 
-                            currentX = x;
-                            currentY = y;
-                        });
+                        currentX = x;
+                        currentY = y;
                     }
                 }
                 break;
             }
 
             case 'Z': {
-                reducedPathData.push(seg);
+                nextSeg = [seg];
 
                 currentX = subpathX;
                 currentY = subpathY;
@@ -972,11 +1005,11 @@ const reducePathData = (pathData) => {
 
         lastType = key;
 
-        return reducedPathData;
+        return [...reducedPathData, ...nextSeg];
     }, []);
 };
 
-const arcToCubicCurves = (x1, y1, x2, y2, r1, r2, angle, largeArcFlag, sweepFlag, _recursive) => {
+const arcToCubicCurves = (x1, y1, x2, y2, rx, ry, xAxisRot, largeArcFlag, sweepFlag, recursive) => {
     const degToRad = deg => (Math.PI * deg) / 180;
 
     const rotate = (x, y, rad) => ({
@@ -984,15 +1017,15 @@ const arcToCubicCurves = (x1, y1, x2, y2, r1, r2, angle, largeArcFlag, sweepFlag
         y: x * Math.sin(rad) + y * Math.cos(rad)
     });
 
-    const angleRad = degToRad(angle);
+    const angleRad = degToRad(xAxisRot);
     let params = [];
     let f1, f2, cx, cy;
 
-    if (_recursive) {
-        f1 = _recursive[0];
-        f2 = _recursive[1];
-        cx = _recursive[2];
-        cy = _recursive[3];
+    if (recursive) {
+        f1 = recursive[0];
+        f2 = recursive[1];
+        cx = recursive[2];
+        cy = recursive[3];
     } else {
         const p1 = rotate(x1, y1, -angleRad);
         x1 = p1.x;
@@ -1004,35 +1037,29 @@ const arcToCubicCurves = (x1, y1, x2, y2, r1, r2, angle, largeArcFlag, sweepFlag
 
         const x = (x1 - x2) / 2;
         const y = (y1 - y2) / 2;
-        let h = (x * x) / (r1 * r1) + (y * y) / (r2 * r2);
+        let h = (x * x) / (rx * rx) + (y * y) / (ry * ry);
 
         if (h > 1) {
             h = Math.sqrt(h);
-            r1 = h * r1;
-            r2 = h * r2;
+            rx = h * rx;
+            ry = h * ry;
         }
 
-        let sign;
+        let sign = largeArcFlag === sweepFlag ? -1 : 1;
 
-        if (largeArcFlag === sweepFlag) {
-            sign = -1;
-        } else {
-            sign = 1;
-        }
-
-        const r1Pow = r1 * r1;
-        const r2Pow = r2 * r2;
+        const r1Pow = rx * rx;
+        const r2Pow = ry * ry;
 
         const left = r1Pow * r2Pow - r1Pow * y * y - r2Pow * x * x;
         const right = r1Pow * y * y + r2Pow * x * x;
 
         let k = sign * Math.sqrt(Math.abs(left / right));
 
-        cx = k * r1 * y / r2 + (x1 + x2) / 2;
-        cy = k * -r2 * x / r1 + (y1 + y2) / 2;
+        cx = k * rx * y / ry + (x1 + x2) / 2;
+        cy = k * -ry * x / rx + (y1 + y2) / 2;
 
-        f1 = Math.asin(parseFloat(((y1 - cy) / r2).toFixed(9)));
-        f2 = Math.asin(parseFloat(((y2 - cy) / r2).toFixed(9)));
+        f1 = Math.asin(parseFloat(((y1 - cy) / ry).toFixed(9)));
+        f2 = Math.asin(parseFloat(((y2 - cy) / ry).toFixed(9)));
 
         if (x1 < cx) {
             f1 = Math.PI - f1;
@@ -1066,15 +1093,13 @@ const arcToCubicCurves = (x1, y1, x2, y2, r1, r2, angle, largeArcFlag, sweepFlag
         let x2old = x2;
         let y2old = y2;
 
-        if (sweepFlag && f2 > f1) {
-            f2 = f1 + (Math.PI * 120 / 180) * (1);
-        } else {
-            f2 = f1 + (Math.PI * 120 / 180) * (-1);
-        }
+        const ratio = sweepFlag && f2 > f1 ? 1 : -1;
 
-        x2 = cx + r1 * Math.cos(f2);
-        y2 = cy + r2 * Math.sin(f2);
-        params = arcToCubicCurves(x2, y2, x2old, y2old, r1, r2, angle, 0, sweepFlag, [f2, f2old, cx, cy]);
+        f2 = f1 + (Math.PI * 120 / 180) * ratio;
+
+        x2 = cx + rx * Math.cos(f2);
+        y2 = cy + ry * Math.sin(f2);
+        params = arcToCubicCurves(x2, y2, x2old, y2old, rx, ry, xAxisRot, 0, sweepFlag, [f2, f2old, cx, cy]);
     }
 
     df = f2 - f1;
@@ -1084,8 +1109,8 @@ const arcToCubicCurves = (x1, y1, x2, y2, r1, r2, angle, largeArcFlag, sweepFlag
     let c2 = Math.cos(f2);
     let s2 = Math.sin(f2);
     let t = Math.tan(df / 4);
-    let hx = 4 / 3 * r1 * t;
-    let hy = 4 / 3 * r2 * t;
+    let hx = 4 / 3 * rx * t;
+    let hy = 4 / 3 * ry * t;
 
     let m1 = [x1, y1];
     let m2 = [x1 + hx * s1, y1 - hy * c1];
@@ -1095,7 +1120,7 @@ const arcToCubicCurves = (x1, y1, x2, y2, r1, r2, angle, largeArcFlag, sweepFlag
     m2[0] = 2 * m1[0] - m2[0];
     m2[1] = 2 * m1[1] - m2[1];
 
-    if (_recursive) {
+    if (recursive) {
         return [m2, m3, m4, ...params];
     } else {
         params = [m2, m3, m4, ...params].join().split(',');
@@ -1103,7 +1128,7 @@ const arcToCubicCurves = (x1, y1, x2, y2, r1, r2, angle, largeArcFlag, sweepFlag
         const curves = [];
         let curveParams = [];
 
-        params.forEach((param, i) => {
+        params.forEach((_, i) => {
             if (i % 2) {
                 curveParams.push(rotate(params[i - 1], params[i], angleRad).y);
             } else {

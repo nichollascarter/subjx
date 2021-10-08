@@ -130,6 +130,7 @@ export default class Cloneable extends SubjectModel {
 
     _start({ target, clientX, clientY }) {
         const {
+            elements,
             storage,
             storage: {
                 data,
@@ -137,7 +138,11 @@ export default class Cloneable extends SubjectModel {
             }
         } = this;
 
-        const { parent } = data.get(target);
+        if (!elements.includes(target)) return;
+
+        const {
+            parent = target.parentNode
+        } = data.get(target) || {};
 
         const { left, top } = getOffset(parent);
 
@@ -153,7 +158,7 @@ export default class Cloneable extends SubjectModel {
         storage.cy = clientY;
         storage.clone = clone;
 
-        helper(parent)[0].appendChild(clone);
+        parent.appendChild(clone);
         this._draw();
     }
 

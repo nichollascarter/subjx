@@ -155,3 +155,9 @@ export const parsePoints = (pts) => (
         []
     )
 );
+
+export const arrayToChunks = (a, size) =>
+    Array.from(
+        new Array(Math.ceil(a.length / size)),
+        (_, i) => a.slice(i * size, i * size + size)
+    );

@@ -119,7 +119,7 @@ export default class Transformable extends SubjectModel {
     _processOptions(options = {}) {
         const { elements } = this;
 
-        [...elements].map((element) => addClass(element, `${LIB_CLASS_PREFIX}drag`));
+        [...elements].map(element => addClass(element, `${LIB_CLASS_PREFIX}drag`));
 
         const {
             each = {
@@ -242,19 +242,81 @@ export default class Transformable extends SubjectModel {
             draggable,
             resizable,
             rotatable,
-            isGrouped
+            isGrouped,
+            restrict
         } = options;
 
         if (doResize && resizable) {
             const distX = snapToGrid(clientX - relativeX, snap.x);
             const distY = snapToGrid(clientY - relativeY, snap.y);
 
+            const {
+                cached,
+                cached: {
+                    dist: {
+                        dx: prevDx = distX,
+                        dy: prevDy = distY
+                    } = {}
+                } = {}
+            } = storage;
+
             const args = {
-                distX,
-                distY,
+                dx: distX,
+                dy: distY,
                 clientX,
                 clientY,
                 mouseEvent
+            };
+
+            const { x: restX, y: restY } = restrict
+                ? elements.reduce((res, element) => {
+                    const {
+                        transform: {
+                            // scX,
+                            // scY,
+                            ctm
+                        }
+                    } = data.get(element);
+
+                    const { x, y } = !isGrouped
+                        ? this._pointToTransform(
+                            {
+                                x: distX,
+                                y: distY,
+                                matrix: ctm
+                            }
+                        )
+                        : { x: distX, y: distY };
+
+                    const dx = dox ? (revX ? -x : x) : 0;
+                    const dy = doy ? (revY ? -y : y) : 0;
+
+                    const { x: newX, y: newY } = this._processResizeRestrict(element, { dx, dy });
+
+                    return {
+                        x: newX !== null && res.x === null ? distX : res.x,
+                        y: newY !== null && res.y === null ? distY : res.y
+                    };
+                }, { x: null, y: null })
+                : { x: null, y: null };
+
+            const isBounding = restrict && (restX !== null || restY !== null);
+
+            const newDx = isBounding ? prevDx : distX;
+            const newDy = isBounding ? prevDy : distY;
+
+            const nextArgs = {
+                ...args,
+                dx: newDx,
+                dy: newDy
+            };
+
+            this.storage.cached = {
+                ...cached,
+                dist: {
+                    dx: newDx,
+                    dy: newDy
+                }
             };
 
             elements.map((element) => {
@@ -269,31 +331,31 @@ export default class Transformable extends SubjectModel {
                 const { x, y } = !isGrouped
                     ? this._pointToTransform(
                         {
-                            x: distX,
-                            y: distY,
+                            x: newDx,
+                            y: newDy,
                             matrix: ctm
                         }
                     )
-                    : { x: distX, y: distY };
+                    : { x: newDx, y: newDy };
 
                 const dx = dox ? (revX ? -x : x) : 0;
                 const dy = doy ? (revY ? -y : y) : 0;
 
                 self._resize({
-                    ...args,
+                    ...nextArgs,
                     element,
                     dx,
                     dy
                 });
             });
 
-            this._processControlsResize({ dx: distX, dy: distY });
+            this._processControlsResize({ dx: newDx, dy: newDy });
 
             if (resizeEach) {
                 observable.notify(
                     ON_RESIZE,
                     self,
-                    args
+                    nextArgs
                 );
             }
         }
@@ -307,6 +369,16 @@ export default class Transformable extends SubjectModel {
                 ? snapToGrid(clientY - relativeY, snap.y)
                 : 0;
 
+            const {
+                cached,
+                cached: {
+                    dist: {
+                        dx: prevDx = dx,
+                        dy: prevDy = dy
+                    } = {}
+                } = {}
+            } = storage;
+
             const args = {
                 dx,
                 dy,
@@ -315,20 +387,50 @@ export default class Transformable extends SubjectModel {
                 mouseEvent
             };
 
+            const { x: restX, y: restY } = restrict
+                ? elements.reduce((res, element) => {
+                    const { x, y } = this._processMoveRestrict(element, args);
+
+                    return {
+                        x: restX !== null && res.x === null && restrict ? x : res.x,
+                        y: restY !== null && res.y === null && restrict ? y : res.y
+                    };
+                }, { x: null, y: null })
+                : { x: null, y: null };
+
+            const newDx = restX !== null && restrict ? prevDx : dx;
+            const newDy = restY !== null && restrict ? prevDy : dy;
+
+            const nextArgs = {
+                ...args,
+                dx: newDx,
+                dy: newDy
+            };
+
+            this.storage.cached = {
+                ...cached,
+                dist: {
+                    dx: newDx,
+                    dy: newDy
+                }
+            };
+
             elements.map((element) => (
                 super._drag({
                     element,
-                    ...args
+                    ...nextArgs,
+                    dx: newDx,
+                    dy: newDy
                 })
             ));
 
-            this._processControlsMove({ dx, dy });
+            this._processControlsMove({ dx: newDx, dy: newDy });
 
             if (moveEach) {
                 observable.notify(
                     ON_MOVE,
                     self,
-                    args
+                    nextArgs
                 );
             }
         }
@@ -350,6 +452,15 @@ export default class Transformable extends SubjectModel {
                 clientY,
                 mouseEvent
             };
+
+            if (restrict) {
+                const isBounding = elements.some((element) => {
+                    const { x: restX, y: restY } = this._processRotateRestrict(element, radians);
+                    return (restX !== null || restY !== null);
+                });
+
+                if (isBounding) return;
+            }
 
             elements.map((element) => (
                 self._rotate({
@@ -669,8 +780,10 @@ export default class Transformable extends SubjectModel {
             ...rest
         } = this._checkHandles(handle, handles);
 
+        const commonState = this._getCommonState();
+
         const { x, y } = this._cursorPoint(e);
-        const { x: bx, y: by } = this._pointToControls({ x, y });
+        const { x: bx, y: by } = this._pointToControls({ x, y }, commonState.transform);
 
         elements.map(element => {
             const { transform, ...nextData } = this._getElementState(element, { revX, revY, doW, doH });
@@ -684,8 +797,6 @@ export default class Transformable extends SubjectModel {
                 cy: ey
             });
         });
-
-        const commonState = this._getCommonState();
 
         const pressang = Math.atan2(
             y - commonState.center.y,
@@ -738,11 +849,11 @@ export default class Transformable extends SubjectModel {
         };
     }
 
-    _restrictHandler(matrix) {
+    _restrictHandler(element, matrix) {
         let restrictX = null,
             restrictY = null;
 
-        const elBox = this.getBoundingRect(matrix);
+        const elBox = this.getBoundingRect(element, matrix);
 
         const containerBBox = this._getRestrictedBBox();
 
@@ -786,12 +897,9 @@ export default class Transformable extends SubjectModel {
         wrapper.parentNode.removeChild(wrapper);
     }
 
-    notifyMove() {
-        const { elements } = this;
-
-        elements.map((element) => (
-            super._drag(element, ...arguments)
-        ));
+    notifyMove({ dx, dy }) {
+        this.elements.map((element) => super._drag({ element, dx, dy }));
+        this._processControlsMove({ dx, dy });
     }
 
     notifyRotate({ radians, ...rest }) {
@@ -803,37 +911,54 @@ export default class Transformable extends SubjectModel {
         } = this;
 
         elements.map((element) => (
-            this._rotate(element, {
+            this._rotate({
+                element,
                 radians: snapToGrid(radians, angle),
                 ...rest
             })
         ));
+
+        this._processControlsRotate({ radians });
     }
 
-    notifyResize() {
-        const { elements } = this;
-
-        elements.map((element) => (
-            this._resize(element, ...arguments)
-        ));
+    notifyResize({ dx, dy }) {
+        this.elements.map(element => this._resize({ element, dx, dy }));
+        this._processControlsResize({ dx, dy });
     }
 
     notifyApply({ clientX, clientY, actionName, triggerEvent }) {
         this.proxyMethods.onDrop.call(this, { clientX, clientY });
         if (triggerEvent) {
-            this._applyTransformToElement(actionName);
+            this.elements.map((element) => this._applyTransformToElement(element, actionName));
             super._emitEvent(`${actionName}End`, { clientX, clientY });
         }
     }
 
     notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest }) {
         if (triggerEvent) {
-            const recalc = this._getElementState(rest);
+            const {
+                elements,
+                storage: {
+                    data
+                }
+            } = this;
+
+            elements.map(element => {
+                const nextData = this._getElementState(element, rest);
+
+                data.set(element, {
+                    ...data.get(element),
+                    ...nextData
+                });
+            });
+
+            const recalc = this._getCommonState();
 
             this.storage = {
                 ...this.storage,
                 ...recalc
             };
+
             super._emitEvent(`${actionName}Start`, { clientX, clientY });
         }
     }
@@ -890,21 +1015,45 @@ export default class Transformable extends SubjectModel {
     }
 
     exeDrag({ dx, dy }) {
-        const { draggable } = this.options;
+        const {
+            elements,
+            options: {
+                draggable
+            },
+            storage,
+            storage: {
+                data
+            }
+        } = this;
         if (!draggable) return;
 
-        this.storage = {
-            ...this.storage,
-            ...this._getElementState({
+        const commonState = this._getCommonState();
+
+        elements.map(element => {
+            const nextData = this._getElementState(element, {
                 revX: false,
                 revY: false,
                 doW: false,
                 doH: false
-            })
+            });
+
+            data.set(element, {
+                ...data.get(element),
+                ...nextData
+            });
+        });
+
+        this.storage = {
+            ...storage,
+            ...commonState
         };
 
-        super._drag({ dx, dy });
-        this._applyTransformToElement(E_DRAG);
+        elements.map((element) => {
+            super._drag({ element, dx, dy });
+            this._applyTransformToElement(element, E_DRAG);
+        });
+
+        this._processControlsMove({ dx, dy });
     }
 
     exeResize({
@@ -915,39 +1064,87 @@ export default class Transformable extends SubjectModel {
         doW = false,
         doH = false
     }) {
-        const { resizable } = this.options;
+        const {
+            elements,
+            options: {
+                resizable
+            },
+            storage,
+            storage: {
+                data
+            }
+        } = this;
         if (!resizable) return;
 
-        this.storage = {
-            ...this.storage,
-            ...this._getElementState({
+        const commonState = this._getCommonState();
+
+        elements.map(element => {
+            const nextData = this._getElementState(element, {
                 revX,
                 revY,
                 doW,
                 doH
-            })
+            });
+
+            data.set(element, {
+                ...data.get(element),
+                ...nextData
+            });
+        });
+
+        this.storage = {
+            ...storage,
+            ...commonState
         };
 
-        this._resize({ dx, dy });
-        this._applyTransformToElement(E_RESIZE);
+        elements.map((element) => {
+            this._resize({ element, dx, dy });
+            this._applyTransformToElement(element, E_RESIZE);
+        });
+
+        this._processControlsMove({ dx, dy });
     }
 
     exeRotate({ delta }) {
-        const { rotatable } = this.options;
+        const {
+            elements,
+            options: {
+                rotatable
+            },
+            storage,
+            storage: {
+                data
+            }
+        } = this;
         if (!rotatable) return;
 
-        this.storage = {
-            ...this.storage,
-            ...this._getElementState({
+        const commonState = this._getCommonState();
+
+        elements.map(element => {
+            const nextData = this._getElementState(element, {
                 revX: false,
                 revY: false,
                 doW: false,
                 doH: false
-            })
+            });
+
+            data.set(element, {
+                ...data.get(element),
+                ...nextData
+            });
+        });
+
+        this.storage = {
+            ...storage,
+            ...commonState
         };
 
-        this._rotate({ radians: delta });
-        this._applyTransformToElement(E_ROTATE);
+        elements.map(element => {
+            this._rotate({ element, radians: delta });
+            this._applyTransformToElement(element, E_ROTATE);
+        });
+
+        this._processControlsRotate({ radians: delta });
     }
 
     get controls() {
