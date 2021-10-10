@@ -308,15 +308,11 @@ export default class Transformable extends SubjectModel {
             const nextArgs = {
                 ...args,
                 dx: newDx,
-                dy: newDy
-            };
-
-            this.storage.cached = {
-                ...cached,
-                dist: {
-                    dx: newDx,
-                    dy: newDy
-                }
+                dy: newDy,
+                revX,
+                revY,
+                dox,
+                doy
             };
 
             elements.map((element) => {
@@ -348,6 +344,14 @@ export default class Transformable extends SubjectModel {
                     dy
                 });
             });
+
+            this.storage.cached = {
+                ...cached,
+                dist: {
+                    dx: newDx,
+                    dy: newDy
+                }
+            };
 
             this._processControlsResize({ dx: newDx, dy: newDy });
 
@@ -681,7 +685,7 @@ export default class Transformable extends SubjectModel {
     _end({ clientX, clientY }) {
         const {
             elements,
-            options: { isGrouped, each },
+            options: { each },
             observable,
             storage,
             storage: {
@@ -710,12 +714,7 @@ export default class Transformable extends SubjectModel {
         storage.onExecution = false;
         storage.cursor = null;
 
-        elements.map((el) => this._applyTransformToElement(el, actionName));
-
-        if (isGrouped && actionName === E_ROTATE) {
-            this._applyTransformToHandles();
-            this._updateControlsView();
-        }
+        elements.map(element => this._applyTransformToElement(element, actionName));
 
         const eventArgs = {
             clientX,
@@ -921,8 +920,41 @@ export default class Transformable extends SubjectModel {
         this._processControlsRotate({ radians });
     }
 
-    notifyResize({ dx, dy }) {
-        this.elements.map(element => this._resize({ element, dx, dy }));
+    notifyResize({ dx, dy, revX, revY, dox, doy }) {
+        const {
+            elements,
+            storage: {
+                data
+            },
+            options: {
+                isGrouped
+            }
+        } = this;
+
+        elements.map((element) => {
+            const {
+                transform: {
+                    ctm
+                }
+            } = data.get(element);
+
+            const { x, y } = !isGrouped
+                ? this._pointToTransform(
+                    {
+                        x: dx,
+                        y: dy,
+                        matrix: ctm
+                    }
+                )
+                : { x: dx, y: dy };
+
+            this._resize({
+                element,
+                dx: dox ? (revX ? -x : x) : 0,
+                dy: doy ? (revY ? -y : y) : 0
+            });
+        });
+
         this._processControlsResize({ dx, dy });
     }
 

@@ -1009,6 +1009,8 @@ const reducePathData = (pathData) => {
     }, []);
 };
 
+//  - a2c() by Dmitry Baranovskiy (MIT License)
+//  https://github.com/DmitryBaranovskiy/raphael/blob/v2.1.1/raphael.js#L2216
 const arcToCubicCurves = (x1, y1, x2, y2, rx, ry, xAxisRot, largeArcFlag, sweepFlag, recursive) => {
     const degToRad = deg => (Math.PI * deg) / 180;
 

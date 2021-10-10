@@ -1420,15 +1420,13 @@
 
             var nextArgs = _objectSpread2({}, args, {
               dx: newDx,
-              dy: newDy
+              dy: newDy,
+              revX: revX,
+              revY: revY,
+              dox: dox,
+              doy: doy
             });
 
-            this.storage.cached = _objectSpread2({}, cached, {
-              dist: {
-                dx: newDx,
-                dy: newDy
-              }
-            });
             elements.map(function (element) {
               var _data$get2 = data.get(element),
                   ctm = _data$get2.transform.ctm;
@@ -1452,6 +1450,12 @@
                 dx: dx,
                 dy: dy
               }));
+            });
+            this.storage.cached = _objectSpread2({}, cached, {
+              dist: {
+                dx: newDx,
+                dy: newDy
+              }
             });
 
             this._processControlsResize({
@@ -1729,9 +1733,7 @@
           var clientX = _ref7.clientX,
               clientY = _ref7.clientY;
           var elements = this.elements,
-              _this$options2 = this.options,
-              isGrouped = _this$options2.isGrouped,
-              each = _this$options2.each,
+              each = this.options.each,
               observable = this.observable,
               storage = this.storage,
               _this$storage2 = this.storage,
@@ -1751,16 +1753,9 @@
           storage.doDraw = false;
           storage.onExecution = false;
           storage.cursor = null;
-          elements.map(function (el) {
-            return _this3._applyTransformToElement(el, actionName);
+          elements.map(function (element) {
+            return _this3._applyTransformToElement(element, actionName);
           });
-
-          if (isGrouped && actionName === E_ROTATE$1) {
-            this._applyTransformToHandles();
-
-            this._updateControlsView();
-          }
-
           var eventArgs = {
             clientX: clientX,
             clientY: clientY
@@ -1981,9 +1976,9 @@
               rest = _objectWithoutProperties(_ref9, ["radians"]);
 
           var elements = this.elements,
-              _this$options3 = this.options;
-          _this$options3 = _this$options3 === void 0 ? {} : _this$options3;
-          var angle = _this$options3.snap.angle;
+              _this$options2 = this.options;
+          _this$options2 = _this$options2 === void 0 ? {} : _this$options2;
+          var angle = _this$options2.snap.angle;
           elements.map(function (element) {
             return _this7._rotate(_objectSpread2({
               element: element,
@@ -2001,12 +1996,33 @@
           var _this8 = this;
 
           var dx = _ref10.dx,
-              dy = _ref10.dy;
-          this.elements.map(function (element) {
-            return _this8._resize({
+              dy = _ref10.dy,
+              revX = _ref10.revX,
+              revY = _ref10.revY,
+              dox = _ref10.dox,
+              doy = _ref10.doy;
+          var elements = this.elements,
+              data = this.storage.data,
+              isGrouped = this.options.isGrouped;
+          elements.map(function (element) {
+            var _data$get3 = data.get(element),
+                ctm = _data$get3.transform.ctm;
+
+            var _ref11 = !isGrouped ? _this8._pointToTransform({
+              x: dx,
+              y: dy,
+              matrix: ctm
+            }) : {
+              x: dx,
+              y: dy
+            },
+                x = _ref11.x,
+                y = _ref11.y;
+
+            _this8._resize({
               element: element,
-              dx: dx,
-              dy: dy
+              dx: dox ? revX ? -x : x : 0,
+              dy: doy ? revY ? -y : y : 0
             });
           });
 
@@ -2017,13 +2033,13 @@
         }
       }, {
         key: "notifyApply",
-        value: function notifyApply(_ref11) {
+        value: function notifyApply(_ref12) {
           var _this9 = this;
 
-          var clientX = _ref11.clientX,
-              clientY = _ref11.clientY,
-              actionName = _ref11.actionName,
-              triggerEvent = _ref11.triggerEvent;
+          var clientX = _ref12.clientX,
+              clientY = _ref12.clientY,
+              actionName = _ref12.actionName,
+              triggerEvent = _ref12.triggerEvent;
           this.proxyMethods.onDrop.call(this, {
             clientX: clientX,
             clientY: clientY
@@ -2042,14 +2058,14 @@
         }
       }, {
         key: "notifyGetState",
-        value: function notifyGetState(_ref12) {
+        value: function notifyGetState(_ref13) {
           var _this10 = this;
 
-          var clientX = _ref12.clientX,
-              clientY = _ref12.clientY,
-              actionName = _ref12.actionName,
-              triggerEvent = _ref12.triggerEvent,
-              rest = _objectWithoutProperties(_ref12, ["clientX", "clientY", "actionName", "triggerEvent"]);
+          var clientX = _ref13.clientX,
+              clientY = _ref13.clientY,
+              actionName = _ref13.actionName,
+              triggerEvent = _ref13.triggerEvent,
+              rest = _objectWithoutProperties(_ref13, ["clientX", "clientY", "actionName", "triggerEvent"]);
 
           if (triggerEvent) {
             var elements = this.elements,
@@ -2072,10 +2088,10 @@
         }
       }, {
         key: "subscribe",
-        value: function subscribe(_ref13) {
-          var resize = _ref13.resize,
-              move = _ref13.move,
-              rotate = _ref13.rotate;
+        value: function subscribe(_ref14) {
+          var resize = _ref14.resize,
+              move = _ref14.move,
+              rotate = _ref14.rotate;
           var ob = this.observable;
 
           if (move || resize || rotate) {
@@ -2128,11 +2144,11 @@
         }
       }, {
         key: "exeDrag",
-        value: function exeDrag(_ref14) {
+        value: function exeDrag(_ref15) {
           var _this12 = this;
 
-          var dx = _ref14.dx,
-              dy = _ref14.dy;
+          var dx = _ref15.dx,
+              dy = _ref15.dy;
           var elements = this.elements,
               draggable = this.options.draggable,
               storage = this.storage,
@@ -2169,19 +2185,19 @@
         }
       }, {
         key: "exeResize",
-        value: function exeResize(_ref15) {
+        value: function exeResize(_ref16) {
           var _this13 = this;
 
-          var dx = _ref15.dx,
-              dy = _ref15.dy,
-              _ref15$revX = _ref15.revX,
-              revX = _ref15$revX === void 0 ? false : _ref15$revX,
-              _ref15$revY = _ref15.revY,
-              revY = _ref15$revY === void 0 ? false : _ref15$revY,
-              _ref15$doW = _ref15.doW,
-              doW = _ref15$doW === void 0 ? false : _ref15$doW,
-              _ref15$doH = _ref15.doH,
-              doH = _ref15$doH === void 0 ? false : _ref15$doH;
+          var dx = _ref16.dx,
+              dy = _ref16.dy,
+              _ref16$revX = _ref16.revX,
+              revX = _ref16$revX === void 0 ? false : _ref16$revX,
+              _ref16$revY = _ref16.revY,
+              revY = _ref16$revY === void 0 ? false : _ref16$revY,
+              _ref16$doW = _ref16.doW,
+              doW = _ref16$doW === void 0 ? false : _ref16$doW,
+              _ref16$doH = _ref16.doH,
+              doH = _ref16$doH === void 0 ? false : _ref16$doH;
           var elements = this.elements,
               resizable = this.options.resizable,
               storage = this.storage,
@@ -2218,10 +2234,10 @@
         }
       }, {
         key: "exeRotate",
-        value: function exeRotate(_ref16) {
+        value: function exeRotate(_ref17) {
           var _this14 = this;
 
-          var delta = _ref16.delta;
+          var delta = _ref17.delta;
           var elements = this.elements,
               rotatable = this.options.rotatable,
               storage = this.storage,
@@ -5014,7 +5030,9 @@
         lastType = key;
         return [].concat(_toConsumableArray(reducedPathData), _toConsumableArray(nextSeg));
       }, []);
-    };
+    }; //  - a2c() by Dmitry Baranovskiy (MIT License)
+    //  https://github.com/DmitryBaranovskiy/raphael/blob/v2.1.1/raphael.js#L2216
+
 
     var arcToCubicCurves = function arcToCubicCurves(x1, y1, x2, y2, rx, ry, xAxisRot, largeArcFlag, sweepFlag, recursive) {
       var degToRad = function degToRad(deg) {
@@ -5141,7 +5159,8 @@
     };
 
     var E_DRAG$3 = EVENT_EMITTER_CONSTANTS.E_DRAG,
-        E_RESIZE$2 = EVENT_EMITTER_CONSTANTS.E_RESIZE;
+        E_RESIZE$2 = EVENT_EMITTER_CONSTANTS.E_RESIZE,
+        E_ROTATE$2 = EVENT_EMITTER_CONSTANTS.E_ROTATE;
     var E_MOUSEDOWN$3 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
         E_TOUCHSTART$3 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
     var keys$2 = Object.keys,
@@ -5183,6 +5202,7 @@
 
           var handles = {};
           var rotationHandles = {};
+          var nextCenter = Array.isArray(rotationPoint) ? pointTo(createSVGMatrix(), rotationPoint[0], rotationPoint[1]) : nextVertices.center;
 
           if (rotatable) {
             var normalLine = showNormal ? renderLine$1([anchor, rotator], THEME_COLOR, 'normal') : null;
@@ -5193,8 +5213,8 @@
               radius = createSVGElement('line', ['sjx-hidden']);
               radius.x1.baseVal.value = nextVertices.center.x;
               radius.y1.baseVal.value = nextVertices.center.y;
-              radius.x2.baseVal.value = nextVertices.center.x;
-              radius.y2.baseVal.value = nextVertices.center.y;
+              radius.x2.baseVal.value = nextCenter.x;
+              radius.y2.baseVal.value = nextCenter.y;
               setLineStyle(radius, '#fe3232');
               radius.setAttribute('opacity', 0.5);
               controls.appendChild(radius);
@@ -5228,7 +5248,6 @@
             handles[key] = renderLine$1(data, THEME_COLOR, key);
             controls.appendChild(handles[key]);
           });
-          var nextCenter =  nextVertices.center;
 
           var allHandles = _objectSpread2({}, resizingHandles, {
             rotator: rotator,
@@ -5264,7 +5283,7 @@
             handles: _objectSpread2({}, handles, {}, rotationHandles),
             data: data,
             center: {
-              isShifted: false
+              isShifted: Boolean(rotationPoint)
             }
           };
           [].concat(_toConsumableArray(elements), [controls]).map(function (target) {
@@ -5338,13 +5357,15 @@
               applyDragging = _this$options3.applyTranslate;
 
           var _data$get = data.get(element),
-              cached = _data$get.cached,
-              _data$get$transform = _data$get.transform,
-              matrix = _data$get$transform.matrix,
-              parentMatrix = _data$get$transform.parentMatrix,
-              __data__ = _data$get.__data__;
+              _data$get$cached = _data$get.cached,
+              cached = _data$get$cached === void 0 ? {} : _data$get$cached,
+              nextData = _objectWithoutProperties(_data$get, ["cached"]);
 
-          if (isUndef(cached)) return;
+          var _nextData$transform = nextData.transform,
+              matrix = _nextData$transform.matrix,
+              parentMatrix = _nextData$transform.parentMatrix,
+              __data__ = nextData.__data__; //if (isUndef(cached)) return;
+
           var scaleX = cached.scaleX,
               scaleY = cached.scaleY,
               _cached$dist = cached.dist;
@@ -5431,6 +5452,14 @@
               }
             }
           }
+
+          if (isGrouped && actionName === E_ROTATE$2) {
+            this._applyTransformToHandles();
+
+            this._updateControlsView();
+          }
+
+          data.set(element, _objectSpread2({}, nextData));
         }
       }, {
         key: "_processResize",
@@ -5456,7 +5485,8 @@
           var _elementData$transfor = elementData.transform,
               matrix = _elementData$transfor.matrix,
               translateMatrix = _elementData$transfor.auxiliary.scale.translateMatrix,
-              cached = elementData.cached;
+              _elementData$cached = elementData.cached,
+              cached = _elementData$cached === void 0 ? {} : _elementData$cached;
 
           var getScale = function getScale(distX, distY) {
             var ratio = doW || !doW && !doH ? (boxWidth + distX) / boxWidth : (boxHeight + distY) / boxHeight;
@@ -5616,15 +5646,19 @@
               bcy = _pointTo3.y; // element's center coordinates
 
 
-          var _ref7 = cHandle ? pointTo(parentMatrixInverted, bcx, bcy) : pointTo(elMatrix, elCenterX, elCenterY),
+          var _ref7 = cHandle ? pointTo(parentMatrixInverted, bcx, bcy) : pointTo(isGrouped ? parentMatrixInverted : elMatrix, elCenterX, elCenterY),
               elcx = _ref7.x,
               elcy = _ref7.y;
+
+          var _pointTo4 = pointTo(isGrouped ? parentMatrixInverted : createSVGMatrix(), scaleX, scaleY),
+              nextScaleX = _pointTo4.x,
+              nextScaleY = _pointTo4.y;
 
           var transform = {
             auxiliary: {
               scale: {
                 scaleMatrix: createSVGMatrix(),
-                translateMatrix: createTranslateMatrix$1(scaleX, scaleY)
+                translateMatrix: createTranslateMatrix$1(nextScaleX, nextScaleY)
               },
               translate: {
                 parentMatrix: parentMatrixInverted,
@@ -5669,9 +5703,9 @@
           var centerX = cHandle ? cHandle.cx.baseVal.value : elCenterX;
           var centerY = cHandle ? cHandle.cy.baseVal.value : elCenterY; // c-handle's coordinates
 
-          var _pointTo4 = pointTo(boxCTM, centerX, centerY),
-              bcx = _pointTo4.x,
-              bcy = _pointTo4.y;
+          var _pointTo5 = pointTo(boxCTM, centerX, centerY),
+              bcx = _pointTo5.x,
+              bcy = _pointTo5.y;
 
           var parentMatrix = getTransformToElement(controls.parentNode, container); // element's center coordinates
 
@@ -5680,9 +5714,9 @@
               elcy = _ref8.y; // box's center coordinates
 
 
-          var _pointTo5 = pointTo(isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container), elCenterX, elCenterY),
-              rcx = _pointTo5.x,
-              rcy = _pointTo5.y;
+          var _pointTo6 = pointTo(isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container), elCenterX, elCenterY),
+              rcx = _pointTo6.x,
+              rcy = _pointTo6.y;
 
           var containerMatrix = restrict ? getTransformToElement(restrict, restrict.parentNode) : getTransformToElement(container, container.parentNode);
 
@@ -5814,11 +5848,13 @@
         key: "_getBBox",
         value: function _getBBox() {
           var elements = this.elements,
-              isGrouped = this.options.isGrouped;
+              _this$options8 = this.options,
+              container = _this$options8.container,
+              isGrouped = _this$options8.isGrouped;
 
           if (isGrouped) {
             var groupBBox = elements.reduce(function (result, element) {
-              var elCTM = getTransformToElement(element, element.parentNode);
+              var elCTM = getTransformToElement(element, container);
               return [].concat(_toConsumableArray(result), _toConsumableArray(_getBoundingRect$1(element, elCTM)));
             }, []);
 
@@ -5848,9 +5884,11 @@
               _this$storage7$handle = _this$storage7.handles,
               center = _this$storage7$handle.center,
               radius = _this$storage7$handle.radius,
+              prevCenterData = _this$storage7.center,
               _this$storage7$center = _this$storage7.center,
               hx = _this$storage7$center.hx,
-              hy = _this$storage7$center.hy;
+              hy = _this$storage7$center.hy,
+              controlsMatrix = _this$storage7.transform.controlsMatrix;
           if (isUndef(center)) return;
           var mx = hx + dx,
               my = hy + dy;
@@ -5858,7 +5896,10 @@
           center.cy.baseVal.value = my;
           radius.x2.baseVal.value = mx;
           radius.y2.baseVal.value = my;
-          this.storage.center.isShifted = true;
+          this.storage.center = _objectSpread2({}, prevCenterData, {
+            isShifted: true,
+            cached: _objectSpread2({}, pointTo(controlsMatrix.inverse(), mx, my))
+          });
         }
       }, {
         key: "_processMoveRestrict",
@@ -5872,9 +5913,9 @@
               parentMatrix = _elementStorage$trans3.auxiliary.translate.parentMatrix;
           parentMatrix.e = parentMatrix.f = 0;
 
-          var _pointTo6 = pointTo(parentMatrix, dx, dy),
-              x = _pointTo6.x,
-              y = _pointTo6.y;
+          var _pointTo7 = pointTo(parentMatrix, dx, dy),
+              x = _pointTo7.x,
+              y = _pointTo7.y;
 
           var preTranslateMatrix = createTranslateMatrix$1(x, y).multiply(matrix);
           return this._restrictHandler(element, preTranslateMatrix);
@@ -5968,9 +6009,9 @@
             var centerTransformMatrix = controlsMatrix.inverse();
             centerTransformMatrix.e = centerTransformMatrix.f = 0;
 
-            var _pointTo7 = pointTo(centerTransformMatrix, dx, dy),
-                cx = _pointTo7.x,
-                cy = _pointTo7.y;
+            var _pointTo8 = pointTo(centerTransformMatrix, dx, dy),
+                cx = _pointTo8.x,
+                cy = _pointTo8.y;
 
             this._moveCenterHandle(-cx, -cy);
           }
@@ -6138,10 +6179,10 @@
         key: "getBoundingRect",
         value: function getBoundingRect(element) {
           var transformMatrix = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-          var _this$options8 = this.options;
-          _this$options8 = _this$options8 === void 0 ? {} : _this$options8;
-          var restrict = _this$options8.restrict,
-              container = _this$options8.container;
+          var _this$options9 = this.options;
+          _this$options9 = _this$options9 === void 0 ? {} : _this$options9;
+          var restrict = _this$options9.restrict,
+              container = _this$options9.container;
           var restrictEl = restrict || container;
           var nextTransform = transformMatrix ? getTransformToElement(element.parentNode, restrictEl).multiply(transformMatrix) : getTransformToElement(element, restrictEl);
           return _getBoundingRect$1(element, nextTransform, element.getBBox());
@@ -6222,9 +6263,9 @@
             var parentMatrix = getTransformToElement(element.parentNode, container);
             parentMatrix.e = parentMatrix.f = 0;
 
-            var _pointTo8 = pointTo(parentMatrix.inverse(), getXDir(), getYDir()),
-                x = _pointTo8.x,
-                y = _pointTo8.y;
+            var _pointTo9 = pointTo(parentMatrix.inverse(), getXDir(), getYDir()),
+                x = _pointTo9.x,
+                y = _pointTo9.y;
 
             var moveElementMtrx = createTranslateMatrix$1(x, y).multiply(getTransformToElement(element, element.parentNode));
 
@@ -6336,9 +6377,9 @@
                 y = storedData.y,
                 textLength = storedData.textLength;
 
-            var _pointTo9 = pointTo(localCTM, x, y),
-                resX = _pointTo9.x,
-                resY = _pointTo9.y;
+            var _pointTo10 = pointTo(localCTM, x, y),
+                resX = _pointTo10.x,
+                resY = _pointTo10.y;
 
             attrs.push(['x', resX + (scaleX < 0 ? boxW : 0)], ['y', resY - (scaleY < 0 ? boxH : 0)], ['textLength', Math.abs(scaleX * textLength)]);
             break;
@@ -6351,9 +6392,9 @@
                 cy = storedData.cy,
                 newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-            var _pointTo10 = pointTo(localCTM, cx, cy),
-                _resX3 = _pointTo10.x,
-                _resY3 = _pointTo10.y;
+            var _pointTo11 = pointTo(localCTM, cx, cy),
+                _resX3 = _pointTo11.x,
+                _resY3 = _pointTo11.y;
 
             attrs.push(['r', newR], ['cx', _resX3], ['cy', _resY3]);
             break;
@@ -6369,9 +6410,9 @@
                   _x5 = storedData.x,
                   _y5 = storedData.y;
 
-              var _pointTo11 = pointTo(localCTM, _x5, _y5),
-                  _resX4 = _pointTo11.x,
-                  _resY4 = _pointTo11.y;
+              var _pointTo12 = pointTo(localCTM, _x5, _y5),
+                  _resX4 = _pointTo12.x,
+                  _resY4 = _pointTo12.y;
 
               var newWidth = Math.abs(width * scaleX),
                   newHeight = Math.abs(height * scaleY);
@@ -6395,17 +6436,17 @@
                 _cx = storedData.cx,
                 _cy = storedData.cy;
 
-            var _pointTo12 = pointTo(localCTM, _cx, _cy),
-                cx1 = _pointTo12.x,
-                cy1 = _pointTo12.y;
+            var _pointTo13 = pointTo(localCTM, _cx, _cy),
+                cx1 = _pointTo13.x,
+                cy1 = _pointTo13.y;
 
             var scaleMatrix = createSVGMatrix();
             scaleMatrix.a = scaleX;
             scaleMatrix.d = scaleY;
 
-            var _pointTo13 = pointTo(scaleMatrix, rx, ry),
-                nRx = _pointTo13.x,
-                nRy = _pointTo13.y;
+            var _pointTo14 = pointTo(scaleMatrix, rx, ry),
+                nRx = _pointTo14.x,
+                nRy = _pointTo14.y;
 
             attrs.push(['rx', Math.abs(nRx)], ['ry', Math.abs(nRy)], ['cx', cx1], ['cy', cy1]);
             break;
@@ -6418,13 +6459,13 @@
                 resX2 = storedData.resX2,
                 resY2 = storedData.resY2;
 
-            var _pointTo14 = pointTo(localCTM, resX1, resY1),
-                resX1_ = _pointTo14.x,
-                resY1_ = _pointTo14.y;
+            var _pointTo15 = pointTo(localCTM, resX1, resY1),
+                resX1_ = _pointTo15.x,
+                resY1_ = _pointTo15.y;
 
-            var _pointTo15 = pointTo(localCTM, resX2, resY2),
-                resX2_ = _pointTo15.x,
-                resY2_ = _pointTo15.y;
+            var _pointTo16 = pointTo(localCTM, resX2, resY2),
+                resX2_ = _pointTo16.x,
+                resY2_ = _pointTo16.y;
 
             attrs.push(['x1', resX1_], ['y1', resY1_], ['x2', resX2_], ['y2', resY2_]);
             break;
@@ -6435,9 +6476,9 @@
           {
             var points = storedData.points;
             var result = parsePoints(points).map(function (item) {
-              var _pointTo16 = pointTo(localCTM, Number(item[0]), Number(item[1])),
-                  x = _pointTo16.x,
-                  y = _pointTo16.y;
+              var _pointTo17 = pointTo(localCTM, Number(item[0]), Number(item[1])),
+                  x = _pointTo17.x,
+                  y = _pointTo17.y;
 
               item[0] = floatToFixed(x);
               item[1] = floatToFixed(y);
@@ -6636,9 +6677,9 @@
             l = _ref31[0],
             t = _ref31[1];
 
-        var _pointTo17 = pointTo(ctm, l, t),
-            nx = _pointTo17.x,
-            ny = _pointTo17.y;
+        var _pointTo18 = pointTo(ctm, l, t),
+            nx = _pointTo18.x,
+            ny = _pointTo18.y;
 
         return [nx, ny];
       });
@@ -6777,11 +6818,14 @@
               _this$storage2 = this.storage,
               data = _this$storage2.data,
               css = _this$storage2.css;
-          if (!elements.includes(target)) return;
+          var element = elements.find(function (el) {
+            return el === target || el.contains(target);
+          });
+          if (!element) return;
 
-          var _ref2 = data.get(target) || {},
+          var _ref2 = data.get(element) || {},
               _ref2$parent = _ref2.parent,
-              parent = _ref2$parent === void 0 ? target.parentNode : _ref2$parent;
+              parent = _ref2$parent === void 0 ? element.parentNode : _ref2$parent;
 
           var _getOffset = getOffset(parent),
               left = _getOffset.left,
@@ -6789,7 +6833,7 @@
 
           css.left = "".concat(clientX - left, "px");
           css.top = "".concat(clientY - top, "px");
-          var clone = target.cloneNode(true);
+          var clone = element.cloneNode(true);
           helper(clone).css(css);
           storage.clientX = clientX;
           storage.clientY = clientY;

@@ -25,7 +25,7 @@ import {
     isIdentity
 } from './util';
 
-const { E_DRAG, E_RESIZE } = EVENT_EMITTER_CONSTANTS;
+const { E_DRAG, E_RESIZE, E_ROTATE } = EVENT_EMITTER_CONSTANTS;
 const { E_MOUSEDOWN, E_TOUCHSTART } = CLIENT_EVENTS_CONSTANTS;
 
 const { keys, entries, values } = Object;
@@ -56,6 +56,14 @@ export default class DraggableSVG extends Transformable {
         const handles = {};
         let rotationHandles = {};
 
+        const nextCenter = Array.isArray(rotationPoint)
+            ? pointTo(
+                createSVGMatrix(),
+                rotationPoint[0],
+                rotationPoint[1]
+            )
+            : nextVertices.center;
+
         if (rotatable) {
             const normalLine = showNormal
                 ? renderLine([anchor, rotator], THEME_COLOR, 'normal')
@@ -70,8 +78,8 @@ export default class DraggableSVG extends Transformable {
 
                 radius.x1.baseVal.value = nextVertices.center.x;
                 radius.y1.baseVal.value = nextVertices.center.y;
-                radius.x2.baseVal.value = nextVertices.center.x;
-                radius.y2.baseVal.value = nextVertices.center.y;
+                radius.x2.baseVal.value = nextCenter.x;
+                radius.y2.baseVal.value = nextCenter.y;
 
                 setLineStyle(radius, '#fe3232');
                 radius.setAttribute('opacity', 0.5);
@@ -118,14 +126,6 @@ export default class DraggableSVG extends Transformable {
 
             controls.appendChild(handles[key]);
         });
-
-        const nextCenter = false
-            ? pointTo(
-                createSVGMatrix(),
-                0, // originRotation[0],
-                0 //originRotation[1]
-            )
-            : nextVertices.center;
 
         const allHandles = {
             ...resizingHandles,
@@ -180,7 +180,7 @@ export default class DraggableSVG extends Transformable {
             },
             data,
             center: {
-                isShifted: false
+                isShifted: Boolean(rotationPoint)
             }
         };
 
@@ -267,15 +267,19 @@ export default class DraggableSVG extends Transformable {
         } = this;
 
         const {
-            cached,
+            cached = {},
+            ...nextData
+        } = data.get(element);
+
+        const {
             transform: {
                 matrix,
                 parentMatrix
             },
             __data__
-        } = data.get(element);
+        } = nextData;
 
-        if (isUndef(cached)) return;
+        //if (isUndef(cached)) return;
 
         const {
             scaleX,
@@ -379,6 +383,13 @@ export default class DraggableSVG extends Transformable {
                 }
             }
         }
+
+        if (isGrouped && actionName === E_ROTATE) {
+            this._applyTransformToHandles();
+            this._updateControlsView();
+        }
+
+        data.set(element, { ...nextData });
     }
 
     _processResize(element, { dx, dy }) {
@@ -414,7 +425,7 @@ export default class DraggableSVG extends Transformable {
                     }
                 }
             },
-            cached
+            cached = {}
         } = elementData;
 
         const getScale = (distX, distY) => {
@@ -645,16 +656,22 @@ export default class DraggableSVG extends Transformable {
                 bcy
             )
             : pointTo(
-                elMatrix,
+                isGrouped ? parentMatrixInverted : elMatrix,
                 elCenterX,
                 elCenterY
             );
+
+        const { x: nextScaleX, y: nextScaleY } = pointTo(
+            isGrouped ? parentMatrixInverted : createSVGMatrix(),
+            scaleX,
+            scaleY
+        );
 
         const transform = {
             auxiliary: {
                 scale: {
                     scaleMatrix: createSVGMatrix(),
-                    translateMatrix: createTranslateMatrix(scaleX, scaleY)
+                    translateMatrix: createTranslateMatrix(nextScaleX, nextScaleY)
                 },
                 translate: {
                     parentMatrix: parentMatrixInverted,
@@ -876,13 +893,14 @@ export default class DraggableSVG extends Transformable {
         const {
             elements,
             options: {
+                container,
                 isGrouped
             }
         } = this;
 
         if (isGrouped) {
             const groupBBox = elements.reduce((result, element) => {
-                const elCTM = getTransformToElement(element, element.parentNode);
+                const elCTM = getTransformToElement(element, container);
                 return [...result, ...getBoundingRect(element, elCTM)];
             }, []);
 
@@ -904,9 +922,15 @@ export default class DraggableSVG extends Transformable {
 
     _moveCenterHandle(dx, dy) {
         const {
-            handles: { center, radius },
-            center: { hx, hy }
-        } = this.storage;
+            storage: {
+                handles: { center, radius },
+                center: prevCenterData,
+                center: { hx, hy },
+                transform: {
+                    controlsMatrix
+                }
+            }
+        } = this;
 
         if (isUndef(center)) return;
 
@@ -918,7 +942,18 @@ export default class DraggableSVG extends Transformable {
 
         radius.x2.baseVal.value = mx;
         radius.y2.baseVal.value = my;
-        this.storage.center.isShifted = true;
+
+        this.storage.center = {
+            ...prevCenterData,
+            isShifted: true,
+            cached: {
+                ...pointTo(
+                    controlsMatrix.inverse(),
+                    mx,
+                    my
+                )
+            }
+        };
     }
 
     _processMoveRestrict(element, { dx, dy }) {

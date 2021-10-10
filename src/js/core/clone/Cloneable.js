@@ -138,18 +138,20 @@ export default class Cloneable extends SubjectModel {
             }
         } = this;
 
-        if (!elements.includes(target)) return;
+        const element = elements.find(el => el === target || el.contains(target));
+
+        if (!element) return;
 
         const {
-            parent = target.parentNode
-        } = data.get(target) || {};
+            parent = element.parentNode
+        } = data.get(element) || {};
 
         const { left, top } = getOffset(parent);
 
         css.left = `${(clientX - left)}px`;
         css.top = `${(clientY - top)}px`;
 
-        const clone = target.cloneNode(true);
+        const clone = element.cloneNode(true);
         helper(clone).css(css);
 
         storage.clientX = clientX;
