@@ -9,6 +9,7 @@ import {
     arrayToChunks
 } from './util';
 
+// https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
 
 const getCommandValuesLength = (cmd) => ([
@@ -43,6 +44,8 @@ const parsePath = (path) => {
 
     const serialized = [];
 
+    let firstCommand = false;
+
     while ((match = dRE.exec(path))) {
         const [, cmd, params] = match;
         const upCmd = cmd.toUpperCase();
@@ -57,16 +60,26 @@ const parsePath = (path) => {
             }
         });
 
+        const isMoveTo = upCmd === 'M';
+
+        const { size: commandLength } = getCommandValuesLength(cmd);
+
         // split big command into multiple commands
-        arrayToChunks(values, getCommandValuesLength(cmd).size)
-            .map(chunkedValues => (
-                serialized.push({
+        arrayToChunks(values, commandLength)
+            .map(chunkedValues => {
+                const shouldReplace = firstCommand && isMoveTo;
+
+                firstCommand = firstCommand ? firstCommand : isMoveTo;
+
+                return serialized.push({
                     relative: isRelative,
-                    key: upCmd,
-                    cmd,
+                    key: shouldReplace ? 'L' : upCmd,
+                    cmd: shouldReplace
+                        ? isRelative ? 'l' : 'L'
+                        : cmd,
                     values: chunkedValues
-                })
-            ));
+                });
+            });
     }
 
     return reducePathData(absolutizePathData(serialized));
