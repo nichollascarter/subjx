@@ -13,12 +13,12 @@
     "scripts": {
         "dev": "cross-env NODE_ENV=development rollup -c",
         "build": "cross-env NODE_ENV=production rollup -c",
-        "build:all": "yarn lint && yarn test && yarn dev && yarn build",
+        "build:all": "yarn dev && yarn build",
         "start": "cross-env NODE_ENV=development LIVE_MODE=enable rollup -c -w",
         "lint": "eslint src/ --fix",
         "test": "jest",
         "test:coverage": "jest --coverage",
-        "publish:local": "yarn build:all && sh ./scripts/publish-local.sh"
+        "publish:local": "yarn test && yarn build:all && sh ./scripts/publish-local.sh"
     },
     "devDependencies": {
         "@babel/core": "^7.9.0",
