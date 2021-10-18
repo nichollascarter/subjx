@@ -1,6 +1,6 @@
 {
     "name": "subjx",
-    "version": "0.3.1",
+    "version": "0.3.9",
     "description": "Drag, Rotate, Resize library",
     "author": "Karen Sarksyan (https://github.com/nichollascarter)",
     "license": "MIT",
@@ -9,9 +9,11 @@
         "url": "https://github.com/nichollascarter/subjx.git"
     },
     "main": "index.js",
+    "module": "dist/js/subjx.esm.js",
     "scripts": {
-        "dev": "jest --coverage && cross-env NODE_ENV=development rollup -c",
-        "build": "jest --coverage && cross-env NODE_ENV=production rollup -c",
+        "dev": "cross-env NODE_ENV=development rollup -c",
+        "build": "cross-env NODE_ENV=production rollup -c",
+        "build:all": "yarn lint && yarn test && yarn dev && yarn build",
         "start": "cross-env NODE_ENV=development LIVE_MODE=enable rollup -c -w",
         "lint": "eslint src/ --fix",
         "test": "jest --coverage"
@@ -28,27 +30,41 @@
         "eslint": "^6.6.0",
         "eslint-config-airbnb": "^17.1.1",
         "eslint-loader": "^2.2.1",
+        "jest": "^26.6.3",
+        "jsdom": "^16.5.0",
         "mini-css-extract-plugin": "^0.4.4",
         "npm": "^6.14.6",
         "optimize-css-assets-webpack-plugin": "^5.0.3",
         "rollup": "^1.25.2",
         "rollup-plugin-babel": "^4.3.3",
         "rollup-plugin-eslint": "^7.0.0",
+        "rollup-plugin-livereload": "^2.0.0",
         "rollup-plugin-node-resolve": "^5.2.0",
         "rollup-plugin-postcss": "^2.0.3",
+        "rollup-plugin-serve": "^1.1.0",
         "rollup-plugin-terser": "^5.1.3",
         "rollup-plugin-uglify": "^6.0.4",
         "uglifyjs-webpack-plugin": "^2.2.0",
-        "rollup-plugin-serve": "^1.1.0",
-        "rollup-plugin-livereload": "^2.0.0",
         "webpack": "^4.41.2",
-        "webpack-cli": "^3.3.9",
-        "jest": "^26.6.3"
+        "webpack-cli": "^3.3.9"
     },
     "files": [
         "LICENSE",
         "README.md",
         "index.js",
         "dist/"
+    ],
+    "keywords": [
+        "subjx",
+        "svg",
+        "resize",
+        "scale",
+        "drag",
+        "rotate",
+        "vanilla-js",
+        "resizable",
+        "scalable",
+        "draggable",
+        "rotatable"
     ]
 }

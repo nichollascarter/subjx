@@ -1,6 +1,6 @@
 import { helper } from '../Helper';
 import SubjectModel from '../SubjectModel';
-import { snapToGrid, RAD } from './common';
+import { getMinMaxOfArray, snapToGrid, RAD } from './common';
 
 import {
     LIB_CLASS_PREFIX,
@@ -73,6 +73,8 @@ const {
     RIGHT_EDGE
 } = TRANSFORM_EDGES_KEYS;
 
+const { keys, values } = Object;
+
 export default class Transformable extends SubjectModel {
 
     constructor(el, options, observable) {
@@ -83,7 +85,7 @@ export default class Transformable extends SubjectModel {
         this.observable = observable;
 
         EMITTER_EVENTS.forEach(eventName => this.eventDispatcher.registerEvent(eventName));
-        this.enable(options);
+        super.enable(options);
     }
 
     _cursorPoint() {
@@ -98,7 +100,7 @@ export default class Transformable extends SubjectModel {
             ...rest
         };
         this.proxyMethods.onRotate.call(this, finalArgs);
-        this._emitEvent(E_ROTATE, finalArgs);
+        super._emitEvent(E_ROTATE, finalArgs);
     }
 
     _resize({ dx, dy, ...rest }) {
@@ -110,7 +112,7 @@ export default class Transformable extends SubjectModel {
             ...rest
         };
         this.proxyMethods.onResize.call(this, finalArgs);
-        this._emitEvent(E_RESIZE, finalArgs);
+        super._emitEvent(E_RESIZE, finalArgs);
     }
 
     _processOptions(options = {}) {
@@ -220,7 +222,8 @@ export default class Transformable extends SubjectModel {
             doRotate,
             doSetCenter,
             revX,
-            revY
+            revY,
+            mouseEvent
         } = storage;
 
         const {
@@ -267,7 +270,8 @@ export default class Transformable extends SubjectModel {
                 dx,
                 dy,
                 clientX,
-                clientY
+                clientY,
+                mouseEvent
             };
 
             self._resize(args);
@@ -296,10 +300,11 @@ export default class Transformable extends SubjectModel {
                 dx,
                 dy,
                 clientX,
-                clientY
+                clientY,
+                mouseEvent
             };
 
-            self._drag(
+            super._drag(
                 args
             );
 
@@ -326,7 +331,8 @@ export default class Transformable extends SubjectModel {
 
             const args = {
                 clientX,
-                clientY
+                clientY,
+                mouseEvent
             };
 
             self._rotate(
@@ -378,7 +384,7 @@ export default class Transformable extends SubjectModel {
             el
         } = this;
 
-        const isTarget = Object.values(handles).some((hdl) => helper(e.target).is(hdl)) ||
+        const isTarget = values(handles).some((hdl) => helper(e.target).is(hdl)) ||
             el.contains(e.target);
 
         storage.isTarget = isTarget;
@@ -387,7 +393,7 @@ export default class Transformable extends SubjectModel {
 
         const computed = this._compute(e, el);
 
-        Object.keys(computed).map(prop => storage[prop] = computed[prop]);
+        keys(computed).map(prop => storage[prop] = computed[prop]);
 
         const {
             onRightEdge,
@@ -428,6 +434,7 @@ export default class Transformable extends SubjectModel {
         const { x: bx, y: by } = this._pointToControls({ x, y });
 
         const nextStorage = {
+            mouseEvent: e,
             clientX,
             clientY,
             cx: ex,
@@ -478,11 +485,11 @@ export default class Transformable extends SubjectModel {
         };
 
         if (doResize) {
-            this._emitEvent(E_RESIZE_START, eventArgs);
+            super._emitEvent(E_RESIZE_START, eventArgs);
         } else if (doRotate) {
-            this._emitEvent(E_ROTATE_START, eventArgs);
+            super._emitEvent(E_ROTATE_START, eventArgs);
         } else if (doDrag) {
-            this._emitEvent(E_DRAG_START, eventArgs);
+            super._emitEvent(E_DRAG_START, eventArgs);
         }
 
         const {
@@ -526,7 +533,7 @@ export default class Transformable extends SubjectModel {
 
         const { x, y } = this._cursorPoint(e);
 
-        storage.e = e;
+        storage.mouseEvent = e;
         storage.clientX = x;
         storage.clientY = y;
         storage.doDraw = true;
@@ -597,11 +604,11 @@ export default class Transformable extends SubjectModel {
         proxyMethods.onDrop.call(this, eventArgs);
 
         if (doResize) {
-            this._emitEvent(E_RESIZE_END, eventArgs);
+            super._emitEvent(E_RESIZE_END, eventArgs);
         } else if (doRotate) {
-            this._emitEvent(E_ROTATE_END, eventArgs);
+            super._emitEvent(E_ROTATE_END, eventArgs);
         } else if (doDrag) {
-            this._emitEvent(E_DRAG_END, eventArgs);
+            super._emitEvent(E_DRAG_END, eventArgs);
         }
 
         const {
@@ -664,7 +671,7 @@ export default class Transformable extends SubjectModel {
         return {
             ..._computed,
             ...rest,
-            handle: Object.values(handles).some(hdl => helper(e.target).is(hdl))
+            handle: values(handles).some(hdl => helper(e.target).is(hdl))
                 ? handle
                 : helper(el),
             pressang
@@ -698,6 +705,36 @@ export default class Transformable extends SubjectModel {
         };
     }
 
+    _restrictHandler(matrix) {
+        let restrictX = null,
+            restrictY = null;
+
+        const elBox = this.getBoundingRect(matrix);
+
+        const containerBBox = this._getRestrictedBBox();
+
+        const [
+            [minX, maxX],
+            [minY, maxY]
+        ] = getMinMaxOfArray(containerBBox);
+
+        for (let i = 0, len = elBox.length; i < len; i++) {
+            const [x, y] = elBox[i];
+
+            if (x < minX || x > maxX) {
+                restrictX = x;
+            }
+            if (y < minY || y > maxY) {
+                restrictY = y;
+            }
+        }
+
+        return {
+            x: restrictX,
+            y: restrictY
+        };
+    }
+
     _destroy() {
         const {
             el,
@@ -717,7 +754,7 @@ export default class Transformable extends SubjectModel {
     }
 
     notifyMove() {
-        this._drag(...arguments);
+        super._drag(...arguments);
     }
 
     notifyRotate({ radians, ...rest }) {
@@ -741,7 +778,7 @@ export default class Transformable extends SubjectModel {
         this.proxyMethods.onDrop.call(this, { clientX, clientY });
         if (triggerEvent) {
             this._apply(actionName);
-            this._emitEvent(`${actionName}End`, { clientX, clientY });
+            super._emitEvent(`${actionName}End`, { clientX, clientY });
         }
     }
 
@@ -753,7 +790,7 @@ export default class Transformable extends SubjectModel {
                 ...this.storage,
                 ...recalc
             };
-            this._emitEvent(`${actionName}Start`, { clientX, clientY });
+            super._emitEvent(`${actionName}Start`, { clientX, clientY });
         }
     }
 
@@ -822,7 +859,7 @@ export default class Transformable extends SubjectModel {
             })
         };
 
-        this._drag({ dx, dy });
+        super._drag({ dx, dy });
         this._apply(E_DRAG);
     }
 
@@ -867,6 +904,10 @@ export default class Transformable extends SubjectModel {
 
         this._rotate({ radians: delta });
         this._apply(E_ROTATE);
+    }
+
+    get controls() {
+        return this.storage.wrapper;
     }
 
 }

@@ -23,10 +23,17 @@ export const floatToFixed = (val, size = 6) => (
     Number(val.toFixed(size))
 );
 
-export const getMinMaxOf2DIndex = (arr, idx) => {
-    const axisValues = arr.map(e => e[idx]);
-    return [
-        Math.min(...axisValues),
-        Math.max(...axisValues)
-    ];
+export const getMinMaxOfArray = (arr, length = 2) => {
+    const res = [];
+
+    for (let i = 0; i < length; i++) {
+        const axisValues = arr.map(e => e[i]);
+
+        res.push([
+            Math.min(...axisValues),
+            Math.max(...axisValues)
+        ]);
+    }
+
+    return res;
 };

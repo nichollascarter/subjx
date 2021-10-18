@@ -3,11 +3,12 @@ import { floatToFixed } from '../common';
 
 import {
     pointTo,
-    cloneMatrix
+    cloneMatrix,
+    normalizeString,
+    sepRE
 } from './util';
 
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
-const sepRE = /\s*,\s*|\s+/g;
 
 const parsePath = (path) => {
     let match = dRE.lastIndex = 0;
@@ -18,10 +19,7 @@ const parsePath = (path) => {
         const [, cmd, params] = match;
         const upCmd = cmd.toUpperCase();
 
-        // normalize the data
-        const data = params
-            .replace(/([^e])-/g, '$1 -')
-            .replace(/ +/g, ' ');
+        const data = normalizeString(params);
 
         serialized.push({
             relative: cmd !== upCmd,
@@ -222,18 +220,18 @@ export const resizePath = (params) => {
             switch (cmd) {
 
                 case 'A': {
-                //A rx ry x-axis-rotation large-arc-flag sweep-flag x y
+                    //A rx ry x-axis-rotation large-arc-flag sweep-flag x y
                     const coordinates = [];
+
+                    const mtrx = cloneMatrix(localCTM);
+
+                    if (relative) {
+                        mtrx.e = mtrx.f = 0;
+                    }
 
                     for (let k = 0, len = values.length; k < len; k += 7) {
                         const [rx, ry, x_axis_rot, large_arc_flag, sweep_flag, x, y] =
                             values.slice(k, k + 7);
-
-                        const mtrx = cloneMatrix(localCTM);
-
-                        if (relative) {
-                            mtrx.e = mtrx.f = 0;
-                        }
 
                         const {
                             x: resX,
@@ -273,17 +271,17 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'C': {
-                //C x1 y1, x2 y2, x y (or c dx1 dy1, dx2 dy2, dx dy)
+                    //C x1 y1, x2 y2, x y (or c dx1 dy1, dx2 dy2, dx dy)
                     const coordinates = [];
+
+                    const mtrx = cloneMatrix(localCTM);
+
+                    if (relative) {
+                        mtrx.e = mtrx.f = 0;
+                    }
 
                     for (let k = 0, len = values.length; k < len; k += 6) {
                         const [x1, y1, x2, y2, x, y] = values.slice(k, k + 6);
-
-                        const mtrx = cloneMatrix(localCTM);
-
-                        if (relative) {
-                            mtrx.e = mtrx.f = 0;
-                        }
 
                         const {
                             x: resX1,
@@ -328,17 +326,17 @@ export const resizePath = (params) => {
                 // this command makes impossible free transform within group
                 // todo: use proportional resizing only or need to be converted to L
                 case 'H': {
-                // H x (or h dx)
+                    // H x (or h dx)
                     const coordinates = [];
+
+                    const mtrx = cloneMatrix(localCTM);
+
+                    if (relative) {
+                        mtrx.e = mtrx.f = 0;
+                    }
 
                     for (let k = 0, len = values.length; k < len; k += 1) {
                         const [x] = values.slice(k, k + 1);
-
-                        const mtrx = cloneMatrix(localCTM);
-
-                        if (relative) {
-                            mtrx.e = mtrx.f = 0;
-                        }
 
                         const {
                             x: resX
@@ -359,17 +357,17 @@ export const resizePath = (params) => {
                 // this command makes impossible free transform within group
                 // todo: use proportional resizing only or need to be converted to L
                 case 'V': {
-                // V y (or v dy)
+                    // V y (or v dy)
                     const coordinates = [];
+
+                    const mtrx = cloneMatrix(localCTM);
+
+                    if (relative) {
+                        mtrx.e = mtrx.f = 0;
+                    }
 
                     for (let k = 0, len = values.length; k < len; k += 1) {
                         const [y] = values.slice(k, k + 1);
-
-                        const mtrx = cloneMatrix(localCTM);
-
-                        if (relative) {
-                            mtrx.e = mtrx.f = 0;
-                        }
 
                         const {
                             y: resY
@@ -389,18 +387,18 @@ export const resizePath = (params) => {
                 }
                 case 'T':
                 case 'L': {
-                // T x y (or t dx dy)
-                // L x y (or l dx dy)
+                    // T x y (or t dx dy)
+                    // L x y (or l dx dy)
                     const coordinates = [];
+
+                    const mtrx = cloneMatrix(localCTM);
+
+                    if (relative) {
+                        mtrx.e = mtrx.f = 0;
+                    }
 
                     for (let k = 0, len = values.length; k < len; k += 2) {
                         const [x, y] = values.slice(k, k + 2);
-
-                        const mtrx = cloneMatrix(localCTM);
-
-                        if (relative) {
-                            mtrx.e = mtrx.f = 0;
-                        }
 
                         const {
                             x: resX,
@@ -421,17 +419,17 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'M': {
-                // M x y (or dx dy)
+                    // M x y (or dx dy)
                     const coordinates = [];
+
+                    const mtrx = cloneMatrix(localCTM);
+
+                    if (relative && !firstCommand) {
+                        mtrx.e = mtrx.f = 0;
+                    }
 
                     for (let k = 0, len = values.length; k < len; k += 2) {
                         const [x, y] = values.slice(k, k + 2);
-
-                        const mtrx = cloneMatrix(localCTM);
-
-                        if (relative && !firstCommand) {
-                            mtrx.e = mtrx.f = 0;
-                        }
 
                         const {
                             x: resX,
@@ -454,17 +452,17 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'Q': {
-                //Q x1 y1, x y (or q dx1 dy1, dx dy)
+                    //Q x1 y1, x y (or q dx1 dy1, dx dy)
                     const coordinates = [];
+
+                    const mtrx = cloneMatrix(localCTM);
+
+                    if (relative) {
+                        mtrx.e = mtrx.f = 0;
+                    }
 
                     for (let k = 0, len = values.length; k < len; k += 4) {
                         const [x1, y1, x, y] = values.slice(k, k + 4);
-
-                        const mtrx = cloneMatrix(localCTM);
-
-                        if (relative) {
-                            mtrx.e = mtrx.f = 0;
-                        }
 
                         const {
                             x: resX1,
@@ -496,17 +494,17 @@ export const resizePath = (params) => {
                     break;
                 }
                 case 'S': {
-                //S x2 y2, x y (or s dx2 dy2, dx dy)
+                    //S x2 y2, x y (or s dx2 dy2, dx dy)
                     const coordinates = [];
+
+                    const mtrx = cloneMatrix(localCTM);
+
+                    if (relative) {
+                        mtrx.e = mtrx.f = 0;
+                    }
 
                     for (let k = 0, len = values.length; k < len; k += 4) {
                         const [x2, y2, x, y] = values.slice(k, k + 4);
-
-                        const mtrx = cloneMatrix(localCTM);
-
-                        if (relative) {
-                            mtrx.e = mtrx.f = 0;
-                        }
 
                         const {
                             x: resX2,

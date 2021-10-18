@@ -1,12 +1,7 @@
-import {
-    warn,
-    forEach,
-    isUndef
-} from './../../util/util';
+import { warn, forEach } from './../../util/util';
 import { addClass } from '../../util/css-util';
 
-const svgPoint = createSVGElement('svg').createSVGPoint();
-const floatRE = /[+-]?\d+(\.\d+)?/g;
+export const sepRE = /\s*,\s*|\s+/g;
 
 const allowedElements = [
     'circle', 'ellipse',
@@ -22,6 +17,13 @@ export function createSVGElement(name, classNames = []) {
     classNames.forEach(className => addClass(element, className));
     return element;
 }
+
+export const createSVGPoint = (x, y) => {
+    const pt = createSVGElement('svg').createSVGPoint();
+    pt.x = x;
+    pt.y = y;
+    return pt;
+};
 
 export const checkChildElements = (element) => {
     const arrOfElements = [];
@@ -90,9 +92,7 @@ export const matrixToString = (m) => {
 };
 
 export const pointTo = (ctm, x, y) => {
-    svgPoint.x = x;
-    svgPoint.y = y;
-    return svgPoint.matrixTransform(ctm);
+    return createSVGPoint(x, y).matrixTransform(ctm);
 };
 
 export const cloneMatrix = (b) => {
@@ -118,16 +118,6 @@ export const isIdentity = (matrix) => {
         f === 0;
 };
 
-export const createPoint = (_, x, y) => {
-    if (isUndef(x) || isUndef(y)) {
-        return null;
-    }
-    const pt = createSVGElement('svg').createSVGPoint();
-    pt.x = x;
-    pt.y = y;
-    return pt;
-};
-
 export const checkElement = (el) => {
     const tagName = el.tagName.toLowerCase();
 
@@ -146,8 +136,16 @@ export const isGroup = (element) => (
     element.tagName.toLowerCase() === 'g'
 );
 
+export const normalizeString = (str = '') => (
+    str.replace(/[\n\r]/g, '')
+        .replace(/([^e])-/g, '$1 -')
+        .replace(/ +/g, ' ')
+        .replace(/(\d*\.)(\d+)(?=\.)/g, '$1$2 ')
+);
+
+// example "101.3,175.5 92.3,162 110.3,162 		"
 export const parsePoints = (pts) => (
-    pts.match(floatRE).reduce(
+    normalizeString(pts).trim().split(sepRE).reduce(
         (result, _, index, array) => {
             if (index % 2 === 0) {
                 result.push(array.slice(index, index + 2));
