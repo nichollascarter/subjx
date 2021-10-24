@@ -2,8 +2,7 @@ name: NPM publish CD workflow
 
 on:
   pull_request:
-      types:
-        - labeled
+    types: [labeled]
 
 jobs:
 
