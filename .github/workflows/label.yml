@@ -69,9 +69,9 @@ jobs:
 
     - name: Commit bundles
       run: |
-        git config --global user.name 'Github CD'
-        git config --global user.email 'gh-cd@github.com'
-        git commit -am 'gh-cd: automated build'
+        git config user.name 'Github CD'
+        git config user.email 'gh-cd@github.com'
+        git commit -m 'gh-cd: automated build' ./dist/*
 
     #  - run: npm version ${{ env.RELEASE }}
 
