@@ -1,6 +1,7 @@
 name: NPM publish CD workflow
 
 on:
+  push:
   pull_request:
     types: [labeled]
 
@@ -40,11 +41,12 @@ jobs:
         run: echo "RELEASE=prerelease" >> $GITHUB_ENV
 
       - name: Check release env
-        run:
+        run: |
           if [[ -z "${{ env.RELEASE }}" ]];
           then
             echo "You need to set a release label on PRs to the master, dev branches"
             exit 1
           else
+            echo ${{ env.RELEASE }}
             exit 0
           fi
