@@ -6,9 +6,9 @@ export default function subjx(params) {
 }
 
 Object.defineProperty(subjx, 'createObservable', {
-    value: () => {
-        return new Observable();
-    }
+    value: () => (
+        new Observable()
+    )
 });
 
 Object.defineProperty(subjx, 'Subjx', {
