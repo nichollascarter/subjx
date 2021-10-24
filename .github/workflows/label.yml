@@ -13,31 +13,31 @@ jobs:
 
     steps:
       - name: Set major release
-        if: contains(github.event.pull_request.labels.*.name, 'release-major')
+        if: contains(github.event.push.labels.*.name, 'release-major')
         run: echo "RELEASE=major" >> $GITHUB_ENV
       - name: Set minor release
-        if: contains(github.event.pull_request.labels.*.name, 'release-minor')
+        if: contains(github.event.push.labels.*.name, 'release-minor')
         run: echo "RELEASE=minor" >> $GITHUB_ENV
       - name: Set patch release
-        if: contains(github.event.pull_request.labels.*.name, 'release-patch')
+        if: contains(github.event.push.labels.*.name, 'release-patch')
         run: echo "RELEASE=patch" >> $GITHUB_ENV
 
       - name: Set major prerelease
-        if: contains(github.event.pull_request.labels.*.name, 'prerelease-major')
+        if: contains(github.event.push.labels.*.name, 'prerelease-major')
         run: echo "RELEASE=premajor" >> $GITHUB_ENV
       - name: Set minor prerelease
-        if: contains(github.event.pull_request.labels.*.name, 'prerelease-minor')
+        if: contains(github.event.push.labels.*.name, 'prerelease-minor')
         run: echo "RELEASE=preminor" >> $GITHUB_ENV
       - name: Set patch prerelease
-        if: contains(github.event.pull_request.labels.*.name, 'prerelease-patch')
+        if: contains(github.event.push.labels.*.name, 'prerelease-patch')
         run: echo "RELEASE=prepatch" >> $GITHUB_ENV
 
       - name: Set prerelease
-        if: contains(github.event.pull_request.labels.*.name, 'prerelease')
+        if: contains(github.event.push.labels.*.name, 'prerelease')
         run: echo "RELEASE=prerelease" >> $GITHUB_ENV
 
       - name: Set preid prerelease
-        if: contains(github.event.pull_request.labels.*.name, 'preid-*')
+        if: contains(github.event.push.labels.*.name, 'preid-*')
         run: echo "RELEASE=prerelease" >> $GITHUB_ENV
 
       - name: Check release env
