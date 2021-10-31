@@ -49,9 +49,6 @@ const xElem = subjx( 'selector' ) |
                 subjx( elementArray );
 ```
 
-## Breaking changes 
-Starting ``0.5.0`` version ``.drag()`` && ``.clone()`` methods return an <b>instance</b> instead of <b>array of instances</b>
-
 ## Transformation(drag/resize/rotate)
 
 ```javascript
