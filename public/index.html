@@ -44,6 +44,7 @@
             height: 50px;
             left: 0;
         }
+
         .vertex {
             width: 14px;
             height: 14px;
@@ -54,6 +55,7 @@
             margin-top: -7px;
             margin-left: -7px;
         }
+
         #container {
             position: absolute;
         }
@@ -63,20 +65,118 @@
 </head>
 
 <body>
-    
+    <div class="page">
+        <svg id="svg-container" width="100%" height="100%" transform="scale(1, 1)">
+            <g class="drag-svg3">
+                <circle class="drag-svg" cx="1032" cy="392" r="20" stroke="red" fill="transparent" stroke-width="5"
+                    transform="matrix(1,0,0,1,0,0)">
+                </circle>
+                <ellipse class="drag-svg" cx="598" cy="462" rx="22.000000000000004" ry="17" stroke="red"
+                    fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></ellipse>
+
+                <line class="drag-svg" x1="866" x2="906" y1="440" y2="480" stroke="orange" fill="transparent"
+                    stroke-width="5" transform="matrix(1,0,0,1,0,0)"></line>
+                <polyline class="drag-svg"
+                    points="839 313 844 323 849 318 854 333 859 328 864 343 869 338 874 353 879 348" stroke="orange"
+                    fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></polyline>
+
+                <polygon class="drag-svg"
+                    points="596 311 601 331 616 331 606 341 611 356 596 346 581 356 586 341 576 331 591 331"
+                    stroke="green" fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></polygon>
+
+                <path class="drag-svg" d="M691,331 Q711,306,721,331 T761,331 " fill="none" stroke="blue"
+                    stroke-width="5">
+                </path>
+
+                <!-- <text class="drag-svg" x="106" y="106">
+                    Test
+                </text> -->
+
+                <g class="drag-svg" transform="rotate(0)" data-cx="303.5000305175781" data-cy="389.5">
+                    <g transform="matrix(1,-5.5511137996368026e-17,5.5511137996368026e-17,1,7.105427357601002e-15,0)">
+                        <path style="fill:#566E7F;"
+                            d="M362.862556,257 c-4.535548,0,-8.453712,2.784661,-10.581922,6.881017 h-27.981178 c-2.12821,-4.096355,-6.046374,-6.881016,-10.581923,-6.881016 c-6.785085,0,-12.286256,6.161951,-12.286256,13.762033 c0,7.600083,5.501172,13.762033,12.286256,13.762033 c4.535548,0,8.453712,-2.785091,10.581922,-6.881017 H332.146919 v13.762033 c0,3.800041,-2.750586,6.881017,-6.143128,6.881017 h-6.143128 c-1.696271,0,-3.071564,1.540488,-3.071564,3.440508 c0,1.900021,1.375293,3.440508,3.071564,3.440508 h36.858768 c1.696271,0,3.071564,-1.540488,3.071564,-3.440508 c0,-1.900021,-1.375293,-3.440508,-3.071564,-3.440508 h-6.143128 c-3.392543,0,-6.143128,-3.080975,-6.143128,-6.881016 v-13.762033 h7.847462 c2.12821,4.095925,6.046374,6.881016,10.581923,6.881016 c6.311296,0,12.286256,-6.161951,12.286256,-13.762033 C375.148819,263.161949,369.647644,257,362.862556,257 z"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </path>
+                        <path style="fill:#3F556B;"
+                            d="M365.03337899999997,257.245132 C367.461067,259.759285,369.005676,263.326233,369.005676,267.321526 c0,7.600083,-5.975343,13.762033,-12.286256,13.762033 c-0.743703,0,-1.4636,-0.103645,-2.170828,-0.245136 c2.190409,2.268585,5.095341,3.685644,8.313955,3.685644 c6.311296,0,12.286256,-6.161951,12.286256,-13.762033 C375.148819,263.99498,370.77950999999996,258.397705,365.03337899999997,257.245132 z"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </path>
+                        <path style="fill:#566E7F;"
+                            d="M418.150711,375.576675 V324.210754 c0,-1.15042,0.513335,-2.224719,1.367614,-2.862503 l7.073044,-5.28161 c0.504504,-0.376736,1.097316,-0.578005,1.70395,-0.578005 H433.50853 c1.696271,0,3.071564,1.540488,3.071564,3.440508 v61.92915 c0,1.900021,-1.375293,3.440508,-3.071564,3.440508 h-5.213212 c-0.60625,0,-1.199062,-0.20084,-1.70395,-0.578005 l-7.073044,-5.28161 C418.664047,377.800964,418.150711,376.726669,418.150711,375.576675 z"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </path>
+                        <path style="fill:#566E7F;"
+                            d="M282.61795,422.14439400000003 H240.383943 c-0.211938,0,-0.383945,-0.192668,-0.383945,-0.430063 v-19.782923 c0,-0.237395,0.172008,-0.430064,0.383945,-0.430064 h42.234005 c0.211938,0,0.383945,0.192668,0.383945,0.430063 v19.782923 C283.001896,421.951736,282.829891,422.14439400000003,282.61795,422.14439400000003 z"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </path>
+                        <rect x="405.86444091796875" y="336.1316833496094" style="fill:#566E7F;"
+                            width="12.286255836486816" height="27.524063110351562"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </rect>
+                        <path style="fill:#B1C3D0;"
+                            d="M399.72132899999997,329.250671 h-33.144863 c-1.664788,-2.853472,-3.640955,-5.48374,-5.963826,-7.758776 c-2.559764,-2.50727,-3.893207,-6.239362,-3.893208,-10.048434 L356.719429,305.16711399999997 h-36.858768 l0,6.277637 c0,3.809073,-1.33421,7.540305,-3.893975,10.048004 c-2.32287,2.275466,-4.301341,4.904015,-5.966128,7.757916 H292.216583 C265.074711,329.250671,243.071565,353.896759,243.071565,384.298813 v17.202541 h36.858768 v-17.202541 c0,-7.600513,5.247383,-13.762033,12.286256,-13.762033 h17.77898 c5.416319,9.235185,14.34958,15.726564,24.51108,16.970306 c13.361687,1.635531,25.455204,-5.54739,32.130859,-16.970306 H399.72132899999997 c3.392926,0,6.143128,-3.080545,6.143128,-6.881017 v-27.524067 C405.864456,332.331207,403.114258,329.250671,399.72132899999997,329.250671 z"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </path>
+                        <path style="fill:#8EADBE;"
+                            d="M398.689651,329.344849 c-3.020499,0.550481,-5.111466,3.72736,-5.111466,7.154967 V356.77475000000004 c0,3.800041,-2.750586,6.881017,-6.143128,6.881017 h-17.654966 c0.766355,-2.201925,1.371837,-4.489003,1.748487,-6.862954 c2.011106,-12.676124,-1.655958,-24.415995,-8.575039,-32.70805 c0.040314,0.100205,0.067958,0.207721,0.107505,0.308356 c-0.690718,-0.964632,-1.444019,-1.898301,-2.319031,-2.773049 c-2.580114,-2.580381,-4.022981,-6.301721,-4.022981,-10.176593 V305.16711399999997 h-0.615081 c-3.053135,0,-5.528047,2.77219,-5.528047,6.192055 v0.974954 c0,3.371268,1.291209,6.580402,3.545737,8.813292 c12.279346,12.160476,12.948947,33.759987,0.919167,46.229679 C349.029007,373.608719,340.98996,377.417786,332.146919,377.417786 c-9.623209,0,-15.266058,-3.785849,-20.619793,-11.776429 c-0.404679,-0.603809,-0.646564,-1.313414,-0.881155,-1.985603 h-18.429384 c-10.178395,0,-18.429384,9.242065,-18.429382,20.643051 v3.440508 c0,3.800041,-2.750586,6.881017,-6.143128,6.881017 H249.214689 c-3.392543,0,-6.143128,3.080545,-6.143128,6.881017 h30.715639 h6.143128 v-17.202541 c0,-7.600513,5.500787,-13.762033,12.286256,-13.762033 h17.788195 c6.851507,11.768688,19.36813,19.01483,33.235477,16.807312 c9.698079,-1.543928,18.194792,-7.894247,23.397253,-16.807314 H393.57820100000004 h6.143128 c3.392543,0,6.143128,-3.080975,6.143128,-6.881017 v-27.524067 C405.864456,331.952332,402.53833,328.643417,398.689651,329.344849 z"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </path>
+                        <path style="fill:#3F556B;"
+                            d="M332.146919,270.762032 h-6.143128 c0,-6.76705,-4.3693,-12.364326,-10.115429,-13.516897 C318.316048,259.759285,319.860664,263.326233,319.860664,267.321526 c0,7.600083,-5.975343,13.762033,-12.286256,13.762033 c-0.743703,0,-1.4636,-0.103645,-2.170828,-0.245136 c2.190409,2.268585,5.095341,3.685644,8.313955,3.685644 c4.218793,0,8.243309,-2.785091,10.477104,-6.881017 H332.146919 V270.762032 z"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </path>
+                        <path style="fill:#3F556B;"
+                            d="M344.433174,291.405083 v-13.762033 h7.847462 C351.225166,275.611855,350.576302,273.281342,350.576302,270.762032 h-6.143128 c-3.392926,0,-6.143128,3.080545,-6.143128,6.881017 v0 v13.762033 c0,3.800472,2.750202,6.881016,6.143128,6.881016 h6.143128 C347.183762,298.286102,344.433174,295.205116,344.433174,291.405083 z"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </path>
+                        <path style="fill:#3F556B;"
+                            d="M418.150711,363.655762 h-12.286256 v-6.881017 h11.518365 c0.42426,0,0.767891,0.384907,0.767891,0.860127 V363.655762 z"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </path>
+                        <path style="fill:#3F556B;"
+                            d="M433.50853,315.488632 h-3.071564 v56.889664 h-2.141648 c-0.606634,0,-1.199446,-0.20127,-1.70395,-0.578005 l-7.073044,-5.28161 C418.664047,365.88046299999996,418.150711,364.806168,418.150711,363.655762 v11.920501 c0,1.15042,0.513335,2.224719,1.367998,2.862933 l7.073044,5.28161 c0.504504,0.376736,1.097316,0.578005,1.70395,0.578005 H430.436966 h3.071564 c1.696271,0,3.071564,-1.540488,3.071564,-3.440508 v-6.881017 V318.92915300000004 C436.58009300000003,317.029129,435.20480299999997,315.488632,433.50853,315.488632 z"
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                        </path>
+                        <g
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                            <path style="fill:#E2E4E6;"
+                                d="M319.104675,336.131683 c-0.671905,0,-1.349953,-0.248577,-1.916656,-0.756052 c-1.325764,-1.189556,-1.538853,-3.353205,-0.47686,-4.834774 c5.27925,-7.37817,13.143991,-11.611715,21.578888,-11.611716 c1.697807,0,3.071564,1.538767,3.071564,3.440508 s-1.373757,3.440508,-3.071564,3.440508 c-6.560093,0,-12.679031,3.292566,-16.785713,9.031335 C320.898468,335.691742,320.004639,336.131683,319.104675,336.131683 z"
+                                transform="matrix(1,-1.1102228922762585e-16,1.1102228922762585e-16,1,5.329070518200751e-15,2.3092638912203256e-14)">
+                            </path>
+                        </g>
+                        <g
+                            transform="matrix(1,-5.5511124761478225e-17,5.5511124761478225e-17,1,6.394884621840902e-14,-2.842170943040401e-14)">
+                            <path style="fill:#E2E4E6;"
+                                d="M313.717537,353.334229 c-1.697807,0,-3.071564,-1.538767,-3.071564,-3.440508 c0,-2.610486,0.294102,-5.21452,0.87002,-7.734262 c0.425795,-1.844543,2.114771,-2.946796,3.737325,-2.479747 c1.643671,0.47393,2.633482,2.348577,2.21383,4.186238 C317.017159,345.831772,316.789101,347.857788,316.789101,349.893723 C316.789101,351.795456,315.415344,353.334229,313.717537,353.334229 z"
+                                transform="matrix(1,-1.1102228922762585e-16,1.1102228922762585e-16,1,5.329070518200751e-15,2.3092638912203256e-14)">
+                            </path>
+                        </g>
+                    </g>
+                    <path style="fill:#3F556B;"
+                        d="M279.930332,422.14439400000003 c1.696271,0,3.071564,-1.540488,3.071564,-3.440508 l0,-13.762033 c-1.696271,0,-3.071564,1.540488,-3.071564,3.440508 l0,10.321525 H246.143126 c-1.696271,0,-3.071564,1.540488,-3.071564,3.440508 H279.93032800000003 z"
+                        transform="matrix(1,-5.5511137996368026e-17,5.5511137996368026e-17,1,7.105427357601002e-15,0)">
+                    </path>
+                </g>
+            </g>
+        </svg>
+    </div>
     <div class="page">
         <div id="stack"
-            style="position: fixed; overflow: auto; box-sizing: border-box; width:100%; height:100%;border-top: #32B5FE 1px dashed">
+            style="position: absolute; overflow: auto; box-sizing: border-box; width:100%; height:100%;border-top: #32B5FE 1px dashed">
             <div id="container" style="position: absolute; box-sizing: border-box; width:100%; height:100%;">
-                <div id="world" style="box-sizing: border-box; width:100%; height:100%; position: absolute; transform: scale(0.8); border: #32B5FE 1px dashed">
-                    <div style="position: absolute; width: 200px; height:500px; transform: translateX(10px)">
-                        <div style="top: 10px; left: 20px; position: absolute; width: 200px; height:500px; transform: scaleZ(0.5) rotateZ(25deg)">
-                            <div class='draggable' style='position: absolute; border: 1px solid red; top:150px; left:150px; transform: scaleX(1.5) scaleY(1.5) rotateX(-125deg) translateX(10px)'>
+                <div id="world"
+                    style="box-sizing: border-box; width:100%; height:100%; position: absolute; transform: scale(0.8); border: #32B5FE 1px dashed">
+                    <div style="position: absolute; width: 200px; height:500px; transform: translateX(0px)">
+                        <div
+                            style="top: 10px; left: 20px; position: absolute; width: 200px; height:500px; transform: scaleZ(1) rotateZ(0deg)">
+                            <div class='draggable'
+                                style='position: absolute; border: 1px solid red; top:150px; left:150px; transform: rotate(15deg); '>
                                 <span class="draggable-text"></span>
                             </div>
                         </div>
                     </div>
-                    <div class='draggable' style='top:150px; left:400px;'>  
+                    <div class='draggable1' style='top:150px; left:400px;'>
                     </div>
                 </div>
             </div>
@@ -89,13 +189,104 @@
 
 <script>
 
+    const svgObservable = subjx.createObservable();
+    const methods = {
+        onInit(elements) {
+            //console.log('init');
+        },
+        onMove() {
+            // console.log(arguments);
+        },
+        onResize(dx, dy, handle) {
+            //console.log(handle);
+        },
+        onRotate(rad) {
+            //console.log('is rotating');
+        },
+        onDrop(e) {
+            //console.log('is dropped');
+        },
+        onDestroy(elements) {
+            //console.log('is destroyed');
+        }
+    };
+
+    const svgOptions = {
+        container: '#svg-container',
+        //restrict: '#restrict',
+        //proportions: true,
+        //rotationPoint: [200, 200],
+        //themeColor: 'white',
+        //scalable: true,
+        each: {
+            resize: true,
+            move: true,
+            rotate: true
+        },
+        snap: {
+            x: 20,
+            y: 20,
+            angle: 0
+        },
+        cursorMove: 'move',
+        cursorRotate: 'crosshair',
+        cursorResize: 'pointer',
+        ...methods
+    };
+
+    const svgs = [
+        subjx('.drag-svg')
+            .drag(svgOptions, svgObservable)
+    ];
+
+    document.onkeydown = e => {
+        e = e || window.event;
+        e.preventDefault();
+        if (e.keyCode == "38") {
+            svgs.forEach(item => {
+                item.exeDrag({ dx: 0, dy: -10 });
+            });
+        } else if (e.keyCode == "40") {
+            svgs.forEach(item => {
+                item.exeDrag({ dx: 0, dy: 10 });
+            });
+        } else if (e.keyCode == "37") {
+            svgs.forEach(item => {
+                item.exeDrag({ dx: -10, dy: 0 });
+            });
+        } else if (e.keyCode == "39") {
+            svgs.forEach(item => {
+                item.exeDrag({ dx: 10, dy: 0 });
+            });
+        }
+    };
+
+    svgs.forEach(item => {
+        console.log(item)
+        subjx(item.controls).on('dblclick', () => {
+            item.disable();
+        });
+    });
+
+    // double click activating/deactivating the drag method
+    subjx('.drag-svg').on('dblclick', e => {
+        if (e.currentTarget.classList.contains('sjx-drag')) return;
+        const xDraggable = subjx(e.currentTarget).drag(svgOptions, obs);
+        // adding event to controls
+        const controls = xDraggable.controls;
+        subjx(controls).on('dblclick', () => {
+            xDraggable.disable();
+        });
+    });
+
     // create Observable instance
     const obs = subjx.createObservable();
 
     const options = {
         container: '#container',
+        controlsContainer: '#container',
         restrict: '#world',
-        rotationPoint: true,
+        rotationPoint: [10, 10],
         rotatorAnchor: 's',
         rotatorOffset: 30,
         //rotatable: false,
@@ -105,8 +296,8 @@
         //proportions: true,
         //draggable: false,
         each: {
-           // move: true,
-           // resize: true
+            // move: true,
+            // resize: true
         },
         snap: {
             x: 0,
@@ -119,19 +310,11 @@
     };
 
     const $draggables = document.getElementsByClassName('draggable');
-    const Draggables = subjx($draggables).drag(options);
-
-    Draggables.forEach(item => {
-        const { controls } = item;
-        subjx(controls).on('dblclick', () => {
-            item.disable();
-            Draggables.splice(Draggables.indexOf(item), 1);
-        });
-    });
+    const Draggables = [subjx($draggables).drag(options)];
 
     subjx('.draggable').on('dblclick', e => {
         if (e.currentTarget.classList.contains('sjx-drag')) return;
-        const [xDraggable] = subjx(e.currentTarget).drag(options);
+        const xDraggable = subjx(e.currentTarget).drag(options);
 
         Draggables.push(xDraggable);
         // adding event to controls
@@ -154,7 +337,7 @@
         stack.appendChild(div);
 
         Draggables.push(
-            ...subjx(div).drag()
+            subjx(div).drag()
         );
     };
 
@@ -177,7 +360,7 @@
     subjx('.clone-clear').on('click', () => {
         Draggables.forEach(item => {
             item.disable();
-            item.el.parentNode.removeChild(item.el);
+            [...item.elements].map(element => element.parentNode.removeChild(element));
         });
         Draggables.splice(0, Draggables.length);
     });

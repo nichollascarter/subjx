@@ -22,6 +22,9 @@ export const {
 } = Array.prototype;
 /* eslint-disable no-console */
 export const { warn } = console;
+
+export const noop = _ => _;
+
 /* eslint-disable no-console */
 
 export const isDef = val => val !== undefined && val !== null;
@@ -35,5 +38,5 @@ export const createMethod = (fn) => {
         ? function () {
             fn.call(this, ...arguments);
         }
-        : () => { };
+        : noop;
 };

@@ -2,7 +2,7 @@ import { Observable } from '../observable';
 import Draggable from './Draggable';
 import DraggableSVG from './svg';
 import { checkElement } from './svg/util';
-import { arrReduce, isDef } from '../util/util';
+import { arrReduce, arrMap, isDef } from '../util/util';
 
 // factory method for creating draggable elements
 export default function drag(options, obInstance) {
@@ -11,19 +11,21 @@ export default function drag(options, obInstance) {
             ? obInstance
             : new Observable();
 
-        return arrReduce.call(this, (result, item) => {
-            if (!(item instanceof SVGElement)) {
-                result.push(
-                    new Draggable(item, options, Ob)
-                );
-            } else {
+        if (this[0] instanceof SVGElement) {
+            const items = arrReduce.call(this, (result, item) => {
                 if (checkElement(item)) {
-                    result.push(
-                        new DraggableSVG(item, options, Ob)
-                    );
+                    result.push(item);
                 }
-            }
-            return result;
-        }, []);
+                return result;
+            }, []);
+
+            return new DraggableSVG(items, options, Ob);
+        } else {
+            return new Draggable(
+                arrMap.call(this, _ => _),
+                options,
+                Ob
+            );
+        }
     }
 }
