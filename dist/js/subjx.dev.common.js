@@ -3959,6 +3959,7 @@ var getCommandValuesLength = function getCommandValuesLength(cmd) {
 var parsePath = function parsePath(path) {
   var match = dRE.lastIndex = 0;
   var serialized = [];
+  var firstCommand = false;
 
   var _loop = function _loop() {
     var _match = match,
@@ -3973,13 +3974,20 @@ var parsePath = function parsePath(path) {
       if (!isNaN(val)) {
         return Number(val);
       }
-    }); // split big command into multiple commands
+    });
+    var isMoveTo = upCmd === 'M';
 
-    arrayToChunks(values, getCommandValuesLength(cmd).size).map(function (chunkedValues) {
+    var _getCommandValuesLeng = getCommandValuesLength(cmd),
+        commandLength = _getCommandValuesLeng.size; // split big command into multiple commands
+
+
+    arrayToChunks(values, commandLength).map(function (chunkedValues) {
+      var shouldReplace = firstCommand && isMoveTo;
+      firstCommand = firstCommand ? firstCommand : isMoveTo;
       return serialized.push({
         relative: isRelative,
-        key: upCmd,
-        cmd: cmd,
+        key: shouldReplace ? 'L' : upCmd,
+        cmd: shouldReplace ? isRelative ? 'l' : 'L' : cmd,
         values: chunkedValues
       });
     });
