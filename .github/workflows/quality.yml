@@ -19,5 +19,6 @@ jobs:
           cache: 'npm'
   
       - run: npm ci
+      - run: npm test
       - run: npm run build:all --if-present
-      - run: npx semantic-release --dry-run --no-ci --branches ${{ github.head_ref }}
+      #- run: npx semantic-release --dry-run --no-ci --branches $(git branch --show-current)
