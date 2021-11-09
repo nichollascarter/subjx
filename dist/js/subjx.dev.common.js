@@ -3959,7 +3959,6 @@ var getCommandValuesLength = function getCommandValuesLength(cmd) {
 var parsePath = function parsePath(path) {
   var match = dRE.lastIndex = 0;
   var serialized = [];
-  var firstCommand = false;
 
   var _loop = function _loop() {
     var _match = match,
@@ -3975,6 +3974,7 @@ var parsePath = function parsePath(path) {
         return Number(val);
       }
     });
+    var firstCommand = false;
     var isMoveTo = upCmd === 'M';
 
     var _getCommandValuesLeng = getCommandValuesLength(cmd),
