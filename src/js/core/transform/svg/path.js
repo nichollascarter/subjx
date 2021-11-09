@@ -44,8 +44,6 @@ const parsePath = (path) => {
 
     const serialized = [];
 
-    let firstCommand = false;
-
     while ((match = dRE.exec(path))) {
         const [, cmd, params] = match;
         const upCmd = cmd.toUpperCase();
@@ -60,6 +58,7 @@ const parsePath = (path) => {
             }
         });
 
+        let firstCommand = false;
         const isMoveTo = upCmd === 'M';
 
         const { size: commandLength } = getCommandValuesLength(cmd);
