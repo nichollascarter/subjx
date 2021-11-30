@@ -1236,7 +1236,7 @@ export default class DraggableSVG extends Transformable {
         });
     }
 
-    resetCenterPoint() {
+    resetCenterPoint(nx,ny) {
         const {
             storage: {
                 handles: {
@@ -1256,6 +1256,14 @@ export default class DraggableSVG extends Transformable {
             center: { x, y }
         } = this._getVertices(controlsMatrix.inverse());
 
+        if (nx !== undefined && ny !== undefined) {
+            handle.cx.baseVal.value = nx;
+            handle.cy.baseVal.value = ny;
+            radius.x2.baseVal.value = nx;
+            radius.y2.baseVal.value = ny;
+            center.isShifted = true;
+            return;
+        }
         handle.cx.baseVal.value = x;
         handle.cy.baseVal.value = y;
 
