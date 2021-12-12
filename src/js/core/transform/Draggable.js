@@ -2,7 +2,7 @@ import { helper } from '../Helper';
 import Transformable from './Transformable';
 import { floatToFixed, getMinMaxOfArray } from './common';
 import { isDef, isUndef } from '../util/util';
-import { addClass, matrixToCSS } from '../util/css-util';
+import { addClass, matrixToCSS, getScrollOffset, getElementOffset } from '../util/css-util';
 import { MIN_SIZE, CLIENT_EVENTS_CONSTANTS } from '../consts';
 
 import {
@@ -43,19 +43,6 @@ export default class Draggable extends Transformable {
         const controls = createElement(['sjx-controls']);
 
         const handles = {};
-
-        //const matrix = getCurrentTransformMatrix(el, container);
-        // const [offsetLeft, offsetTop] = getAbsoluteOffset(el, container);
-
-        // const originRotation = [
-        //     'data-sjx-cx',
-        //     'data-sjx-cy'
-        // ].map(attr => {
-        //     const val = el.getAttribute(attr);
-        //     return isDef(val) ? Number(val) : undefined;
-        // });
-
-        // const hasOrigin = originRotation.every(val => !isNaN(val));
 
         const {
             rotator = null,
@@ -108,8 +95,8 @@ export default class Draggable extends Transformable {
             }
             : {};
 
-        const nextCenter = false
-            ? [...[0, 0], 0, 1]
+        const nextCenter = Array.isArray(rotationPoint)
+            ? [...rotationPoint, 0, 1]
             : finalVertices.center;
 
         const allHandles = {
@@ -141,15 +128,12 @@ export default class Draggable extends Transformable {
         elements.map(element => (
             data.set(element, {
                 parent: element.parentNode,
-                center: {
-                    isShifted: false
-                },
                 transform: {
                     ctm: getCurrentTransformMatrix(element, container)
                 },
                 bBox: this._getBBox(),
-                cached: {},
-                __data__: new WeakMap()
+                __data__: new WeakMap(),
+                cached: {}
             })
         ));
 
@@ -160,7 +144,10 @@ export default class Draggable extends Transformable {
                 ...handles,
                 ...rotationHandles
             },
-            data
+            data,
+            center: {
+                isShifted: Boolean(rotationPoint)
+            }
         };
 
         [...elements, controls].map(target => (
@@ -203,8 +190,20 @@ export default class Draggable extends Transformable {
         const { container } = this.options;
         const globalMatrix = getCurrentTransformMatrix(container);
 
+        const offset = getElementOffset(container);
+        const { left, top } = getScrollOffset();
+        const translateMatrix = createTranslateMatrix(
+            offset.left - left,
+            offset.top - top
+        );
+
         return this._applyMatrixToPoint(
-            matrixInvert(globalMatrix),
+            matrixInvert(
+                multiplyMatrix(
+                    globalMatrix,
+                    translateMatrix
+                )
+            ),
             clientX,
             clientY
         );
@@ -236,7 +235,6 @@ export default class Draggable extends Transformable {
         const {
             storage: {
                 controls,
-                center,
                 data
             },
             options: {
@@ -252,9 +250,6 @@ export default class Draggable extends Transformable {
         const $controls = helper(controls);
 
         if (isUndef(cached)) return;
-
-        element.setAttribute('data-sjx-cx', center.elX);
-        element.setAttribute('data-sjx-cy', center.elY);
 
         if (applyTranslate) {
             const $el = helper(element);
@@ -535,10 +530,7 @@ export default class Draggable extends Transformable {
 
         const storage = data.get(element);
 
-        const {
-            parent,
-            center: oldCenter
-        } = storage;
+        const { parent } = storage;
 
         const {
             offsetWidth,
@@ -665,19 +657,7 @@ export default class Draggable extends Transformable {
                     left: glLeft,
                     top: glTop
                 }
-            },
-            center: {
-                ...oldCenter,
-                x: globalCenterX,
-                y: globalCenterY,
-                elX,
-                elY,
-                matrix: originTransform
-            },
-            revX,
-            revY,
-            doW,
-            doH
+            }
         };
     }
 
@@ -698,8 +678,7 @@ export default class Draggable extends Transformable {
         } = this;
 
         const [glLeft, glTop] = getAbsoluteOffset(elements[0], container);
-
-        const boxCTM = getCurrentTransformMatrix(controls, container);
+        const ctm = getCurrentTransformMatrix(elements[0], container);
 
         const {
             width: boxWidth,
@@ -708,7 +687,7 @@ export default class Draggable extends Transformable {
 
         // real element's center
         const [cenX, cenY] = multiplyMatrixAndPoint(
-            boxCTM,
+            ctm,
             [
                 boxWidth / 2,
                 boxHeight / 2,

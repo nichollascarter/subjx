@@ -396,8 +396,8 @@ export default class Transformable extends SubjectModel {
                     const { x, y } = this._processMoveRestrict(element, args);
 
                     return {
-                        x: restX !== null && res.x === null && restrict ? x : res.x,
-                        y: restY !== null && res.y === null && restrict ? y : res.y
+                        x: res.x === null && restrict ? x : res.x,
+                        y: res.y === null && restrict ? y : res.y
                     };
                 }, { x: null, y: null })
                 : { x: null, y: null };
@@ -451,12 +451,6 @@ export default class Transformable extends SubjectModel {
             );
             const radians = snapToGrid(delta - pressang, snap.angle);
 
-            const args = {
-                clientX,
-                clientY,
-                mouseEvent
-            };
-
             if (restrict) {
                 const isBounding = elements.some((element) => {
                     const { x: restX, y: restY } = this._processRotateRestrict(element, radians);
@@ -465,6 +459,12 @@ export default class Transformable extends SubjectModel {
 
                 if (isBounding) return;
             }
+
+            const args = {
+                clientX,
+                clientY,
+                mouseEvent
+            };
 
             elements.map((element) => (
                 self._rotate({
