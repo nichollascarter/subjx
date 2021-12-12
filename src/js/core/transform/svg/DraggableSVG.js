@@ -738,21 +738,6 @@ export default class DraggableSVG extends Transformable {
             centerY
         );
 
-        const parentMatrix = getTransformToElement(controls.parentNode, container);
-
-        // element's center coordinates
-        const { x: elcx, y: elcy } = cHandle
-            ? pointTo(
-                parentMatrix.inverse(),
-                bcx,
-                bcy
-            )
-            : pointTo(
-                boxCTM,
-                elCenterX,
-                elCenterY
-            );
-
         // box's center coordinates
         const { x: rcx, y: rcy } = pointTo(
             isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container),
@@ -768,8 +753,6 @@ export default class DraggableSVG extends Transformable {
             ...(this.storage.center || {}),
             x: cHandle ? bcx : rcx,
             y: cHandle ? bcy : rcy,
-            elX: elcx,
-            elY: elcy,
             hx: cHandle ? cHandle.cx.baseVal.value : null,
             hy: cHandle ? cHandle.cy.baseVal.value : null
         };
@@ -927,8 +910,8 @@ export default class DraggableSVG extends Transformable {
                 center: prevCenterData,
                 center: { hx, hy },
                 transform: {
-                    controlsMatrix
-                }
+                    controlsMatrix = createSVGMatrix()
+                } = {}
             }
         } = this;
 
@@ -1238,23 +1221,39 @@ export default class DraggableSVG extends Transformable {
 
     resetCenterPoint() {
         const {
+            elements,
             storage: {
+                controls,
                 handles: {
                     center: handle,
                     radius
                 } = {},
-                center,
-                transform: {
-                    controlsMatrix = createSVGMatrix()
-                } = {}
-            } = {}
+                center
+            } = {},
+            options: {
+                container,
+                isGrouped
+            }
         } = this;
 
         if (!center || !handle || !radius) return;
 
-        const {
-            center: { x, y }
-        } = this._getVertices(controlsMatrix.inverse());
+        const { x: bx, y: by, width, height } = this._getBBox();
+
+        const hW = width / 2,
+            hH = height / 2;
+
+        const controlsTransformMatrix = getTransformToElement(controls, controls.parentNode).inverse();
+
+        const nextTransform = isGrouped
+            ? controlsTransformMatrix
+            : controlsTransformMatrix.multiply(getTransformToElement(elements[0], container));
+
+        const { x, y } = pointTo(
+            nextTransform,
+            bx + hW,
+            by + hH
+        );
 
         handle.cx.baseVal.value = x;
         handle.cy.baseVal.value = y;

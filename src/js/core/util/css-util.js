@@ -76,3 +76,23 @@ export const getStyle = (el, property) => {
 
     return value;
 };
+
+export const getScrollOffset = () => {
+    const doc = document.documentElement;
+    return {
+        left: (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0),
+        top: (window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0)
+    };
+};
+
+export const getElementOffset = (el) => {
+    let left = 0;
+    let top = 0;
+
+    while (el && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
+        left += el.offsetLeft - el.scrollLeft;
+        top += el.offsetTop - el.scrollTop;
+        el = el.offsetParent;
+    }
+    return { left, top };
+};

@@ -137,7 +137,7 @@ xDraggable.resetCenterPoint();
 |Property|Description|Type|Default|
 |--|--|--|--|
 | **container** | Transformation coordinate system | `'selector'` \| `element` | element.parentNode |
-| **controlsContainer** | "controls" append to this element | `'selector'` \| `element` | element.parentNode |
+| **controlsContainer** | "controls" will append to this element | `'selector'` \| `element` | element.parentNode |
 | **axis** | Constrain movement along an axis | `string`: 'x' \| 'y' \| 'xy' | 'xy' |
 | **snap** | Snapping to grid in pixels/radians | `object` | { x: 10, y: 10, angle: 10 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
@@ -180,11 +180,13 @@ subjx('.draggable').drag({
 Subscribing new draggable element to previously activated(useful with `each` option)
 
 ```javascript
+const options = {};
 const observable = subjx.createObservable();
-subjx('.draggable').drag({...}, observable);
+subjx('.draggable').drag(options, observable);
 
+// pass Observable to new element
 const createDraggableAndSubscribe = e => {
-    subjx(e.target).drag({...}, observable);
+    subjx(e.target).drag(options, observable);
 };
 ```
 

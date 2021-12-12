@@ -42,9 +42,9 @@ const plugins = [
 
 const uglifyPlugin = () => (
     uglify({
-        compress:
-        {
-            evaluate: false
+        compress: {
+            evaluate: false,
+            join_vars: false
         },
         output: {
             preamble: banner
