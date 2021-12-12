@@ -1,3 +1,10 @@
+# [1.0.0-rc.3](https://github.com/nichollascarter/subjx/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2021-12-12)
+
+
+### Bug Fixes
+
+* **src:** fix rotation issue on HTML element and rotation point reseting on SVG element ([4e1a5a3](https://github.com/nichollascarter/subjx/commit/4e1a5a36e2e2c6f40e8a549ce8c20f28fdd3eda8)), closes [#58](https://github.com/nichollascarter/subjx/issues/58)
+
 # [1.0.0-rc.2](https://github.com/nichollascarter/subjx/compare/v1.0.0-rc.1...v1.0.0-rc.2) (2021-11-09)
 
 
