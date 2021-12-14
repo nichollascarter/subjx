@@ -43,7 +43,8 @@ const {
     E_RESIZE_END,
     E_ROTATE_START,
     E_ROTATE,
-    E_ROTATE_END
+    E_ROTATE_END,
+    E_SET_POINT
 } = EVENT_EMITTER_CONSTANTS;
 
 const { TRANSFORM_HANDLES_KEYS, TRANSFORM_EDGES_KEYS } = TRANSFORM_HANDLES_CONSTANTS;
@@ -692,7 +693,7 @@ export default class Transformable extends SubjectModel {
                 doResize,
                 doDrag,
                 doRotate,
-                //doSetCenter,
+                doSetCenter,
                 frame,
                 handles: { radius },
                 isTarget
@@ -702,9 +703,25 @@ export default class Transformable extends SubjectModel {
 
         if (!isTarget) return;
 
-        const actionName = doResize
-            ? E_RESIZE
-            : (doDrag ? E_DRAG : E_ROTATE);
+        const { actionName = E_DRAG } = [
+            {
+                actionName: E_RESIZE,
+                condition: doResize
+            },
+            {
+                actionName: E_DRAG,
+                condition: doDrag
+            },
+            {
+                actionName: E_ROTATE,
+                condition: doRotate
+            },
+            {
+                actionName: E_SET_POINT,
+                condition: doSetCenter
+            }
+        ].find((({ condition }) => condition)) || {};
+
 
         storage.doResize = false;
         storage.doDrag = false;

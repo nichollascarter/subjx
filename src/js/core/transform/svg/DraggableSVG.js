@@ -180,7 +180,7 @@ export default class DraggableSVG extends Transformable {
             },
             data,
             center: {
-                isShifted: Boolean(rotationPoint)
+                isShifted: Array.isArray(rotationPoint)
             }
         };
 
@@ -257,7 +257,13 @@ export default class DraggableSVG extends Transformable {
         const {
             storage: {
                 data,
-                bBox
+                bBox,
+                transform: {
+                    controlsMatrix
+                },
+                center: {
+                    isShifted
+                }
             } = {},
             options: {
                 isGrouped,
@@ -278,8 +284,6 @@ export default class DraggableSVG extends Transformable {
             },
             __data__
         } = nextData;
-
-        //if (isUndef(cached)) return;
 
         const {
             scaleX,
@@ -386,6 +390,12 @@ export default class DraggableSVG extends Transformable {
 
         if (isGrouped && actionName === E_ROTATE) {
             this._applyTransformToHandles();
+
+            if (isShifted) {
+                const { x: dx, y: dy } = pointTo(controlsMatrix, 0, 0);
+                this._moveCenterHandle(dx, dy);
+            }
+
             this._updateControlsView();
         }
 
