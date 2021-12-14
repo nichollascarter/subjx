@@ -703,7 +703,7 @@ export default class Transformable extends SubjectModel {
 
         if (!isTarget) return;
 
-        const { actionName } = [
+        const { actionName = E_DRAG } = [
             {
                 actionName: E_RESIZE,
                 condition: doResize
@@ -720,7 +720,7 @@ export default class Transformable extends SubjectModel {
                 actionName: E_SET_POINT,
                 condition: doSetCenter
             }
-        ].find((({ condition }) => condition));
+        ].find((({ condition }) => condition)) || {};
 
 
         storage.doResize = false;
