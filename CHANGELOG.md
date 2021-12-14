@@ -1,3 +1,10 @@
+# [1.0.0-rc.4](https://github.com/nichollascarter/subjx/compare/v1.0.0-rc.3...v1.0.0-rc.4) (2021-12-14)
+
+
+### Bug Fixes
+
+* **src:** prevent rotation point moving when groupable is rotating ([080cf48](https://github.com/nichollascarter/subjx/commit/080cf486bf3749b636610141cd825d989bc35d4e)), closes [#58](https://github.com/nichollascarter/subjx/issues/58)
+
 # [1.0.0-rc.3](https://github.com/nichollascarter/subjx/compare/v1.0.0-rc.2...v1.0.0-rc.3) (2021-12-12)
 
 

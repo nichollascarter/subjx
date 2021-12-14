@@ -611,6 +611,7 @@ var E_RESIZE_END = 'resizeEnd';
 var E_ROTATE_START = 'rotateStart';
 var E_ROTATE = 'rotate';
 var E_ROTATE_END = 'rotateEnd';
+var E_SET_POINT = 'setPoint';
 var E_SET_POINT_START = 'setPointStart';
 var E_SET_POINT_END = 'setPointEnd';
 var EMITTER_EVENTS = [E_DRAG_START, E_DRAG,, E_DRAG_END, E_RESIZE_START, E_RESIZE, E_RESIZE_END, E_ROTATE_START, E_ROTATE, E_ROTATE_END, E_SET_POINT_START, E_SET_POINT_END];
@@ -640,6 +641,7 @@ var EVENT_EMITTER_CONSTANTS = {
   E_ROTATE_START: E_ROTATE_START,
   E_ROTATE: E_ROTATE,
   E_ROTATE_END: E_ROTATE_END,
+  E_SET_POINT: E_SET_POINT,
   E_SET_POINT_START: E_SET_POINT_START,
   E_SET_POINT_END: E_SET_POINT_END
 };
@@ -1134,7 +1136,8 @@ var EMITTER_EVENTS$1 = EVENT_EMITTER_CONSTANTS.EMITTER_EVENTS,
     E_RESIZE_END$1 = EVENT_EMITTER_CONSTANTS.E_RESIZE_END,
     E_ROTATE_START$1 = EVENT_EMITTER_CONSTANTS.E_ROTATE_START,
     E_ROTATE$1 = EVENT_EMITTER_CONSTANTS.E_ROTATE,
-    E_ROTATE_END$1 = EVENT_EMITTER_CONSTANTS.E_ROTATE_END;
+    E_ROTATE_END$1 = EVENT_EMITTER_CONSTANTS.E_ROTATE_END,
+    E_SET_POINT$1 = EVENT_EMITTER_CONSTANTS.E_SET_POINT;
 var TRANSFORM_HANDLES_KEYS$1 = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_HANDLES_KEYS,
     TRANSFORM_EDGES_KEYS$1 = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_EDGES_KEYS;
 var E_MOUSEDOWN$1 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
@@ -1756,12 +1759,32 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
           doResize = _this$storage2.doResize,
           doDrag = _this$storage2.doDrag,
           doRotate = _this$storage2.doRotate,
+          doSetCenter = _this$storage2.doSetCenter,
           frame = _this$storage2.frame,
           radius = _this$storage2.handles.radius,
           isTarget = _this$storage2.isTarget,
           proxyMethods = this.proxyMethods;
       if (!isTarget) return;
-      var actionName = doResize ? E_RESIZE$1 : doDrag ? E_DRAG$2 : E_ROTATE$1;
+
+      var _ref8 = [{
+        actionName: E_RESIZE$1,
+        condition: doResize
+      }, {
+        actionName: E_DRAG$2,
+        condition: doDrag
+      }, {
+        actionName: E_ROTATE$1,
+        condition: doRotate
+      }, {
+        actionName: E_SET_POINT$1,
+        condition: doSetCenter
+      }].find(function (_ref9) {
+        var condition = _ref9.condition;
+        return condition;
+      }) || {},
+          _ref8$actionName = _ref8.actionName,
+          actionName = _ref8$actionName === void 0 ? E_DRAG$2 : _ref8$actionName;
+
       storage.doResize = false;
       storage.doDrag = false;
       storage.doRotate = false;
@@ -1965,11 +1988,11 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
     }
   }, {
     key: "notifyMove",
-    value: function notifyMove(_ref8) {
+    value: function notifyMove(_ref10) {
       var _this6 = this;
 
-      var dx = _ref8.dx,
-          dy = _ref8.dy;
+      var dx = _ref10.dx,
+          dy = _ref10.dy;
       this.elements.map(function (element) {
         return _get(_getPrototypeOf(Transformable.prototype), "_drag", _this6).call(_this6, {
           element: element,
@@ -1985,11 +2008,11 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
     }
   }, {
     key: "notifyRotate",
-    value: function notifyRotate(_ref9) {
+    value: function notifyRotate(_ref11) {
       var _this7 = this;
 
-      var radians = _ref9.radians,
-          rest = _objectWithoutProperties(_ref9, ["radians"]);
+      var radians = _ref11.radians,
+          rest = _objectWithoutProperties(_ref11, ["radians"]);
 
       var elements = this.elements,
           _this$options2 = this.options;
@@ -2008,15 +2031,15 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
     }
   }, {
     key: "notifyResize",
-    value: function notifyResize(_ref10) {
+    value: function notifyResize(_ref12) {
       var _this8 = this;
 
-      var dx = _ref10.dx,
-          dy = _ref10.dy,
-          revX = _ref10.revX,
-          revY = _ref10.revY,
-          dox = _ref10.dox,
-          doy = _ref10.doy;
+      var dx = _ref12.dx,
+          dy = _ref12.dy,
+          revX = _ref12.revX,
+          revY = _ref12.revY,
+          dox = _ref12.dox,
+          doy = _ref12.doy;
       var elements = this.elements,
           data = this.storage.data,
           isGrouped = this.options.isGrouped;
@@ -2024,7 +2047,7 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
         var _data$get3 = data.get(element),
             ctm = _data$get3.transform.ctm;
 
-        var _ref11 = !isGrouped ? _this8._pointToTransform({
+        var _ref13 = !isGrouped ? _this8._pointToTransform({
           x: dx,
           y: dy,
           matrix: ctm
@@ -2032,8 +2055,8 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
           x: dx,
           y: dy
         },
-            x = _ref11.x,
-            y = _ref11.y;
+            x = _ref13.x,
+            y = _ref13.y;
 
         _this8._resize({
           element: element,
@@ -2049,13 +2072,13 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
     }
   }, {
     key: "notifyApply",
-    value: function notifyApply(_ref12) {
+    value: function notifyApply(_ref14) {
       var _this9 = this;
 
-      var clientX = _ref12.clientX,
-          clientY = _ref12.clientY,
-          actionName = _ref12.actionName,
-          triggerEvent = _ref12.triggerEvent;
+      var clientX = _ref14.clientX,
+          clientY = _ref14.clientY,
+          actionName = _ref14.actionName,
+          triggerEvent = _ref14.triggerEvent;
       this.proxyMethods.onDrop.call(this, {
         clientX: clientX,
         clientY: clientY
@@ -2074,14 +2097,14 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
     }
   }, {
     key: "notifyGetState",
-    value: function notifyGetState(_ref13) {
+    value: function notifyGetState(_ref15) {
       var _this10 = this;
 
-      var clientX = _ref13.clientX,
-          clientY = _ref13.clientY,
-          actionName = _ref13.actionName,
-          triggerEvent = _ref13.triggerEvent,
-          rest = _objectWithoutProperties(_ref13, ["clientX", "clientY", "actionName", "triggerEvent"]);
+      var clientX = _ref15.clientX,
+          clientY = _ref15.clientY,
+          actionName = _ref15.actionName,
+          triggerEvent = _ref15.triggerEvent,
+          rest = _objectWithoutProperties(_ref15, ["clientX", "clientY", "actionName", "triggerEvent"]);
 
       if (triggerEvent) {
         var elements = this.elements,
@@ -2104,10 +2127,10 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
     }
   }, {
     key: "subscribe",
-    value: function subscribe(_ref14) {
-      var resize = _ref14.resize,
-          move = _ref14.move,
-          rotate = _ref14.rotate;
+    value: function subscribe(_ref16) {
+      var resize = _ref16.resize,
+          move = _ref16.move,
+          rotate = _ref16.rotate;
       var ob = this.observable;
 
       if (move || resize || rotate) {
@@ -2160,11 +2183,11 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
     }
   }, {
     key: "exeDrag",
-    value: function exeDrag(_ref15) {
+    value: function exeDrag(_ref17) {
       var _this12 = this;
 
-      var dx = _ref15.dx,
-          dy = _ref15.dy;
+      var dx = _ref17.dx,
+          dy = _ref17.dy;
       var elements = this.elements,
           draggable = this.options.draggable,
           storage = this.storage,
@@ -2201,19 +2224,19 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
     }
   }, {
     key: "exeResize",
-    value: function exeResize(_ref16) {
+    value: function exeResize(_ref18) {
       var _this13 = this;
 
-      var dx = _ref16.dx,
-          dy = _ref16.dy,
-          _ref16$revX = _ref16.revX,
-          revX = _ref16$revX === void 0 ? false : _ref16$revX,
-          _ref16$revY = _ref16.revY,
-          revY = _ref16$revY === void 0 ? false : _ref16$revY,
-          _ref16$doW = _ref16.doW,
-          doW = _ref16$doW === void 0 ? false : _ref16$doW,
-          _ref16$doH = _ref16.doH,
-          doH = _ref16$doH === void 0 ? false : _ref16$doH;
+      var dx = _ref18.dx,
+          dy = _ref18.dy,
+          _ref18$revX = _ref18.revX,
+          revX = _ref18$revX === void 0 ? false : _ref18$revX,
+          _ref18$revY = _ref18.revY,
+          revY = _ref18$revY === void 0 ? false : _ref18$revY,
+          _ref18$doW = _ref18.doW,
+          doW = _ref18$doW === void 0 ? false : _ref18$doW,
+          _ref18$doH = _ref18.doH,
+          doH = _ref18$doH === void 0 ? false : _ref18$doH;
       var elements = this.elements,
           resizable = this.options.resizable,
           storage = this.storage,
@@ -2250,10 +2273,10 @@ var Transformable = /*#__PURE__*/function (_SubjectModel) {
     }
   }, {
     key: "exeRotate",
-    value: function exeRotate(_ref17) {
+    value: function exeRotate(_ref19) {
       var _this14 = this;
 
-      var delta = _ref17.delta;
+      var delta = _ref19.delta;
       var elements = this.elements,
           rotatable = this.options.rotatable,
           storage = this.storage,
@@ -2663,7 +2686,7 @@ var Draggable = /*#__PURE__*/function (_Transformable) {
         handles: _objectSpread2({}, handles, {}, rotationHandles),
         data: data,
         center: {
-          isShifted: Boolean(rotationPoint)
+          isShifted: Array.isArray(rotationPoint)
         }
       };
       [].concat(_toConsumableArray(elements), [controls]).map(function (target) {
@@ -5290,7 +5313,7 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
         handles: _objectSpread2({}, handles, {}, rotationHandles),
         data: data,
         center: {
-          isShifted: Boolean(rotationPoint)
+          isShifted: Array.isArray(rotationPoint)
         }
       };
       [].concat(_toConsumableArray(elements), [controls]).map(function (target) {
@@ -5357,6 +5380,8 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
       _this$storage2 = _this$storage2 === void 0 ? {} : _this$storage2;
       var data = _this$storage2.data,
           bBox = _this$storage2.bBox,
+          controlsMatrix = _this$storage2.transform.controlsMatrix,
+          isShifted = _this$storage2.center.isShifted,
           _this$options3 = this.options;
       _this$options3 = _this$options3 === void 0 ? {} : _this$options3;
       var isGrouped = _this$options3.isGrouped,
@@ -5371,8 +5396,7 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
       var _nextData$transform = nextData.transform,
           matrix = _nextData$transform.matrix,
           parentMatrix = _nextData$transform.parentMatrix,
-          __data__ = nextData.__data__; //if (isUndef(cached)) return;
-
+          __data__ = nextData.__data__;
       var scaleX = cached.scaleX,
           scaleY = cached.scaleY,
           _cached$dist = cached.dist;
@@ -5462,6 +5486,14 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
 
       if (isGrouped && actionName === E_ROTATE$2) {
         this._applyTransformToHandles();
+
+        if (isShifted) {
+          var _pointTo2 = pointTo(controlsMatrix, 0, 0),
+              _dx = _pointTo2.x,
+              _dy = _pointTo2.y;
+
+          this._moveCenterHandle(_dx, _dy);
+        }
 
         this._updateControlsView();
       }
@@ -5557,9 +5589,9 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
           cached = elementStorage.cached;
       parentMatrix.e = parentMatrix.f = 0;
 
-      var _pointTo2 = pointTo(parentMatrix, dx, dy),
-          nx = _pointTo2.x,
-          ny = _pointTo2.y;
+      var _pointTo3 = pointTo(parentMatrix, dx, dy),
+          nx = _pointTo3.x,
+          ny = _pointTo3.y;
 
       data.set(element, _objectSpread2({}, elementStorage, {
         cached: _objectSpread2({}, cached, {
@@ -5648,18 +5680,18 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
       var centerX = cHandle ? cHandle.cx.baseVal.value : elCenterX;
       var centerY = cHandle ? cHandle.cy.baseVal.value : elCenterY; // c-handle's coordinates
 
-      var _pointTo3 = pointTo(boxCTM, centerX, centerY),
-          bcx = _pointTo3.x,
-          bcy = _pointTo3.y; // element's center coordinates
+      var _pointTo4 = pointTo(boxCTM, centerX, centerY),
+          bcx = _pointTo4.x,
+          bcy = _pointTo4.y; // element's center coordinates
 
 
       var _ref7 = cHandle ? pointTo(parentMatrixInverted, bcx, bcy) : pointTo(isGrouped ? parentMatrixInverted : elMatrix, elCenterX, elCenterY),
           elcx = _ref7.x,
           elcy = _ref7.y;
 
-      var _pointTo4 = pointTo(isGrouped ? parentMatrixInverted : createSVGMatrix(), scaleX, scaleY),
-          nextScaleX = _pointTo4.x,
-          nextScaleY = _pointTo4.y;
+      var _pointTo5 = pointTo(isGrouped ? parentMatrixInverted : createSVGMatrix(), scaleX, scaleY),
+          nextScaleX = _pointTo5.x,
+          nextScaleY = _pointTo5.y;
 
       var transform = {
         auxiliary: {
@@ -5710,14 +5742,14 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
       var centerX = cHandle ? cHandle.cx.baseVal.value : elCenterX;
       var centerY = cHandle ? cHandle.cy.baseVal.value : elCenterY; // c-handle's coordinates
 
-      var _pointTo5 = pointTo(boxCTM, centerX, centerY),
-          bcx = _pointTo5.x,
-          bcy = _pointTo5.y; // box's center coordinates
+      var _pointTo6 = pointTo(boxCTM, centerX, centerY),
+          bcx = _pointTo6.x,
+          bcy = _pointTo6.y; // box's center coordinates
 
 
-      var _pointTo6 = pointTo(isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container), elCenterX, elCenterY),
-          rcx = _pointTo6.x,
-          rcy = _pointTo6.y;
+      var _pointTo7 = pointTo(isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container), elCenterX, elCenterY),
+          rcx = _pointTo7.x,
+          rcy = _pointTo7.y;
 
       var containerMatrix = restrict ? getTransformToElement(restrict, restrict.parentNode) : getTransformToElement(container, container.parentNode);
 
@@ -5915,9 +5947,9 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
           parentMatrix = _elementStorage$trans3.auxiliary.translate.parentMatrix;
       parentMatrix.e = parentMatrix.f = 0;
 
-      var _pointTo7 = pointTo(parentMatrix, dx, dy),
-          x = _pointTo7.x,
-          y = _pointTo7.y;
+      var _pointTo8 = pointTo(parentMatrix, dx, dy),
+          x = _pointTo8.x,
+          y = _pointTo8.y;
 
       var preTranslateMatrix = createTranslateMatrix$1(x, y).multiply(matrix);
       return this._restrictHandler(element, preTranslateMatrix);
@@ -6011,9 +6043,9 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
         var centerTransformMatrix = controlsMatrix.inverse();
         centerTransformMatrix.e = centerTransformMatrix.f = 0;
 
-        var _pointTo8 = pointTo(centerTransformMatrix, dx, dy),
-            cx = _pointTo8.x,
-            cy = _pointTo8.y;
+        var _pointTo9 = pointTo(centerTransformMatrix, dx, dy),
+            cx = _pointTo9.x,
+            cy = _pointTo9.y;
 
         this._moveCenterHandle(-cx, -cy);
       }
@@ -6160,9 +6192,9 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
       var controlsTransformMatrix = getTransformToElement(controls, controls.parentNode).inverse();
       var nextTransform = isGrouped ? controlsTransformMatrix : controlsTransformMatrix.multiply(getTransformToElement(elements[0], container));
 
-      var _pointTo9 = pointTo(nextTransform, bx + hW, by + hH),
-          x = _pointTo9.x,
-          y = _pointTo9.y;
+      var _pointTo10 = pointTo(nextTransform, bx + hW, by + hH),
+          x = _pointTo10.x,
+          y = _pointTo10.y;
 
       handle.cx.baseVal.value = x;
       handle.cy.baseVal.value = y;
@@ -6276,9 +6308,9 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
         var parentMatrix = getTransformToElement(element.parentNode, container);
         parentMatrix.e = parentMatrix.f = 0;
 
-        var _pointTo10 = pointTo(parentMatrix.inverse(), getXDir(), getYDir()),
-            x = _pointTo10.x,
-            y = _pointTo10.y;
+        var _pointTo11 = pointTo(parentMatrix.inverse(), getXDir(), getYDir()),
+            x = _pointTo11.x,
+            y = _pointTo11.y;
 
         var moveElementMtrx = createTranslateMatrix$1(x, y).multiply(getTransformToElement(element, element.parentNode));
 
@@ -6390,9 +6422,9 @@ var applyResize = function applyResize(element, data) {
             y = storedData.y,
             textLength = storedData.textLength;
 
-        var _pointTo11 = pointTo(localCTM, x, y),
-            resX = _pointTo11.x,
-            resY = _pointTo11.y;
+        var _pointTo12 = pointTo(localCTM, x, y),
+            resX = _pointTo12.x,
+            resY = _pointTo12.y;
 
         attrs.push(['x', resX + (scaleX < 0 ? boxW : 0)], ['y', resY - (scaleY < 0 ? boxH : 0)], ['textLength', Math.abs(scaleX * textLength)]);
         break;
@@ -6405,9 +6437,9 @@ var applyResize = function applyResize(element, data) {
             cy = storedData.cy,
             newR = r * (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
 
-        var _pointTo12 = pointTo(localCTM, cx, cy),
-            _resX3 = _pointTo12.x,
-            _resY3 = _pointTo12.y;
+        var _pointTo13 = pointTo(localCTM, cx, cy),
+            _resX3 = _pointTo13.x,
+            _resY3 = _pointTo13.y;
 
         attrs.push(['r', newR], ['cx', _resX3], ['cy', _resY3]);
         break;
@@ -6423,9 +6455,9 @@ var applyResize = function applyResize(element, data) {
               _x5 = storedData.x,
               _y5 = storedData.y;
 
-          var _pointTo13 = pointTo(localCTM, _x5, _y5),
-              _resX4 = _pointTo13.x,
-              _resY4 = _pointTo13.y;
+          var _pointTo14 = pointTo(localCTM, _x5, _y5),
+              _resX4 = _pointTo14.x,
+              _resY4 = _pointTo14.y;
 
           var newWidth = Math.abs(width * scaleX),
               newHeight = Math.abs(height * scaleY);
@@ -6449,17 +6481,17 @@ var applyResize = function applyResize(element, data) {
             _cx = storedData.cx,
             _cy = storedData.cy;
 
-        var _pointTo14 = pointTo(localCTM, _cx, _cy),
-            cx1 = _pointTo14.x,
-            cy1 = _pointTo14.y;
+        var _pointTo15 = pointTo(localCTM, _cx, _cy),
+            cx1 = _pointTo15.x,
+            cy1 = _pointTo15.y;
 
         var scaleMatrix = createSVGMatrix();
         scaleMatrix.a = scaleX;
         scaleMatrix.d = scaleY;
 
-        var _pointTo15 = pointTo(scaleMatrix, rx, ry),
-            nRx = _pointTo15.x,
-            nRy = _pointTo15.y;
+        var _pointTo16 = pointTo(scaleMatrix, rx, ry),
+            nRx = _pointTo16.x,
+            nRy = _pointTo16.y;
 
         attrs.push(['rx', Math.abs(nRx)], ['ry', Math.abs(nRy)], ['cx', cx1], ['cy', cy1]);
         break;
@@ -6472,13 +6504,13 @@ var applyResize = function applyResize(element, data) {
             resX2 = storedData.resX2,
             resY2 = storedData.resY2;
 
-        var _pointTo16 = pointTo(localCTM, resX1, resY1),
-            resX1_ = _pointTo16.x,
-            resY1_ = _pointTo16.y;
+        var _pointTo17 = pointTo(localCTM, resX1, resY1),
+            resX1_ = _pointTo17.x,
+            resY1_ = _pointTo17.y;
 
-        var _pointTo17 = pointTo(localCTM, resX2, resY2),
-            resX2_ = _pointTo17.x,
-            resY2_ = _pointTo17.y;
+        var _pointTo18 = pointTo(localCTM, resX2, resY2),
+            resX2_ = _pointTo18.x,
+            resY2_ = _pointTo18.y;
 
         attrs.push(['x1', resX1_], ['y1', resY1_], ['x2', resX2_], ['y2', resY2_]);
         break;
@@ -6489,9 +6521,9 @@ var applyResize = function applyResize(element, data) {
       {
         var points = storedData.points;
         var result = parsePoints(points).map(function (item) {
-          var _pointTo18 = pointTo(localCTM, Number(item[0]), Number(item[1])),
-              x = _pointTo18.x,
-              y = _pointTo18.y;
+          var _pointTo19 = pointTo(localCTM, Number(item[0]), Number(item[1])),
+              x = _pointTo19.x,
+              y = _pointTo19.y;
 
           item[0] = floatToFixed(x);
           item[1] = floatToFixed(y);
@@ -6690,9 +6722,9 @@ var _getBoundingRect$1 = function _getBoundingRect(element, ctm) {
         l = _ref30[0],
         t = _ref30[1];
 
-    var _pointTo19 = pointTo(ctm, l, t),
-        nx = _pointTo19.x,
-        ny = _pointTo19.y;
+    var _pointTo20 = pointTo(ctm, l, t),
+        nx = _pointTo20.x,
+        ny = _pointTo20.y;
 
     return [nx, ny];
   });
