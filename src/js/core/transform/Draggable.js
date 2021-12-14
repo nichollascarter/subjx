@@ -146,7 +146,7 @@ export default class Draggable extends Transformable {
             },
             data,
             center: {
-                isShifted: Boolean(rotationPoint)
+                isShifted: Array.isArray(rotationPoint)
             }
         };
 

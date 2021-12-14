@@ -18,6 +18,7 @@ const E_RESIZE_END = 'resizeEnd';
 const E_ROTATE_START = 'rotateStart';
 const E_ROTATE = 'rotate';
 const E_ROTATE_END ='rotateEnd';
+const E_SET_POINT = 'setPoint';
 const E_SET_POINT_START = 'setPointStart';
 const E_SET_POINT_END = 'setPointEnd';
 
@@ -77,6 +78,7 @@ export const EVENT_EMITTER_CONSTANTS = {
     E_ROTATE_START,
     E_ROTATE,
     E_ROTATE_END,
+    E_SET_POINT,
     E_SET_POINT_START,
     E_SET_POINT_END
 };
