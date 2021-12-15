@@ -1316,7 +1316,7 @@ export default class DraggableSVG extends Transformable {
         radius.x2.baseVal.value = x;
         radius.y2.baseVal.value = y;
 
-        center.isShifted = true;
+        center.isShifted = false;
     }
 
     fitControlsToSize() {

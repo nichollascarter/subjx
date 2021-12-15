@@ -1333,6 +1333,39 @@ export default class Draggable extends Transformable {
         );
     }
 
+    offsetCenterPoint(nx,ny) {
+        const {
+            elements: [element] = [],
+            storage: {
+                wrapper,
+                handles: { center }
+            },
+            options: {
+                container
+            }
+        } = this;
+
+        if (!center) return;
+
+        const { offsetHeight, offsetWidth } = element;
+
+        const [offsetLeft, offsetTop] = getAbsoluteOffset(element, container);
+
+        const matrix = multiplyMatrix(
+            getCurrentTransformMatrix(element, container),
+            matrixInvert(getCurrentTransformMatrix(wrapper, wrapper.parentNode))
+        );
+
+        const [x, y] = multiplyMatrixAndPoint(
+            matrix,
+            [(offsetWidth / 2) + nx, (offsetHeight / 2) +ny, 0, 1]
+        );
+
+        helper(center).css(
+            { transform: `translate(${x + offsetLeft}px, ${y + offsetTop}px)` }
+        );
+    }
+
     fitControlsToSize() {
         const identityMatrix = createIdentityMatrix();
 
