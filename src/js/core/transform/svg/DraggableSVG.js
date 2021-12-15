@@ -1274,51 +1274,6 @@ export default class DraggableSVG extends Transformable {
         center.isShifted = false;
     }
 
-    resetCenterPoint() {
-        const {
-            elements,
-            storage: {
-                controls,
-                handles: {
-                    center: handle,
-                    radius
-                } = {},
-                center
-            } = {},
-            options: {
-                container,
-                isGrouped
-            }
-        } = this;
-
-        if (!center || !handle || !radius) return;
-
-        const { x: bx, y: by, width, height } = this._getBBox();
-
-        const hW = width / 2,
-            hH = height / 2;
-
-        const controlsTransformMatrix = getTransformToElement(controls, controls.parentNode).inverse();
-
-        const nextTransform = isGrouped
-            ? controlsTransformMatrix
-            : controlsTransformMatrix.multiply(getTransformToElement(elements[0], container));
-
-        const { x, y } = pointTo(
-            nextTransform,
-            bx + hW,
-            by + hH
-        );
-
-        handle.cx.baseVal.value = x;
-        handle.cy.baseVal.value = y;
-
-        radius.x2.baseVal.value = x;
-        radius.y2.baseVal.value = y;
-
-        center.isShifted = false;
-    }
-
     offsetCenterPoint(nx, ny) {
         const {
             elements,
@@ -1361,7 +1316,7 @@ export default class DraggableSVG extends Transformable {
         radius.x2.baseVal.value = x;
         radius.y2.baseVal.value = y;
 
-        center.isShifted = false;
+        center.isShifted = true;
     }
 
     fitControlsToSize() {
