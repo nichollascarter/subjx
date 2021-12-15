@@ -11,8 +11,8 @@ const {
 } = CLIENT_EVENTS_CONSTANTS;
 export default class SubjectModel {
 
-    constructor(el) {
-        this.el = el;
+    constructor(elements) {
+        this.elements = elements;
         this.storage = null;
         this.proxyMethods = null;
 
@@ -29,8 +29,8 @@ export default class SubjectModel {
 
     enable(options) {
         this._processOptions(options);
-        this._init(this.el);
-        this.proxyMethods.onInit.call(this, this.el);
+        this._init(this.elements);
+        this.proxyMethods.onInit.call(this, this.elements);
     }
 
     disable() {
@@ -65,8 +65,8 @@ export default class SubjectModel {
         throwNotImplementedError();
     }
 
-    _drag({ dx, dy, ...rest }) {
-        const transform = this._processMove(dx, dy);
+    _drag({ element, dx, dy, ...rest }) {
+        const transform = this._processMove(element, { dx, dy });
 
         const finalArgs = {
             dx,
@@ -101,20 +101,14 @@ export default class SubjectModel {
         if (e.preventDefault) {
             e.preventDefault();
         }
-        this._moving(
-            e,
-            this.el
-        );
+        this._moving(e);
     }
 
     _onTouchMove(e) {
         if (e.preventDefault) {
             e.preventDefault();
         }
-        this._moving(
-            e.touches[0],
-            this.el
-        );
+        this._moving(e.touches[0]);
     }
 
     _onMouseUp(e) {
@@ -124,7 +118,7 @@ export default class SubjectModel {
 
         this._end(
             e,
-            this.el
+            this.elements
         );
     }
 
@@ -136,7 +130,7 @@ export default class SubjectModel {
         if (e.touches.length === 0) {
             this._end(
                 e.changedTouches[0],
-                this.el
+                this.elements
             );
         }
     }

@@ -7,7 +7,7 @@
 </p>
 
 <h3 align="middle">
-    Draggable, resizable, rotatable library for creating drag-n-drop applications.
+    Draggable, Resizable, Rotatable library for creating drag-n-drop applications.
 </h3>
 
 ## Demos
@@ -36,7 +36,7 @@ Including via a `<script>` tag:
 
 ## Get started
 
- Main function `subjx` returns array of `Subjx` instances which based on elements finded by
+ Main function `subjx` returns `Subjx` instance which based on elements finded by
  passed parameters:
 
 ```javascript
@@ -54,20 +54,16 @@ const xElem = subjx( 'selector' ) |
 ```javascript
 // enabling tool by `drag` method with the optional parameters
 // by default just call `.drag()`
-const xDraggables = xElem.drag();
+const xDraggable = xElem.drag();
 
-// method always returns array of new Draggable instances
 // for disabling use `disable` method for each object
-xDraggables.forEach(item => {
-    item.disable();
-});
+xDraggable.disable();
 ```
+
 
 ### "Draggable" API
 
 ```javascript
-const [xDraggable] = xDraggables;
-
 // getter returns root DOM element of 'controls'
 xDraggable.controls;
 
@@ -141,7 +137,7 @@ xDraggable.resetCenterPoint();
 |Property|Description|Type|Default|
 |--|--|--|--|
 | **container** | Transformation coordinate system | `'selector'` \| `element` | element.parentNode |
-| **controlsContainer** | "controls" append to this element | `'selector'` \| `element` | element.parentNode |
+| **controlsContainer** | "controls" will append to this element | `'selector'` \| `element` | element.parentNode |
 | **axis** | Constrain movement along an axis | `string`: 'x' \| 'y' \| 'xy' | 'xy' |
 | **snap** | Snapping to grid in pixels/radians | `object` | { x: 10, y: 10, angle: 10 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
@@ -160,7 +156,7 @@ xDraggable.resetCenterPoint();
 
 ```javascript
 subjx('.draggable').drag({
-    onInit(el) {
+    onInit(elements) {
         // fires on tool activation
     },
     onMove({ clientX, clientY, dx, dy, transform }) {
@@ -184,11 +180,13 @@ subjx('.draggable').drag({
 Subscribing new draggable element to previously activated(useful with `each` option)
 
 ```javascript
+const options = {};
 const observable = subjx.createObservable();
-subjx('.draggable').drag({...}, observable);
+subjx('.draggable').drag(options, observable);
 
+// pass Observable to new element
 const createDraggableAndSubscribe = e => {
-    subjx(e.target).drag({...}, observable);
+    subjx(e.target).drag(options, observable);
 };
 ```
 
@@ -235,9 +233,7 @@ subjx('.cloneable').clone({
 Disabling
 
 ```javascript
-xCloneable.forEach(item => {
-    item.disable();
-});
+xCloneable.disable();
 ```
 
 ## License

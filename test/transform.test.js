@@ -1,8 +1,4 @@
-const {
-    snapToGrid,
-    floatToFixed,
-    getMinMaxOfArray
-} = require('../src/js/core/transform/common');
+import { snapToGrid, floatToFixed, getMinMaxOfArray } from '../src/js/core/transform/common';
 
 describe('snapToGrid func', () => {
     it('returns value near to grid size', () => {

@@ -148,7 +148,8 @@ const defaultOptions = {
     custom: null,
     rotatorAnchor: null,
     rotatorOffset: 50,
-    showNormal: true
+    showNormal: true,
+    isGrouped: false
 };
 
 const options = {
@@ -214,7 +215,7 @@ describe('Test subjx "clone" method', () => {
 
 describe('Test subjx "drag" method', () => {
     it('init draggable with defaults', () => {
-        const [draggable] = subjx(domElement).drag();
+        const draggable = subjx(domElement).drag();
         expect(draggable.options).toEqual({
             ...defaultOptions,
             container: draggableContainer,
@@ -234,7 +235,7 @@ describe('Test subjx "drag" method', () => {
             ...nextOptions
         });
 
-        expect($draggables[0].options).toMatchObject({
+        expect($draggables.options).toMatchObject({
             ...nextOptions,
             restrict: draggableContainer,
             container: draggableContainer,
@@ -245,7 +246,7 @@ describe('Test subjx "drag" method', () => {
             }
         });
 
-        $draggables.forEach(item => item.disable());
+        $draggables.disable();
     });
 
     it('test subjx hooks', () => {
@@ -277,10 +278,10 @@ describe('Test subjx "drag" method', () => {
             }
         };
 
-        const [draggable] = subjx(domElement).drag({ ...methods });
+        const draggable = subjx(domElement).drag({ ...methods });
 
         // simulate move
-        draggable.el.dispatchEvent(createEMouseDown());
+        draggable.elements[0].dispatchEvent(createEMouseDown());
 
         let step = 0;
         while (step < 5) {
@@ -330,7 +331,7 @@ describe('Test subjx "drag" method', () => {
     it('process move', () => {
         const $draggables = subjx(draggables).drag({ each: { move: true } });
 
-        $draggables[0].el.dispatchEvent(createEMouseDown());
+        $draggables.elements[0].dispatchEvent(createEMouseDown());
 
         let step = 0;
         while (step < 5) {
@@ -341,32 +342,32 @@ describe('Test subjx "drag" method', () => {
 
         document.dispatchEvent(createEMouseUp());
 
-        expect($draggables[0].storage).toMatchObject({
+        expect($draggables.storage).toMatchObject({
             clientX: 150,
             clientY: 150,
-            cx: 10,
-            cy: 10,
+            relativeX: 10,
+            relativeY: 10,
             isTarget: true
         });
 
-        $draggables.forEach(item => item.disable());
+        $draggables.disable();
     });
 
     it('test subjx api', () => {
-        const [draggable] = subjx(draggables).drag({ each: { move: true } });
+        const draggable = subjx(draggables).drag({ each: { move: true } });
 
         expect(() => {
             draggable.fitControlsToSize();
             draggable.resetCenterPoint();
             draggable.getBoundingRect();
-            ['t', 'b', 'l', 'b', 'r', 'v', 'h'].map((align) => draggable.applyAlignment(align));
+            ['t', 'b', 'l', 'b', 'r', 'v', 'h'].map(align => draggable.applyAlignment(align));
         }).not.toThrow();
     });
 });
 
 describe('Test svg subjx "drag" method', () => {
     it('init draggable with defaults', () => {
-        const [draggable] = subjx(svgElement).drag();
+        const draggable = subjx(svgElement).drag();
         expect(draggable.options).toEqual({
             ...defaultOptions,
             container: svgContainerElement,
@@ -383,11 +384,11 @@ describe('Test svg subjx "drag" method', () => {
             ...options
         };
 
-        const $draggables = subjx(svgElement).drag({
+        const $draggable = subjx(svgElement).drag({
             ...nextOptions
         });
 
-        expect($draggables[0].options).toMatchObject({
+        expect($draggable.options).toMatchObject({
             ...nextOptions,
             restrict: svgContainerElement,
             container: svgContainerElement,
@@ -398,7 +399,7 @@ describe('Test svg subjx "drag" method', () => {
             }
         });
 
-        $draggables.forEach(item => item.disable());
+        $draggable.disable();
     });
 
     it('test subjx hooks', () => {
@@ -430,10 +431,10 @@ describe('Test svg subjx "drag" method', () => {
             }
         };
 
-        const [draggable] = subjx(svgElement).drag({ ...methods });
+        const draggable = subjx(svgElement).drag({ ...methods });
 
         // simulate move
-        draggable.el.dispatchEvent(createEMouseDown());
+        draggable.elements[0].dispatchEvent(createEMouseDown());
 
         let step = 0;
         while (step < 5) {
@@ -483,7 +484,7 @@ describe('Test svg subjx "drag" method', () => {
     it('process move', () => {
         const $draggables = subjx(svgElement).drag({ each: { move: true } });
 
-        $draggables[0].el.dispatchEvent(createEMouseDown());
+        $draggables.elements[0].dispatchEvent(createEMouseDown());
 
         let step = 0;
         while (step < 5) {
@@ -494,24 +495,24 @@ describe('Test svg subjx "drag" method', () => {
 
         document.dispatchEvent(createEMouseUp());
 
-        expect($draggables[0].storage).toMatchObject({
+        expect($draggables.storage).toMatchObject({
             clientX: 150,
             clientY: 150,
-            cx: 150,
-            cy: 150,
+            relativeX: 150,
+            relativeY: 150,
             isTarget: true
         });
 
-        $draggables.forEach(item => item.disable());
+        $draggables.disable();
     });
 
     it('test subjx api', () => {
-        const [draggable] = subjx(svgElement).drag({ each: { move: true } });
+        const draggable = subjx(svgElement).drag({ each: { move: true } });
 
         expect(() => {
             draggable.fitControlsToSize();
             draggable.resetCenterPoint();
-            draggable.getBoundingRect();
+            draggable.getBoundingRect(svgElement);
             ['t', 'b', 'l', 'b', 'r', 'v', 'h'].map((align) => draggable.applyAlignment(align));
         }).not.toThrow();
     });
