@@ -1300,37 +1300,55 @@ export default class Draggable extends Transformable {
         });
     }
 
-    resetCenterPoint() {
+    setCenterPoint({ x, y, dx, dy } = {}, pin = true) {
         const {
             elements: [element] = [],
             storage: {
                 wrapper,
-                handles: { center }
-            },
+                handles: {
+                    center: handle
+                },
+                center
+            } = {},
             options: {
                 container
-            }
+            } = {}
         } = this;
 
-        if (!center) return;
+        const isRelative = isDef(dx) && isDef(dy),
+            isAbsolute = isDef(x) && isDef(y);
 
-        const { offsetHeight, offsetWidth } = element;
-
-        const [offsetLeft, offsetTop] = getAbsoluteOffset(element, container);
+        if (!handle || !center || !(isRelative || isAbsolute)) return;
 
         const matrix = multiplyMatrix(
             getCurrentTransformMatrix(element, container),
             matrixInvert(getCurrentTransformMatrix(wrapper, wrapper.parentNode))
         );
 
-        const [x, y] = multiplyMatrixAndPoint(
+        let newX, newY;
+
+        const [offsetLeft, offsetTop] = getAbsoluteOffset(element, container);
+
+        if (isRelative) {
+            const { offsetHeight, offsetWidth } = element;
+
+            newX = -dx + offsetWidth / 2;
+            newY = -dy + offsetHeight / 2;
+        } else {
+            newX = x;
+            newY = y;
+        }
+
+        const [nextX, nextY] = multiplyMatrixAndPoint(
             matrix,
-            [offsetWidth / 2, offsetHeight / 2, 0, 1]
+            [newX, newY, 0, 1]
         );
 
-        helper(center).css(
-            { transform: `translate(${x + offsetLeft}px, ${y + offsetTop}px)` }
-        );
+        helper(handle).css({
+            transform: `translate(${nextX + offsetLeft}px, ${nextY + offsetTop}px)`
+        });
+
+        center.isShifted = pin;
     }
 
     fitControlsToSize() {

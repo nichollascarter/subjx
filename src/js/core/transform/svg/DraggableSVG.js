@@ -439,15 +439,18 @@ export default class DraggableSVG extends Transformable {
         } = elementData;
 
         const getScale = (distX, distY) => {
+            const actualBoxWidth = boxWidth || 1;
+            const actualBoxHeight = boxHeight || 1;
+
             const ratio = doW || (!doW && !doH)
-                ? (boxWidth + distX) / boxWidth
-                : (boxHeight + distY) / boxHeight;
+                ? (actualBoxWidth + distX) / actualBoxWidth
+                : (actualBoxHeight + distY) / actualBoxHeight;
 
-            const newWidth = proportions ? boxWidth * ratio : boxWidth + distX,
-                newHeight = proportions ? boxHeight * ratio : boxHeight + distY;
+            const newWidth = proportions ? actualBoxWidth * ratio : actualBoxWidth + distX,
+                newHeight = proportions ? actualBoxHeight * ratio : actualBoxHeight + distY;
 
-            const scaleX = newWidth / boxWidth,
-                scaleY = newHeight / boxHeight;
+            const scaleX = newWidth / actualBoxWidth,
+                scaleY = newHeight / actualBoxHeight;
 
             return [scaleX, scaleY, newWidth, newHeight];
         };
@@ -1049,15 +1052,18 @@ export default class DraggableSVG extends Transformable {
         } = elementData;
 
         const getScale = (distX, distY) => {
+            const actualBoxWidth = boxWidth || 1;
+            const actualBoxHeight = boxHeight || 1;
+
             const ratio = doW || (!doW && !doH)
-                ? (boxWidth + distX) / boxWidth
-                : (boxHeight + distY) / boxHeight;
+                ? (actualBoxWidth + distX) / actualBoxWidth
+                : (actualBoxHeight + distY) / actualBoxHeight;
 
-            const newWidth = proportions ? boxWidth * ratio : boxWidth + distX,
-                newHeight = proportions ? boxHeight * ratio : boxHeight + distY;
+            const newWidth = proportions ? actualBoxWidth * ratio : actualBoxWidth + distX,
+                newHeight = proportions ? actualBoxHeight * ratio : actualBoxHeight + distY;
 
-            const scaleX = newWidth / boxWidth,
-                scaleY = newHeight / boxHeight;
+            const scaleX = newWidth / actualBoxWidth,
+                scaleY = newHeight / actualBoxHeight;
 
             return [scaleX, scaleY, newWidth, newHeight];
         };
@@ -1229,7 +1235,7 @@ export default class DraggableSVG extends Transformable {
         });
     }
 
-    resetCenterPoint() {
+    setCenterPoint({ x, y, dx, dy } = {}, pin = true) {
         const {
             elements,
             storage: {
@@ -1246,32 +1252,44 @@ export default class DraggableSVG extends Transformable {
             }
         } = this;
 
-        if (!center || !handle || !radius) return;
+        const isRelative = isDef(dx) && isDef(dy),
+            isAbsolute = isDef(x) && isDef(y);
 
-        const { x: bx, y: by, width, height } = this._getBBox();
-
-        const hW = width / 2,
-            hH = height / 2;
+        if (!center || !handle || !radius || !(isRelative || isAbsolute)) return;
 
         const controlsTransformMatrix = getTransformToElement(controls, controls.parentNode).inverse();
-
         const nextTransform = isGrouped
             ? controlsTransformMatrix
             : controlsTransformMatrix.multiply(getTransformToElement(elements[0], container));
 
-        const { x, y } = pointTo(
+        let newX, newY;
+
+        if (isRelative) {
+            const { x: bx, y: by, width, height } = this._getBBox();
+
+            const hW = width / 2,
+                hH = height / 2;
+
+            newX = bx + hW + dx;
+            newY = by + hH + dy;
+        } else {
+            newX = x;
+            newY = y;
+        }
+
+        const { x: nextX, y: nextY } = pointTo(
             nextTransform,
-            bx + hW,
-            by + hH
+            newX,
+            newY
         );
 
-        handle.cx.baseVal.value = x;
-        handle.cy.baseVal.value = y;
+        handle.cx.baseVal.value = nextX;
+        handle.cy.baseVal.value = nextY;
 
-        radius.x2.baseVal.value = x;
-        radius.y2.baseVal.value = y;
+        radius.x2.baseVal.value = nextX;
+        radius.y2.baseVal.value = nextY;
 
-        center.isShifted = false;
+        center.isShifted = pin;
     }
 
     fitControlsToSize() {

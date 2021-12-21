@@ -722,7 +722,6 @@ export default class Transformable extends SubjectModel {
             }
         ].find((({ condition }) => condition)) || {};
 
-
         storage.doResize = false;
         storage.doDrag = false;
         storage.doRotate = false;
@@ -1194,6 +1193,14 @@ export default class Transformable extends SubjectModel {
         });
 
         this._processControlsRotate({ radians: delta });
+    }
+
+    setCenterPoint() {
+        throw Error(`'setCenterPoint()' method not implemented`);
+    }
+
+    resetCenterPoint() {
+        this.setCenterPoint({ dx: 0, dy: 0 }, false);
     }
 
     get controls() {

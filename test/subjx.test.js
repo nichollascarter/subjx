@@ -358,8 +358,8 @@ describe('Test subjx "drag" method', () => {
 
         expect(() => {
             draggable.fitControlsToSize();
-            draggable.resetCenterPoint();
             draggable.getBoundingRect();
+            draggable.setCenterPoint();
             ['t', 'b', 'l', 'b', 'r', 'v', 'h'].map(align => draggable.applyAlignment(align));
         }).not.toThrow();
     });
@@ -511,8 +511,8 @@ describe('Test svg subjx "drag" method', () => {
 
         expect(() => {
             draggable.fitControlsToSize();
-            draggable.resetCenterPoint();
             draggable.getBoundingRect(svgElement);
+            draggable.setCenterPoint();
             ['t', 'b', 'l', 'b', 'r', 'v', 'h'].map((align) => draggable.applyAlignment(align));
         }).not.toThrow();
     });
