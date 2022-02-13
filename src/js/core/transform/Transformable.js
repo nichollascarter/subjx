@@ -16,7 +16,8 @@ import {
     isDef,
     isUndef,
     createMethod,
-    noop
+    noop,
+    warn
 } from '../util/util';
 
 import {
@@ -44,7 +45,8 @@ const {
     E_ROTATE_START,
     E_ROTATE,
     E_ROTATE_END,
-    E_SET_POINT
+    E_SET_POINT,
+    E_SET_POINT_END
 } = EVENT_EMITTER_CONSTANTS;
 
 const { TRANSFORM_HANDLES_KEYS, TRANSFORM_EDGES_KEYS } = TRANSFORM_HANDLES_CONSTANTS;
@@ -138,6 +140,7 @@ export default class Transformable extends SubjectModel {
             cursorResize = 'auto',
             cursorRotate = 'auto',
             rotationPoint = false,
+            transformOrigin = false,
             restrict,
             draggable = true,
             resizable = true,
@@ -165,6 +168,7 @@ export default class Transformable extends SubjectModel {
             cursorRotate,
             cursorResize,
             rotationPoint,
+            transformOrigin: transformOrigin || rotationPoint,
             restrict: restrict
                 ? helper(restrict)[0] || document.body
                 : null,
@@ -688,7 +692,6 @@ export default class Transformable extends SubjectModel {
             elements,
             options: { each },
             observable,
-            storage,
             storage: {
                 doResize,
                 doDrag,
@@ -722,15 +725,10 @@ export default class Transformable extends SubjectModel {
             }
         ].find((({ condition }) => condition)) || {};
 
-        storage.doResize = false;
-        storage.doDrag = false;
-        storage.doRotate = false;
-        storage.doSetCenter = false;
-        storage.doDraw = false;
-        storage.onExecution = false;
-        storage.cursor = null;
-
         elements.map(element => this._applyTransformToElement(element, actionName));
+
+        this._processActions(actionName);
+        this._updateStorage();
 
         const eventArgs = {
             clientX,
@@ -745,6 +743,8 @@ export default class Transformable extends SubjectModel {
             super._emitEvent(E_ROTATE_END, eventArgs);
         } else if (doDrag) {
             super._emitEvent(E_DRAG_END, eventArgs);
+        } else if (doSetCenter) {
+            super._emitEvent(E_SET_POINT_END, eventArgs);
         }
 
         const {
@@ -910,6 +910,31 @@ export default class Transformable extends SubjectModel {
         ));
 
         wrapper.parentNode.removeChild(wrapper);
+    }
+
+    _updateStorage() {
+        const {
+            storage,
+            storage: {
+                transformOrigin: prevTransformOrigin,
+                cached: {
+                    transformOrigin = prevTransformOrigin
+                } = {}
+            }
+        } = this;
+
+        this.storage = {
+            ...storage,
+            doResize: false,
+            doDrag: false,
+            doRotate: false,
+            doSetCenter: false,
+            doDraw: false,
+            onExecution: false,
+            cursor: null,
+            transformOrigin,
+            cached: {}
+        };
     }
 
     notifyMove({ dx, dy }) {
@@ -1200,7 +1225,16 @@ export default class Transformable extends SubjectModel {
     }
 
     resetCenterPoint() {
-        this.setCenterPoint({ dx: 0, dy: 0 }, false);
+        warn('"resetCenterPoint" method is replaced by "resetTransformOrigin" and would be removed soon');
+        this.setTransformOrigin({ dx: 0, dy: 0 }, false);
+    }
+
+    setTransformOrigin() {
+        throw Error(`'setTransformOrigin()' method not implemented`);
+    }
+
+    resetTransformOrigin() {
+        this.setTransformOrigin({ dx: 0, dy: 0 }, false);
     }
 
     get controls() {

@@ -149,7 +149,8 @@ const defaultOptions = {
     rotatorAnchor: null,
     rotatorOffset: 50,
     showNormal: true,
-    isGrouped: false
+    isGrouped: false,
+    transformOrigin: false
 };
 
 const options = {
@@ -360,7 +361,9 @@ describe('Test subjx "drag" method', () => {
             draggable.fitControlsToSize();
             draggable.getBoundingRect();
             draggable.setCenterPoint();
-            ['t', 'b', 'l', 'b', 'r', 'v', 'h'].map(align => draggable.applyAlignment(align));
+            draggable.setTransformOrigin();
+            draggable.getDimensions();
+            ['t', 'b', 'l', 'r', 'v', 'h'].map(align => draggable.applyAlignment(align));
         }).not.toThrow();
     });
 });
@@ -513,7 +516,9 @@ describe('Test svg subjx "drag" method', () => {
             draggable.fitControlsToSize();
             draggable.getBoundingRect(svgElement);
             draggable.setCenterPoint();
-            ['t', 'b', 'l', 'b', 'r', 'v', 'h'].map((align) => draggable.applyAlignment(align));
+            draggable.setTransformOrigin();
+            draggable.getDimensions();
+            ['t', 'b', 'l', 'r', 'v', 'h'].map((align) => draggable.applyAlignment(align));
         }).not.toThrow();
     });
 });
