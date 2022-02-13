@@ -128,10 +128,24 @@ xDraggable.applyAlignment('tr');
 // useful when element's container was transformed from outside
 xDraggable.fitControlsToSize();
 
-// Returns rotation point handle to default position
-xDraggable.resetCenterPoint();
-```
+// Sets the origin for an element's transformations
+xDraggable.setTransformOrigin(
+    {
+        x, // absolute the origin's position x coordinate
+        y, // absolute he origin's position y coordinate
+        dx, // offset the origin's position x coordinate
+        dy // offset the origin's position y coordinate
+    },
+    pin // leaves current origin fixed if true or not if false
+);
 
+// Sets transform origin to default
+xDraggable.resetTransformOrigin();
+
+// Returns element's current dimensions
+xDraggable.getDimensions();
+```
+transformOrigin
 ### Options
 
 |Property|Description|Type|Default|
@@ -149,6 +163,7 @@ xDraggable.resetCenterPoint();
 | **restrict** | Restricts element dragging/resizing/rotation | `'selector'` \| `element` | - |
 | **rotatorAnchor** | Rotator anchor direction | `string`: 'n' \| 's' \| 'w' \| 'e' | 'e' |
 | **rotatorOffset** | Rotator offset  | `number` | 50 |
+| **transformOrigin** | Sets the origin for an element's transformations | `boolean` \| Array<number> | false |
 
 #### Notice: In most cases, it is recommended to use 'proportions' option
 
