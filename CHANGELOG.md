@@ -1,3 +1,11 @@
+# [1.1.0-rc.1](https://github.com/nichollascarter/subjx/compare/v1.0.0...v1.1.0-rc.1) (2022-02-13)
+
+
+### Features
+
+* **src:** add setCenterPoint method ([7995cf5](https://github.com/nichollascarter/subjx/commit/7995cf504434d98e60bfa6e240a7e14eee8372fb)), closes [#56](https://github.com/nichollascarter/subjx/issues/56)
+* added transform origin support ([75e33de](https://github.com/nichollascarter/subjx/commit/75e33de273d896b3b3e64593be123bea4dd6d64f))
+
 # [1.0.0](https://github.com/nichollascarter/subjx/compare/v0.3.9...v1.0.0) (2021-12-15)
 
 
