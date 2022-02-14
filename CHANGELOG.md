@@ -19,6 +19,13 @@
 
 * fix wrong transform-origin position for nested elements ([93af678](https://github.com/nichollascarter/subjx/commit/93af67887834b0c455ab8cbb38b8d7a7765d9ae5))
 
+# [1.1.0-rc.2](https://github.com/nichollascarter/subjx/compare/v1.1.0-rc.1...v1.1.0-rc.2) (2022-02-14)
+
+
+### Bug Fixes
+
+* fix wrong transform-origin position for nested elements ([93af678](https://github.com/nichollascarter/subjx/commit/93af67887834b0c455ab8cbb38b8d7a7765d9ae5))
+
 # [1.1.0-rc.1](https://github.com/nichollascarter/subjx/compare/v1.0.0...v1.1.0-rc.1) (2022-02-13)
 
 
