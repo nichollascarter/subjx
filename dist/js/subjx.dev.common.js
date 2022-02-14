@@ -5831,7 +5831,7 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
           elcx = _ref7.x,
           elcy = _ref7.y;
 
-      var _ref8 = cHandle ? pointTo(isGrouped ? parentMatrixInverted : elMatrix.inverse(), bcx, bcy) : pointTo(isGrouped ? parentMatrixInverted : createSVGMatrix(), scaleX, scaleY),
+      var _ref8 = cHandle ? pointTo(isGrouped ? parentMatrixInverted : ctm.inverse(), bcx, bcy) : pointTo(isGrouped ? parentMatrixInverted : createSVGMatrix(), scaleX, scaleY),
           nextScaleX = _ref8.x,
           nextScaleY = _ref8.y;
 
