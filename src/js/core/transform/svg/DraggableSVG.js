@@ -685,7 +685,7 @@ export default class DraggableSVG extends Transformable {
 
         const { x: nextScaleX, y: nextScaleY } = cHandle
             ? pointTo(
-                isGrouped ? parentMatrixInverted : elMatrix.inverse(),
+                isGrouped ? parentMatrixInverted : ctm.inverse(),
                 bcx,
                 bcy
             )
