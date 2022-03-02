@@ -1,3 +1,10 @@
+# [1.1.0-rc.3](https://github.com/nichollascarter/subjx/compare/v1.1.0-rc.2...v1.1.0-rc.3) (2022-03-02)
+
+
+### Bug Fixes
+
+* **src:** fixed undefined containerMatrix value on applying alignment ([6b20349](https://github.com/nichollascarter/subjx/commit/6b20349b3ca408297d923f64646bc69ac860245c))
+
 # [1.1.0-rc.2](https://github.com/nichollascarter/subjx/compare/v1.1.0-rc.1...v1.1.0-rc.2) (2022-02-14)
 
 

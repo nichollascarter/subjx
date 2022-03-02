@@ -2659,7 +2659,8 @@
               controlsContainer = _this$options.controlsContainer,
               resizable = _this$options.resizable,
               rotatable = _this$options.rotatable,
-              showNormal = _this$options.showNormal;
+              showNormal = _this$options.showNormal,
+              restrict = _this$options.restrict;
           var wrapper = createElement(['sjx-wrapper']);
           var controls = createElement(['sjx-controls']);
           var handles = {};
@@ -2739,6 +2740,7 @@
               cached: {}
             });
           });
+          var restrictContainer = restrict || container;
           this.storage = {
             wrapper: wrapper,
             controls: controls,
@@ -2747,7 +2749,10 @@
             center: {
               isShifted: Array.isArray(transformOrigin)
             },
-            transformOrigin: nextTransformOrigin
+            transformOrigin: nextTransformOrigin,
+            transform: {
+              containerMatrix: getCurrentTransformMatrix(restrictContainer, restrictContainer.parentNode)
+            }
           };
           [].concat(_toConsumableArray(elements), [controls]).map(function (target) {
             return helper(target).on(E_MOUSEDOWN$2, _this._onMouseDown).on(E_TOUCHSTART$2, _this._onTouchStart);
@@ -3104,7 +3109,8 @@
               glTop = _getAbsoluteOffset4[1];
 
           var ctm = getCurrentTransformMatrix(elements[0], container);
-          var containerMatrix = restrict ? getCurrentTransformMatrix(restrict, restrict.parentNode) : getCurrentTransformMatrix(container, container.parentNode);
+          var restrictContainer = restrict || container;
+          var containerMatrix = getCurrentTransformMatrix(restrictContainer, restrictContainer.parentNode);
 
           var _this$_getBBox = this._getBBox(),
               boxWidth = _this$_getBBox.width,
@@ -5350,7 +5356,8 @@
               resizable = _this$options.resizable,
               rotatable = _this$options.rotatable,
               showNormal = _this$options.showNormal,
-              transformOrigin = _this$options.transformOrigin;
+              transformOrigin = _this$options.transformOrigin,
+              restrict = _this$options.restrict;
           var wrapper = createSVGElement('g', ['sjx-svg-wrapper']);
           var controls = createSVGElement('g', ['sjx-svg-controls']);
 
@@ -5438,6 +5445,7 @@
               cached: {}
             });
           });
+          var restrictContainer = restrict || container;
           this.storage = {
             wrapper: wrapper,
             controls: controls,
@@ -5446,7 +5454,10 @@
             center: {
               isShifted: Array.isArray(transformOrigin)
             },
-            transformOrigin: nextTransformOrigin
+            transformOrigin: nextTransformOrigin,
+            transform: {
+              containerMatrix: getTransformToElement(restrictContainer, restrictContainer.parentNode)
+            }
           };
           [].concat(_toConsumableArray(elements), [controls]).map(function (target) {
             return helper(target).on(E_MOUSEDOWN$3, _this._onMouseDown).on(E_TOUCHSTART$3, _this._onTouchStart);
@@ -5897,7 +5908,8 @@
               rcx = _pointTo6.x,
               rcy = _pointTo6.y;
 
-          var containerMatrix = restrict ? getTransformToElement(restrict, restrict.parentNode) : getTransformToElement(container, container.parentNode);
+          var restrictContainer = restrict || container;
+          var containerMatrix = getTransformToElement(restrictContainer, restrictContainer.parentNode);
 
           var center = _objectSpread2({}, this.storage.center || {}, {
             x: cHandle ? bcx : rcx,
