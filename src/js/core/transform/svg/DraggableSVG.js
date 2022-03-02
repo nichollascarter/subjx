@@ -40,7 +40,8 @@ export default class DraggableSVG extends Transformable {
                 resizable,
                 rotatable,
                 showNormal,
-                transformOrigin
+                transformOrigin,
+                restrict
             }
         } = this;
 
@@ -171,6 +172,8 @@ export default class DraggableSVG extends Transformable {
             })
         ));
 
+        const restrictContainer = restrict || container;
+
         this.storage = {
             wrapper,
             controls,
@@ -182,7 +185,10 @@ export default class DraggableSVG extends Transformable {
             center: {
                 isShifted: Array.isArray(transformOrigin)
             },
-            transformOrigin: nextTransformOrigin
+            transformOrigin: nextTransformOrigin,
+            transform: {
+                containerMatrix: getTransformToElement(restrictContainer, restrictContainer.parentNode)
+            }
         };
 
         [...elements, controls].map(target => (
@@ -773,9 +779,8 @@ export default class DraggableSVG extends Transformable {
             elCenterY
         );
 
-        const containerMatrix = restrict
-            ? getTransformToElement(restrict, restrict.parentNode)
-            : getTransformToElement(container, container.parentNode);
+        const restrictContainer = restrict || container;
+        const containerMatrix = getTransformToElement(restrictContainer, restrictContainer.parentNode);
 
         const center = {
             ...(this.storage.center || {}),

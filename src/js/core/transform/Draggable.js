@@ -35,7 +35,8 @@ export default class Draggable extends Transformable {
                 controlsContainer,
                 resizable,
                 rotatable,
-                showNormal
+                showNormal,
+                restrict
             }
         } = this;
 
@@ -137,6 +138,8 @@ export default class Draggable extends Transformable {
             })
         ));
 
+        const restrictContainer = restrict || container;
+
         this.storage = {
             wrapper,
             controls,
@@ -148,7 +151,10 @@ export default class Draggable extends Transformable {
             center: {
                 isShifted: Array.isArray(transformOrigin)
             },
-            transformOrigin: nextTransformOrigin
+            transformOrigin: nextTransformOrigin,
+            transform: {
+                containerMatrix: getCurrentTransformMatrix(restrictContainer, restrictContainer.parentNode)
+            }
         };
 
         [...elements, controls].map(target => (
@@ -644,9 +650,8 @@ export default class Draggable extends Transformable {
         const [glLeft, glTop] = getAbsoluteOffset(elements[0], container);
         const ctm = getCurrentTransformMatrix(elements[0], container);
 
-        const containerMatrix = restrict
-            ? getCurrentTransformMatrix(restrict, restrict.parentNode)
-            : getCurrentTransformMatrix(container, container.parentNode);
+        const restrictContainer = restrict || container;
+        const containerMatrix = getCurrentTransformMatrix(restrictContainer, restrictContainer.parentNode);
 
         const {
             width: boxWidth,
