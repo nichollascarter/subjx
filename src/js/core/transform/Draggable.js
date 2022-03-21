@@ -1260,10 +1260,11 @@ export default class Draggable extends Transformable {
             },
             storage: {
                 handles,
+                controls,
                 center: { isShifted = false } = {},
                 transform: {
-                    controlsMatrix
-                }
+                    controlsMatrix = getCurrentTransformMatrix(controls, controls.parentNode)
+                } = {}
             }
         } = this;
 
@@ -1406,10 +1407,10 @@ export default class Draggable extends Transformable {
                 center: {
                     isShifted
                 } = {},
-                transformOrigin: {
-                    x: originX,
-                    y: originY
-                } = {}
+                transformOrigin: [
+                    originX,
+                    originY
+                ]
             }
         } = this;
 
