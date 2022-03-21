@@ -1,3 +1,11 @@
+# [1.1.0-rc.4](https://github.com/nichollascarter/subjx/compare/v1.1.0-rc.3...v1.1.0-rc.4) (2022-03-21)
+
+
+### Bug Fixes
+
+* **core:** fixed tests ([5d81abe](https://github.com/nichollascarter/subjx/commit/5d81abe94f745b25d4d539d081bcd14a9870003a))
+* **core:** set correct transform origin, allow alignment for groupable html elements ([cf29d29](https://github.com/nichollascarter/subjx/commit/cf29d2910cbea89c83864b98d382cbfdda535531))
+
 # [1.1.0-rc.3](https://github.com/nichollascarter/subjx/compare/v1.1.0-rc.2...v1.1.0-rc.3) (2022-03-02)
 
 
