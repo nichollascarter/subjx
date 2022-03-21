@@ -917,8 +917,12 @@ export default class Transformable extends SubjectModel {
             storage,
             storage: {
                 transformOrigin: prevTransformOrigin,
+                transform: {
+                    controlsMatrix: prevControlsMatrix
+                } = {},
                 cached: {
-                    transformOrigin = prevTransformOrigin
+                    transformOrigin = prevTransformOrigin,
+                    controlsMatrix = prevControlsMatrix
                 } = {}
             }
         } = this;
@@ -933,6 +937,7 @@ export default class Transformable extends SubjectModel {
             onExecution: false,
             cursor: null,
             transformOrigin,
+            controlsMatrix,
             cached: {}
         };
     }

@@ -154,7 +154,8 @@ export default class Draggable extends Transformable {
             transformOrigin: nextTransformOrigin,
             transform: {
                 containerMatrix: getCurrentTransformMatrix(restrictContainer, restrictContainer.parentNode)
-            }
+            },
+            cached: {}
         };
 
         [...elements, controls].map(target => (
@@ -767,9 +768,7 @@ export default class Draggable extends Transformable {
             createTranslateMatrix(dx, dy)
         );
 
-        const wrapperStyle = matrixToCSS(flatMatrix(moveControlsMtrx));
-
-        this._updateControlsView(wrapperStyle);
+        this._updateControlsView(moveControlsMtrx);
 
         const centerTransformMatrix = dropTranslate(matrixInvert(wrapperMatrix));
         const [cx, cy] = multiplyMatrixAndPoint(
@@ -992,8 +991,11 @@ export default class Draggable extends Transformable {
         helper(element).css(css);
     }
 
-    _updateControlsView(css) {
-        helper(this.storage.controls).css(css);
+    _updateControlsView(matrix = createIdentityMatrix()) {
+        const cssStyle = matrixToCSS(flatMatrix(matrix));
+        helper(this.storage.controls).css(cssStyle);
+
+        this.storage.cached.controlsMatrix = matrix;
     }
 
     _getVertices(transformMatrix = createIdentityMatrix()) {
@@ -1374,43 +1376,65 @@ export default class Draggable extends Transformable {
         if (isRelative) {
             const { offsetHeight, offsetWidth } = element;
 
-            newX = -dx + offsetWidth / 2;
-            newY = -dy + offsetHeight / 2;
+            const relX = -dx + offsetWidth / 2;
+            const relY = -dy + offsetHeight / 2;
+
+            [newX, newY] = multiplyMatrixAndPoint(
+                matrix,
+                [relX, relY, 0, 1]
+            );
         } else {
             newX = x;
             newY = y;
         }
 
-        const [nextX, nextY] = multiplyMatrixAndPoint(
-            matrix,
-            [newX, newY, 0, 1]
-        );
-
         helper(handle).css({
-            transform: `translate(${nextX + offsetLeft}px, ${nextY + offsetTop}px)`
+            transform: `translate(${newX + offsetLeft}px, ${newY + offsetTop}px)`
         });
 
         center.isShifted = pin;
         storage.transformOrigin = multiplyMatrixAndPoint(
             createIdentityMatrix(),
-            [nextX, nextY, 0, 1]
+            [newX, newY, 0, 1]
         );
     }
 
     fitControlsToSize() {
-        const identityMatrix = createIdentityMatrix();
-
-        this.storage = {
-            ...this.storage,
-            transform: {
-                ...(this.storage.transform || {}),
-                controlsMatrix: identityMatrix
+        const {
+            storage: {
+                controls,
+                center: {
+                    isShifted
+                } = {},
+                transformOrigin: {
+                    x: originX,
+                    y: originY
+                } = {}
             }
-        };
+        } = this;
 
-        this._updateControlsView(
-            matrixToCSS(flatMatrix(identityMatrix))
+        const controlsMatrix = getCurrentTransformMatrix(controls, controls.parentNode);
+        const [dx, dy] =  multiplyMatrixAndPoint(
+            controlsMatrix,
+            [originX, originY, 0, 1]
         );
+
+        const { nextValues, pin } = [
+            {
+                nextValues: () => ({ x: dx, y: dy }),
+                pin: true,
+                condition: () => isShifted
+            },
+            {
+                nextValues: () => ({ dx: 0, dy: 0 }),
+                pin: false,
+                condition: () => !isShifted
+            }
+        ].find(({ condition }) => condition());
+
+        this._updateControlsView();
+
+        this.setTransformOrigin({ ...nextValues() }, pin);
         this._applyTransformToHandles();
     }
 
@@ -1523,10 +1547,13 @@ export default class Draggable extends Transformable {
             createTranslateMatrix(x, y)
         );
 
-        this._updateElementView(
-            elements[0],
-            matrixToCSS(flatMatrix(moveElementMtrx))
-        );
+        elements.map((element) => (
+            this._updateElementView(
+                element,
+                matrixToCSS(flatMatrix(moveElementMtrx))
+            )
+        ));
+
         this.fitControlsToSize();
     }
 
