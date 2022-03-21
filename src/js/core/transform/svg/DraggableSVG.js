@@ -188,7 +188,8 @@ export default class DraggableSVG extends Transformable {
             transformOrigin: nextTransformOrigin,
             transform: {
                 containerMatrix: getTransformToElement(restrictContainer, restrictContainer.parentNode)
-            }
+            },
+            cached: {}
         };
 
         [...elements, controls].map(target => (
@@ -1195,6 +1196,8 @@ export default class DraggableSVG extends Transformable {
             'transform',
             matrixToString(matrix)
         );
+
+        this.storage.cached.controlsMatrix = matrix;
     }
 
     _applyTransformToHandles({ boxMatrix = createSVGMatrix() } = {}) {
@@ -1314,50 +1317,64 @@ export default class DraggableSVG extends Transformable {
             const hW = width / 2,
                 hH = height / 2;
 
-            newX = bx + hW + dx;
-            newY = by + hH + dy;
+            ({ x: newX, y: newY } = pointTo(
+                nextTransform,
+                bx + hW + dx,
+                by + hH + dy
+            ));
         } else {
             newX = x;
             newY = y;
         }
 
-        const { x: nextX, y: nextY } = pointTo(
-            nextTransform,
-            newX,
-            newY
-        );
+        handle.cx.baseVal.value = newX;
+        handle.cy.baseVal.value = newY;
 
-        handle.cx.baseVal.value = nextX;
-        handle.cy.baseVal.value = nextY;
-
-        radius.x2.baseVal.value = nextX;
-        radius.y2.baseVal.value = nextY;
+        radius.x2.baseVal.value = newX;
+        radius.y2.baseVal.value = newY;
 
         center.isShifted = pin;
         storage.transformOrigin = pointTo(
             createSVGMatrix(),
-            nextX,
-            nextY
+            newX,
+            newY
         );
     }
 
     fitControlsToSize() {
         const {
-            storage = {}
+            storage: {
+                controls,
+                center: {
+                    isShifted
+                } = {},
+                transformOrigin: {
+                    x: originX,
+                    y: originY
+                } = {}
+            }
         } = this;
 
-        const identityMatrix = createSVGMatrix();
+        const controlsMatrix = getTransformToElement(controls, controls.parentNode);
+        const { x: dx, y: dy } = pointTo(controlsMatrix, originX, originY);
 
-        this.storage = {
-            ...storage,
-            transform: {
-                ...(storage.transform || {}),
-                controlsMatrix: identityMatrix
+        const { nextValues, pin } = [
+            {
+                nextValues: () => ({ x: dx, y: dy }),
+                pin: true,
+                condition: () => isShifted
+            },
+            {
+                nextValues: () => ({ dx: 0, dy: 0 }),
+                pin: false,
+                condition: () => !isShifted
             }
-        };
+        ].find(({ condition }) => condition());
 
-        this._updateControlsView(identityMatrix);
-        this._applyTransformToHandles({ boxMatrix: identityMatrix });
+        this._updateControlsView();
+
+        this.setTransformOrigin({ ...nextValues() }, pin);
+        this._applyTransformToHandles();
     }
 
     getBoundingRect(element, transformMatrix = null) {

@@ -145,7 +145,7 @@ xDraggable.resetTransformOrigin();
 // Returns element's current dimensions
 xDraggable.getDimensions();
 ```
-transformOrigin
+
 ### Options
 
 |Property|Description|Type|Default|
