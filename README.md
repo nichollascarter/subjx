@@ -151,11 +151,11 @@ xDraggable.getDimensions();
 |Property|Description|Type|Default|
 |--|--|--|--|
 | **container** | Transformation coordinate system | `'selector'` \| `element` | element.parentNode |
-| **controlsContainer** | "controls" will append to this element | `'selector'` \| `element` | element.parentNode |
+| **controlsContainer** | Parent element of 'controls' | `'selector'` \| `element` | element.parentNode |
 | **axis** | Constrain movement along an axis | `string`: 'x' \| 'y' \| 'xy' | 'xy' |
 | **snap** | Snapping to grid in pixels/radians | `object` | { x: 10, y: 10, angle: 10 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
-| **proportions** | Keep aspect ratio when resizing | `boolean` | false |
+| **proportions** | Keep aspect ratio on resizing / scaling | `boolean` | false |
 | **draggable** | Allow or deny an action | `boolean` | true |
 | **resizable** | Allow or deny an action | `boolean` | true |
 | **rotatable** | Allow or deny an action | `boolean` | true |

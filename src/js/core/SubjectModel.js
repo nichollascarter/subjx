@@ -9,6 +9,7 @@ const {
     E_TOUCHMOVE,
     E_TOUCHEND
 } = CLIENT_EVENTS_CONSTANTS;
+
 export default class SubjectModel {
 
     constructor(elements) {
