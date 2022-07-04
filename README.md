@@ -128,8 +128,22 @@ xDraggable.applyAlignment('tr');
 // useful when element's container was transformed from outside
 xDraggable.fitControlsToSize();
 
-// Returns rotation point handle to default position
-xDraggable.resetCenterPoint();
+// Sets the origin for an element's transformations
+xDraggable.setTransformOrigin(
+    {
+        x, // absolute the origin's position x coordinate
+        y, // absolute he origin's position y coordinate
+        dx, // offset the origin's position x coordinate
+        dy // offset the origin's position y coordinate
+    },
+    pin // leaves current origin fixed if true or not if false
+);
+
+// Sets transform origin to default
+xDraggable.resetTransformOrigin();
+
+// Returns element's current dimensions
+xDraggable.getDimensions();
 ```
 
 ### Options
@@ -137,11 +151,11 @@ xDraggable.resetCenterPoint();
 |Property|Description|Type|Default|
 |--|--|--|--|
 | **container** | Transformation coordinate system | `'selector'` \| `element` | element.parentNode |
-| **controlsContainer** | "controls" will append to this element | `'selector'` \| `element` | element.parentNode |
+| **controlsContainer** | Parent element of 'controls' | `'selector'` \| `element` | element.parentNode |
 | **axis** | Constrain movement along an axis | `string`: 'x' \| 'y' \| 'xy' | 'xy' |
 | **snap** | Snapping to grid in pixels/radians | `object` | { x: 10, y: 10, angle: 10 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
-| **proportions** | Keep aspect ratio when resizing | `boolean` | false |
+| **proportions** | Keep aspect ratio on resizing / scaling | `boolean` | false |
 | **draggable** | Allow or deny an action | `boolean` | true |
 | **resizable** | Allow or deny an action | `boolean` | true |
 | **rotatable** | Allow or deny an action | `boolean` | true |
@@ -149,6 +163,7 @@ xDraggable.resetCenterPoint();
 | **restrict** | Restricts element dragging/resizing/rotation | `'selector'` \| `element` | - |
 | **rotatorAnchor** | Rotator anchor direction | `string`: 'n' \| 's' \| 'w' \| 'e' | 'e' |
 | **rotatorOffset** | Rotator offset  | `number` | 50 |
+| **transformOrigin** | Sets the origin for an element's transformations | `boolean` \| Array<number> | false |
 
 #### Notice: In most cases, it is recommended to use 'proportions' option
 

@@ -149,7 +149,8 @@ const defaultOptions = {
     rotatorAnchor: null,
     rotatorOffset: 50,
     showNormal: true,
-    isGrouped: false
+    isGrouped: false,
+    transformOrigin: false
 };
 
 const options = {
@@ -223,6 +224,19 @@ describe('Test subjx "drag" method', () => {
         });
 
         draggable.disable();
+    });
+
+    it('test subjx api', () => {
+        const draggable = subjx(draggables).drag({ each: { move: true } });
+
+        expect(() => {
+            draggable.fitControlsToSize();
+            draggable.getBoundingRect();
+            draggable.setCenterPoint();
+            draggable.setTransformOrigin({ x: 0, y: 0 });
+            draggable.getDimensions();
+            ['t', 'b', 'l', 'r', 'v', 'h'].map(align => draggable.applyAlignment(align));
+        }).not.toThrow();
     });
 
     it('init draggable with options', () => {
@@ -352,17 +366,6 @@ describe('Test subjx "drag" method', () => {
 
         $draggables.disable();
     });
-
-    it('test subjx api', () => {
-        const draggable = subjx(draggables).drag({ each: { move: true } });
-
-        expect(() => {
-            draggable.fitControlsToSize();
-            draggable.resetCenterPoint();
-            draggable.getBoundingRect();
-            ['t', 'b', 'l', 'b', 'r', 'v', 'h'].map(align => draggable.applyAlignment(align));
-        }).not.toThrow();
-    });
 });
 
 describe('Test svg subjx "drag" method', () => {
@@ -375,6 +378,19 @@ describe('Test svg subjx "drag" method', () => {
         });
 
         draggable.disable();
+    });
+
+    it('test subjx api', () => {
+        const draggable = subjx(svgElement).drag({ each: { move: true } });
+
+        expect(() => {
+            draggable.fitControlsToSize();
+            draggable.getBoundingRect(svgElement);
+            draggable.setCenterPoint();
+            draggable.setTransformOrigin({ x: 0, y: 0 });
+            draggable.getDimensions();
+            ['t', 'b', 'l', 'r', 'v', 'h'].map((align) => draggable.applyAlignment(align));
+        }).not.toThrow();
     });
 
     it('init draggable with options', () => {
@@ -504,16 +520,5 @@ describe('Test svg subjx "drag" method', () => {
         });
 
         $draggables.disable();
-    });
-
-    it('test subjx api', () => {
-        const draggable = subjx(svgElement).drag({ each: { move: true } });
-
-        expect(() => {
-            draggable.fitControlsToSize();
-            draggable.resetCenterPoint();
-            draggable.getBoundingRect(svgElement);
-            ['t', 'b', 'l', 'b', 'r', 'v', 'h'].map((align) => draggable.applyAlignment(align));
-        }).not.toThrow();
     });
 });
