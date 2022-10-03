@@ -74,11 +74,10 @@ export const multiplyMatrix = (m1, m2) => {
 };
 
 export const matrixInvert = (matrix) => {
-    const _A = cloneMatrix(matrix);
+    const A = cloneMatrix(matrix);
+    const N = A.length;
 
-    let temp,
-        N = _A.length,
-        E = [];
+    let temp, E = [];
 
     for (let i = 0; i < N; i++)
         E[i] = [];
@@ -86,23 +85,25 @@ export const matrixInvert = (matrix) => {
     for (let i = 0; i < N; i++)
         for (let j = 0; j < N; j++) {
             E[i][j] = 0;
-            if (i == j)
+            if (i === j)
                 E[i][j] = 1;
         }
 
     for (let k = 0; k < N; k++) {
-        temp = _A[k][k];
+        temp = A[k][k];
 
-        for (let j = 0; j < N; j++) {
-            _A[k][j] /= temp;
-            E[k][j] /= temp;
+        if (temp !== 0) {
+            for (let j = 0; j < N; j++) {
+                A[k][j] /= temp;
+                E[k][j] /= temp;
+            }
         }
 
         for (let i = k + 1; i < N; i++) {
-            temp = _A[i][k];
+            temp = A[i][k];
 
             for (let j = 0; j < N; j++) {
-                _A[i][j] -= _A[k][j] * temp;
+                A[i][j] -= A[k][j] * temp;
                 E[i][j] -= E[k][j] * temp;
             }
         }
@@ -110,10 +111,10 @@ export const matrixInvert = (matrix) => {
 
     for (let k = N - 1; k > 0; k--) {
         for (let i = k - 1; i >= 0; i--) {
-            temp = _A[i][k];
+            temp = A[i][k];
 
             for (let j = 0; j < N; j++) {
-                _A[i][j] -= _A[k][j] * temp;
+                A[i][j] -= A[k][j] * temp;
                 E[i][j] -= E[k][j] * temp;
             }
         }
@@ -121,9 +122,9 @@ export const matrixInvert = (matrix) => {
 
     for (let i = 0; i < N; i++)
         for (let j = 0; j < N; j++)
-            _A[i][j] = E[i][j];
+            A[i][j] = E[i][j];
 
-    return _A;
+    return A;
 };
 
 export const computeTransformMatrix = (tx, [x, y, z]) => {
