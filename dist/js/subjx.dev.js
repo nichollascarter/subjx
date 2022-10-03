@@ -2466,10 +2466,9 @@
       return result;
     };
     var matrixInvert = function matrixInvert(matrix) {
-      var _A = cloneMatrix(matrix);
-
+      var A = cloneMatrix(matrix);
+      var N = A.length;
       var temp,
-          N = _A.length,
           E = [];
 
       for (var i = 0; i < N; i++) {
@@ -2479,23 +2478,25 @@
       for (var _i = 0; _i < N; _i++) {
         for (var j = 0; j < N; j++) {
           E[_i][j] = 0;
-          if (_i == j) E[_i][j] = 1;
+          if (_i === j) E[_i][j] = 1;
         }
       }
 
       for (var k = 0; k < N; k++) {
-        temp = _A[k][k];
+        temp = A[k][k];
 
-        for (var _j = 0; _j < N; _j++) {
-          _A[k][_j] /= temp;
-          E[k][_j] /= temp;
+        if (temp !== 0) {
+          for (var _j = 0; _j < N; _j++) {
+            A[k][_j] /= temp;
+            E[k][_j] /= temp;
+          }
         }
 
         for (var _i2 = k + 1; _i2 < N; _i2++) {
-          temp = _A[_i2][k];
+          temp = A[_i2][k];
 
           for (var _j2 = 0; _j2 < N; _j2++) {
-            _A[_i2][_j2] -= _A[k][_j2] * temp;
+            A[_i2][_j2] -= A[k][_j2] * temp;
             E[_i2][_j2] -= E[k][_j2] * temp;
           }
         }
@@ -2503,10 +2504,10 @@
 
       for (var _k = N - 1; _k > 0; _k--) {
         for (var _i3 = _k - 1; _i3 >= 0; _i3--) {
-          temp = _A[_i3][_k];
+          temp = A[_i3][_k];
 
           for (var _j3 = 0; _j3 < N; _j3++) {
-            _A[_i3][_j3] -= _A[_k][_j3] * temp;
+            A[_i3][_j3] -= A[_k][_j3] * temp;
             E[_i3][_j3] -= E[_k][_j3] * temp;
           }
         }
@@ -2514,11 +2515,11 @@
 
       for (var _i4 = 0; _i4 < N; _i4++) {
         for (var _j4 = 0; _j4 < N; _j4++) {
-          _A[_i4][_j4] = E[_i4][_j4];
+          A[_i4][_j4] = E[_i4][_j4];
         }
       }
 
-      return _A;
+      return A;
     };
     var computeTransformMatrix = function computeTransformMatrix(tx, _ref) {
       var _ref2 = _slicedToArray(_ref, 3),
