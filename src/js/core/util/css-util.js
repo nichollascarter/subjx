@@ -1,9 +1,9 @@
 import { helper } from '../Helper';
 import { CSS_PREFIXES } from '../consts';
 
-export const getOffset = node => node.getBoundingClientRect();
+const getOffset = node => node.getBoundingClientRect();
 
-export const addClass = (node, cls) => {
+const addClass = (node, cls) => {
     if (!cls) return;
 
     if (node.classList) {
@@ -18,7 +18,7 @@ export const addClass = (node, cls) => {
     return node;
 };
 
-export const removeClass = (node, cls) => {
+const removeClass = (node, cls) => {
     if (!cls) return;
 
     if (node.classList) {
@@ -33,7 +33,7 @@ export const removeClass = (node, cls) => {
     return node;
 };
 
-export const objectsCollide = (a, b) => {
+const objectsCollide = (a, b) => {
     const {
             top: aTop,
             left: aLeft
@@ -53,7 +53,7 @@ export const objectsCollide = (a, b) => {
     );
 };
 
-export const matrixToCSS = (arr) => {
+const matrixToCSS = (arr) => {
     const style = `matrix3d(${arr.join()})`;
 
     return {
@@ -65,7 +65,7 @@ export const matrixToCSS = (arr) => {
     };
 };
 
-export const getStyle = (el, property) => {
+const getStyle = (el, property) => {
     const style = window.getComputedStyle(el);
     let value = null;
 
@@ -77,7 +77,7 @@ export const getStyle = (el, property) => {
     return value;
 };
 
-export const getScrollOffset = () => {
+const getScrollOffset = () => {
     const doc = document.documentElement;
     return {
         left: (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0),
@@ -85,7 +85,7 @@ export const getScrollOffset = () => {
     };
 };
 
-export const getElementOffset = (el) => {
+const getElementOffset = (el) => {
     let left = 0;
     let top = 0;
 
@@ -95,4 +95,15 @@ export const getElementOffset = (el) => {
         el = el.offsetParent;
     }
     return { left, top };
+};
+
+export {
+    getOffset,
+    addClass,
+    removeClass,
+    objectsCollide,
+    matrixToCSS,
+    getStyle,
+    getScrollOffset,
+    getElementOffset
 };

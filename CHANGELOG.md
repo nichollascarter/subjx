@@ -1,3 +1,17 @@
+## [1.1.1-rc.1](https://github.com/nichollascarter/subjx/compare/v1.1.0...v1.1.1-rc.1) (2023-01-06)
+
+
+### Bug Fixes
+
+* **core:** fixed issue on rotating to 90deg ([163e06d](https://github.com/nichollascarter/subjx/commit/163e06dabbf5ed4e956ad33ce7a0738819c59abb)), closes [#47](https://github.com/nichollascarter/subjx/issues/47)
+
+# [1.1.0-rc.5](https://github.com/nichollascarter/subjx/compare/v1.1.0-rc.4...v1.1.0-rc.5) (2022-10-03)
+
+
+### Bug Fixes
+
+* **core:** fixed issue on rotating to 90deg ([163e06d](https://github.com/nichollascarter/subjx/commit/163e06dabbf5ed4e956ad33ce7a0738819c59abb)), closes [#47](https://github.com/nichollascarter/subjx/issues/47)
+
 # [1.1.0](https://github.com/nichollascarter/subjx/compare/v1.0.0...v1.1.0) (2022-07-04)
 
 
@@ -7,7 +21,6 @@
 * **core:** fixed tests ([5d81abe](https://github.com/nichollascarter/subjx/commit/5d81abe94f745b25d4d539d081bcd14a9870003a))
 * **src:** fixed undefined containerMatrix value on applying alignment ([6b20349](https://github.com/nichollascarter/subjx/commit/6b20349b3ca408297d923f64646bc69ac860245c))
 * **core:** set correct transform origin, allow alignment for groupable html elements ([cf29d29](https://github.com/nichollascarter/subjx/commit/cf29d2910cbea89c83864b98d382cbfdda535531))
-
 
 ### Features
 
