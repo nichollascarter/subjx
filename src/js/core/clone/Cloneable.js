@@ -33,14 +33,12 @@ export default class Cloneable extends SubjectModel {
             options
         } = this;
 
-        const $el = helper(elements);
-
         const {
             style,
             appendTo
         } = options;
 
-        const css = {
+        const nextStyle = {
             position: 'absolute',
             'z-index': '2147483647',
             ...style
@@ -55,76 +53,54 @@ export default class Cloneable extends SubjectModel {
         ));
 
         this.storage = {
-            css,
+            style: nextStyle,
             data
         };
 
-        $el.on(E_MOUSEDOWN, this._onMouseDown)
+        helper(elements).on(E_MOUSEDOWN, this._onMouseDown)
             .on(E_TOUCHSTART, this._onTouchStart);
 
-        EMITTER_EVENTS.slice(0, 3).forEach((eventName) => {
-            this.eventDispatcher.registerEvent(eventName);
-        });
+        EMITTER_EVENTS.slice(0, 3).forEach((eventName) => (
+            this.eventDispatcher.registerEvent(eventName)
+        ));
     }
 
-    _processOptions(options) {
-        let _style = {},
-            _appendTo = null,
-            _stack = document,
-            _onInit = noop,
-            _onMove = noop,
-            _onDrop = noop,
-            _onDestroy = noop;
+    _processOptions(options = {}) {
+        const {
+            style = {},
+            appendTo = null,
+            stack = document.body,
+            onInit = noop,
+            onMove = noop,
+            onDrop = noop,
+            onDestroy = noop
+        } = options;
 
-        if (isDef(options)) {
-            const {
-                style,
-                appendTo,
-                stack,
-                onInit,
-                onMove,
-                onDrop,
-                onDestroy
-            } = options;
+        const dropable = helper(stack)[0];
 
-            _style = (isDef(style) && typeof style === 'object') ? style : _style;
-            _appendTo = appendTo || null;
+        const _onDrop = isFunc(onDrop)
+            ? function (evt) {
+                const { storage: { clone } = {} } = this;
 
-            const dropZone = isDef(stack)
-                ? helper(stack)[0]
-                : document;
+                const isCollide = objectsCollide(clone, dropable);
 
-            _onInit = createMethod(onInit);
-            _onMove = createMethod(onMove);
-            _onDrop = isFunc(onDrop)
-                ? function(evt) {
-                    const {
-                        storage: {
-                            clone
-                        } = {}
-                    } = this;
-
-                    const result = objectsCollide(clone, dropZone);
-
-                    if (result) {
-                        onDrop.call(this, evt, this.elements, clone);
-                    }
+                if (isCollide) {
+                    onDrop.call(this, evt, this.elements, clone);
                 }
-                : noop;
-            _onDestroy = createMethod(onDestroy);
-        }
+            }
+            : noop;
 
         this.options = {
-            style: _style,
-            appendTo: _appendTo,
-            stack: _stack
+            style,
+            appendTo,
+            stack
         };
 
         this.proxyMethods = {
-            onInit: _onInit,
+            onInit: createMethod(onInit),
             onDrop: _onDrop,
-            onMove: _onMove,
-            onDestroy: _onDestroy
+            onMove: createMethod(onMove),
+            onDestroy: createMethod(onDestroy)
         };
     }
 
@@ -134,7 +110,7 @@ export default class Cloneable extends SubjectModel {
             storage,
             storage: {
                 data,
-                css
+                style
             }
         } = this;
 
@@ -148,11 +124,11 @@ export default class Cloneable extends SubjectModel {
 
         const { left, top } = getOffset(parent);
 
-        css.left = `${(clientX - left)}px`;
-        css.top = `${(clientY - top)}px`;
+        style.left = `${(clientX - left)}px`;
+        style.top = `${(clientY - top)}px`;
 
         const clone = element.cloneNode(true);
-        helper(clone).css(css);
+        helper(clone).css(style);
 
         storage.clientX = clientX;
         storage.clientY = clientY;
@@ -225,14 +201,14 @@ export default class Cloneable extends SubjectModel {
             } = {}
         } = this;
 
-        const translate = `translate(${dx}px, ${dy}px)`;
+        const transformCommand = `translate(${dx}px, ${dy}px)`;
 
         helper(clone).css({
-            transform: translate,
-            webkitTranform: translate,
-            mozTransform: translate,
-            msTransform: translate,
-            otransform: translate
+            transform: transformCommand,
+            webkitTranform: transformCommand,
+            mozTransform: transformCommand,
+            msTransform: transformCommand,
+            otransform: transformCommand
         });
     }
 
