@@ -98,12 +98,12 @@ export default class Draggable extends Transformable {
 
         const nextTransformOrigin = Array.isArray(transformOrigin)
             ? [...transformOrigin, 0, 1]
-            : finalVertices.center;
+            : [...finalVertices.center, 0, 1];
 
         const allHandles = {
             ...resizingHandles,
             center: transformOrigin && rotatable
-                ? nextTransformOrigin
+                ? [...nextTransformOrigin].slice(0, 2)
                 : undefined,
             rotator
         };
@@ -793,8 +793,38 @@ export default class Draggable extends Transformable {
         }
     }
 
-    _processControlsRotate() {
-        this._applyTransformToHandles();
+    _processControlsRotate({ radians }) {
+        const {
+            storage: {
+                transform: {
+                    wrapperMatrix,
+                    controlsMatrix
+                },
+                transformOrigin: [
+                    originX,
+                    originY
+                ]
+            }
+        } = this;
+
+        const cos = floatToFixed(Math.cos(radians)),
+            sin = floatToFixed(Math.sin(radians));
+
+        const rotateMatrix = createRotateMatrix(sin, cos);
+
+        const transformMatrix = multiplyMatrix(
+            multiplyMatrix(matrixInvert(wrapperMatrix), rotateMatrix),
+            wrapperMatrix
+        );
+
+        const rotateResultMatrix = multiplyMatrix(
+            multiplyMatrix(createTranslateMatrix(-originX, -originY), transformMatrix),
+            createTranslateMatrix(originX, originY)
+        );
+
+        this._updateControlsView(
+            multiplyMatrix(controlsMatrix, rotateResultMatrix)
+        );
     }
 
     _moveCenterHandle(x, y, updateTransformOrigin = true) {
