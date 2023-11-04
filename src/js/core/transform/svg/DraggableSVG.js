@@ -1164,25 +1164,34 @@ export default class DraggableSVG extends Transformable {
 
     _processControlsRotate({ radians }) {
         const {
+            options: {
+                isGrouped
+            },
             storage: {
                 transform: {
                     controlsMatrix,
                     wrapperOriginMatrix
-                }
+                } = {}
             } = {}
         } = this;
 
-        const cos = floatToFixed(Math.cos(radians)),
-            sin = floatToFixed(Math.sin(radians));
+        if (isGrouped) {
+            const cos = floatToFixed(Math.cos(radians)),
+                sin = floatToFixed(Math.sin(radians));
 
-        const rotateMatrix = createRotateMatrix(sin, cos);
+            const rotateMatrix = createRotateMatrix(sin, cos);
 
-        const wrapperResultMatrix = wrapperOriginMatrix
-            .multiply(rotateMatrix)
-            .multiply(wrapperOriginMatrix.inverse())
-            .multiply(controlsMatrix);
+            const wrapperResultMatrix = wrapperOriginMatrix
+                .multiply(rotateMatrix)
+                .multiply(wrapperOriginMatrix.inverse())
+                .multiply(controlsMatrix);
 
-        this._updateControlsView(wrapperResultMatrix);
+            this._updateControlsView(wrapperResultMatrix);
+        } else {
+            this._applyTransformToHandles({
+                boxMatrix: controlsMatrix.inverse()
+            });
+        }
     }
 
     _updateElementView(element, [attr, value]) {
@@ -1610,9 +1619,7 @@ const applyTranslate = (element, { x, y }) => {
 
     }
 
-    attrs.forEach(item => {
-        element.setAttribute(item[0], item[1]);
-    });
+    attrs.forEach(([name, value]) => element.setAttribute(name, value));
 };
 
 const applyResize = (element, data) => {
@@ -1809,9 +1816,7 @@ const applyResize = (element, data) => {
 
     }
 
-    attrs.forEach(([key, value]) => {
-        element.setAttribute(key, value);
-    });
+    attrs.forEach(([name, value]) => element.setAttribute(name, value));
 };
 
 const createHandler = (left, top, color, key) => {
