@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/nichollascarter/subjx/compare/v1.1.0...v1.1.1) (2023-11-04)
+
+
+### Bug Fixes
+
+* **core:** fixed issue on rotating to 90deg ([163e06d](https://github.com/nichollascarter/subjx/commit/163e06dabbf5ed4e956ad33ce7a0738819c59abb)), closes [#47](https://github.com/nichollascarter/subjx/issues/47)
+
 ## [1.1.1-rc.1](https://github.com/nichollascarter/subjx/compare/v1.1.0...v1.1.1-rc.1) (2023-01-06)
 
 
