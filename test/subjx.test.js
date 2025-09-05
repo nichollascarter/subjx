@@ -1,13 +1,8 @@
 import Subjx from '../src/js/core';
-import JsDOM from 'jsdom';
 
 function subjx(params) {
     return new Subjx(params);
 }
-
-const jsdom = new JsDOM.JSDOM('<html><head></head><body></body></html>');
-document = jsdom.window.document;
-window = jsdom.window;
 
 beforeEach(() => {
     jest.useFakeTimers();

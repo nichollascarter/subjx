@@ -1,10 +1,8 @@
-
-import resolve from 'rollup-plugin-node-resolve';
-import babel from 'rollup-plugin-babel';
-import postcss from 'rollup-plugin-postcss';
-import { terser } from 'rollup-plugin-terser';
-import { uglify } from 'rollup-plugin-uglify';
-import { eslint } from 'rollup-plugin-eslint';
+import resolve from '@rollup/plugin-node-resolve';
+import babel from '@rollup/plugin-babel';
+import css from 'rollup-plugin-import-css';
+import terser from '@rollup/plugin-terser';
+import eslint from '@rollup/plugin-eslint';
 import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
 
@@ -16,12 +14,14 @@ const libraryName = 'subjx';
 
 const banner = `/*@license
 * Drag/Rotate/Resize Library
-* Released under the MIT license, 2018-2023
+* Released under the MIT license, 2018-2025
 * Karen Sarksyan
 * nichollascarter@gmail.com
 */`;
 
 const input = './src/js/index.js';
+const dir = 'dist';
+
 let libraryFileName = libraryName;
 
 if (!prod) {
@@ -29,35 +29,39 @@ if (!prod) {
 }
 
 const plugins = [
-    postcss({
-        minimize: true,
-        extract: 'dist/style/subjx.css'
+    css({
+        minify: true,
+        output: 'style/subjx.css'
     }),
     eslint({
-        exclude: 'node_modules/**',
+        exclude: ['node_modules/**', '**.css'],
         throwOnError: prod
     }),
     resolve()
 ];
 
 const uglifyPlugin = () => (
-    uglify({
+    terser({
         compress: {
             evaluate: false,
             join_vars: false
-        },
-        output: {
-            preamble: banner
         }
     })
 );
 
-const uglifyESMPlugin = () => terser();
+const uglifyCJSPlugin = () => terser();
 
 const babelPlugins = [
     babel({
         exclude: 'node_modules/**',
-        presets: ['@babel/preset-env']
+        presets: ['@babel/preset-env'],
+        babelHelpers: liveMode ? 'runtime' : 'bundled',
+        plugins: liveMode ? [
+            ["@babel/plugin-transform-runtime", {
+                "helpers": true,
+                "regenerator": true
+            }]
+        ] : []
     })
 ];
 
@@ -70,33 +74,34 @@ export default [
     ...(prod ? [{
         input,
         output: [{
-            file: `dist/js/${libraryName}.esm.js`,
+            dir,
+            entryFileNames: `js/${libraryName}.esm.js`,
             format: 'esm',
             banner
         }],
         plugins: [
-            ...plugins,
-            ...babelPlugins
+            ...plugins
         ]
     }] : []),
     {
         input,
         output: [{
-            file: `dist/js/${libraryFileName}.common.js`,
+            dir,
+            entryFileNames: `js/${libraryFileName}.common.js`,
             format: 'cjs',
             banner
         }],
         plugins: [
             ...plugins,
-            ...babelPlugins,
-            prod && uglifyESMPlugin()
+            prod && uglifyCJSPlugin()
         ]
     },
     {
         input,
         output: [{
             name: libraryName,
-            file: `dist/js/${libraryFileName}.js`,
+            dir,
+            entryFileNames: `js/${libraryFileName}.js`,
             format: 'umd',
             banner
         }],
