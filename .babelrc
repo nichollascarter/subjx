@@ -1,4 +1,14 @@
 {
+    "presets": [
+        [
+            "@babel/preset-env",
+            {
+                "targets": {
+                    "esmodules": true
+                }
+            }
+        ]
+    ],
     "env": {
         "cjs": {
             "presets": [
