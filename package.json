@@ -12,6 +12,10 @@
     "main": "index.js",
     "module": "dist/js/subjx.esm.js",
     "unpkg": "dist/js/subjx.js",
+    "exports": {
+        "require": "./index.js",
+        "import": "./dist/js/subjx.esm.js"
+    },
     "scripts": {
         "dev": "cross-env NODE_ENV=development rollup -c",
         "build": "cross-env NODE_ENV=production rollup -c",

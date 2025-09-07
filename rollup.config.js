@@ -40,7 +40,7 @@ const plugins = [
     resolve()
 ];
 
-const uglifyPlugin = () => (
+const uglifyUMDPlugin = () => (
     terser({
         compress: {
             evaluate: false,
@@ -49,25 +49,24 @@ const uglifyPlugin = () => (
     })
 );
 
-const uglifyCJSPlugin = () => terser();
-
-const babelPlugins = [
+const babelPlugins = (target) => ([
     babel({
         exclude: 'node_modules/**',
         presets: ['@babel/preset-env'],
         babelHelpers: liveMode ? 'runtime' : 'bundled',
         plugins: liveMode ? [
-            ["@babel/plugin-transform-runtime", {
-                "helpers": true,
-                "regenerator": true
+            ['@babel/plugin-transform-runtime', {
+                helpers: true,
+                regenerator: true
             }]
-        ] : []
+        ] : [],
+        envName: target
     })
-];
+]);
 
 const umdPlugins = [
-    ...babelPlugins,
-    prod && uglifyPlugin()
+    ...babelPlugins('cjs'),
+    prod && uglifyUMDPlugin()
 ];
 
 export default [
@@ -80,7 +79,9 @@ export default [
             banner
         }],
         plugins: [
-            ...plugins
+            ...plugins,
+            ...babelPlugins('esm'),
+            prod && terser()
         ]
     }] : []),
     {
@@ -93,7 +94,8 @@ export default [
         }],
         plugins: [
             ...plugins,
-            prod && uglifyCJSPlugin()
+            ...babelPlugins('cjs'),
+            prod && terser()
         ]
     },
     {

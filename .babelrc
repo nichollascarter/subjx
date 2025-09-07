@@ -1,12 +1,34 @@
 {
-    "presets": [
-        [
-            "@babel/preset-env",
-            {
-                "targets": {
-                    "esmodules": true
-                }
-            }
-        ]
-    ]
+    "env": {
+        "cjs": {
+            "presets": [
+                [
+                    "@babel/preset-env",
+                    {
+                        "targets": {
+                            "node": "12",
+                            "browsers": [
+                                ">0.25%",
+                                "not dead"
+                            ]
+                        },
+                        "modules": "commonjs"
+                    }
+                ]
+            ]
+        },
+        "esm": {
+            "presets": [
+                [
+                    "@babel/preset-env",
+                    {
+                        "targets": {
+                            "esmodules": true
+                        },
+                        "modules": false
+                    }
+                ]
+            ]
+        }
+    }
 }
