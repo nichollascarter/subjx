@@ -6,11 +6,13 @@ import eslint from '@rollup/plugin-eslint';
 import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
 
-// eslint-disable-next-line no-undef
+const libraryName = 'subjx';
+
 const { NODE_ENV = 'production', LIVE_MODE = 'disable' } = process.env;
 const liveMode = LIVE_MODE === 'enable';
-const prod = NODE_ENV === 'production';
-const libraryName = 'subjx';
+
+const production = NODE_ENV === 'production';
+const development = NODE_ENV === 'development';
 
 const banner = `/*@license
 * Drag/Rotate/Resize Library
@@ -24,7 +26,7 @@ const dir = 'dist';
 
 let libraryFileName = libraryName;
 
-if (!prod) {
+if (development) {
     libraryFileName += '.dev';
 }
 
@@ -35,42 +37,32 @@ const plugins = [
     }),
     eslint({
         exclude: ['node_modules/**', '**.css'],
-        throwOnError: prod
+        throwOnError: production
     }),
     resolve()
 ];
-
-const uglifyUMDPlugin = () => (
-    terser({
-        compress: {
-            evaluate: false,
-            join_vars: false
-        }
-    })
-);
 
 const babelPlugins = (target) => ([
     babel({
         exclude: 'node_modules/**',
         presets: ['@babel/preset-env'],
-        babelHelpers: liveMode ? 'runtime' : 'bundled',
-        plugins: liveMode ? [
-            ['@babel/plugin-transform-runtime', {
-                helpers: true,
-                regenerator: true
-            }]
-        ] : [],
+        babelHelpers: 'bundled',
         envName: target
     })
 ]);
 
 const umdPlugins = [
     ...babelPlugins('cjs'),
-    prod && uglifyUMDPlugin()
+    production && terser({
+        compress: {
+            evaluate: false,
+            join_vars: false
+        }
+    })
 ];
 
-export default [
-    ...(prod ? [{
+const bundleConfigs = [
+    ...(production ? [{
         input,
         output: [{
             dir,
@@ -81,7 +73,7 @@ export default [
         plugins: [
             ...plugins,
             ...babelPlugins('esm'),
-            prod && terser()
+            terser()
         ]
     }] : []),
     {
@@ -95,7 +87,7 @@ export default [
         plugins: [
             ...plugins,
             ...babelPlugins('cjs'),
-            prod && terser()
+            production && terser()
         ]
     },
     {
@@ -111,24 +103,45 @@ export default [
             ...plugins,
             ...umdPlugins
         ]
-    },
+    }
+];
+
+export default [
     ...(
         liveMode
             ? [{
                 input,
                 output: [{
                     name: libraryName,
-                    file: `public/${libraryFileName}.js`,
+                    file: `dev/${libraryName}.js`,
                     format: 'umd',
                     banner
                 }],
                 plugins: [
-                    ...plugins,
-                    serve(['public', 'dist']),
-                    livereload('dist'),
-                    ...umdPlugins
+                    css({
+                        output: 'subjx.css'
+                    }),
+                    eslint({
+                        exclude: ['node_modules/**', '**.css'],
+                        throwOnError: true
+                    }),
+                    resolve(),
+                    babel({
+                        exclude: 'node_modules/**',
+                        presets: ['@babel/preset-env'],
+                        babelHelpers: 'runtime',
+                        plugins: [
+                            ['@babel/plugin-transform-runtime', {
+                                helpers: true,
+                                regenerator: true
+                            }]
+                        ],
+                        envName: 'cjs',
+                    }),
+                    serve(['public', 'dev']),
+                    livereload('public', 'dev')
                 ]
             }]
-            : []
+            : bundleConfigs
     )
 ];
