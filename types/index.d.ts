@@ -14,7 +14,7 @@ declare class DraggableSVG extends Transformable { }
 declare class Observable { }
 
 declare class Subjx extends Helper {
-    public drag(parameters: DragOptions, observable: Observable): Draggable | DraggableSVG;
+    public drag(parameters: DragOptions, observable?: Observable): Draggable | DraggableSVG;
     public clone(parameters: CloneOptions): Cloneable;
 }
 
