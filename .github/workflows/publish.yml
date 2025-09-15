@@ -7,7 +7,10 @@ on:
 jobs:
   publish:
     runs-on: self-hosted
-    steps: 
+    strategy:
+      matrix:
+        node-version: [22.x]
+    steps:
     - uses: actions/checkout@v2
       with:
         token: ${{ secrets.GH_TOKEN }}
