@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/nichollascarter/subjx/compare/v1.1.1...v1.1.2) (2025-10-13)
+
+
+### Bug Fixes
+
+* **types:** make "observable" argument for drag method optional ([04fb831](https://github.com/nichollascarter/subjx/commit/04fb8312a20c9ec451e9ad57541373942f62762c))
+
 ## [1.1.2-rc.1](https://github.com/nichollascarter/subjx/compare/v1.1.1...v1.1.2-rc.1) (2025-09-16)
 
 
