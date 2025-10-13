@@ -6,8 +6,11 @@ on:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
-    steps: 
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        node-version: [22.x]
+    steps:
     - uses: actions/checkout@v2
       with:
         token: ${{ secrets.GH_TOKEN }}

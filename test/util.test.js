@@ -55,6 +55,6 @@ describe('animate func', () => {
     it('Check requestAnimFrame returns 1', () => {
         const frameId = requestAnimFrame(() => { });
         cancelAnimFrame(frameId);
-        expect(frameId).toBe(17);
+        expect(frameId).toBe(1);
     });
 });
