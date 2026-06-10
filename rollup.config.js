@@ -22,6 +22,7 @@ const banner = `/*@license
 */`;
 
 const input = './src/js/index.js';
+const umdInput = './src/js/index.umd.js';
 const dir = 'dist';
 
 let libraryFileName = libraryName;
@@ -68,6 +69,7 @@ const bundleConfigs = [
             dir,
             entryFileNames: `js/${libraryName}.esm.js`,
             format: 'esm',
+            exports: 'named',
             banner
         }],
         plugins: [
@@ -82,6 +84,7 @@ const bundleConfigs = [
             dir,
             entryFileNames: `js/${libraryFileName}.common.js`,
             format: 'cjs',
+            exports: 'named',
             banner
         }],
         plugins: [
@@ -91,12 +94,13 @@ const bundleConfigs = [
         ]
     },
     {
-        input,
+        input: umdInput,
         output: [{
             name: libraryName,
             dir,
             entryFileNames: `js/${libraryFileName}.js`,
             format: 'umd',
+            exports: 'default',
             banner
         }],
         plugins: [
@@ -110,11 +114,12 @@ export default [
     ...(
         liveMode
             ? [{
-                input,
+                input: umdInput,
                 output: [{
                     name: libraryName,
                     file: `dev/${libraryName}.js`,
                     format: 'umd',
+                    exports: 'default',
                     banner
                 }],
                 plugins: [
