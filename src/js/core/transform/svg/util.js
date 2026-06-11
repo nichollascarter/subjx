@@ -80,9 +80,9 @@ export const createScaleMatrix = (x, y) => {
 };
 
 export const getTransformToElement = (toElement, g) => {
-    const gTransform = (g.getScreenCTM && g.getScreenCTM()) || createSVGMatrix();
+    const gTransform = g?.getScreenCTM?.() || createSVGMatrix();
     return gTransform.inverse().multiply(
-        toElement.getScreenCTM() || createSVGMatrix()
+        toElement?.getScreenCTM?.() || createSVGMatrix()
     );
 };
 
