@@ -218,9 +218,11 @@ export default class DraggableSVG extends Transformable {
             } = {},
             options: {
                 container,
-                restrict: restrictEl = container
+                restrict
             } = {}
         } = this;
+
+        const restrictEl = restrict || container;
 
         return getBoundingRect(
             restrictEl,
