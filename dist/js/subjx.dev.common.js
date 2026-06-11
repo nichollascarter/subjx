@@ -6,6 +6,8 @@
 */
 'use strict';
 
+Object.defineProperty(exports, '__esModule', { value: true });
+
 function _arrayLikeToArray(r, a) {
   (null == a || a > r.length) && (a = r.length);
   for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
@@ -844,6 +846,15 @@ var getMinMaxOfArray = function getMinMaxOfArray(arr) {
   }
   return res;
 };
+
+var common = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  DEG: DEG,
+  RAD: RAD,
+  floatToFixed: floatToFixed,
+  getMinMaxOfArray: getMinMaxOfArray,
+  snapToGrid: snapToGrid
+});
 
 var getOffset = function getOffset(node) {
   return node.getBoundingClientRect();
@@ -2274,6 +2285,26 @@ var getAbsoluteOffset = function getAbsoluteOffset(element) {
   return [left, top, 0, 1];
 };
 
+var matrix = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  cloneMatrix: cloneMatrix$1,
+  computeTransformMatrix: computeTransformMatrix,
+  createIdentityMatrix: createIdentityMatrix,
+  createRotateMatrix: createRotateMatrix$1,
+  createScaleMatrix: createScaleMatrix$1,
+  createTranslateMatrix: createTranslateMatrix$1,
+  decompose: decompose,
+  dropTranslate: dropTranslate,
+  flatMatrix: flatMatrix,
+  getAbsoluteOffset: getAbsoluteOffset,
+  getCurrentTransformMatrix: getCurrentTransformMatrix,
+  getTransform: getTransform,
+  getTransformOrigin: getTransformOrigin,
+  matrixInvert: matrixInvert,
+  multiplyMatrix: multiplyMatrix,
+  multiplyMatrixAndPoint: multiplyMatrixAndPoint
+});
+
 var _excluded$1 = ["rotator", "anchor"],
   _excluded2$1 = ["anchor", "center"],
   _excluded3$1 = ["anchor", "rotator", "center"];
@@ -3351,6 +3382,7 @@ var Draggable = /*#__PURE__*/function (_Transformable) {
     key: "applyAlignment",
     value: function applyAlignment(direction) {
       var _this2 = this;
+      var target = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
       var elements = this.elements,
         container = this.options.container;
       var _this$_getVertices3 = this._getVertices();
@@ -3358,7 +3390,7 @@ var Draggable = /*#__PURE__*/function (_Transformable) {
         _this$_getVertices3.rotator;
         _this$_getVertices3.center;
         var vertices = _objectWithoutProperties(_this$_getVertices3, _excluded3$1);
-      var restrictBBox = this._getRestrictedBBox(true);
+      var restrictBBox = target ? _getBoundingRect$1(target, container, getCurrentTransformMatrix(target, container)) : this._getRestrictedBBox(true);
       var nextVertices = values$1(vertices);
       var _getMinMaxOfArray5 = getMinMaxOfArray(restrictBBox),
         _getMinMaxOfArray6 = _slicedToArray(_getMinMaxOfArray5, 2),
@@ -3582,8 +3614,9 @@ var createScaleMatrix = function createScaleMatrix(x, y) {
   return matrix;
 };
 var getTransformToElement = function getTransformToElement(toElement, g) {
-  var gTransform = g.getScreenCTM && g.getScreenCTM() || createSVGMatrix();
-  return gTransform.inverse().multiply(toElement.getScreenCTM() || createSVGMatrix());
+  var _g$getScreenCTM, _toElement$getScreenC;
+  var gTransform = (g === null || g === void 0 || (_g$getScreenCTM = g.getScreenCTM) === null || _g$getScreenCTM === void 0 ? void 0 : _g$getScreenCTM.call(g)) || createSVGMatrix();
+  return gTransform.inverse().multiply((toElement === null || toElement === void 0 || (_toElement$getScreenC = toElement.getScreenCTM) === null || _toElement$getScreenC === void 0 ? void 0 : _toElement$getScreenC.call(toElement)) || createSVGMatrix());
 };
 var matrixToString = function matrixToString(m) {
   var a = m.a,
@@ -3647,6 +3680,28 @@ var arrayToChunks = function arrayToChunks(a, size) {
     return a.slice(i * size, i * size + size);
   });
 };
+
+var svgMatrix = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  arrayToChunks: arrayToChunks,
+  checkChildElements: _checkChildElements,
+  checkElement: checkElement,
+  cloneMatrix: cloneMatrix,
+  createRotateMatrix: createRotateMatrix,
+  createSVGElement: createSVGElement,
+  createSVGMatrix: createSVGMatrix,
+  createSVGPoint: createSVGPoint,
+  createScaleMatrix: createScaleMatrix,
+  createTranslateMatrix: createTranslateMatrix,
+  getTransformToElement: getTransformToElement,
+  isIdentity: isIdentity,
+  isSVGGroup: isSVGGroup,
+  matrixToString: matrixToString,
+  normalizeString: normalizeString,
+  parsePoints: parsePoints,
+  pointTo: pointTo,
+  sepRE: sepRE
+});
 
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
 var dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
@@ -5720,6 +5775,7 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
     key: "applyAlignment",
     value: function applyAlignment(direction) {
       var _this2 = this;
+      var target = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
       var elements = this.elements,
         container = this.options.container;
       var _this$_getVertices3 = this._getVertices();
@@ -5727,7 +5783,7 @@ var DraggableSVG = /*#__PURE__*/function (_Transformable) {
         _this$_getVertices3.rotator;
         _this$_getVertices3.center;
         var vertices = _objectWithoutProperties(_this$_getVertices3, _excluded4);
-      var restrictBBox = this._getRestrictedBBox(true);
+      var restrictBBox = target ? _getBoundingRect(target, getTransformToElement(target, container)) : this._getRestrictedBBox(true);
       var nextVertices = values(vertices).map(function (_ref20) {
         var x = _ref20.x,
           y = _ref20.y;
@@ -6422,16 +6478,18 @@ var Subjx = /*#__PURE__*/function (_Helper) {
 function subjx(params) {
   return new Subjx(params);
 }
-Object.defineProperty(subjx, 'createObservable', {
-  value: function value() {
+Object.assign(subjx, {
+  createObservable: function createObservable() {
     return new Observable();
-  }
-});
-Object.defineProperty(subjx, 'Subjx', {
-  value: Subjx
-});
-Object.defineProperty(subjx, 'Observable', {
-  value: Observable
+  },
+  Subjx: Subjx,
+  Observable: Observable,
+  matrix: matrix,
+  svgMatrix: svgMatrix,
+  common: common
 });
 
-module.exports = subjx;
+exports.common = common;
+exports.default = subjx;
+exports.matrix = matrix;
+exports.svgMatrix = svgMatrix;
