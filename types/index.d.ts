@@ -255,8 +255,10 @@ declare class Transformable extends SubjectModel {
     /**
      * Align element within its container
      * @param direction - Alignment direction (l, r, t, b, h, v, or combinations)
+     * @param target - Optional element whose box is used as the alignment frame,
+     *   instead of `restrict`/`container`; does not constrain dragging
      */
-    applyAlignment(direction: AlignmentDirection): void;
+    applyAlignment(direction: AlignmentDirection, target?: SVGGraphicsElement | HTMLElement): void;
 
     /**
      * Get current element dimensions and rotation

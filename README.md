@@ -124,6 +124,10 @@ xDraggable.exeRotate({
 // Align element inside container: ['t', 'l', 'r', 'b', 'v', 'h']
 xDraggable.applyAlignment('tr');
 
+// optional second argument: align to an arbitrary frame element instead of
+// `restrict`/container — unlike `restrict`, it does not constrain dragging
+xDraggable.applyAlignment('tr', frameElement);
+
 // Call this method when applying scale or viewBox values changing
 // useful when element's container was transformed from outside
 xDraggable.fitControlsToSize();

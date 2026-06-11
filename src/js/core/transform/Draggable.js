@@ -1510,7 +1510,7 @@ export default class Draggable extends Transformable {
         );
     }
 
-    applyAlignment(direction) {
+    applyAlignment(direction, target = null) {
         const {
             elements,
             options: { container }
@@ -1522,7 +1522,9 @@ export default class Draggable extends Transformable {
             ...vertices
         } = this._getVertices();
 
-        const restrictBBox = this._getRestrictedBBox(true);
+        const restrictBBox = target
+            ? getBoundingRect(target, container, getCurrentTransformMatrix(target, container))
+            : this._getRestrictedBBox(true);
 
         const nextVertices = values(vertices);
 

@@ -218,11 +218,9 @@ export default class DraggableSVG extends Transformable {
             } = {},
             options: {
                 container,
-                restrict
+                restrict: restrictEl = container
             } = {}
         } = this;
-
-        const restrictEl = restrict || container;
 
         return getBoundingRect(
             restrictEl,
@@ -1407,7 +1405,7 @@ export default class DraggableSVG extends Transformable {
         );
     }
 
-    applyAlignment(direction) {
+    applyAlignment(direction, target = null) {
         const {
             elements,
             options: { container }
@@ -1419,7 +1417,9 @@ export default class DraggableSVG extends Transformable {
             ...vertices
         } = this._getVertices();
 
-        const restrictBBox = this._getRestrictedBBox(true);
+        const restrictBBox = target
+            ? getBoundingRect(target, getTransformToElement(target, container))
+            : this._getRestrictedBBox(true);
 
         const nextVertices = values(vertices).map(({ x, y }) => [x, y]);
 
