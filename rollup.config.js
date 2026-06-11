@@ -2,7 +2,6 @@ import resolve from '@rollup/plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
 import css from 'rollup-plugin-import-css';
 import terser from '@rollup/plugin-terser';
-import eslint from '@rollup/plugin-eslint';
 import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
 
@@ -35,10 +34,6 @@ const plugins = [
     css({
         minify: true,
         output: 'style/subjx.css'
-    }),
-    eslint({
-        exclude: ['node_modules/**', '**.css'],
-        throwOnError: production
     }),
     resolve()
 ];
@@ -125,10 +120,6 @@ export default [
                 plugins: [
                     css({
                         output: 'subjx.css'
-                    }),
-                    eslint({
-                        exclude: ['node_modules/**', '**.css'],
-                        throwOnError: true
                     }),
                     resolve(),
                     babel({
