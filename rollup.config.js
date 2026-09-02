@@ -2,7 +2,6 @@ import resolve from '@rollup/plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
 import css from 'rollup-plugin-import-css';
 import terser from '@rollup/plugin-terser';
-import eslint from '@rollup/plugin-eslint';
 import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
 
@@ -22,6 +21,7 @@ const banner = `/*@license
 */`;
 
 const input = './src/js/index.js';
+const umdInput = './src/js/index.umd.js';
 const dir = 'dist';
 
 let libraryFileName = libraryName;
@@ -34,10 +34,6 @@ const plugins = [
     css({
         minify: true,
         output: 'style/subjx.css'
-    }),
-    eslint({
-        exclude: ['node_modules/**', '**.css'],
-        throwOnError: production
     }),
     resolve()
 ];
@@ -68,6 +64,7 @@ const bundleConfigs = [
             dir,
             entryFileNames: `js/${libraryName}.esm.js`,
             format: 'esm',
+            exports: 'named',
             banner
         }],
         plugins: [
@@ -82,6 +79,7 @@ const bundleConfigs = [
             dir,
             entryFileNames: `js/${libraryFileName}.common.js`,
             format: 'cjs',
+            exports: 'named',
             banner
         }],
         plugins: [
@@ -91,12 +89,13 @@ const bundleConfigs = [
         ]
     },
     {
-        input,
+        input: umdInput,
         output: [{
             name: libraryName,
             dir,
             entryFileNames: `js/${libraryFileName}.js`,
             format: 'umd',
+            exports: 'default',
             banner
         }],
         plugins: [
@@ -110,20 +109,17 @@ export default [
     ...(
         liveMode
             ? [{
-                input,
+                input: umdInput,
                 output: [{
                     name: libraryName,
                     file: `dev/${libraryName}.js`,
                     format: 'umd',
+                    exports: 'default',
                     banner
                 }],
                 plugins: [
                     css({
                         output: 'subjx.css'
-                    }),
-                    eslint({
-                        exclude: ['node_modules/**', '**.css'],
-                        throwOnError: true
                     }),
                     resolve(),
                     babel({

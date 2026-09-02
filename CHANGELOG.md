@@ -1,3 +1,10 @@
+# [1.2.0-rc.1](https://github.com/nichollascarter/subjx/compare/v1.1.2...v1.2.0-rc.1) (2026-06-11)
+
+
+### Features
+
+* **align:** optional target frame for applyAlignment ([#94](https://github.com/nichollascarter/subjx/issues/94)) ([f06b3ad](https://github.com/nichollascarter/subjx/commit/f06b3ad714f5725f07a3db909c4a5086c792e1ab))
+
 ## [1.1.2](https://github.com/nichollascarter/subjx/compare/v1.1.1...v1.1.2) (2025-10-13)
 
 

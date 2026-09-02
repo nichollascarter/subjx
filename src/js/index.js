@@ -1,18 +1,21 @@
 import '../style/subjx.css';
 import Subjx, { Observable } from './core';
+import * as matrix from './core/transform/matrix';
+import * as svgMatrix from './core/transform/svg/util';
+import * as common from './core/transform/common';
 
-export default function subjx(params) {
+function subjx(params) {
     return new Subjx(params);
 }
 
-Object.defineProperty(subjx, 'createObservable', {
-    value: () => new Observable()
+Object.assign(subjx, {
+    createObservable: () => new Observable(),
+    Subjx,
+    Observable,
+    matrix,
+    svgMatrix,
+    common
 });
 
-Object.defineProperty(subjx, 'Subjx', {
-    value: Subjx
-});
-
-Object.defineProperty(subjx, 'Observable', {
-    value: Observable
-});
+export { matrix, svgMatrix, common };
+export default subjx;
