@@ -24,7 +24,7 @@ const E_SET_POINT_END = 'setPointEnd';
 
 const EMITTER_EVENTS = [
     E_DRAG_START,
-    E_DRAG, ,
+    E_DRAG,
     E_DRAG_END,
     E_RESIZE_START,
     E_RESIZE,

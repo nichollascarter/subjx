@@ -207,6 +207,16 @@ describe('Test subjx "clone" method', () => {
     it('init cloneable with defaults', () => {
         subjx(cloneableElement).clone();
     });
+
+    it('subscribes to every drag event', () => {
+        const cloneable = subjx(cloneableElement).clone();
+
+        expect(() => {
+            ['dragStart', 'drag', 'dragEnd'].forEach(name => cloneable.on(name, () => {}));
+        }).not.toThrow();
+
+        cloneable.disable();
+    });
 });
 
 describe('Test subjx "drag" method', () => {
