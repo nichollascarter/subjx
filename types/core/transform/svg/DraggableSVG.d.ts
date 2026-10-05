@@ -1,5 +1,5 @@
 import Transformable from '../Transformable';
-import type { Delta, ElementData, TransformHandles, TransformOptions, TransformStorage } from '../Transformable';
+import type { Point, Delta, ElementData, TransformHandles, TransformOptions, TransformStorage } from '../Transformable';
 import type { TransformOriginParams, AlignmentDirection } from '../../options';
 interface BBox {
     x: number;
@@ -99,9 +99,17 @@ type SVGOptions = TransformOptions & {
     controlsContainer: SVGGraphicsElement;
     restrict: SVGGraphicsElement | null;
 };
+type Vertices = Record<string, Point>;
 export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     elements: SVGGraphicsElement[];
     options: SVGOptions;
+    /**
+     * Handle positions as { x, y } in container coordinates: box corners and edge
+     * midpoints (tl, tc, tr, ml, mr, bl, bc, br), center, line endpoints (p1, p2)
+     * for a single <line>, and rotator with its anchor when rotatable
+     * @param transformMatrix matrix applied on top of the element transform
+     */
+    getVertices(transformMatrix?: DOMMatrix): Vertices;
     setCenterPoint(...args: [TransformOriginParams?, boolean?]): void;
     setTransformOrigin({ x, y, dx, dy }?: TransformOriginParams, pin?: boolean): void;
     fitControlsToSize(): void;

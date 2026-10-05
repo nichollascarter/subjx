@@ -1,5 +1,5 @@
 import Transformable from './Transformable';
-import type { Delta, ElementData, TransformHandles, TransformOptions, TransformStorage } from './Transformable';
+import type { Point, Delta, ElementData, TransformHandles, TransformOptions, TransformStorage } from './Transformable';
 import type { Matrix, Vector } from '../types';
 import type { TransformOriginParams, AlignmentDirection } from '../options';
 interface BoxSize {
@@ -81,9 +81,19 @@ type HTMLOptions = TransformOptions & {
     controlsContainer: HTMLElement;
     restrict: HTMLElement | null;
 };
+type VertexMap = Record<string, Vector> & {
+    anchor?: Point;
+};
 export default class Draggable extends Transformable<Matrix, HTMLStorage> {
     elements: HTMLElement[];
     options: HTMLOptions;
+    /**
+     * Handle positions as [x, y, ...] arrays in container coordinates: box corners
+     * and edge midpoints (tl, tc, tr, ml, mr, bl, bc, br), center, and rotator
+     * when rotatable; anchor, the rotator's base point, is { x, y }
+     * @param transformMatrix matrix applied on top of the element transform
+     */
+    getVertices(transformMatrix?: Matrix): VertexMap;
     setCenterPoint(...args: [TransformOriginParams?, boolean?]): void;
     setTransformOrigin({ x, y, dx, dy }?: TransformOriginParams, pin?: boolean): void;
     fitControlsToSize(): void;

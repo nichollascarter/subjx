@@ -110,6 +110,8 @@ const inferredSVG: DraggableSVG = subjx(rect).drag();
 const inferredHTML: Draggable = subjx(div).drag();
 inferredSVG.controls.getBBox();
 inferredHTML.controls.offsetWidth.toFixed();
+inferredSVG.getVertices().tl.x.toFixed();
+inferredHTML.getVertices().tl[0].toFixed();
 
 subjx(div).clone({
     onDrop(event) {

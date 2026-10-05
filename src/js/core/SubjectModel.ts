@@ -42,9 +42,9 @@ export default abstract class SubjectModel<
     elements: Element[];
     storage?: S | null;
     /** @internal */
-    proxyMethods: P | null;
+    protected proxyMethods: P | null;
     /** @internal */
-    eventDispatcher: EventDispatcher;
+    protected eventDispatcher: EventDispatcher;
 
     constructor(elements: Element[]) {
         this.elements = elements;
@@ -53,50 +53,50 @@ export default abstract class SubjectModel<
 
         this.eventDispatcher = new EventDispatcher();
 
-        this._onMouseDown = this._onMouseDown.bind(this);
-        this._onTouchStart = this._onTouchStart.bind(this);
-        this._onMouseMove = this._onMouseMove.bind(this);
-        this._onTouchMove = this._onTouchMove.bind(this);
-        this._onMouseUp = this._onMouseUp.bind(this);
-        this._onTouchEnd = this._onTouchEnd.bind(this);
-        this._animate = this._animate.bind(this);
+        this.onMouseDown = this.onMouseDown.bind(this);
+        this.onTouchStart = this.onTouchStart.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.onTouchMove = this.onTouchMove.bind(this);
+        this.onMouseUp = this.onMouseUp.bind(this);
+        this.onTouchEnd = this.onTouchEnd.bind(this);
+        this.animate = this.animate.bind(this);
     }
 
     enable(options?: object) {
-        this._processOptions(options);
-        this._init(this.elements);
+        this.processOptions(options);
+        this.init(this.elements);
         this.proxyMethods!.onInit.call(this, this.elements);
     }
 
     abstract disable(): void;
 
     /** @internal */
-    abstract _init(elements: Element[]): void;
+    protected abstract init(elements: Element[]): void;
 
     /** @internal */
-    abstract _destroy(): void;
+    protected abstract destroy(): void;
 
     /** @internal */
-    abstract _processOptions(options?: object): void;
+    protected abstract processOptions(options?: object): void;
 
     /** @internal */
-    abstract _start(input: PointerInput): void;
+    protected abstract start(input: PointerInput): void;
 
     /** @internal */
-    abstract _moving(input: PointerInput): void;
+    protected abstract moving(input: PointerInput): void;
 
     /** @internal */
-    abstract _end(input: PointerInput, elements: Element[]): void;
+    protected abstract end(input: PointerInput, elements: Element[]): void;
 
     /** @internal */
-    abstract _animate(): void;
+    protected abstract animate(): void;
 
     /** @internal */
-    abstract _processMove(element: Element, delta: { dx: number; dy: number }): unknown;
+    protected abstract processMove(element: Element, delta: { dx: number; dy: number }): unknown;
 
     /** @internal */
-    _drag({ element, dx, dy, ...rest }: MoveArgs) {
-        const transform = this._processMove(element, { dx, dy });
+    protected drag({ element, dx, dy, ...rest }: MoveArgs) {
+        const transform = this.processMove(element, { dx, dy });
 
         const finalArgs = {
             dx,
@@ -106,66 +106,66 @@ export default abstract class SubjectModel<
         };
 
         this.proxyMethods!.onMove.call(this, finalArgs);
-        this._emitEvent(E_DRAG, finalArgs);
+        this.emitEvent(E_DRAG, finalArgs);
     }
 
     /** @internal */
-    _draw() {
-        this._animate();
+    protected draw() {
+        this.animate();
     }
 
     /** @internal */
-    _onMouseDown(e: MouseEvent) {
-        this._start(e);
+    protected onMouseDown(e: MouseEvent) {
+        this.start(e);
         helper(document)
-            .on(E_MOUSEMOVE, this._onMouseMove)
-            .on(E_MOUSEUP, this._onMouseUp);
+            .on(E_MOUSEMOVE, this.onMouseMove)
+            .on(E_MOUSEUP, this.onMouseUp);
     }
 
     /** @internal */
-    _onTouchStart(e: TouchEvent) {
-        this._start(e.touches[0]);
+    protected onTouchStart(e: TouchEvent) {
+        this.start(e.touches[0]);
         helper(document)
-            .on(E_TOUCHMOVE, this._onTouchMove)
-            .on(E_TOUCHEND, this._onTouchEnd);
+            .on(E_TOUCHMOVE, this.onTouchMove)
+            .on(E_TOUCHEND, this.onTouchEnd);
     }
 
     /** @internal */
-    _onMouseMove(e: MouseEvent) {
+    protected onMouseMove(e: MouseEvent) {
         if (e.preventDefault) {
             e.preventDefault();
         }
-        this._moving(e);
+        this.moving(e);
     }
 
     /** @internal */
-    _onTouchMove(e: TouchEvent) {
+    protected onTouchMove(e: TouchEvent) {
         if (e.preventDefault) {
             e.preventDefault();
         }
-        this._moving(e.touches[0]);
+        this.moving(e.touches[0]);
     }
 
     /** @internal */
-    _onMouseUp(e: MouseEvent) {
+    protected onMouseUp(e: MouseEvent) {
         helper(document)
-            .off(E_MOUSEMOVE, this._onMouseMove)
-            .off(E_MOUSEUP, this._onMouseUp);
+            .off(E_MOUSEMOVE, this.onMouseMove)
+            .off(E_MOUSEUP, this.onMouseUp);
 
-        this._end(
+        this.end(
             e,
             this.elements
         );
     }
 
     /** @internal */
-    _onTouchEnd(e: TouchEvent) {
+    protected onTouchEnd(e: TouchEvent) {
         helper(document)
-            .off(E_TOUCHMOVE, this._onTouchMove)
-            .off(E_TOUCHEND, this._onTouchEnd);
+            .off(E_TOUCHMOVE, this.onTouchMove)
+            .off(E_TOUCHEND, this.onTouchEnd);
 
         if (e.touches.length === 0) {
-            this._end(
+            this.end(
                 e.changedTouches[0],
                 this.elements
             );
@@ -173,7 +173,7 @@ export default abstract class SubjectModel<
     }
 
     /** @internal */
-    _emitEvent(eventName: string, eventArgs?: unknown) {
+    protected emitEvent(eventName: string, eventArgs?: unknown) {
         this.eventDispatcher.emit(this, eventName, eventArgs);
     }
 

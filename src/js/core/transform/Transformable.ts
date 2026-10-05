@@ -244,7 +244,7 @@ export default abstract class Transformable<
 
     storage!: S;
     /** @internal */
-    proxyMethods!: TransformProxyMethods;
+    protected proxyMethods!: TransformProxyMethods;
     options!: TransformOptions;
     observable: Observable;
 
@@ -260,58 +260,58 @@ export default abstract class Transformable<
     }
 
     /** @internal */
-    abstract _cursorPoint(input: PointerInput): Point;
+    protected abstract cursorPoint(input: PointerInput): Point;
 
     /** @internal */
-    abstract _pointToTransform(params: Point & { matrix: M }): Point;
+    protected abstract pointToTransform(params: Point & { matrix: M }): Point;
 
     /** @internal */
-    abstract _pointToControls(point: Point, transform?: S['transform']): Point;
+    protected abstract pointToControls(point: Point, transform?: S['transform']): Point;
 
     /** @internal */
-    abstract _processRotate(element: Element, radians: number): unknown;
+    protected abstract processRotate(element: Element, radians: number): unknown;
 
     /** @internal */
-    abstract _processResize(element: Element, delta: Delta): object;
+    protected abstract processResize(element: Element, delta: Delta): object;
 
     /** @internal */
-    abstract _processMoveRestrict(element: Element, delta: Delta): RestrictPoint;
+    protected abstract processMoveRestrict(element: Element, delta: Delta): RestrictPoint;
 
     /** @internal */
-    abstract _processResizeRestrict(element: Element, delta: Delta): RestrictPoint;
+    protected abstract processResizeRestrict(element: Element, delta: Delta): RestrictPoint;
 
     /** @internal */
-    abstract _processPointMove(element: Element, point: string, delta: Delta): object | null;
+    protected abstract processPointMove(element: Element, point: string, delta: Delta): object | null;
 
     /** @internal */
-    abstract _processRotateRestrict(element: Element, radians: number): RestrictPoint;
+    protected abstract processRotateRestrict(element: Element, radians: number): RestrictPoint;
 
     /** @internal */
-    abstract _processControlsMove(delta: Delta): void;
+    protected abstract processControlsMove(delta: Delta): void;
 
     /** @internal */
-    abstract _processControlsResize(delta: Delta): void;
+    protected abstract processControlsResize(delta: Delta): void;
 
     /** @internal */
-    abstract _processControlsRotate(params: { radians: number }): void;
+    protected abstract processControlsRotate(params: { radians: number }): void;
 
     /** @internal */
-    abstract _moveCenterHandle(x: number, y: number): void;
+    protected abstract moveCenterHandle(x: number, y: number): void;
 
     /** @internal */
-    abstract _applyTransformToElement(element: Element, actionName: string): void;
+    protected abstract applyTransformToElement(element: Element, actionName: string): void;
 
     /** @internal */
-    abstract _processActions(actionName: string): void;
+    protected abstract processActions(actionName: string): void;
 
     /** @internal */
-    abstract _getCommonState(): Partial<S> & { center: { x: number; y: number }; transform: S['transform'] };
+    protected abstract getCommonState(): Partial<S> & { center: { x: number; y: number }; transform: S['transform'] };
 
     /** @internal */
-    abstract _getElementState(element: Element, flags: Partial<ResizeFlags> & { factor?: number }): Partial<ElementData<M>>;
+    protected abstract getElementState(element: Element, flags: Partial<ResizeFlags> & { factor?: number }): Partial<ElementData<M>>;
 
     /** @internal */
-    abstract _getRestrictedBBox(): number[][];
+    protected abstract getRestrictedBBox(): number[][];
 
     abstract getBoundingRect(elementOrMatrix?: Element | M | null, matrix?: M | null): number[][];
 
@@ -320,20 +320,20 @@ export default abstract class Transformable<
     abstract setTransformOrigin(params?: { x?: number; y?: number; dx?: number; dy?: number }, pin?: boolean): void;
 
     /** @internal */
-    _rotate({ element, radians, ...rest }: { element: Element; radians: number; [key: string]: unknown }) {
-        const resultMtrx = this._processRotate(element, radians);
+    private rotate({ element, radians, ...rest }: { element: Element; radians: number; [key: string]: unknown }) {
+        const resultMtrx = this.processRotate(element, radians);
         const finalArgs = {
             transform: resultMtrx,
             delta: radians,
             ...rest
         };
         this.proxyMethods.onRotate.call(this, finalArgs);
-        super._emitEvent(E_ROTATE, finalArgs);
+        super.emitEvent(E_ROTATE, finalArgs);
     }
 
     /** @internal */
-    _resize({ element, dx, dy, ...rest }: MoveArgs) {
-        const finalValues = this._processResize(element, { dx, dy });
+    private resize({ element, dx, dy, ...rest }: MoveArgs) {
+        const finalValues = this.processResize(element, { dx, dy });
         const finalArgs = {
             ...finalValues,
             dx,
@@ -341,11 +341,11 @@ export default abstract class Transformable<
             ...rest
         };
         this.proxyMethods.onResize.call(this, finalArgs);
-        super._emitEvent(E_RESIZE, finalArgs);
+        super.emitEvent(E_RESIZE, finalArgs);
     }
 
     /** @internal */
-    _processOptions(options: DragOptions = {}) {
+    protected processOptions(options: DragOptions = {}) {
         const { elements } = this;
 
         [...elements].map(element => addClass(element, `${LIB_CLASS_PREFIX}drag`));
@@ -434,7 +434,7 @@ export default abstract class Transformable<
     }
 
     /** @internal */
-    _animate() {
+    protected animate() {
         const self = this;
         const {
             observable,
@@ -445,7 +445,7 @@ export default abstract class Transformable<
 
         if (isUndef(storage)) return;
 
-        storage.frame = requestAnimFrame(self._animate);
+        storage.frame = requestAnimFrame(self.animate);
 
         if (!storage.doDraw) return;
         storage.doDraw = false;
@@ -486,7 +486,7 @@ export default abstract class Transformable<
             const dx = snapToGrid(clientX - relativeX, snap.x) as number;
             const dy = snapToGrid(clientY - relativeY, snap.y) as number;
 
-            const result = this._processPointMove(elements[0], point, { dx, dy });
+            const result = this.processPointMove(elements[0], point, { dx, dy });
 
             if (result) {
                 const finalArgs = {
@@ -499,7 +499,7 @@ export default abstract class Transformable<
                 };
 
                 this.proxyMethods.onResize.call(this, finalArgs);
-                super._emitEvent(E_RESIZE, finalArgs);
+                super.emitEvent(E_RESIZE, finalArgs);
             }
         } else if (doResize && resizable) {
             const distX = snapToGrid(clientX - relativeX, snap.x) as number;
@@ -534,7 +534,7 @@ export default abstract class Transformable<
                     } = data.get(element)!;
 
                     const { x, y } = !isGrouped
-                        ? this._pointToTransform(
+                        ? this.pointToTransform(
                             {
                                 x: distX,
                                 y: distY,
@@ -546,7 +546,7 @@ export default abstract class Transformable<
                     const dx = dox ? (revX ? -x : x) : 0;
                     const dy = doy ? (revY ? -y : y) : 0;
 
-                    const { x: newX, y: newY } = this._processResizeRestrict(element, { dx, dy });
+                    const { x: newX, y: newY } = this.processResizeRestrict(element, { dx, dy });
 
                     return {
                         x: newX !== null && res.x === null ? distX : res.x,
@@ -580,7 +580,7 @@ export default abstract class Transformable<
                 } = data.get(element)!;
 
                 const { x, y } = !isGrouped
-                    ? this._pointToTransform(
+                    ? this.pointToTransform(
                         {
                             x: newDx,
                             y: newDy,
@@ -592,7 +592,7 @@ export default abstract class Transformable<
                 const dx = dox ? (revX ? -x : x) : 0;
                 const dy = doy ? (revY ? -y : y) : 0;
 
-                self._resize({
+                self.resize({
                     ...nextArgs,
                     element,
                     dx,
@@ -608,7 +608,7 @@ export default abstract class Transformable<
                 }
             };
 
-            this._processControlsResize({ dx: newDx, dy: newDy });
+            this.processControlsResize({ dx: newDx, dy: newDy });
 
             if (resizeEach) {
                 observable.notify(
@@ -648,7 +648,7 @@ export default abstract class Transformable<
 
             const { x: restX, y: restY } = restrict
                 ? elements.reduce<RestrictPoint>((res, element) => {
-                    const { x, y } = this._processMoveRestrict(element, args);
+                    const { x, y } = this.processMoveRestrict(element, args);
 
                     return {
                         x: res.x === null && restrict ? x : res.x,
@@ -675,7 +675,7 @@ export default abstract class Transformable<
             };
 
             elements.map((element) => (
-                super._drag({
+                super.drag({
                     element,
                     ...nextArgs,
                     dx: newDx,
@@ -683,7 +683,7 @@ export default abstract class Transformable<
                 })
             ));
 
-            this._processControlsMove({ dx: newDx, dy: newDy });
+            this.processControlsMove({ dx: newDx, dy: newDy });
 
             if (moveEach) {
                 observable.notify(
@@ -708,7 +708,7 @@ export default abstract class Transformable<
 
             if (restrict) {
                 const isBounding = elements.some((element) => {
-                    const { x: restX, y: restY } = this._processRotateRestrict(element, radians);
+                    const { x: restX, y: restY } = this.processRotateRestrict(element, radians);
                     return (restX !== null || restY !== null);
                 });
 
@@ -722,14 +722,14 @@ export default abstract class Transformable<
             };
 
             elements.map((element) => (
-                self._rotate({
+                self.rotate({
                     element,
                     radians,
                     ...args
                 })
             ));
 
-            this._processControlsRotate({ radians });
+            this.processControlsRotate({ radians });
 
             if (rotateEach) {
                 observable.notify(
@@ -749,14 +749,14 @@ export default abstract class Transformable<
                 by
             } = storage as S & ActiveSession;
 
-            const { x, y } = this._pointToControls(
+            const { x, y } = this.pointToControls(
                 {
                     x: clientX,
                     y: clientY
                 }
             );
 
-            self._moveCenterHandle(
+            self.moveCenterHandle(
                 x - bx,
                 y - by
             );
@@ -764,7 +764,7 @@ export default abstract class Transformable<
     }
 
     /** @internal */
-    _start(e: PointerInput) {
+    protected start(e: PointerInput) {
         const { clientX, clientY } = e;
         const target = e.target as Element;
         const {
@@ -782,7 +782,7 @@ export default abstract class Transformable<
 
         if (!isTarget) return;
 
-        const computed = this._compute(e, elements);
+        const computed = this.compute(e, elements);
 
         keys(computed).map(prop => (storage as Record<string, unknown>)[prop] = (computed as Record<string, unknown>)[prop]);
 
@@ -864,11 +864,11 @@ export default abstract class Transformable<
         };
 
         if (doResize) {
-            super._emitEvent(E_RESIZE_START, eventArgs);
+            super.emitEvent(E_RESIZE_START, eventArgs);
         } else if (doRotate) {
-            super._emitEvent(E_ROTATE_START, eventArgs);
+            super.emitEvent(E_ROTATE_START, eventArgs);
         } else if (doDrag) {
-            super._emitEvent(E_DRAG_START, eventArgs);
+            super.emitEvent(E_DRAG_START, eventArgs);
         }
 
         const {
@@ -902,16 +902,16 @@ export default abstract class Transformable<
             }
         );
 
-        this._draw();
+        this.draw();
     }
 
     /** @internal */
-    _moving(e: PointerInput) {
+    protected moving(e: PointerInput) {
         const { storage = {} as S, options } = this;
 
         if (!storage.isTarget) return;
 
-        const { x, y } = this._cursorPoint(e);
+        const { x, y } = this.cursorPoint(e);
 
         storage.mouseEvent = e;
         storage.clientX = x;
@@ -944,7 +944,7 @@ export default abstract class Transformable<
     }
 
     /** @internal */
-    _end({ clientX, clientY }: PointerInput) {
+    protected end({ clientX, clientY }: PointerInput) {
         const {
             elements,
             options: { each },
@@ -982,10 +982,10 @@ export default abstract class Transformable<
             }
         ].find((({ condition }) => condition)) || {};
 
-        elements.map(element => this._applyTransformToElement(element, actionName));
+        elements.map(element => this.applyTransformToElement(element, actionName));
 
-        this._processActions(actionName);
-        this._updateStorage();
+        this.processActions(actionName);
+        this.updateStorage();
 
         const eventArgs = {
             clientX,
@@ -995,13 +995,13 @@ export default abstract class Transformable<
         proxyMethods.onDrop.call(this, eventArgs);
 
         if (doResize) {
-            super._emitEvent(E_RESIZE_END, eventArgs);
+            super.emitEvent(E_RESIZE_END, eventArgs);
         } else if (doRotate) {
-            super._emitEvent(E_ROTATE_END, eventArgs);
+            super.emitEvent(E_ROTATE_END, eventArgs);
         } else if (doDrag) {
-            super._emitEvent(E_DRAG_END, eventArgs);
+            super.emitEvent(E_DRAG_END, eventArgs);
         } else if (doSetCenter) {
-            super._emitEvent(E_SET_POINT_END, eventArgs);
+            super.emitEvent(E_SET_POINT_END, eventArgs);
         }
 
         const {
@@ -1035,7 +1035,7 @@ export default abstract class Transformable<
     }
 
     /** @internal */
-    _compute(e: PointerInput, elements: Element[]) {
+    private compute(e: PointerInput, elements: Element[]) {
         const {
             storage: {
                 handles,
@@ -1052,16 +1052,16 @@ export default abstract class Transformable<
             doW,
             doH,
             ...rest
-        } = this._checkHandles(handle, handles);
+        } = this.checkHandles(handle, handles);
 
-        const commonState = this._getCommonState();
+        const commonState = this.getCommonState();
 
-        const { x, y } = this._cursorPoint(e);
-        const { x: bx, y: by } = this._pointToControls({ x, y }, commonState.transform);
+        const { x, y } = this.cursorPoint(e);
+        const { x: bx, y: by } = this.pointToControls({ x, y }, commonState.transform);
 
         elements.map(element => {
-            const { transform, ...nextData } = this._getElementState(element, { revX, revY, doW, doH });
-            const { x: ex, y: ey } = this._pointToTransform({ x, y, matrix: transform!.ctm });
+            const { transform, ...nextData } = this.getElementState(element, { revX, revY, doW, doH });
+            const { x: ex, y: ey } = this.pointToTransform({ x, y, matrix: transform!.ctm });
 
             data.set(element, {
                 ...data.get(element),
@@ -1097,7 +1097,7 @@ export default abstract class Transformable<
     }
 
     /** @internal */
-    _checkHandles(handle: Helper, handles: TransformHandles) {
+    private checkHandles(handle: Helper, handles: TransformHandles) {
         const checkIsHandle = (hdl?: Element | null) => isDef(hdl) ? handle.is(hdl) : false;
         const checkAction = (items: string[]) => items.some(key => checkIsHandle(handles[key]));
 
@@ -1128,13 +1128,13 @@ export default abstract class Transformable<
     }
 
     /** @internal */
-    _restrictHandler(element: Element | M, matrix?: M | null): RestrictPoint {
+    protected restrictHandler(element: Element | M, matrix?: M | null): RestrictPoint {
         let restrictX: number | null = null,
             restrictY: number | null = null;
 
         const elBox = this.getBoundingRect(element, matrix);
 
-        const containerBBox = this._getRestrictedBBox();
+        const containerBBox = this.getRestrictedBBox();
 
         const [
             [minX, maxX],
@@ -1159,7 +1159,7 @@ export default abstract class Transformable<
     }
 
     /** @internal */
-    _destroy() {
+    protected destroy() {
         const {
             elements,
             storage: {
@@ -1170,15 +1170,15 @@ export default abstract class Transformable<
 
         [...elements, controls].map(target => (
             helper(target)
-                .off(E_MOUSEDOWN, this._onMouseDown)
-                .off(E_TOUCHSTART, this._onTouchStart)
+                .off(E_MOUSEDOWN, this.onMouseDown)
+                .off(E_TOUCHSTART, this.onTouchStart)
         ));
 
         wrapper.parentNode!.removeChild(wrapper);
     }
 
     /** @internal */
-    _updateStorage() {
+    private updateStorage() {
         const {
             storage,
             storage: {
@@ -1209,8 +1209,8 @@ export default abstract class Transformable<
     }
 
     notifyMove({ dx, dy }: Delta) {
-        this.elements.map((element) => super._drag({ element, dx, dy }));
-        this._processControlsMove({ dx, dy });
+        this.elements.map((element) => super.drag({ element, dx, dy }));
+        this.processControlsMove({ dx, dy });
     }
 
     notifyRotate({ radians, ...rest }: { radians: number; [key: string]: unknown }) {
@@ -1222,14 +1222,14 @@ export default abstract class Transformable<
         } = this;
 
         elements.map((element) => (
-            this._rotate({
+            this.rotate({
                 element,
                 radians: snapToGrid(radians, angle) as number,
                 ...rest
             })
         ));
 
-        this._processControlsRotate({ radians });
+        this.processControlsRotate({ radians });
     }
 
     notifyResize({ dx, dy, revX, revY, dox, doy }: NotifyResizeArgs) {
@@ -1251,7 +1251,7 @@ export default abstract class Transformable<
             } = data.get(element)!;
 
             const { x, y } = !isGrouped
-                ? this._pointToTransform(
+                ? this.pointToTransform(
                     {
                         x: dx,
                         y: dy,
@@ -1260,21 +1260,21 @@ export default abstract class Transformable<
                 )
                 : { x: dx, y: dy };
 
-            this._resize({
+            this.resize({
                 element,
                 dx: dox ? (revX ? -x : x) : 0,
                 dy: doy ? (revY ? -y : y) : 0
             });
         });
 
-        this._processControlsResize({ dx, dy });
+        this.processControlsResize({ dx, dy });
     }
 
     notifyApply({ clientX, clientY, actionName, triggerEvent }: NotifyActionArgs) {
         this.proxyMethods.onDrop.call(this, { clientX, clientY });
         if (triggerEvent) {
-            this.elements.map((element) => this._applyTransformToElement(element, actionName));
-            super._emitEvent(`${actionName}End`, { clientX, clientY });
+            this.elements.map((element) => this.applyTransformToElement(element, actionName));
+            super.emitEvent(`${actionName}End`, { clientX, clientY });
         }
     }
 
@@ -1288,7 +1288,7 @@ export default abstract class Transformable<
             } = this;
 
             elements.map(element => {
-                const nextData = this._getElementState(element, rest);
+                const nextData = this.getElementState(element, rest);
 
                 data.set(element, {
                     ...data.get(element),
@@ -1296,14 +1296,14 @@ export default abstract class Transformable<
                 } as ElementData<M>);
             });
 
-            const recalc = this._getCommonState();
+            const recalc = this.getCommonState();
 
             this.storage = {
                 ...this.storage,
                 ...recalc
             };
 
-            super._emitEvent(`${actionName}Start`, { clientX, clientY });
+            super.emitEvent(`${actionName}Start`, { clientX, clientY });
         }
     }
 
@@ -1343,16 +1343,16 @@ export default abstract class Transformable<
         // unexpected case
         if (storage.onExecution) {
             helper(document)
-                .off(E_MOUSEMOVE, this._onMouseMove)
-                .off(E_MOUSEUP, this._onMouseUp)
-                .off(E_TOUCHMOVE, this._onTouchMove)
-                .off(E_TOUCHEND, this._onTouchEnd);
+                .off(E_MOUSEMOVE, this.onMouseMove)
+                .off(E_MOUSEUP, this.onMouseUp)
+                .off(E_TOUCHMOVE, this.onTouchMove)
+                .off(E_TOUCHEND, this.onTouchEnd);
         }
 
         elements.map((element) => removeClass(element, `${LIB_CLASS_PREFIX}drag`));
 
         this.unsubscribe();
-        this._destroy();
+        this.destroy();
 
         proxyMethods.onDestroy.call(this, elements);
         delete (this as { storage?: S }).storage;
@@ -1371,10 +1371,10 @@ export default abstract class Transformable<
         } = this;
         if (!draggable) return;
 
-        const commonState = this._getCommonState();
+        const commonState = this.getCommonState();
 
         elements.map(element => {
-            const nextData = this._getElementState(element, {
+            const nextData = this.getElementState(element, {
                 revX: false,
                 revY: false,
                 doW: false,
@@ -1393,11 +1393,11 @@ export default abstract class Transformable<
         };
 
         elements.map((element) => {
-            super._drag({ element, dx, dy });
-            this._applyTransformToElement(element, E_DRAG);
+            super.drag({ element, dx, dy });
+            this.applyTransformToElement(element, E_DRAG);
         });
 
-        this._processControlsMove({ dx, dy });
+        this.processControlsMove({ dx, dy });
     }
 
     exeResize({
@@ -1420,10 +1420,10 @@ export default abstract class Transformable<
         } = this;
         if (!resizable) return;
 
-        const commonState = this._getCommonState();
+        const commonState = this.getCommonState();
 
         elements.map(element => {
-            const nextData = this._getElementState(element, {
+            const nextData = this.getElementState(element, {
                 revX,
                 revY,
                 doW,
@@ -1442,11 +1442,11 @@ export default abstract class Transformable<
         };
 
         elements.map((element) => {
-            this._resize({ element, dx, dy });
-            this._applyTransformToElement(element, E_RESIZE);
+            this.resize({ element, dx, dy });
+            this.applyTransformToElement(element, E_RESIZE);
         });
 
-        this._processControlsMove({ dx, dy });
+        this.processControlsMove({ dx, dy });
     }
 
     exeRotate({ delta }: ExeRotateParams) {
@@ -1462,10 +1462,10 @@ export default abstract class Transformable<
         } = this;
         if (!rotatable) return;
 
-        const commonState = this._getCommonState();
+        const commonState = this.getCommonState();
 
         elements.map(element => {
-            const nextData = this._getElementState(element, {
+            const nextData = this.getElementState(element, {
                 revX: false,
                 revY: false,
                 doW: false,
@@ -1484,11 +1484,11 @@ export default abstract class Transformable<
         };
 
         elements.map(element => {
-            this._rotate({ element, radians: delta });
-            this._applyTransformToElement(element, E_ROTATE);
+            this.rotate({ element, radians: delta });
+            this.applyTransformToElement(element, E_ROTATE);
         });
 
-        this._processControlsRotate({ radians: delta });
+        this.processControlsRotate({ radians: delta });
     }
 
     resetCenterPoint() {

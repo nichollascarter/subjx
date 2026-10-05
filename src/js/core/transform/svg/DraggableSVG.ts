@@ -153,7 +153,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     options!: SVGOptions;
 
     /** @internal */
-    _init(elements: SVGGraphicsElement[]) {
+    protected init(elements: SVGGraphicsElement[]) {
         const {
             options: {
                 container,
@@ -169,13 +169,13 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         const wrapper = createSVGElement('g', ['sjx-svg-wrapper']);
         const controls = createSVGElement('g', ['sjx-svg-controls']);
 
-        const line = this._getLine();
+        const line = this.getLine();
 
         const {
             rotator = null,
             anchor = null,
             ...nextVertices
-        } = this._getVertices();
+        } = this.getVertices();
 
         const handles: SVGHandles = {};
         let rotationHandles: SVGHandles = {};
@@ -329,16 +329,16 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
 
         [...elements, controls].map(target => (
             helper(target)
-                .on(E_MOUSEDOWN, this._onMouseDown)
-                .on(E_TOUCHSTART, this._onTouchStart)
+                .on(E_MOUSEDOWN, this.onMouseDown)
+                .on(E_TOUCHSTART, this.onTouchStart)
         ));
     }
 
     /** @internal */
-    _cursorPoint({ clientX, clientY }: PointerInput) {
+    protected cursorPoint({ clientX, clientY }: PointerInput) {
         const { container } = this.options;
 
-        return this._applyMatrixToPoint(
+        return this.applyMatrixToPoint(
             container.getScreenCTM()!.inverse(),
             clientX,
             clientY
@@ -346,7 +346,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _getRestrictedBBox(force = false) {
+    protected getRestrictedBBox(force = false) {
         const {
             storage: {
                 transform: {
@@ -368,11 +368,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _pointToTransform({ x, y, matrix }: Point & { matrix: DOMMatrix }) {
+    protected pointToTransform({ x, y, matrix }: Point & { matrix: DOMMatrix }) {
         const nextMatrix = matrix.inverse();
         nextMatrix.e = nextMatrix.f = 0;
 
-        return this._applyMatrixToPoint(
+        return this.applyMatrixToPoint(
             nextMatrix,
             x,
             y
@@ -380,13 +380,13 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _pointToControls({ x, y }: Point, transform = this.storage.transform) {
+    protected pointToControls({ x, y }: Point, transform = this.storage.transform) {
         const { controlsMatrix } = transform;
 
         const matrix = controlsMatrix.inverse();
         matrix.e = matrix.f = 0;
 
-        return this._applyMatrixToPoint(
+        return this.applyMatrixToPoint(
             matrix,
             x,
             y
@@ -394,7 +394,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _applyMatrixToPoint(matrix: DOMMatrix, x: number, y: number) {
+    private applyMatrixToPoint(matrix: DOMMatrix, x: number, y: number) {
         const pt = createSVGElement('svg').createSVGPoint();
         pt.x = x;
         pt.y = y;
@@ -402,7 +402,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _applyTransformToElement(element: SVGGraphicsElement, actionName: string) {
+    protected applyTransformToElement(element: SVGGraphicsElement, actionName: string) {
         const {
             storage: {
                 data,
@@ -449,7 +449,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 .multiply(matrix)
                 .multiply(eM.inverse());
 
-            this._updateElementView(element, ['transform', translateMatrix]);
+            this.updateElementView(element, ['transform', translateMatrix]);
 
             if (isSVGGroup(element)) {
                 checkChildElements(element)
@@ -535,7 +535,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _processActions(actionName: string) {
+    protected processActions(actionName: string) {
         const {
             storage: {
                 transform: {
@@ -551,20 +551,20 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         } = this;
 
         if (isGrouped && actionName === E_ROTATE) {
-            this._applyTransformToHandles();
+            this.applyTransformToHandles();
 
             const { x: dx, y: dy } = pointTo(controlsMatrix, 0, 0);
 
-            if (isShifted) this._moveCenterHandle(dx, dy);
+            if (isShifted) this.moveCenterHandle(dx, dy);
 
-            this._updateControlsView();
+            this.updateControlsView();
 
             if (!isShifted) this.setTransformOrigin({ dx: 0, dy: 0 }, false);
         }
     }
 
     /** @internal */
-    _processResize(element: SVGGraphicsElement, { dx, dy }: Delta) {
+    protected processResize(element: SVGGraphicsElement, { dx, dy }: Delta) {
         const {
             storage: {
                 revX,
@@ -644,7 +644,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             ? scaleMatrix.multiply(matrix)
             : matrix.multiply(scaleMatrix);
 
-        if (scalable) this._updateElementView(element, ['transform', resultMatrix]);
+        if (scalable) this.updateElementView(element, ['transform', resultMatrix]);
 
         data.set(element, {
             ...elementData,
@@ -657,7 +657,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             }
         });
 
-        this._applyTransformToElement(element, E_RESIZE);
+        this.applyTransformToElement(element, E_RESIZE);
 
         return {
             x: newX,
@@ -669,7 +669,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _processMove(element: SVGGraphicsElement, { dx, dy }: Delta) {
+    protected processMove(element: SVGGraphicsElement, { dx, dy }: Delta) {
         const {
             storage: {
                 data
@@ -716,13 +716,13 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
 
         const moveElementMtrx = translateMatrix.multiply(matrix);
 
-        this._updateElementView(element, ['transform', moveElementMtrx]);
+        this.updateElementView(element, ['transform', moveElementMtrx]);
 
         return moveElementMtrx;
     }
 
     /** @internal */
-    _processRotate(element: SVGGraphicsElement, radians: number) {
+    protected processRotate(element: SVGGraphicsElement, radians: number) {
         const {
             storage: {
                 data
@@ -757,13 +757,13 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
 
         const resultMatrix = resRotateMatrix.multiply(matrix);
 
-        this._updateElementView(element, ['transform', resultMatrix]);
+        this.updateElementView(element, ['transform', resultMatrix]);
 
         return resultMatrix;
     }
 
     /** @internal */
-    _getElementState(element: SVGGraphicsElement, { revX, revY, doW, doH }: Partial<ResizeFlags>) {
+    protected getElementState(element: SVGGraphicsElement, { revX, revY, doW, doH }: Partial<ResizeFlags>) {
         const {
             options: {
                 container,
@@ -793,7 +793,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             storeElementAttributes(child, elementData, element, isGrouped);
         });
 
-        const bBox = this._getBBox();
+        const bBox = this.getBBox();
 
         const {
             x: elX,
@@ -876,7 +876,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _getCommonState() {
+    protected getCommonState() {
         const {
             elements,
             options: {
@@ -892,7 +892,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             }
         } = this;
 
-        const bBox = this._getBBox();
+        const bBox = this.getBBox();
 
         const {
             x: elX,
@@ -950,8 +950,13 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         };
     }
 
-    /** @internal */
-    _getVertices(transformMatrix = createSVGMatrix()): Vertices {
+    /**
+     * Handle positions as { x, y } in container coordinates: box corners and edge
+     * midpoints (tl, tc, tr, ml, mr, bl, bc, br), center, line endpoints (p1, p2)
+     * for a single <line>, and rotator with its anchor when rotatable
+     * @param transformMatrix matrix applied on top of the element transform
+     */
+    getVertices(transformMatrix = createSVGMatrix()): Vertices {
         const {
             elements,
             options: {
@@ -963,7 +968,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             }
         } = this;
 
-        const { x, y, width, height } = this._getBBox();
+        const { x, y, width, height } = this.getBBox();
 
         const hW = width / 2,
             hH = height / 2;
@@ -980,7 +985,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             center: [x + hW, y + hH]
         };
 
-        const line = this._getLine();
+        const line = this.getLine();
 
         if (line) {
             vertices[START_POINT] = [line.x1.baseVal.value, line.y1.baseVal.value];
@@ -1088,7 +1093,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _getLine(): SVGLineElement | null {
+    private getLine(): SVGLineElement | null {
         const {
             elements: [element],
             options: {
@@ -1102,7 +1107,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _getBBox(): BBox {
+    private getBBox(): BBox {
         const {
             elements,
             options: {
@@ -1134,7 +1139,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _moveCenterHandle(dx: number, dy: number) {
+    protected moveCenterHandle(dx: number, dy: number) {
         const {
             storage: {
                 handles: { center, radius },
@@ -1184,7 +1189,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _processMoveRestrict(element: SVGGraphicsElement, { dx, dy }: Delta) {
+    protected processMoveRestrict(element: SVGGraphicsElement, { dx, dy }: Delta) {
         const {
             storage: {
                 data
@@ -1213,11 +1218,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
 
         const preTranslateMatrix = createTranslateMatrix(x, y).multiply(matrix);
 
-        return this._restrictHandler(element, preTranslateMatrix);
+        return this.restrictHandler(element, preTranslateMatrix);
     }
 
     /** @internal */
-    _processRotateRestrict(element: SVGGraphicsElement, radians: number) {
+    protected processRotateRestrict(element: SVGGraphicsElement, radians: number) {
         const {
             storage: {
                 data
@@ -1252,11 +1257,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
 
         const resultMatrix = resRotateMatrix.multiply(matrix);
 
-        return this._restrictHandler(element, resultMatrix);
+        return this.restrictHandler(element, resultMatrix);
     }
 
     /** @internal */
-    _processResizeRestrict(element: SVGGraphicsElement, { dx, dy }: Delta) {
+    protected processResizeRestrict(element: SVGGraphicsElement, { dx, dy }: Delta) {
         const {
             storage: {
                 doW,
@@ -1316,11 +1321,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             getScaleMatrix(scaleX, scaleY)
         );
 
-        return this._restrictHandler(element, preScaledMatrix);
+        return this.restrictHandler(element, preScaledMatrix);
     }
 
     /** @internal */
-    _processPointMove(element: SVGGraphicsElement, point: string, { dx, dy }: Delta) {
+    protected processPointMove(element: SVGGraphicsElement, point: string, { dx, dy }: Delta) {
         const {
             storage: {
                 data
@@ -1379,7 +1384,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             const [
                 [minX, maxX],
                 [minY, maxY]
-            ] = getMinMaxOfArray(this._getRestrictedBBox());
+            ] = getMinMaxOfArray(this.getRestrictedBBox());
 
             if (x < minX || x > maxX || y < minY || y > maxY) return null;
         }
@@ -1387,7 +1392,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         element.setAttribute(isStart ? 'x1' : 'x2', String(nextX));
         element.setAttribute(isStart ? 'y1' : 'y2', String(nextY));
 
-        this._processControlsResize();
+        this.processControlsResize();
 
         const { width, height } = element.getBBox();
 
@@ -1399,7 +1404,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _processControlsResize() {
+    protected processControlsResize() {
         const {
             storage: {
                 transform: {
@@ -1408,13 +1413,13 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             } = {} as SVGStorage
         } = this;
 
-        this._applyTransformToHandles({
+        this.applyTransformToHandles({
             boxMatrix: controlsMatrix.inverse()
         });
     }
 
     /** @internal */
-    _processControlsMove({ dx, dy }: Delta) {
+    protected processControlsMove({ dx, dy }: Delta) {
         const {
             storage: {
                 transform: {
@@ -1430,7 +1435,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
 
         const moveControlsMtrx = controlsTranslateMatrix.multiply(controlsMatrix);
 
-        this._updateControlsView(moveControlsMtrx);
+        this.updateControlsView(moveControlsMtrx);
 
         if (center.isShifted) {
             const centerTransformMatrix = controlsMatrix.inverse();
@@ -1441,12 +1446,12 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 dy
             );
 
-            this._moveCenterHandle(-cx, -cy);
+            this.moveCenterHandle(-cx, -cy);
         }
     }
 
     /** @internal */
-    _processControlsRotate({ radians }: { radians: number }) {
+    protected processControlsRotate({ radians }: { radians: number }) {
         const {
             options: {
                 isGrouped
@@ -1470,23 +1475,23 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 .multiply(wrapperOriginMatrix.inverse())
                 .multiply(controlsMatrix);
 
-            this._updateControlsView(wrapperResultMatrix);
+            this.updateControlsView(wrapperResultMatrix);
         } else {
-            this._applyTransformToHandles({
+            this.applyTransformToHandles({
                 boxMatrix: controlsMatrix.inverse()
             });
         }
     }
 
     /** @internal */
-    _updateElementView(element: Element, [attr, value]: [string, DOMMatrix]) {
+    private updateElementView(element: Element, [attr, value]: [string, DOMMatrix]) {
         if (attr === 'transform') {
             element.setAttribute(attr, matrixToString(value));
         }
     }
 
     /** @internal */
-    _updateControlsView(matrix = createSVGMatrix()) {
+    private updateControlsView(matrix = createSVGMatrix()) {
         this.storage.controls.setAttribute(
             'transform',
             matrixToString(matrix)
@@ -1496,7 +1501,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
-    _applyTransformToHandles({ boxMatrix = createSVGMatrix() } = {}) {
+    private applyTransformToHandles({ boxMatrix = createSVGMatrix() } = {}) {
         const {
             options: {
                 rotatable
@@ -1511,7 +1516,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             anchor = null,
             center,
             ...nextVertices
-        } = this._getVertices(boxMatrix);
+        } = this.getVertices(boxMatrix);
 
         const resEdges: Record<string, Point[]> = {
             te: [nextVertices.tl, nextVertices.tr],
@@ -1608,7 +1613,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         let newX: number, newY: number;
 
         if (isRelative) {
-            const { x: bx, y: by, width, height } = this._getBBox();
+            const { x: bx, y: by, width, height } = this.getBBox();
 
             const hW = width / 2,
                 hH = height / 2;
@@ -1667,10 +1672,10 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             }
         ].find(({ condition }) => condition())!;
 
-        this._updateControlsView();
+        this.updateControlsView();
 
         this.setTransformOrigin({ ...nextValues() }, pin);
-        this._applyTransformToHandles();
+        this.applyTransformToHandles();
     }
 
     getBoundingRect(element: SVGGraphicsElement, transformMatrix: DOMMatrix | null = null) {
@@ -1704,11 +1709,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             anchor, rotator, center,
             ...vertices
-        } = this._getVertices();
+        } = this.getVertices();
 
         const restrictBBox = target
             ? getBoundingRect(target as SVGGraphicsElement, getTransformToElement(target, container))
-            : this._getRestrictedBBox(true);
+            : this.getRestrictedBBox(true);
 
         const nextVertices = values(vertices).map(({ x, y }) => [x, y]);
 
@@ -1766,7 +1771,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 getTransformToElement(element, element.parentNode)
             );
 
-            this._updateElementView(element, ['transform', moveElementMtrx]);
+            this.updateElementView(element, ['transform', moveElementMtrx]);
         });
 
         this.fitControlsToSize();
@@ -1781,7 +1786,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             }
         } = this;
 
-        const { x, y, width, height } = this._getBBox();
+        const { x, y, width, height } = this.getBBox();
 
         const vertices = {
             tl: [x, y],

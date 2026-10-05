@@ -47,7 +47,7 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
     }
 
     /** @internal */
-    _init() {
+    protected init() {
         const {
             elements,
             options
@@ -77,8 +77,8 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
             data
         };
 
-        helper(elements).on(E_MOUSEDOWN, this._onMouseDown)
-            .on(E_TOUCHSTART, this._onTouchStart);
+        helper(elements).on(E_MOUSEDOWN, this.onMouseDown)
+            .on(E_TOUCHSTART, this.onTouchStart);
 
         EMITTER_EVENTS.slice(0, 3).forEach((eventName) => (
             this.eventDispatcher.registerEvent(eventName)
@@ -86,7 +86,7 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
     }
 
     /** @internal */
-    _processOptions(options: CloneOptions = {}) {
+    protected processOptions(options: CloneOptions = {}) {
         const {
             style = {},
             appendTo = null,
@@ -126,7 +126,7 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
     }
 
     /** @internal */
-    _start({ target, clientX, clientY }: PointerInput) {
+    protected start({ target, clientX, clientY }: PointerInput) {
         const { elements } = this;
         const storage = this.storage!;
         const { data, style } = storage;
@@ -154,11 +154,11 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
         storage.clone = clone;
 
         parent!.appendChild(clone);
-        this._draw();
+        this.draw();
     }
 
     /** @internal */
-    _moving({ clientX, clientY }: PointerInput) {
+    protected moving({ clientX, clientY }: PointerInput) {
         const storage = this.storage!;
 
         storage.clientX = clientX;
@@ -168,7 +168,7 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
     }
 
     /** @internal */
-    _end(e: PointerInput) {
+    protected end(e: PointerInput) {
         const storage = this.storage!;
 
         const {
@@ -188,10 +188,10 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
     }
 
     /** @internal */
-    _animate() {
+    protected animate() {
         const storage = this.storage!;
 
-        storage.frameId = requestAnimFrame(this._animate);
+        storage.frameId = requestAnimFrame(this.animate);
 
         const {
             doDraw,
@@ -205,7 +205,7 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
         if (!doDraw) return;
         storage.doDraw = false;
 
-        this._drag(
+        this.drag(
             {
                 element: clone,
                 dx: clientX - cx,
@@ -215,7 +215,7 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
     }
 
     /** @internal */
-    _processMove(_: Element, { dx, dy }: { dx: number; dy: number }) {
+    protected processMove(_: Element, { dx, dy }: { dx: number; dy: number }) {
         const { clone } = this.storage!;
 
         const transformCommand = `translate(${dx}px, ${dy}px)`;
@@ -230,7 +230,7 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
     }
 
     /** @internal */
-    _destroy() {
+    protected destroy() {
         const {
             storage,
             proxyMethods,
@@ -240,15 +240,15 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
         if (isUndef(storage)) return;
 
         helper(elements)
-            .off(E_MOUSEDOWN, this._onMouseDown)
-            .off(E_TOUCHSTART, this._onTouchStart);
+            .off(E_MOUSEDOWN, this.onMouseDown)
+            .off(E_TOUCHSTART, this.onTouchStart);
 
         proxyMethods!.onDestroy.call(this, elements);
         delete this.storage;
     }
 
     disable() {
-        this._destroy();
+        this.destroy();
     }
 
 }
