@@ -308,7 +308,7 @@ export default class DraggableSVG extends Transformable {
                 .multiply(matrix)
                 .multiply(eM.inverse());
 
-            this._updateElementView(['transform', translateMatrix]);
+            this._updateElementView(element, ['transform', translateMatrix]);
 
             if (isSVGGroup(element)) {
                 checkChildElements(element)

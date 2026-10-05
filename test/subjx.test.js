@@ -396,6 +396,14 @@ describe('Test svg subjx "drag" method', () => {
         draggable.disable();
     });
 
+    it('applies translate on drag with applyTranslate', () => {
+        const draggable = subjx(svgElement).drag({ applyTranslate: true });
+
+        expect(() => draggable.exeDrag({ dx: 10, dy: 10 })).not.toThrow();
+
+        draggable.disable();
+    });
+
     it('test subjx api', () => {
         const draggable = subjx(svgElement).drag({ each: { move: true } });
 
