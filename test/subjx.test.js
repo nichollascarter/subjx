@@ -231,6 +231,17 @@ describe('Test subjx "drag" method', () => {
         draggable.disable();
     });
 
+    it('fills missing snap values with defaults', () => {
+        const draggable = subjx(domElement).drag({ snap: { x: 5 } });
+
+        expect(draggable.options.snap).toEqual({
+            ...defaultOptions.snap,
+            x: 5
+        });
+
+        draggable.disable();
+    });
+
     it('test subjx api', () => {
         const draggable = subjx(draggables).drag({ each: { move: true } });
 

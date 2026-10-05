@@ -130,11 +130,7 @@ export default class Transformable extends SubjectModel {
                 resize: false,
                 rotate: false
             },
-            snap = {
-                x: 10,
-                y: 10,
-                angle: 10
-            },
+            snap: snapOptions,
             axis = 'xy',
             cursorMove = 'auto',
             cursorResize = 'auto',
@@ -161,6 +157,13 @@ export default class Transformable extends SubjectModel {
             showNormal = true,
             custom
         } = options;
+
+        const snap = {
+            x: 10,
+            y: 10,
+            angle: 10,
+            ...snapOptions
+        };
 
         this.options = {
             axis,
