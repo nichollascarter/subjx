@@ -17,12 +17,12 @@ const E_RESIZE = 'resize';
 const E_RESIZE_END = 'resizeEnd';
 const E_ROTATE_START = 'rotateStart';
 const E_ROTATE = 'rotate';
-const E_ROTATE_END ='rotateEnd';
+const E_ROTATE_END = 'rotateEnd';
 const E_SET_POINT = 'setPoint';
 const E_SET_POINT_START = 'setPointStart';
 const E_SET_POINT_END = 'setPointEnd';
 
-const EMITTER_EVENTS = [
+const EMITTER_EVENTS: string[] = [
     E_DRAG_START,
     E_DRAG,
     E_DRAG_END,
@@ -36,7 +36,7 @@ const EMITTER_EVENTS = [
     E_SET_POINT_END
 ];
 
-export const CSS_PREFIXES = [
+export const CSS_PREFIXES: string[] = [
     '',
     '-webkit-',
     '-moz-',
@@ -50,7 +50,7 @@ const ON_MOVE = 'onmove';
 const ON_RESIZE = 'onresize';
 const ON_ROTATE = 'onrotate';
 
-const NOTIFIER_EVENTS = [
+const NOTIFIER_EVENTS: string[] = [
     ON_GETSTATE,
     ON_APPLY,
     ON_MOVE,
@@ -102,14 +102,14 @@ const TRANSFORM_HANDLES_KEYS = {
     MIDDLE_LEFT: 'ml',
     MIDDLE_RIGHT: 'mr',
     CENTER: 'center'
-};
+} as const;
 
 const TRANSFORM_EDGES_KEYS = {
     TOP_EDGE: 'te',
     BOTTOM_EDGE: 'be',
     LEFT_EDGE: 'le',
     RIGHT_EDGE: 're'
-};
+} as const;
 
 export const TRANSFORM_HANDLES_CONSTANTS = {
     TRANSFORM_HANDLES_KEYS,

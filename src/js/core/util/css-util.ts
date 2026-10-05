@@ -1,9 +1,9 @@
 import { helper } from '../Helper';
 import { CSS_PREFIXES } from '../consts';
 
-const getOffset = node => node.getBoundingClientRect();
+const getOffset = (node: Element): DOMRect => node.getBoundingClientRect();
 
-const addClass = (node, cls) => {
+const addClass = (node: Element, cls?: string | null) => {
     if (!cls) return;
 
     if (node.classList) {
@@ -18,7 +18,7 @@ const addClass = (node, cls) => {
     return node;
 };
 
-const removeClass = (node, cls) => {
+const removeClass = (node: Element, cls?: string | null) => {
     if (!cls) return;
 
     if (node.classList) {
@@ -33,7 +33,7 @@ const removeClass = (node, cls) => {
     return node;
 };
 
-const objectsCollide = (a, b) => {
+const objectsCollide = (a: Element, b: Element): boolean => {
     const {
             top: aTop,
             left: aLeft
@@ -53,7 +53,7 @@ const objectsCollide = (a, b) => {
     );
 };
 
-const matrixToCSS = (arr) => {
+const matrixToCSS = (arr: number[]) => {
     const style = `matrix3d(${arr.join()})`;
 
     return {
@@ -65,9 +65,9 @@ const matrixToCSS = (arr) => {
     };
 };
 
-const getStyle = (el, property) => {
+const getStyle = (el: Element, property: string): string | null => {
     const style = window.getComputedStyle(el);
-    let value = null;
+    let value: string | null = null;
 
     for (const prefix of CSS_PREFIXES) {
         value = style.getPropertyValue(`${prefix}${property}`) || value;
@@ -85,14 +85,14 @@ const getScrollOffset = () => {
     };
 };
 
-const getElementOffset = (el) => {
+const getElementOffset = (el: HTMLElement | null) => {
     let left = 0;
     let top = 0;
 
     while (el && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
         left += el.offsetLeft - el.scrollLeft;
         top += el.offsetTop - el.scrollTop;
-        el = el.offsetParent;
+        el = el.offsetParent as HTMLElement | null;
     }
     return { left, top };
 };

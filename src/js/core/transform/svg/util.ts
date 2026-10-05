@@ -12,24 +12,27 @@ const allowedElements = [
     'use'
 ];
 
-export function createSVGElement(name, classNames = []) {
+export function createSVGElement<K extends keyof SVGElementTagNameMap>(
+    name: K,
+    classNames: string[] = []
+): SVGElementTagNameMap[K] {
     const element = document.createElementNS('http://www.w3.org/2000/svg', name);
     classNames.forEach(className => addClass(element, className));
     return element;
 }
 
-export const createSVGPoint = (x, y) => {
+export const createSVGPoint = (x: number, y: number): DOMPoint => {
     const pt = createSVGElement('svg').createSVGPoint();
     pt.x = x;
     pt.y = y;
     return pt;
 };
 
-export const checkChildElements = (element) => {
-    const arrOfElements = [];
+export const checkChildElements = (element: Element): Element[] => {
+    const arrOfElements: Element[] = [];
 
     if (isSVGGroup(element)) {
-        forEach.call(element.childNodes, item => {
+        forEach.call(element.childNodes, (item: Element) => {
             if (item.nodeType === 1) {
                 const tagName = item.tagName.toLowerCase();
 
@@ -48,11 +51,11 @@ export const checkChildElements = (element) => {
     return arrOfElements;
 };
 
-export const createSVGMatrix = () => {
+export const createSVGMatrix = (): DOMMatrix => {
     return createSVGElement('svg').createSVGMatrix();
 };
 
-export const createTranslateMatrix = (x, y) => {
+export const createTranslateMatrix = (x: number, y: number): DOMMatrix => {
     const matrix = createSVGMatrix();
     matrix.e = x;
     matrix.f = y;
@@ -60,7 +63,7 @@ export const createTranslateMatrix = (x, y) => {
     return matrix;
 };
 
-export const createRotateMatrix = (sin, cos) => {
+export const createRotateMatrix = (sin: number, cos: number): DOMMatrix => {
     const matrix = createSVGMatrix();
 
     matrix.a = cos;
@@ -71,7 +74,7 @@ export const createRotateMatrix = (sin, cos) => {
     return matrix;
 };
 
-export const createScaleMatrix = (x, y) => {
+export const createScaleMatrix = (x: number, y: number): DOMMatrix => {
     const matrix = createSVGMatrix();
     matrix.a = x;
     matrix.d = y;
@@ -79,23 +82,26 @@ export const createScaleMatrix = (x, y) => {
     return matrix;
 };
 
-export const getTransformToElement = (toElement, g) => {
-    const gTransform = g?.getScreenCTM?.() || createSVGMatrix();
+export const getTransformToElement = (
+    toElement?: Node | null,
+    g?: Node | null
+): DOMMatrix => {
+    const gTransform = (g as SVGGraphicsElement | null | undefined)?.getScreenCTM?.() || createSVGMatrix();
     return gTransform.inverse().multiply(
-        toElement?.getScreenCTM?.() || createSVGMatrix()
+        (toElement as SVGGraphicsElement | null | undefined)?.getScreenCTM?.() || createSVGMatrix()
     );
 };
 
-export const matrixToString = (m) => {
+export const matrixToString = (m: DOMMatrix): string => {
     const { a, b, c, d, e, f } = m;
     return `matrix(${a},${b},${c},${d},${e},${f})`;
 };
 
-export const pointTo = (ctm, x, y) => {
+export const pointTo = (ctm: DOMMatrix, x: number, y: number): DOMPoint => {
     return createSVGPoint(x, y).matrixTransform(ctm);
 };
 
-export const cloneMatrix = (b) => {
+export const cloneMatrix = (b: DOMMatrix): DOMMatrix => {
     const a = createSVGMatrix();
 
     a.a = b.a;
@@ -108,7 +114,7 @@ export const cloneMatrix = (b) => {
     return a;
 };
 
-export const isIdentity = (matrix) => {
+export const isIdentity = (matrix: DOMMatrix): boolean => {
     const { a, b, c, d, e, f } = matrix;
     return a === 1 &&
         b === 0 &&
@@ -118,7 +124,7 @@ export const isIdentity = (matrix) => {
         f === 0;
 };
 
-export const checkElement = (el) => {
+export const checkElement = (el: Element): boolean => {
     const tagName = el.tagName.toLowerCase();
 
     if (allowedElements.indexOf(tagName) === -1) {
@@ -132,11 +138,11 @@ export const checkElement = (el) => {
     }
 };
 
-export const isSVGGroup = (element) => (
+export const isSVGGroup = (element: Element): boolean => (
     element.tagName.toLowerCase() === 'g'
 );
 
-export const normalizeString = (str = '') => (
+export const normalizeString = (str = ''): string => (
     str.replace(/[\n\r]/g, '')
         .replace(/([^e])-/g, '$1 -')
         .replace(/ +/g, ' ')
@@ -144,8 +150,8 @@ export const normalizeString = (str = '') => (
 );
 
 // example "101.3,175.5 92.3,162 110.3,162 		"
-export const parsePoints = (pts) => (
-    normalizeString(pts).trim().split(sepRE).reduce(
+export const parsePoints = (pts: string): string[][] => (
+    normalizeString(pts).trim().split(sepRE).reduce<string[][]>(
         (result, _, index, array) => {
             if (index % 2 === 0) {
                 result.push(array.slice(index, index + 2));
@@ -156,7 +162,7 @@ export const parsePoints = (pts) => (
     )
 );
 
-export const arrayToChunks = (a, size) =>
+export const arrayToChunks = <T>(a: T[], size: number): T[][] =>
     Array.from(
         new Array(Math.ceil(a.length / size)),
         (_, i) => a.slice(i * size, i * size + size)

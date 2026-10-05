@@ -1,30 +1,31 @@
 import { getStyle } from '../util/css-util';
+import type { Matrix, Vector } from '../types';
 
-export const cloneMatrix = m => m.map(item => [...item]);
+export const cloneMatrix = (m: Matrix): Matrix => m.map(item => [...item]);
 
-export const flatMatrix = (m) => (
-    m.reduce((flat, _, i) => ([...flat, m[0][i], m[1][i], m[2][i], m[3][i]]), [])
+export const flatMatrix = (m: Matrix): number[] => (
+    m.reduce<number[]>((flat, _, i) => ([...flat, m[0][i], m[1][i], m[2][i], m[3][i]]), [])
 );
 
-export const createIdentityMatrix = (n = 4) => (
+export const createIdentityMatrix = (n = 4): Matrix => (
     [...Array(n)].map((_, i, a) => a.map(() => +!i--))
 );
 
-export const createTranslateMatrix = (x, y, z = 0) => (
+export const createTranslateMatrix = (x: number, y: number, z = 0): Matrix => (
     createIdentityMatrix().map((item, i) => {
         item[3] = [x, y, z, 1][i];
         return item;
     })
 );
 
-export const createScaleMatrix = (x, y, z = 1, w = 1) => (
+export const createScaleMatrix = (x: number, y: number, z = 1, w = 1): Matrix => (
     createIdentityMatrix().map((item, i) => {
         item[i] = [x, y, z, w][i];
         return item;
     })
 );
 
-export const createRotateMatrix = (sin, cos) => {
+export const createRotateMatrix = (sin: number, cos: number): Matrix => {
     const res = createIdentityMatrix();
 
     res[0][0] = cos;
@@ -35,14 +36,14 @@ export const createRotateMatrix = (sin, cos) => {
     return res;
 };
 
-export const dropTranslate = (matrix, clone = true) => {
+export const dropTranslate = (matrix: Matrix, clone = true): Matrix => {
     const nextMatrix = clone ? cloneMatrix(matrix) : matrix;
     nextMatrix[0][3] = nextMatrix[1][3] = nextMatrix[2][3] = 0;
     return nextMatrix;
 };
 
-export const multiplyMatrixAndPoint = (mat, point) => {
-    const out = [];
+export const multiplyMatrixAndPoint = (mat: Matrix, point: Vector): Vector => {
+    const out: Vector = [];
 
     for (let i = 0, len = mat.length; i < len; ++i) {
         let sum = 0;
@@ -55,8 +56,8 @@ export const multiplyMatrixAndPoint = (mat, point) => {
     return out;
 };
 
-export const multiplyMatrix = (m1, m2) => {
-    const result = [];
+export const multiplyMatrix = (m1: Matrix, m2: Matrix): Matrix => {
+    const result: Matrix = [];
 
     for (let j = 0; j < m2.length; j++) {
         result[j] = [];
@@ -73,11 +74,12 @@ export const multiplyMatrix = (m1, m2) => {
     return result;
 };
 
-export const matrixInvert = (matrix) => {
+export const matrixInvert = (matrix: Matrix): Matrix => {
     const A = cloneMatrix(matrix);
     const N = A.length;
 
-    let temp, E = [];
+    let temp: number;
+    const E: Matrix = [];
 
     for (let i = 0; i < N; i++)
         E[i] = [];
@@ -127,7 +129,7 @@ export const matrixInvert = (matrix) => {
     return A;
 };
 
-export const computeTransformMatrix = (tx, [x, y, z]) => {
+export const computeTransformMatrix = (tx: Matrix, [x, y, z]: Vector): Matrix => {
     const preMul = createTranslateMatrix(-x, -y, -z);
     const postMul = createTranslateMatrix(x, y, z);
 
@@ -137,7 +139,11 @@ export const computeTransformMatrix = (tx, [x, y, z]) => {
     );
 };
 
-export const getCurrentTransformMatrix = (element, container = document.body, newTransform) => {
+export const getCurrentTransformMatrix = (
+    element: Element,
+    container: Node | null = document.body,
+    newTransform?: Matrix | null
+): Matrix => {
     let matrix = createIdentityMatrix();
     let node = element;
 
@@ -155,15 +161,15 @@ export const getCurrentTransformMatrix = (element, container = document.body, ne
         );
 
         allowBorderOffset = true;
-        if (node === container || node.offsetParent === null) break;
-        node = node.offsetParent;
+        if (node === container || (node as HTMLElement).offsetParent === null) break;
+        node = (node as HTMLElement).offsetParent as Element;
         nodeTx = getTransform(node);
     }
 
     return matrix;
 };
 
-export const decompose = (m) => {
+export const decompose = (m: Matrix) => {
     const sX = Math.sqrt(m[0][0] * m[0][0] + m[1][0] * m[1][0] + m[2][0] * m[2][0]),
         sY = Math.sqrt(m[0][1] * m[0][1] + m[1][1] * m[1][1] + m[2][1] * m[2][1]),
         sZ = Math.sqrt(m[0][2] * m[0][2] + m[1][2] * m[1][2] + m[2][2] * m[2][2]);
@@ -197,7 +203,7 @@ export const decompose = (m) => {
     };
 };
 
-export const getTransform = (el) => {
+export const getTransform = (el: Element): Matrix => {
     const matrixString = getStyle(el, 'transform') || 'none';
     const matrix = createIdentityMatrix();
 
@@ -223,7 +229,7 @@ export const getTransform = (el) => {
     return matrix;
 };
 
-export const getTransformOrigin = (el, allowBorderOffset) => {
+export const getTransformOrigin = (el: Element, allowBorderOffset: boolean): Vector => {
     const transformOrigin = getStyle(el, 'transform-origin');
     const values = transformOrigin ? transformOrigin.split(' ') : [];
 
@@ -241,7 +247,7 @@ export const getTransformOrigin = (el, allowBorderOffset) => {
     return out;
 };
 
-export const getAbsoluteOffset = (element, container = document.body) => {
+export const getAbsoluteOffset = (element: HTMLElement, container: Element = document.body): Vector => {
     let top = 0, left = 0;
     let node = element;
 
@@ -264,7 +270,7 @@ export const getAbsoluteOffset = (element, container = document.body) => {
 
         if (container === node) break;
         allowBorderOffset = true;
-        node = node.offsetParent;
+        node = node.offsetParent as HTMLElement;
     }
 
     return [left, top, 0, 1];

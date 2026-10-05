@@ -1,15 +1,20 @@
+import type { Callback } from './types';
+
 class Event {
 
-    constructor(name) {
+    name: string;
+    callbacks: Callback[];
+
+    constructor(name: string) {
         this.name = name;
         this.callbacks = [];
     }
 
-    registerCallback(cb) {
+    registerCallback(cb: Callback) {
         this.callbacks.push(cb);
     }
 
-    removeCallback(cb) {
+    removeCallback(cb: Callback) {
         const ix = this.callbacks.indexOf(cb);
 
         if (ix !== -1) {
@@ -21,25 +26,27 @@ class Event {
 
 export default class EventDispatcher {
 
+    events: Record<string, Event>;
+
     constructor() {
         this.events = {};
     }
 
-    registerEvent(eventName) {
+    registerEvent(eventName: string) {
         this.events[eventName] = new Event(eventName);
     }
 
-    emit(ctx, eventName, eventArgs) {
+    emit(ctx: unknown, eventName: string, eventArgs?: unknown) {
         this.events[eventName].callbacks.forEach((cb) => {
             cb.call(ctx, eventArgs);
         });
     }
 
-    addEventListener(eventName, cb) {
+    addEventListener(eventName: string, cb: Callback) {
         this.events[eventName].registerCallback(cb);
     }
 
-    removeEventListener(eventName, cb) {
+    removeEventListener(eventName: string, cb: Callback) {
         this.events[eventName].removeCallback(cb);
     }
 

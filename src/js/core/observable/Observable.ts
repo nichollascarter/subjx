@@ -1,6 +1,14 @@
 import { isDef, isUndef } from '../util/util';
 import { NOTIFIER_CONSTANTS } from '../consts';
 
+export interface Observer {
+    notifyMove(data: any): void;
+    notifyRotate(data: any): void;
+    notifyResize(data: any): void;
+    notifyApply(data: any): void;
+    notifyGetState(data: any): void;
+}
+
 const {
     ON_GETSTATE,
     ON_APPLY,
@@ -11,11 +19,13 @@ const {
 
 export default class Observable {
 
+    observers: Record<string, Observer[]>;
+
     constructor() {
         this.observers = {};
     }
 
-    subscribe(eventName, sub) {
+    subscribe(eventName: string, sub: Observer) {
         const obs = this.observers;
 
         if (isUndef(obs[eventName])) {
@@ -29,7 +39,7 @@ export default class Observable {
         return this;
     }
 
-    unsubscribe(eventName, f) {
+    unsubscribe(eventName: string, f: Observer) {
         const obs = this.observers;
 
         if (isDef(obs[eventName])) {
@@ -40,7 +50,7 @@ export default class Observable {
         return this;
     }
 
-    notify(eventName, source, data) {
+    notify(eventName: string, source: Observer, data: unknown) {
         if (isUndef(this.observers[eventName])) return;
 
         this.observers[eventName].forEach(observer => {
