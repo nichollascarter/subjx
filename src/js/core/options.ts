@@ -329,6 +329,18 @@ export interface DragOptions {
      */
     handles?: ResizeHandleKey[];
     /**
+     * Extra grab area around handles and edges in screen pixels, independent of zoom.
+     * SVG only. After zooming the container call `fitControlsToSize()` to update it
+     * @default 0
+     */
+    hitRadius?: number;
+    /**
+     * Keep hit areas visible, e.g. to tune `hitRadius`; otherwise they are
+     * highlighted on hover only. SVG only
+     * @default false
+     */
+    showHitAreas?: boolean;
+    /**
      * Enable/disable rotation
      * @default true
      */

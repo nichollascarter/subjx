@@ -140,6 +140,8 @@ const defaultOptions = {
     draggable: true,
     resizable: true,
     handles: null,
+    hitRadius: 0,
+    showHitAreas: false,
     rotatable: true,
     scalable: false,
     applyTranslate: false,
@@ -656,6 +658,119 @@ describe('Test handles option', () => {
         expect(draggable.storage.handles.p1).toBeUndefined();
         expect(draggable.storage.handles.p2).toBeDefined();
 
+        draggable.disable();
+    });
+});
+
+describe('Test hitRadius option', () => {
+    it('adds no hit areas by default', () => {
+        const draggable = subjx(svgElement).drag();
+
+        expect(Object.keys(draggable.storage.hitAreas)).toEqual([]);
+
+        draggable.disable();
+    });
+
+    it('adds a hit area to every interactive handle', () => {
+        const draggable = subjx(svgElement).drag({ hitRadius: 12 });
+        const { hitAreas, handles } = draggable.storage;
+
+        ['tl', 'br', 'rotator', 'te', 're'].forEach(key => {
+            expect(hitAreas[key].getAttribute('data-sjx-handle')).toEqual(key);
+            expect(handles[key]).toBeDefined();
+        });
+        expect(hitAreas.tl.getAttribute('r')).toEqual('12');
+        expect(hitAreas.te.getAttribute('stroke-width')).toEqual('24');
+
+        draggable.disable();
+    });
+
+    it('marks the controls when hit areas should stay visible', () => {
+        const hidden = subjx(svgElement).drag({ hitRadius: 12 });
+        expect(hidden.controls.classList.contains('sjx-show-hit')).toBe(false);
+        hidden.disable();
+
+        const shown = subjx(svgElement).drag({ hitRadius: 12, showHitAreas: true });
+        expect(shown.controls.classList.contains('sjx-show-hit')).toBe(true);
+        shown.disable();
+    });
+
+    it('skips edges that ignore the pointer', () => {
+        const draggable = subjx(svgLineElement).drag({ hitRadius: 12 });
+        const { hitAreas } = draggable.storage;
+
+        expect(hitAreas.p1).toBeDefined();
+        expect(hitAreas.p2).toBeDefined();
+        ['te', 'be', 'le', 're'].forEach(key => expect(hitAreas[key]).toBeUndefined());
+
+        draggable.disable();
+    });
+
+    it('treats a press on the hit area as a press on its handle', () => {
+        svgLineElement.setAttribute('x2', '100');
+
+        const events = [];
+        const draggable = subjx(svgLineElement).drag({ hitRadius: 12 });
+
+        ['resizeStart', 'drag'].forEach(name => (
+            draggable.on(name, () => events.push(name))
+        ));
+
+        draggable.storage.hitAreas.p2.dispatchEvent(createEMouseDown());
+
+        let step = 0;
+        while (step < 5) {
+            document.dispatchEvent(createEMouseMove());
+            jest.advanceTimersByTime(1001 / 60);
+            step++;
+        }
+
+        document.dispatchEvent(createEMouseUp());
+
+        expect(events).toContain('resizeStart');
+        expect(events).not.toContain('drag');
+        expect(svgLineElement.getAttribute('x2')).toEqual('150');
+
+        draggable.disable();
+    });
+});
+
+describe('Test active handle marking', () => {
+    const press = (target) => {
+        target.dispatchEvent(createEMouseDown());
+        document.dispatchEvent(createEMouseMove());
+        jest.advanceTimersByTime(1001 / 60);
+    };
+
+    it('marks the grabbed handle while resizing or rotating', () => {
+        const draggable = subjx(svgElement).drag();
+        const { handles, wrapper } = draggable.storage;
+
+        ['tr', 'rotator'].forEach(key => {
+            press(handles[key]);
+
+            expect(handles[key].classList.contains('sjx-active')).toBe(true);
+            expect(wrapper.classList.contains('sjx-acting')).toBe(true);
+            expect(handles.tl.classList.contains('sjx-active')).toBe(false);
+
+            document.dispatchEvent(createEMouseUp());
+
+            expect(handles[key].classList.contains('sjx-active')).toBe(false);
+            expect(wrapper.classList.contains('sjx-acting')).toBe(false);
+        });
+
+        draggable.disable();
+    });
+
+    it('marks nothing while dragging the element', () => {
+        const draggable = subjx(svgElement).drag();
+
+        press(svgElement);
+
+        expect(draggable.storage.wrapper.classList.contains('sjx-acting')).toBe(false);
+        expect(draggable.storage.wrapper.querySelector('.sjx-active')).toBeNull();
+
+        document.dispatchEvent(createEMouseUp());
         draggable.disable();
     });
 });

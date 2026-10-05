@@ -175,6 +175,7 @@ export interface TransformStorage<M = unknown> {
     doDraw?: boolean;
     onExecution?: boolean;
     cursor?: string | null;
+    activeHandle?: Element | null;
     frame?: number;
     controlsMatrix?: M;
     [key: string]: unknown;
@@ -200,6 +201,8 @@ export interface TransformOptions {
     draggable: boolean;
     resizable: boolean;
     handles: ResizeHandleKey[] | null;
+    hitRadius: number;
+    showHitAreas: boolean;
     rotatable: boolean;
     scalable: boolean;
     applyTranslate: boolean;
@@ -369,6 +372,8 @@ export default abstract class Transformable<
             draggable = true,
             resizable = true,
             handles,
+            hitRadius = 0,
+            showHitAreas = false,
             rotatable = true,
             scalable = false,
             applyTranslate = false,
@@ -415,6 +420,8 @@ export default abstract class Transformable<
             draggable,
             resizable,
             handles: Array.isArray(handles) ? handles : null,
+            hitRadius: Math.max(0, Number(hitRadius) || 0),
+            showHitAreas: Boolean(showHitAreas),
             rotatable,
             scalable,
             applyTranslate,
@@ -770,7 +777,7 @@ export default abstract class Transformable<
     /** @internal */
     protected start(e: PointerInput) {
         const { clientX, clientY } = e;
-        const target = e.target as Element;
+        const target = this.resolveHandle(e.target as Element);
         const {
             elements,
             observable,
@@ -861,6 +868,10 @@ export default abstract class Transformable<
             ...storage,
             ...nextStorage
         };
+
+        if (doResize || doRotate || doSetCenter) {
+            this.setActiveHandle(handle[0]);
+        }
 
         const eventArgs = {
             clientX,
@@ -1032,10 +1043,34 @@ export default abstract class Transformable<
 
         cancelAnimFrame(frame as number);
 
+        this.setActiveHandle(null);
+
         helper(document.body).css({ cursor: 'auto' });
         if (isDef(radius)) {
             addClass(radius, `${LIB_CLASS_PREFIX}hidden`);
         }
+    }
+
+    /** @internal */
+    protected setActiveHandle(handle: Element | null) {
+        const {
+            storage,
+            storage: {
+                wrapper,
+                activeHandle
+            }
+        } = this;
+
+        if (activeHandle) removeClass(activeHandle, `${LIB_CLASS_PREFIX}active`);
+
+        if (handle) {
+            addClass(handle, `${LIB_CLASS_PREFIX}active`);
+            addClass(wrapper, `${LIB_CLASS_PREFIX}acting`);
+        } else {
+            removeClass(wrapper, `${LIB_CLASS_PREFIX}acting`);
+        }
+
+        storage.activeHandle = handle;
     }
 
     /** @internal */
@@ -1047,7 +1082,7 @@ export default abstract class Transformable<
             } = {} as S
         } = this;
 
-        const target = e.target as Element;
+        const target = this.resolveHandle(e.target as Element);
         const handle = helper(target);
 
         const {
@@ -1129,6 +1164,14 @@ export default abstract class Transformable<
             doH,
             point
         };
+    }
+
+    /** @internal */
+    protected resolveHandle(target: Element) {
+        const key = target && target.getAttribute && target.getAttribute('data-sjx-handle');
+        const handle = key ? this.storage.handles[key] : null;
+
+        return handle || target;
     }
 
     /** @internal */

@@ -24,6 +24,8 @@ const options: DragOptions = {
     rotatorAnchor,
     rotatorOffset: 30,
     handles: ['tl', 'br', 're', 'p1'],
+    hitRadius: 8,
+    showHitAreas: true,
     restrict: '#area',
     container: div,
     controlsContainer: div,

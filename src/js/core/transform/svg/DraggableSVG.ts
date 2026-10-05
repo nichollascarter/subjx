@@ -137,6 +137,7 @@ interface SVGStorage extends TransformStorage<DOMMatrix> {
     cached: TransformStorage<DOMMatrix>['cached'] & {
         transformOrigin?: DOMPoint;
     };
+    hitAreas: Record<string, SVGCircleElement | SVGLineElement>;
 }
 
 type SVGOptions = TransformOptions & {
@@ -162,11 +163,17 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 rotatable,
                 showNormal,
                 transformOrigin,
-                restrict
+                restrict,
+                hitRadius,
+                showHitAreas
             }
         } = this;
 
-        const wrapper = createSVGElement('g', ['sjx-svg-wrapper']);
+        const hitAreas: SVGStorage['hitAreas'] = {};
+
+        const wrapper = createSVGElement('g', showHitAreas
+            ? ['sjx-svg-wrapper', 'sjx-show-hit']
+            : ['sjx-svg-wrapper']);
         const controls = createSVGElement('g', ['sjx-svg-controls']);
 
         const line = this.getLine();
@@ -268,6 +275,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 handles[key]!.setAttribute('visibility', 'hidden');
             }
 
+            if (hitRadius && !line && this.isHandleEnabled(key)) {
+                hitAreas[key] = createHitArea('line', key, hitRadius);
+                controls.appendChild(hitAreas[key]);
+            }
+
             controls.appendChild(handles[key]!);
         });
 
@@ -294,6 +306,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 color,
                 key
             );
+
+            if (hitRadius) {
+                hitAreas[key] = createHitArea('circle', key, hitRadius);
+                controls.appendChild(hitAreas[key]);
+            }
 
             controls.appendChild(handles[key]!);
         });
@@ -332,8 +349,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             transform: {
                 containerMatrix: getTransformToElement(restrictContainer, restrictContainer.parentNode)
             },
-            cached: {}
+            cached: {},
+            hitAreas
         } as SVGStorage;
+
+        this.syncHitAreas();
 
         [...elements, controls].map(target => (
             helper(target)
@@ -1194,6 +1214,8 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 )
             }
         };
+
+        this.syncHitAreas();
     }
 
     /** @internal */
@@ -1570,7 +1592,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             ...((!isShifted && Boolean(center)) && { center })
         };
 
-        return keys(handlesVertices).reduce<Vertices>((result, key) => {
+        const result = keys(handlesVertices).reduce<Vertices>((result, key) => {
             const hdl = handles[key];
             const attr = handlesVertices[key];
 
@@ -1583,6 +1605,45 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
 
             return result;
         }, {});
+
+        this.syncHitAreas();
+
+        return result;
+    }
+
+    /** @internal */
+    private syncHitAreas() {
+        const {
+            storage: {
+                controls,
+                handles,
+                hitAreas
+            },
+            options: {
+                hitRadius
+            }
+        } = this;
+
+        if (!hitAreas) return;
+
+        const screenMatrix = controls.getScreenCTM();
+        const scale = screenMatrix
+            ? Math.sqrt(Math.abs(screenMatrix.a * screenMatrix.d - screenMatrix.b * screenMatrix.c)) || 1
+            : 1;
+
+        entries(hitAreas).forEach(([key, area]) => {
+            const hdl = handles[key];
+            if (isUndef(hdl)) return;
+
+            const isLine = area.tagName.toLowerCase() === 'line';
+            const attrs = isLine ? ['x1', 'y1', 'x2', 'y2'] : ['cx', 'cy'];
+
+            attrs.forEach(attr => area.setAttribute(attr, hdl!.getAttribute(attr) || '0'));
+
+            if (!isLine) {
+                area.setAttribute('r', String(hitRadius / scale));
+            }
+        });
     }
 
     setCenterPoint(...args: [TransformOriginParams?, boolean?]) {
@@ -1648,6 +1709,8 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             newX,
             newY
         );
+
+        this.syncHitAreas();
     }
 
     fitControlsToSize() {
@@ -2159,6 +2222,21 @@ const createHandler = (left: number, top: number, color: string, key: string) =>
     ));
 
     return handler;
+};
+
+const createHitArea = (tag: 'circle' | 'line', key: string, radius: number) => {
+    const area = createSVGElement(tag, ['sjx-svg-hit', `sjx-svg-hit-${key}`]);
+
+    area.setAttribute('data-sjx-handle', key);
+    area.setAttribute('fill', 'transparent');
+
+    if (tag === 'line') {
+        area.setAttribute('stroke', 'transparent');
+        area.setAttribute('stroke-width', String(radius * 2));
+        area.setAttribute('vector-effect', 'non-scaling-stroke');
+    }
+
+    return area;
 };
 
 const setLineStyle = (line: Element, color: string) => {

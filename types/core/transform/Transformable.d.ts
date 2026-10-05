@@ -79,6 +79,7 @@ export interface TransformStorage<M = unknown> {
     doDraw?: boolean;
     onExecution?: boolean;
     cursor?: string | null;
+    activeHandle?: Element | null;
     frame?: number;
     controlsMatrix?: M;
     [key: string]: unknown;
@@ -103,6 +104,8 @@ export interface TransformOptions {
     draggable: boolean;
     resizable: boolean;
     handles: ResizeHandleKey[] | null;
+    hitRadius: number;
+    showHitAreas: boolean;
     rotatable: boolean;
     scalable: boolean;
     applyTranslate: boolean;

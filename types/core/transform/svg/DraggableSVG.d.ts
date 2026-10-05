@@ -93,6 +93,7 @@ interface SVGStorage extends TransformStorage<DOMMatrix> {
     cached: TransformStorage<DOMMatrix>['cached'] & {
         transformOrigin?: DOMPoint;
     };
+    hitAreas: Record<string, SVGCircleElement | SVGLineElement>;
 }
 type SVGOptions = TransformOptions & {
     container: SVGGraphicsElement;
