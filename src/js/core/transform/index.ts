@@ -2,27 +2,30 @@ import { Observable } from '../observable';
 import Draggable from './Draggable';
 import DraggableSVG from './svg';
 import { checkElement } from './svg/util';
-import { arrReduce, arrMap, isDef } from '../util/util';
+import { forEach, arrMap, isDef } from '../util/util';
+import type Helper from '../Helper';
+import type { DragOptions } from '../../../../types/options';
 
 // factory method for creating draggable elements
-export default function drag(options, obInstance) {
+export default function drag(this: Helper, options?: DragOptions, obInstance?: Observable) {
     if (this.length) {
         const Ob = (isDef(obInstance) && obInstance instanceof Observable)
             ? obInstance
             : new Observable();
 
         if (this[0] instanceof SVGElement) {
-            const items = arrReduce.call(this, (result, item) => {
+            const items: Element[] = [];
+
+            forEach.call(this, (item: Element) => {
                 if (checkElement(item)) {
-                    result.push(item);
+                    items.push(item);
                 }
-                return result;
-            }, []);
+            });
 
             return new DraggableSVG(items, options, Ob);
         } else {
             return new Draggable(
-                arrMap.call(this, _ => _),
+                arrMap.call(this, (_: Element) => _) as Element[],
                 options,
                 Ob
             );

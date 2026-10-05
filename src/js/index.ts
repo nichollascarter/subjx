@@ -3,12 +3,13 @@ import Subjx, { Observable } from './core';
 import * as matrix from './core/transform/matrix';
 import * as svgMatrix from './core/transform/svg/util';
 import * as common from './core/transform/common';
+import type { HelperParams } from './core/Helper';
 
-function subjx(params) {
+function subjx(params: HelperParams) {
     return new Subjx(params);
 }
 
-Object.assign(subjx, {
+const api = Object.assign(subjx, {
     createObservable: () => new Observable(),
     Subjx,
     Observable,
@@ -18,4 +19,4 @@ Object.assign(subjx, {
 });
 
 export { matrix, svgMatrix, common };
-export default subjx;
+export default api;

@@ -1,5 +1,7 @@
 import { helper } from '../Helper';
 import SubjectModel from '../SubjectModel';
+import type { PointerInput } from '../SubjectModel';
+import type { CloneOptions } from '../../../../types/options';
 import { EVENT_EMITTER_CONSTANTS, CLIENT_EVENTS_CONSTANTS } from '../consts';
 
 import {
@@ -20,9 +22,24 @@ import {
 const { EMITTER_EVENTS } = EVENT_EMITTER_CONSTANTS;
 const { E_MOUSEDOWN, E_TOUCHSTART } = CLIENT_EVENTS_CONSTANTS;
 
-export default class Cloneable extends SubjectModel {
+interface CloneStorage {
+    style: Record<string, string>;
+    data: WeakMap<Element, { parent: Element }>;
+    clientX?: number;
+    clientY?: number;
+    cx?: number;
+    cy?: number;
+    clone?: Element;
+    doDraw?: boolean;
+    doMove?: boolean;
+    frameId?: number;
+}
 
-    constructor(elements, options) {
+export default class Cloneable extends SubjectModel<CloneStorage> {
+
+    options!: Required<Pick<CloneOptions, 'style' | 'appendTo' | 'stack'>>;
+
+    constructor(elements: Element[], options?: CloneOptions) {
         super(elements);
         this.enable(options);
     }
@@ -38,13 +55,13 @@ export default class Cloneable extends SubjectModel {
             appendTo
         } = options;
 
-        const nextStyle = {
+        const nextStyle: Record<string, string> = {
             position: 'absolute',
             'z-index': '2147483647',
-            ...style
+            ...style as Record<string, string>
         };
 
-        const data = new WeakMap();
+        const data: CloneStorage['data'] = new WeakMap();
 
         elements.map(element => (
             data.set(element, {
@@ -65,7 +82,7 @@ export default class Cloneable extends SubjectModel {
         ));
     }
 
-    _processOptions(options = {}) {
+    _processOptions(options: CloneOptions = {}) {
         const {
             style = {},
             appendTo = null,
@@ -79,13 +96,13 @@ export default class Cloneable extends SubjectModel {
         const dropable = helper(stack)[0];
 
         const _onDrop = isFunc(onDrop)
-            ? function (evt) {
-                const { storage: { clone } = {} } = this;
+            ? function (this: Cloneable, evt: PointerInput) {
+                const { clone } = this.storage!;
 
-                const isCollide = objectsCollide(clone, dropable);
+                const isCollide = objectsCollide(clone!, dropable);
 
                 if (isCollide) {
-                    onDrop.call(this, evt, this.elements, clone);
+                    onDrop.call(this, evt as MouseEvent, this.elements, clone!);
                 }
             }
             : noop;
@@ -104,17 +121,12 @@ export default class Cloneable extends SubjectModel {
         };
     }
 
-    _start({ target, clientX, clientY }) {
-        const {
-            elements,
-            storage,
-            storage: {
-                data,
-                style
-            }
-        } = this;
+    _start({ target, clientX, clientY }: PointerInput) {
+        const { elements } = this;
+        const storage = this.storage!;
+        const { data, style } = storage;
 
-        const element = elements.find(el => el === target || el.contains(target));
+        const element = elements.find(el => el === target || el.contains(target as Node | null));
 
         if (!element) return;
 
@@ -122,12 +134,12 @@ export default class Cloneable extends SubjectModel {
             parent = element.parentNode
         } = data.get(element) || {};
 
-        const { left, top } = getOffset(parent);
+        const { left, top } = getOffset(parent as Element);
 
         style.left = `${(clientX - left)}px`;
         style.top = `${(clientY - top)}px`;
 
-        const clone = element.cloneNode(true);
+        const clone = element.cloneNode(true) as Element;
         helper(clone).css(style);
 
         storage.clientX = clientX;
@@ -136,12 +148,12 @@ export default class Cloneable extends SubjectModel {
         storage.cy = clientY;
         storage.clone = clone;
 
-        parent.appendChild(clone);
+        parent!.appendChild(clone);
         this._draw();
     }
 
-    _moving({ clientX, clientY }) {
-        const { storage } = this;
+    _moving({ clientX, clientY }: PointerInput) {
+        const storage = this.storage!;
 
         storage.clientX = clientX;
         storage.clientY = clientY;
@@ -149,8 +161,8 @@ export default class Cloneable extends SubjectModel {
         storage.doMove = true;
     }
 
-    _end(e) {
-        const { storage } = this;
+    _end(e: PointerInput) {
+        const storage = this.storage!;
 
         const {
             clone,
@@ -158,18 +170,18 @@ export default class Cloneable extends SubjectModel {
         } = storage;
 
         storage.doDraw = false;
-        cancelAnimFrame(frameId);
+        cancelAnimFrame(frameId as number);
 
         if (isUndef(clone)) return;
 
-        this.proxyMethods.onDrop.call(this, e);
-        clone.parentNode.removeChild(clone);
+        this.proxyMethods!.onDrop.call(this, e);
+        clone.parentNode!.removeChild(clone);
 
         delete storage.clone;
     }
 
     _animate() {
-        const { storage } = this;
+        const storage = this.storage!;
 
         storage.frameId = requestAnimFrame(this._animate);
 
@@ -180,7 +192,7 @@ export default class Cloneable extends SubjectModel {
             cx,
             cy,
             clone
-        } = storage;
+        } = storage as Required<CloneStorage>;
 
         if (!doDraw) return;
         storage.doDraw = false;
@@ -194,16 +206,12 @@ export default class Cloneable extends SubjectModel {
         );
     }
 
-    _processMove(_, { dx, dy }) {
-        const {
-            storage: {
-                clone
-            } = {}
-        } = this;
+    _processMove(_: Element, { dx, dy }: { dx: number; dy: number }) {
+        const { clone } = this.storage!;
 
         const transformCommand = `translate(${dx}px, ${dy}px)`;
 
-        helper(clone).css({
+        helper(clone!).css({
             transform: transformCommand,
             webkitTranform: transformCommand,
             mozTransform: transformCommand,
@@ -225,7 +233,7 @@ export default class Cloneable extends SubjectModel {
             .off(E_MOUSEDOWN, this._onMouseDown)
             .off(E_TOUCHSTART, this._onTouchStart);
 
-        proxyMethods.onDestroy.call(this, elements);
+        proxyMethods!.onDestroy.call(this, elements);
         delete this.storage;
     }
 
