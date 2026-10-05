@@ -9,10 +9,17 @@ import {
     arrayToChunks
 } from './util';
 
+export interface PathSegment {
+    key: string;
+    values: number[];
+    cmd?: string;
+    relative?: boolean;
+}
+
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
 
-const getCommandValuesLength = (cmd) => ([
+const getCommandValuesLength = (cmd: string) => ([
     {
         size: 2,
         condition: ['M', 'm', 'L', 'l', 'T', 't'].includes(cmd)
@@ -37,12 +44,13 @@ const getCommandValuesLength = (cmd) => ([
         size: 1,
         condition: true
     }
-].find(({ condition }) => !!condition));
+].find(({ condition }) => !!condition)!);
 
-const parsePath = (path) => {
-    let match = dRE.lastIndex = 0;
+const parsePath = (path: string): PathSegment[] => {
+    let match: RegExpExecArray | null;
+    dRE.lastIndex = 0;
 
-    const serialized = [];
+    const serialized: PathSegment[] = [];
 
     while ((match = dRE.exec(path))) {
         const [, cmd, params] = match;
@@ -53,10 +61,10 @@ const parsePath = (path) => {
         const data = normalizeString(params);
 
         const values = data.trim().split(sepRE).map(val => {
-            if (!isNaN(val)) {
+            if (!isNaN(val as unknown as number)) {
                 return Number(val);
             }
-        });
+        }) as number[];
 
         let firstCommand = false;
         const isMoveTo = upCmd === 'M';
@@ -84,7 +92,7 @@ const parsePath = (path) => {
     return reducePathData(absolutizePathData(serialized));
 };
 
-export const movePath = (params) => {
+export const movePath = (params: { path: string; dx: number; dy: number }) => {
     const {
         path,
         dx,
@@ -224,7 +232,7 @@ export const movePath = (params) => {
                     break;
                 }
                 case 'Z': {
-                    values[0] = '';
+                    (values as unknown[])[0] = '';
                     space = '';
                     break;
                 }
@@ -240,7 +248,7 @@ export const movePath = (params) => {
     }
 };
 
-export const resizePath = (params) => {
+export const resizePath = (params: { path: string; localCTM: DOMMatrix }) => {
     const {
         path,
         localCTM
@@ -600,16 +608,16 @@ export const resizePath = (params) => {
     }
 };
 
-const absolutizePathData = (pathData) => {
-    let currentX = null,
-        currentY = null,
-        subpathX = null,
-        subpathY = null;
+const absolutizePathData = (pathData: PathSegment[]): PathSegment[] => {
+    let currentX = null as unknown as number,
+        currentY = null as unknown as number,
+        subpathX = null as unknown as number,
+        subpathY = null as unknown as number;
 
-    return pathData.reduce((absolutizedPathData, seg) => {
+    return pathData.reduce<PathSegment[]>((absolutizedPathData, seg) => {
         const { cmd, values } = seg;
 
-        let nextSeg;
+        let nextSeg: PathSegment | undefined;
 
         switch (cmd) {
 
@@ -838,26 +846,26 @@ const absolutizePathData = (pathData) => {
 
         }
 
-        return [...absolutizedPathData, nextSeg];
+        return [...absolutizedPathData, nextSeg as PathSegment];
     }, []);
 };
 
-const reducePathData = (pathData) => {
-    let lastType = null;
+const reducePathData = (pathData: PathSegment[]): PathSegment[] => {
+    let lastType: string | null = null;
 
-    let lastControlX = null;
-    let lastControlY = null;
+    let lastControlX = null as unknown as number;
+    let lastControlY = null as unknown as number;
 
-    let currentX = null;
-    let currentY = null;
+    let currentX = null as unknown as number;
+    let currentY = null as unknown as number;
 
-    let subpathX = null;
-    let subpathY = null;
+    let subpathX = null as unknown as number;
+    let subpathY = null as unknown as number;
 
-    return pathData.reduce((reducedPathData, seg) => {
+    return pathData.reduce<PathSegment[]>((reducedPathData, seg) => {
         const { key, values } = seg;
 
-        let nextSeg;
+        let nextSeg: PathSegment[] | undefined;
 
         switch (key) {
 
@@ -1017,23 +1025,34 @@ const reducePathData = (pathData) => {
 
         lastType = key;
 
-        return [...reducedPathData, ...nextSeg];
+        return [...reducedPathData, ...nextSeg as PathSegment[]];
     }, []);
 };
 
 //  - a2c() by Dmitry Baranovskiy (MIT License)
 //  https://github.com/DmitryBaranovskiy/raphael/blob/v2.1.1/raphael.js#L2216
-const arcToCubicCurves = (x1, y1, x2, y2, rx, ry, xAxisRot, largeArcFlag, sweepFlag, recursive) => {
-    const degToRad = deg => (Math.PI * deg) / 180;
+const arcToCubicCurves = (
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    rx: number,
+    ry: number,
+    xAxisRot: number,
+    largeArcFlag: number,
+    sweepFlag: number,
+    recursive?: number[]
+): number[][] => {
+    const degToRad = (deg: number) => (Math.PI * deg) / 180;
 
-    const rotate = (x, y, rad) => ({
+    const rotate = (x: number, y: number, rad: number) => ({
         x: x * Math.cos(rad) - y * Math.sin(rad),
         y: x * Math.sin(rad) + y * Math.cos(rad)
     });
 
     const angleRad = degToRad(xAxisRot);
-    let params = [];
-    let f1, f2, cx, cy;
+    let params: any[] = [];
+    let f1: number, f2: number, cx: number, cy: number;
 
     if (recursive) {
         f1 = recursive[0];
@@ -1139,8 +1158,8 @@ const arcToCubicCurves = (x1, y1, x2, y2, rx, ry, xAxisRot, largeArcFlag, sweepF
     } else {
         params = [m2, m3, m4, ...params].join().split(',');
 
-        const curves = [];
-        let curveParams = [];
+        const curves: number[][] = [];
+        let curveParams: number[] = [];
 
         params.forEach((_, i) => {
             if (i % 2) {
