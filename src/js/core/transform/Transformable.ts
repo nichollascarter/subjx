@@ -61,7 +61,7 @@ const {
     E_SET_POINT_END
 } = EVENT_EMITTER_CONSTANTS;
 
-const { TRANSFORM_HANDLES_KEYS, TRANSFORM_EDGES_KEYS } = TRANSFORM_HANDLES_CONSTANTS;
+const { TRANSFORM_HANDLES_KEYS, TRANSFORM_EDGES_KEYS, TRANSFORM_POINT_KEYS } = TRANSFORM_HANDLES_CONSTANTS;
 const {
     E_MOUSEDOWN,
     E_TOUCHSTART,
@@ -88,6 +88,8 @@ const {
     LEFT_EDGE,
     RIGHT_EDGE
 } = TRANSFORM_EDGES_KEYS;
+
+const { START_POINT, END_POINT } = TRANSFORM_POINT_KEYS;
 
 const { keys, values } = Object;
 
@@ -165,6 +167,7 @@ export interface TransformStorage<M = unknown> {
     doW?: boolean;
     doH?: boolean;
     doResize?: boolean;
+    point?: string | null;
     doDrag?: boolean;
     doRotate?: boolean;
     doSetCenter?: boolean;
@@ -276,6 +279,9 @@ export default abstract class Transformable<
 
     /** @internal */
     abstract _processResizeRestrict(element: Element, delta: Delta): RestrictPoint;
+
+    /** @internal */
+    abstract _processPointMove(element: Element, point: string, delta: Delta): object | null;
 
     /** @internal */
     abstract _processRotateRestrict(element: Element, radians: number): RestrictPoint;
@@ -458,7 +464,8 @@ export default abstract class Transformable<
             revX,
             revY,
             mouseEvent,
-            data
+            data,
+            point
         } = storage as S & ActiveSession;
 
         const {
@@ -475,7 +482,26 @@ export default abstract class Transformable<
             restrict
         } = options;
 
-        if (doResize && resizable) {
+        if (doResize && resizable && point) {
+            const dx = snapToGrid(clientX - relativeX, snap.x) as number;
+            const dy = snapToGrid(clientY - relativeY, snap.y) as number;
+
+            const result = this._processPointMove(elements[0], point, { dx, dy });
+
+            if (result) {
+                const finalArgs = {
+                    ...result,
+                    dx,
+                    dy,
+                    clientX,
+                    clientY,
+                    mouseEvent
+                };
+
+                this.proxyMethods.onResize.call(this, finalArgs);
+                super._emitEvent(E_RESIZE, finalArgs);
+            }
+        } else if (doResize && resizable) {
             const distX = snapToGrid(clientX - relativeX, snap.x) as number;
             const distY = snapToGrid(clientY - relativeY, snap.y) as number;
 
@@ -770,10 +796,11 @@ export default abstract class Transformable<
             revX,
             revY,
             doW,
-            doH
+            doH,
+            point
         } = computed;
 
-        const doResize = onRightEdge || onBottomEdge || onTopEdge || onLeftEdge;
+        const doResize = onRightEdge || onBottomEdge || onTopEdge || onLeftEdge || Boolean(point);
 
         const {
             rotator,
@@ -802,6 +829,7 @@ export default abstract class Transformable<
             cursor: null,
             dox: /x/.test(axis) && (doResize
                 ?
+                Boolean(point) ||
                 handle.is(handles.ml) ||
                 handle.is(handles.mr) ||
                 handle.is(handles.tl) ||
@@ -813,6 +841,7 @@ export default abstract class Transformable<
                 : true),
             doy: /y/.test(axis) && (doResize
                 ?
+                Boolean(point) ||
                 handle.is(handles.br) ||
                 handle.is(handles.bl) ||
                 handle.is(handles.bc) ||
@@ -1083,6 +1112,8 @@ export default abstract class Transformable<
         const doW = checkAction([MIDDLE_LEFT, MIDDLE_RIGHT, LEFT_EDGE, RIGHT_EDGE]);
         const doH = checkAction([TOP_CENTER, BOTTOM_CENTER, BOTTOM_EDGE, TOP_EDGE]);
 
+        const point = [START_POINT, END_POINT].find(key => checkIsHandle(handles[key])) || null;
+
         return {
             revX,
             revY,
@@ -1091,7 +1122,8 @@ export default abstract class Transformable<
             onRightEdge,
             onBottomEdge,
             doW,
-            doH
+            doH,
+            point
         };
     }
 

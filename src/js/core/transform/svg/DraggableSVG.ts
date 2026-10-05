@@ -18,7 +18,8 @@ import { movePath, resizePath } from './path';
 import {
     THEME_COLOR,
     EVENT_EMITTER_CONSTANTS,
-    CLIENT_EVENTS_CONSTANTS
+    CLIENT_EVENTS_CONSTANTS,
+    TRANSFORM_HANDLES_CONSTANTS
 } from '../../consts';
 
 import {
@@ -38,6 +39,7 @@ import {
 
 const { E_DRAG, E_RESIZE, E_ROTATE } = EVENT_EMITTER_CONSTANTS;
 const { E_MOUSEDOWN, E_TOUCHSTART } = CLIENT_EVENTS_CONSTANTS;
+const { START_POINT, END_POINT } = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_POINT_KEYS;
 
 const { keys, entries, values } = Object;
 
@@ -167,6 +169,8 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         const wrapper = createSVGElement('g', ['sjx-svg-wrapper']);
         const controls = createSVGElement('g', ['sjx-svg-controls']);
 
+        const line = this._getLine();
+
         const {
             rotator = null,
             anchor = null,
@@ -214,17 +218,24 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             };
         }
 
-        const resizingHandles = resizable ?
-            {
-                tl: nextVertices.tl,
-                tr: nextVertices.tr,
-                br: nextVertices.br,
-                bl: nextVertices.bl,
-                tc: nextVertices.tc,
-                bc: nextVertices.bc,
-                ml: nextVertices.ml,
-                mr: nextVertices.mr
-            }
+        const boxHandles = {
+            tl: nextVertices.tl,
+            tr: nextVertices.tr,
+            br: nextVertices.br,
+            bl: nextVertices.bl,
+            tc: nextVertices.tc,
+            bc: nextVertices.bc,
+            ml: nextVertices.ml,
+            mr: nextVertices.mr
+        };
+
+        const lineHandles = {
+            [START_POINT]: nextVertices[START_POINT],
+            [END_POINT]: nextVertices[END_POINT]
+        };
+
+        const resizingHandles = resizable
+            ? (line ? lineHandles : boxHandles)
             : {};
 
         const resizingEdges: Record<string, (Point | undefined)[]> = {
@@ -243,6 +254,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 THEME_COLOR,
                 key
             );
+
+            if (line) {
+                handles[key]!.setAttribute('pointer-events', 'none');
+                handles[key]!.setAttribute('visibility', 'hidden');
+            }
 
             controls.appendChild(handles[key]!);
         });
@@ -952,7 +968,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         const hW = width / 2,
             hH = height / 2;
 
-        const vertices = {
+        const vertices: Record<string, number[]> = {
             tl: [x, y],
             tr: [x + width, y],
             mr: [x + width, y + hH],
@@ -963,6 +979,13 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             bl: [x, y + height],
             center: [x + hW, y + hH]
         };
+
+        const line = this._getLine();
+
+        if (line) {
+            vertices[START_POINT] = [line.x1.baseVal.value, line.y1.baseVal.value];
+            vertices[END_POINT] = [line.x2.baseVal.value, line.y2.baseVal.value];
+        }
 
         const nextTransform = isGrouped
             ? transformMatrix
@@ -978,7 +1001,33 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 return nextRes;
             }, {});
 
-        if (rotatable) {
+        if (rotatable && line) {
+            const {
+                [START_POINT]: start,
+                [END_POINT]: end
+            } = nextVertices;
+
+            const axisX = end.x - start.x,
+                axisY = end.y - start.y;
+            const length = Math.sqrt(axisX * axisX + axisY * axisY);
+
+            const [normalX, normalY] = length
+                ? [axisY / length, -axisX / length]
+                : [0, -1];
+
+            const side = rotatorAnchor === 's' || rotatorAnchor === 'w' ? -1 : 1;
+
+            const anchor = {
+                x: (start.x + end.x) / 2,
+                y: (start.y + end.y) / 2
+            };
+
+            nextVertices.rotator = {
+                x: anchor.x + normalX * rotatorOffset * side,
+                y: anchor.y + normalY * rotatorOffset * side
+            };
+            nextVertices.anchor = anchor;
+        } else if (rotatable) {
             const anchor = {} as Point;
             let factor = 1;
 
@@ -1036,6 +1085,20 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         }
 
         return nextVertices;
+    }
+
+    /** @internal */
+    _getLine(): SVGLineElement | null {
+        const {
+            elements: [element],
+            options: {
+                isGrouped
+            }
+        } = this;
+
+        return !isGrouped && element.tagName.toLowerCase() === 'line'
+            ? element as unknown as SVGLineElement
+            : null;
     }
 
     /** @internal */
@@ -1254,6 +1317,85 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         );
 
         return this._restrictHandler(element, preScaledMatrix);
+    }
+
+    /** @internal */
+    _processPointMove(element: SVGGraphicsElement, point: string, { dx, dy }: Delta) {
+        const {
+            storage: {
+                data
+            },
+            options: {
+                proportions,
+                restrict
+            }
+        } = this;
+
+        const {
+            transform: {
+                ctm,
+                matrix
+            },
+            __data__
+        } = data.get(element)!;
+
+        const {
+            resX1,
+            resY1,
+            resX2,
+            resY2
+        } = __data__.get(element) as Required<StoredAttributes>;
+
+        const isStart = point === START_POINT;
+
+        const [baseX, baseY, otherX, otherY] = isStart
+            ? [resX1, resY1, resX2, resY2]
+            : [resX2, resY2, resX1, resY1];
+
+        const toLocal = ctm.inverse();
+        toLocal.e = toLocal.f = 0;
+
+        let { x: localDx, y: localDy } = pointTo(toLocal, dx, dy);
+
+        if (proportions) {
+            const axisX = baseX - otherX,
+                axisY = baseY - otherY;
+            const axisLength = axisX * axisX + axisY * axisY;
+
+            if (axisLength > 0) {
+                const projection = (localDx * axisX + localDy * axisY) / axisLength;
+
+                localDx = axisX * projection;
+                localDy = axisY * projection;
+            }
+        }
+
+        const nextX = baseX + localDx,
+            nextY = baseY + localDy;
+
+        if (restrict) {
+            const { x, y } = pointTo(getTransformToElement(element, restrict), nextX, nextY);
+
+            const [
+                [minX, maxX],
+                [minY, maxY]
+            ] = getMinMaxOfArray(this._getRestrictedBBox());
+
+            if (x < minX || x > maxX || y < minY || y > maxY) return null;
+        }
+
+        element.setAttribute(isStart ? 'x1' : 'x2', String(nextX));
+        element.setAttribute(isStart ? 'y1' : 'y2', String(nextY));
+
+        this._processControlsResize();
+
+        const { width, height } = element.getBBox();
+
+        return {
+            width,
+            height,
+            transform: matrix
+        };
     }
 
     /** @internal */

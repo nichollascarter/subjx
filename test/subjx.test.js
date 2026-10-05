@@ -114,6 +114,7 @@ document.body.innerHTML = `
     </div>
     <svg id="svg-container" xmlns="http://www.w3.org/2000/svg">
         <path id="svg-draggable" d="M691,331 Q711,306,721,331 T761,331 " fill="none" stroke="blue" stroke-width="5"></path>
+        <line id="svg-line" x1="0" y1="0" x2="100" y2="0" stroke="blue"></line>
     </svg>
 `;
 
@@ -124,6 +125,7 @@ const cloneableElement = document.getElementById('cloneable');
 
 const svgElement = document.getElementById('svg-draggable');
 const svgContainerElement = document.getElementById('svg-container');
+const svgLineElement = document.getElementById('svg-line');
 
 const defaultOptions = {
     axis: 'xy',
@@ -544,5 +546,75 @@ describe('Test svg subjx "drag" method', () => {
         });
 
         $draggables.disable();
+    });
+});
+
+describe('Test svg line controls', () => {
+    const boxHandles = ['tl', 'tc', 'tr', 'ml', 'mr', 'bl', 'bc', 'br'];
+
+    it('uses endpoint handles for a single line', () => {
+        const draggable = subjx(svgLineElement).drag();
+        const { handles } = draggable.storage;
+
+        expect(handles.p1).toBeDefined();
+        expect(handles.p2).toBeDefined();
+        boxHandles.forEach(key => expect(handles[key]).toBeUndefined());
+        ['te', 'be', 'le', 're'].forEach(key => (
+            expect(handles[key].getAttribute('pointer-events')).toEqual('none')
+        ));
+
+        draggable.disable();
+    });
+
+    it('keeps box handles for other elements', () => {
+        const draggable = subjx(svgElement).drag();
+        const { handles } = draggable.storage;
+
+        boxHandles.forEach(key => expect(handles[key]).toBeDefined());
+        expect(handles.p1).toBeUndefined();
+        expect(handles.te.getAttribute('pointer-events')).toBeNull();
+
+        draggable.disable();
+    });
+
+    it('has no endpoint handles when not resizable', () => {
+        const draggable = subjx(svgLineElement).drag({ resizable: false });
+
+        expect(draggable.storage.handles.p1).toBeUndefined();
+        expect(draggable.storage.handles.p2).toBeUndefined();
+
+        draggable.disable();
+    });
+
+    it('moves an endpoint as a resize', () => {
+        const events = [];
+        const onResize = jest.fn();
+
+        const draggable = subjx(svgLineElement).drag({ onResize });
+
+        ['resizeStart', 'resize', 'resizeEnd', 'drag'].forEach(name => (
+            draggable.on(name, () => events.push(name))
+        ));
+
+        draggable.storage.handles.p2.dispatchEvent(createEMouseDown());
+
+        let step = 0;
+        while (step < 5) {
+            document.dispatchEvent(createEMouseMove());
+            jest.advanceTimersByTime(1001 / 60);
+            step++;
+        }
+
+        document.dispatchEvent(createEMouseUp());
+
+        expect(svgLineElement.getAttribute('x2')).toEqual('150');
+        expect(svgLineElement.getAttribute('x1')).toEqual('0');
+        expect(onResize).toHaveBeenCalled();
+        expect(events[0]).toEqual('resizeStart');
+        expect(events).toContain('resize');
+        expect(events[events.length - 1]).toEqual('resizeEnd');
+        expect(events).not.toContain('drag');
+
+        draggable.disable();
     });
 });

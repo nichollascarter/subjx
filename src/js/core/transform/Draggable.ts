@@ -396,6 +396,11 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
     _processActions() { }
 
     /** @internal */
+    _processPointMove() {
+        return null;
+    }
+
+    /** @internal */
     _processResize(element: HTMLElement, { dx, dy }: Delta) {
         const {
             storage: {

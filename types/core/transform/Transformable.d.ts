@@ -72,6 +72,7 @@ export interface TransformStorage<M = unknown> {
     doW?: boolean;
     doH?: boolean;
     doResize?: boolean;
+    point?: string | null;
     doDrag?: boolean;
     doRotate?: boolean;
     doSetCenter?: boolean;

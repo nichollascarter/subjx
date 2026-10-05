@@ -51,4 +51,8 @@ export declare const TRANSFORM_HANDLES_CONSTANTS: {
         readonly LEFT_EDGE: "le";
         readonly RIGHT_EDGE: "re";
     };
+    TRANSFORM_POINT_KEYS: {
+        readonly START_POINT: "p1";
+        readonly END_POINT: "p2";
+    };
 };
