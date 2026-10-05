@@ -11,7 +11,7 @@ import type {
 } from './Transformable';
 import type { PointerInput } from '../SubjectModel';
 import type { Matrix, Vector } from '../types';
-import type { TransformOriginParams, AlignmentDirection } from '../../../../types/options';
+import type { TransformOriginParams, AlignmentDirection } from '../options';
 import { floatToFixed, getMinMaxOfArray, DEG } from './common';
 import { isDef, isUndef, warn } from '../util/util';
 import { addClass, matrixToCSS, getScrollOffset, getElementOffset } from '../util/css-util';
@@ -127,6 +127,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
     elements!: HTMLElement[];
     options!: HTMLOptions;
 
+    /** @internal */
     _init(elements: HTMLElement[]) {
         const {
             options: {
@@ -268,6 +269,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         ));
     }
 
+    /** @internal */
     _pointToTransform({ x, y, matrix }: Point & { matrix: Matrix }) {
         const nextMatrix = matrixInvert(matrix);
 
@@ -278,6 +280,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         );
     }
 
+    /** @internal */
     _pointToControls({ x, y }: Point, transform = this.storage.transform) {
         const { controlsMatrix } = transform;
         const matrix = matrixInvert(controlsMatrix);
@@ -289,6 +292,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         );
     }
 
+    /** @internal */
     _applyMatrixToPoint(matrix: Matrix, x: number, y: number): Point {
         const [nx, ny] = multiplyMatrixAndPoint(matrix, [x, y, 0, 1]);
         return {
@@ -297,6 +301,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         };
     }
 
+    /** @internal */
     _cursorPoint({ clientX, clientY }: PointerInput) {
         const { container } = this.options;
         const globalMatrix = getCurrentTransformMatrix(container);
@@ -320,6 +325,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         );
     }
 
+    /** @internal */
     _getRestrictedBBox(force = false) {
         const {
             storage: {
@@ -342,6 +348,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         );
     }
 
+    /** @internal */
     _applyTransformToElement(element: HTMLElement) {
         const {
             storage: {
@@ -385,8 +392,10 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         }
     }
 
+    /** @internal */
     _processActions() { }
 
+    /** @internal */
     _processResize(element: HTMLElement, { dx, dy }: Delta) {
         const {
             storage: {
@@ -514,6 +523,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         };
     }
 
+    /** @internal */
     _processMove(element: HTMLElement, { dx, dy }: Delta) {
         const {
             storage: {
@@ -565,6 +575,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         return moveElementMtrx;
     }
 
+    /** @internal */
     _processRotate(element: HTMLElement, radians: number) {
         const {
             storage: {
@@ -612,6 +623,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         return resultMatrix;
     }
 
+    /** @internal */
     _getElementState(element: HTMLElement, { revX, revY, doW, doH }: Partial<ResizeFlags>) {
         const {
             storage: {
@@ -734,6 +746,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         };
     }
 
+    /** @internal */
     _getCommonState() {
         const {
             elements,
@@ -796,6 +809,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         };
     }
 
+    /** @internal */
     _getBBox() {
         const {
             elements: [element],
@@ -830,6 +844,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         }
     }
 
+    /** @internal */
     _processControlsResize() {
         const { center } = this._applyTransformToHandles();
 
@@ -854,6 +869,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         };
     }
 
+    /** @internal */
     _processControlsMove({ dx, dy }: Delta) {
         const {
             storage: {
@@ -896,6 +912,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         }
     }
 
+    /** @internal */
     _processControlsRotate({ radians }: { radians: number }) {
         const {
             storage: {
@@ -930,6 +947,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         );
     }
 
+    /** @internal */
     _moveCenterHandle(x: number, y: number, updateTransformOrigin = true) {
         const {
             storage: {
@@ -968,6 +986,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         };
     }
 
+    /** @internal */
     _processMoveRestrict(element: HTMLElement, { dx, dy }: Delta) {
         const {
             storage: {
@@ -1001,6 +1020,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         return this._restrictHandler(preTranslateMatrix);
     }
 
+    /** @internal */
     _processRotateRestrict(element: HTMLElement, radians: number) {
         const {
             storage: {
@@ -1034,6 +1054,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         return this._restrictHandler(resultMatrix);
     }
 
+    /** @internal */
     _processResizeRestrict(element: HTMLElement, { dx, dy }: Delta) {
         const {
             storage: {
@@ -1120,10 +1141,12 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         return this._restrictHandler(preResultMatrix);
     }
 
+    /** @internal */
     _updateElementView(element: Element, css: Record<string, string>) {
         helper(element).css(css);
     }
 
+    /** @internal */
     _updateControlsView(matrix = createIdentityMatrix()) {
         const cssStyle = matrixToCSS(flatMatrix(matrix));
         helper(this.storage.controls).css(cssStyle);
@@ -1131,6 +1154,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         this.storage.cached.controlsMatrix = matrix;
     }
 
+    /** @internal */
     _getVertices(transformMatrix = createIdentityMatrix()): VertexMap {
         const {
             elements: [element] = [],
@@ -1198,6 +1222,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         return finalVertices;
     }
 
+    /** @internal */
     _getElementVertices(element: HTMLElement, transformMatrix: Matrix): VertexMap {
         const {
             options: {
@@ -1247,6 +1272,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
             }, {});
     }
 
+    /** @internal */
     _getGroupVertices(): VertexMap {
         const {
             x,
@@ -1271,6 +1297,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         };
     }
 
+    /** @internal */
     _getGroupBbox() {
         const {
             elements,
@@ -1331,6 +1358,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         };
     }
 
+    /** @internal */
     _getElementBBox(element: HTMLElement) {
         const {
             options: {
@@ -1384,6 +1412,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         };
     }
 
+    /** @internal */
     _applyTransformToHandles({ boxMatrix = createIdentityMatrix() }: { boxMatrix?: Matrix } = {}): VertexMap {
         const {
             options: {
@@ -1613,7 +1642,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         );
     }
 
-    applyAlignment(direction: AlignmentDirection, target: HTMLElement | null = null) {
+    applyAlignment(direction: AlignmentDirection, target: Element | null = null) {
         const {
             elements,
             options: { container }
@@ -1626,7 +1655,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         } = this._getVertices();
 
         const restrictBBox = target
-            ? getBoundingRect(target, container, getCurrentTransformMatrix(target, container))
+            ? getBoundingRect(target as HTMLElement, container, getCurrentTransformMatrix(target, container))
             : this._getRestrictedBBox(true);
 
         const nextVertices = values(vertices);

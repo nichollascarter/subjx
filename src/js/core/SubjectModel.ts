@@ -35,12 +35,15 @@ export interface ProxyMethods {
 
 export default abstract class SubjectModel<
     S extends object = object,
-    P extends ProxyMethods = ProxyMethods
+    P extends ProxyMethods = ProxyMethods,
+    EM extends object = Record<string, unknown>
 > {
 
     elements: Element[];
     storage?: S | null;
+    /** @internal */
     proxyMethods: P | null;
+    /** @internal */
     eventDispatcher: EventDispatcher;
 
     constructor(elements: Element[]) {
@@ -67,22 +70,31 @@ export default abstract class SubjectModel<
 
     abstract disable(): void;
 
+    /** @internal */
     abstract _init(elements: Element[]): void;
 
+    /** @internal */
     abstract _destroy(): void;
 
+    /** @internal */
     abstract _processOptions(options?: object): void;
 
+    /** @internal */
     abstract _start(input: PointerInput): void;
 
+    /** @internal */
     abstract _moving(input: PointerInput): void;
 
+    /** @internal */
     abstract _end(input: PointerInput, elements: Element[]): void;
 
+    /** @internal */
     abstract _animate(): void;
 
+    /** @internal */
     abstract _processMove(element: Element, delta: { dx: number; dy: number }): unknown;
 
+    /** @internal */
     _drag({ element, dx, dy, ...rest }: MoveArgs) {
         const transform = this._processMove(element, { dx, dy });
 
@@ -97,10 +109,12 @@ export default abstract class SubjectModel<
         this._emitEvent(E_DRAG, finalArgs);
     }
 
+    /** @internal */
     _draw() {
         this._animate();
     }
 
+    /** @internal */
     _onMouseDown(e: MouseEvent) {
         this._start(e);
         helper(document)
@@ -108,6 +122,7 @@ export default abstract class SubjectModel<
             .on(E_MOUSEUP, this._onMouseUp);
     }
 
+    /** @internal */
     _onTouchStart(e: TouchEvent) {
         this._start(e.touches[0]);
         helper(document)
@@ -115,6 +130,7 @@ export default abstract class SubjectModel<
             .on(E_TOUCHEND, this._onTouchEnd);
     }
 
+    /** @internal */
     _onMouseMove(e: MouseEvent) {
         if (e.preventDefault) {
             e.preventDefault();
@@ -122,6 +138,7 @@ export default abstract class SubjectModel<
         this._moving(e);
     }
 
+    /** @internal */
     _onTouchMove(e: TouchEvent) {
         if (e.preventDefault) {
             e.preventDefault();
@@ -129,6 +146,7 @@ export default abstract class SubjectModel<
         this._moving(e.touches[0]);
     }
 
+    /** @internal */
     _onMouseUp(e: MouseEvent) {
         helper(document)
             .off(E_MOUSEMOVE, this._onMouseMove)
@@ -140,6 +158,7 @@ export default abstract class SubjectModel<
         );
     }
 
+    /** @internal */
     _onTouchEnd(e: TouchEvent) {
         helper(document)
             .off(E_TOUCHMOVE, this._onTouchMove)
@@ -153,17 +172,18 @@ export default abstract class SubjectModel<
         }
     }
 
+    /** @internal */
     _emitEvent(eventName: string, eventArgs?: unknown) {
         this.eventDispatcher.emit(this, eventName, eventArgs);
     }
 
-    on(name: string, cb: Callback) {
-        this.eventDispatcher.addEventListener(name, cb);
+    on<K extends keyof EM & string>(name: K, cb: (eventArgs: EM[K]) => void) {
+        this.eventDispatcher.addEventListener(name, cb as Callback);
         return this;
     }
 
-    off(name: string, cb: Callback) {
-        this.eventDispatcher.removeEventListener(name, cb);
+    off<K extends keyof EM & string>(name: K, cb: (eventArgs: EM[K]) => void) {
+        this.eventDispatcher.removeEventListener(name, cb as Callback);
         return this;
     }
 

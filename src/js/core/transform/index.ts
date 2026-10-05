@@ -4,7 +4,7 @@ import DraggableSVG from './svg';
 import { checkElement } from './svg/util';
 import { forEach, arrMap, isDef } from '../util/util';
 import type Helper from '../Helper';
-import type { DragOptions } from '../../../../types/options';
+import type { DragOptions } from '../options';
 
 // factory method for creating draggable elements
 export default function drag(this: Helper, options?: DragOptions, obInstance?: Observable) {

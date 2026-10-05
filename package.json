@@ -13,13 +13,15 @@
     "module": "dist/js/subjx.esm.js",
     "unpkg": "dist/js/subjx.js",
     "exports": {
+        "types": "./types/index.d.ts",
         "require": "./index.js",
         "import": "./dist/js/subjx.esm.js"
     },
     "scripts": {
         "dev": "cross-env NODE_ENV=development rollup -c",
         "prebuild": "npm run lint && npm run typecheck",
-        "build": "cross-env NODE_ENV=production rollup -c",
+        "build": "cross-env NODE_ENV=production rollup -c && npm run build:types",
+        "build:types": "node scripts/clean-types.js && tsc -p tsconfig.build.json",
         "build:all": "npm run dev && npm run build",
         "start": "cross-env NODE_ENV=development LIVE_MODE=enable rollup -c -w",
         "lint": "eslint src/",
@@ -27,6 +29,7 @@
         "typecheck": "tsc -p .",
         "test": "jest",
         "test:coverage": "jest --coverage",
+        "test:types": "tsc -p test/types",
         "publish:local": "npm run test && npm run build:all && sh ./scripts/publish-local.sh",
         "semantic-release": "semantic-release",
         "commit": "git add . && git-cz"
@@ -66,7 +69,7 @@
         "README.md",
         "index.js",
         "dist/",
-        "types/*.d.ts"
+        "types/**/*.d.ts"
     ],
     "keywords": [
         "subjx",

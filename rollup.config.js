@@ -20,7 +20,7 @@ const banner = `/*@license
 * nichollascarter@gmail.com
 */`;
 
-const input = './src/js/index.ts';
+const input = './src/js/bundle.ts';
 const umdInput = './src/js/index.umd.ts';
 const dir = 'dist';
 const extensions = ['.js', '.ts'];

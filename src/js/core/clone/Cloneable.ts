@@ -1,7 +1,7 @@
 import { helper } from '../Helper';
 import SubjectModel from '../SubjectModel';
-import type { PointerInput } from '../SubjectModel';
-import type { CloneOptions } from '../../../../types/options';
+import type { PointerInput, ProxyMethods } from '../SubjectModel';
+import type { CloneOptions, CloneEventName, DragEventArgs } from '../options';
 import { EVENT_EMITTER_CONSTANTS, CLIENT_EVENTS_CONSTANTS } from '../consts';
 
 import {
@@ -35,7 +35,9 @@ interface CloneStorage {
     frameId?: number;
 }
 
-export default class Cloneable extends SubjectModel<CloneStorage> {
+export type CloneEventMap = Record<CloneEventName, DragEventArgs>;
+
+export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, CloneEventMap> {
 
     options!: Required<Pick<CloneOptions, 'style' | 'appendTo' | 'stack'>>;
 
@@ -44,6 +46,7 @@ export default class Cloneable extends SubjectModel<CloneStorage> {
         this.enable(options);
     }
 
+    /** @internal */
     _init() {
         const {
             elements,
@@ -82,6 +85,7 @@ export default class Cloneable extends SubjectModel<CloneStorage> {
         ));
     }
 
+    /** @internal */
     _processOptions(options: CloneOptions = {}) {
         const {
             style = {},
@@ -102,7 +106,7 @@ export default class Cloneable extends SubjectModel<CloneStorage> {
                 const isCollide = objectsCollide(clone!, dropable);
 
                 if (isCollide) {
-                    onDrop.call(this, evt as MouseEvent, this.elements, clone!);
+                    onDrop.call(this, evt as MouseEvent | Touch, this.elements, clone!);
                 }
             }
             : noop;
@@ -121,6 +125,7 @@ export default class Cloneable extends SubjectModel<CloneStorage> {
         };
     }
 
+    /** @internal */
     _start({ target, clientX, clientY }: PointerInput) {
         const { elements } = this;
         const storage = this.storage!;
@@ -152,6 +157,7 @@ export default class Cloneable extends SubjectModel<CloneStorage> {
         this._draw();
     }
 
+    /** @internal */
     _moving({ clientX, clientY }: PointerInput) {
         const storage = this.storage!;
 
@@ -161,6 +167,7 @@ export default class Cloneable extends SubjectModel<CloneStorage> {
         storage.doMove = true;
     }
 
+    /** @internal */
     _end(e: PointerInput) {
         const storage = this.storage!;
 
@@ -180,6 +187,7 @@ export default class Cloneable extends SubjectModel<CloneStorage> {
         delete storage.clone;
     }
 
+    /** @internal */
     _animate() {
         const storage = this.storage!;
 
@@ -206,6 +214,7 @@ export default class Cloneable extends SubjectModel<CloneStorage> {
         );
     }
 
+    /** @internal */
     _processMove(_: Element, { dx, dy }: { dx: number; dy: number }) {
         const { clone } = this.storage!;
 
@@ -220,6 +229,7 @@ export default class Cloneable extends SubjectModel<CloneStorage> {
         });
     }
 
+    /** @internal */
     _destroy() {
         const {
             storage,

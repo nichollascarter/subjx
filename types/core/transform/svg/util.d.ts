@@ -1,0 +1,18 @@
+export declare const sepRE: RegExp;
+export declare function createSVGElement<K extends keyof SVGElementTagNameMap>(name: K, classNames?: string[]): SVGElementTagNameMap[K];
+export declare const createSVGPoint: (x: number, y: number) => DOMPoint;
+export declare const checkChildElements: (element: Element) => Element[];
+export declare const createSVGMatrix: () => DOMMatrix;
+export declare const createTranslateMatrix: (x: number, y: number) => DOMMatrix;
+export declare const createRotateMatrix: (sin: number, cos: number) => DOMMatrix;
+export declare const createScaleMatrix: (x: number, y: number) => DOMMatrix;
+export declare const getTransformToElement: (toElement?: Node | null, g?: Node | null) => DOMMatrix;
+export declare const matrixToString: (m: DOMMatrix) => string;
+export declare const pointTo: (ctm: DOMMatrix, x: number, y: number) => DOMPoint;
+export declare const cloneMatrix: (b: DOMMatrix) => DOMMatrix;
+export declare const isIdentity: (matrix: DOMMatrix) => boolean;
+export declare const checkElement: (el: Element) => boolean;
+export declare const isSVGGroup: (element: Element) => boolean;
+export declare const normalizeString: (str?: string) => string;
+export declare const parsePoints: (pts: string) => string[][];
+export declare const arrayToChunks: <T>(a: T[], size: number) => T[][];

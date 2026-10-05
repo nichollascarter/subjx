@@ -42,11 +42,20 @@ export interface MimicOptions {
 
 // Snapping configuration
 export interface SnapOptions {
-    /** Snap step for x-axis in pixels */
+    /**
+     * Snap step for x-axis in pixels, 0 disables snapping
+     * @default 10
+     */
     x?: number;
-    /** Snap step for y-axis in pixels */
+    /**
+     * Snap step for y-axis in pixels, 0 disables snapping
+     * @default 10
+     */
     y?: number;
-    /** Snap step for rotation angle in degrees */
+    /**
+     * Snap step for rotation angle in degrees, 0 disables snapping
+     * @default 10
+     */
     angle?: number;
 }
 
@@ -77,50 +86,68 @@ export interface Dimensions {
 }
 
 // Bounding rectangle vertices
-export type BoundingRect = Vertex[];
+export type BoundingRect = number[][];
 
 // Event arguments for drag callbacks
 export interface DragEventArgs {
-    /** Current client X coordinate */
+    /**
+     * Pointer X in container coordinates.
+     * Not set when the action comes from exe* methods or a synchronized instance
+     */
     clientX: number;
-    /** Current client Y coordinate */
+    /**
+     * Pointer Y in container coordinates.
+     * Not set when the action comes from exe* methods or a synchronized instance
+     */
     clientY: number;
-    /** Delta X from start position */
+    /** Distance along X since the action started, snapped to grid */
     dx: number;
-    /** Delta Y from start position */
+    /** Distance along Y since the action started, snapped to grid */
     dy: number;
-    /** Current transformation matrix */
-    transform: Matrix4x4;
+    /** Resulting element matrix: DOMMatrix for SVG, 4x4 matrix for HTML */
+    transform: Matrix4x4 | DOMMatrix;
 }
 
 // Event arguments for resize callbacks
 export interface ResizeEventArgs {
-    /** Current client X coordinate */
+    /**
+     * Pointer X in container coordinates.
+     * Not set when the action comes from exe* methods or a synchronized instance
+     */
     clientX: number;
-    /** Current client Y coordinate */
+    /**
+     * Pointer Y in container coordinates.
+     * Not set when the action comes from exe* methods or a synchronized instance
+     */
     clientY: number;
-    /** Delta X from start position */
+    /** Resize distance along X in element coordinates, positive when the element grows */
     dx: number;
-    /** Delta Y from start position */
+    /** Resize distance along Y in element coordinates, positive when the element grows */
     dy: number;
-    /** Current transformation matrix */
-    transform: Matrix4x4;
-    /** Current width */
+    /** Resulting element matrix: DOMMatrix for SVG, 4x4 matrix for HTML */
+    transform: Matrix4x4 | DOMMatrix;
+    /** Width after resizing */
     width: number;
-    /** Current height */
+    /** Height after resizing */
     height: number;
 }
 
 // Event arguments for rotate callbacks
 export interface RotateEventArgs {
-    /** Current client X coordinate */
+    /**
+     * Pointer X in container coordinates.
+     * Not set when the action comes from exe* methods or a synchronized instance
+     */
     clientX: number;
-    /** Current client Y coordinate */
+    /**
+     * Pointer Y in container coordinates.
+     * Not set when the action comes from exe* methods or a synchronized instance
+     */
     clientY: number;
-    /** Rotation delta in radians */
+    /** Rotation since the action started in radians, snapped to `snap.angle` */
     delta: number;
-    /** Current transformation matrix */
-    transform: Matrix4x4;
+    /** Resulting element matrix: DOMMatrix for SVG, 4x4 matrix for HTML */
+    transform: Matrix4x4 | DOMMatrix;
 }
 
 // Event arguments for drop callbacks
@@ -156,9 +183,11 @@ export type OnDropCallback = (this: any, eventArgs: DropEventArgs) => void;
 export type OnDestroyCallback = (this: any, elements: Element[]) => void;
 
 // Clone specific callbacks
+export type CloneDropEvent = MouseEvent | Touch | TouchEvent;
+
 export type OnCloneDropCallback = (
     this: any,
-    event: MouseEvent | TouchEvent,
+    event: CloneDropEvent,
     elements: Element[],
     clone: Element
 ) => void;
@@ -202,9 +231,9 @@ export interface ExeResizeParams {
     dx: number;
     /** Delta Y for resize */
     dy: number;
-    /** Reverse X direction */
+    /** Resize towards the left, keeping the right edge in place */
     revX?: boolean;
-    /** Reverse Y direction */
+    /** Resize towards the top, keeping the bottom edge in place */
     revY?: boolean;
     /** Only resize width */
     doW?: boolean;
@@ -230,71 +259,34 @@ export interface TransformOriginParams {
     dy?: number;
 }
 
-// Handles object containing DOM elements for controls
-export interface TransformHandles {
-    tl?: HTMLElement;
-    tc?: HTMLElement;
-    tr?: HTMLElement;
-    bl?: HTMLElement;
-    br?: HTMLElement;
-    bc?: HTMLElement;
-    ml?: HTMLElement;
-    mr?: HTMLElement;
-    center?: HTMLElement;
-    rotator?: HTMLElement;
-    normal?: HTMLElement;
-    radius?: HTMLElement;
-    te?: HTMLElement;
-    be?: HTMLElement;
-    le?: HTMLElement;
-    re?: HTMLElement;
-}
-
-// Storage object for Draggable/DraggableSVG
-export interface TransformStorage {
-    wrapper: HTMLElement;
-    controls: HTMLElement;
-    handles: TransformHandles;
-    data: WeakMap<Element, any>;
-    center: {
-        isShifted: boolean;
-        x?: number;
-        y?: number;
-        matrix?: Matrix4x4;
-    };
-    transformOrigin: Vertex;
-    transform: {
-        containerMatrix: Matrix4x4;
-        controlsMatrix?: Matrix4x4;
-        wrapperMatrix?: Matrix4x4;
-    };
-    bBox?: BBox;
-    cached: Record<string, any>;
-}
-
 export interface DragOptions {
     /**
      * Mimic behavior with other `Subjx` instances for synchronized transformations
      */
     each?: MimicOptions;
     /**
-     * Snapping to grid configuration
+     * Snapping to grid; missing values fall back to the defaults
+     * @default { x: 10, y: 10, angle: 10 }
      */
     snap?: SnapOptions;
     /**
      * Constrain movement along an axis: 'x', 'y', or 'xy' (both)
+     * @default 'xy'
      */
     axis?: Axis;
     /**
      * Cursor style during dragging
+     * @default 'auto'
      */
     cursorMove?: string;
     /**
      * Cursor style during resizing / scaling
+     * @default 'auto'
      */
     cursorResize?: string;
     /**
      * Cursor style during rotating
+     * @default 'auto'
      */
     cursorRotate?: string;
     /**
@@ -305,11 +297,13 @@ export interface DragOptions {
     /**
      * Show and enable custom transform origin handle.
      * Can be boolean or initial position as [x, y] array
+     * @default false
      */
     transformOrigin?: boolean | [number, number];
     /**
      * Restrict element transformations within the specified container.
-     * Can be a CSS selector string, HTMLElement, or SVGElement
+     * Can be a CSS selector string, HTMLElement, or SVGElement;
+     * a selector that matches nothing restricts to document.body
      */
     restrict?: string | HTMLElement | SVGElement | null;
     /**
@@ -328,12 +322,14 @@ export interface DragOptions {
      */
     rotatable?: boolean;
     /**
-     * Use CSS scale transform instead of changing width/height
+     * Scale through the transform instead of changing width/height (HTML)
+     * or geometry attributes (SVG)
      * @default false
      */
     scalable?: boolean;
     /**
-     * Apply translation to CSS left/top properties instead of transform
+     * When dragging ends, move the element through CSS left/top (HTML)
+     * or position attributes such as x/y, cx/cy, points, d (SVG) instead of the transform
      * @default false
      */
     applyTranslate?: boolean;
@@ -391,7 +387,7 @@ export interface DragOptions {
      */
     showNormal?: boolean;
     /**
-     * Custom data object passed through transformation lifecycle
+     * Arbitrary user data, available as `options.custom`; non-objects become null
      */
     custom?: Record<string, any> | null;
 }
@@ -407,8 +403,7 @@ export interface CloneOptions {
      */
     appendTo?: string | HTMLElement | null;
     /**
-     * Target element/area for drop detection.
-     * Clone drop callback fires only when dropped on this element.
+     * Drop target: `onDrop` fires only when the clone lies entirely within it.
      * Defaults to document.body
      */
     stack?: string | HTMLElement;
@@ -418,11 +413,12 @@ export interface CloneOptions {
     onInit?: OnInitCallback;
     /**
      * Callback fired when clone is dropped on stack target.
-     * Receives event, original elements array, and clone element
+     * Receives the pointer event (a Touch on touch devices),
+     * original elements array, and clone element
      */
-    onDrop?: OnCloneDropCallback;
+    onDrop?(this: any, event: CloneDropEvent, elements: Element[], clone: Element): void;
     /**
-     * Callback fired during clone dragging
+     * Callback fired during clone dragging; receives only dx and dy
      */
     onMove?: OnMoveCallback;
     /**
