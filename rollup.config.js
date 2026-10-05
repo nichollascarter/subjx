@@ -23,6 +23,7 @@ const banner = `/*@license
 const input = './src/js/index.js';
 const umdInput = './src/js/index.umd.js';
 const dir = 'dist';
+const extensions = ['.js', '.ts'];
 
 let libraryFileName = libraryName;
 
@@ -35,12 +36,13 @@ const plugins = [
         minify: true,
         output: 'style/subjx.css'
     }),
-    resolve()
+    resolve({ extensions })
 ];
 
 const babelPlugins = (target) => ([
     babel({
         exclude: 'node_modules/**',
+        extensions,
         presets: ['@babel/preset-env'],
         babelHelpers: 'bundled',
         envName: target
@@ -121,9 +123,10 @@ export default [
                     css({
                         output: 'subjx.css'
                     }),
-                    resolve(),
+                    resolve({ extensions }),
                     babel({
                         exclude: 'node_modules/**',
+                        extensions,
                         presets: ['@babel/preset-env'],
                         babelHelpers: 'runtime',
                         plugins: [

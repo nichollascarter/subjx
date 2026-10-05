@@ -18,12 +18,13 @@
     },
     "scripts": {
         "dev": "cross-env NODE_ENV=development rollup -c",
-        "prebuild": "npm run lint",
+        "prebuild": "npm run lint && npm run typecheck",
         "build": "cross-env NODE_ENV=production rollup -c",
         "build:all": "npm run dev && npm run build",
         "start": "cross-env NODE_ENV=development LIVE_MODE=enable rollup -c -w",
         "lint": "eslint src/",
         "lint:fix": "eslint src/ --fix",
+        "typecheck": "tsc -p .",
         "test": "jest",
         "test:coverage": "jest --coverage",
         "publish:local": "npm run test && npm run build:all && sh ./scripts/publish-local.sh",
@@ -35,6 +36,7 @@
         "@babel/eslint-parser": "^7.26.0",
         "@babel/plugin-transform-runtime": "^7.28.3",
         "@babel/preset-env": "^7.26.0",
+        "@babel/preset-typescript": "^7.29.7",
         "@babel/runtime": "^7.28.3",
         "@rollup/plugin-babel": "^6.0.4",
         "@rollup/plugin-commonjs": "^25.0.7",
@@ -56,7 +58,8 @@
         "rollup-plugin-livereload": "^2.0.5",
         "rollup-plugin-serve": "^1.1.0",
         "semantic-release": "^24.2.7",
-        "typescript": "^5.5.4"
+        "typescript": "^5.5.4",
+        "typescript-eslint": "^8.70.1"
     },
     "files": [
         "LICENSE",
