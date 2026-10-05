@@ -235,7 +235,12 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         };
 
         const resizingHandles = resizable
-            ? (line ? lineHandles : boxHandles)
+            ? entries(line ? lineHandles : boxHandles)
+                .filter(([key]) => this.isHandleEnabled(key))
+                .reduce<Record<string, Point>>((result, [key, point]) => {
+                    result[key] = point;
+                    return result;
+                }, {})
             : {};
 
         const resizingEdges: Record<string, (Point | undefined)[]> = {
@@ -255,8 +260,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 key
             );
 
-            if (line) {
+            if (line || !this.isHandleEnabled(key)) {
                 handles[key]!.setAttribute('pointer-events', 'none');
+            }
+
+            if (line) {
                 handles[key]!.setAttribute('visibility', 'hidden');
             }
 

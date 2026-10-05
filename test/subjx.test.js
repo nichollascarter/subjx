@@ -139,6 +139,7 @@ const defaultOptions = {
     proportions: false,
     draggable: true,
     resizable: true,
+    handles: null,
     rotatable: true,
     scalable: false,
     applyTranslate: false,
@@ -614,6 +615,46 @@ describe('Test svg line controls', () => {
         expect(events).toContain('resize');
         expect(events[events.length - 1]).toEqual('resizeEnd');
         expect(events).not.toContain('drag');
+
+        draggable.disable();
+    });
+});
+
+describe('Test handles option', () => {
+    const boxHandles = ['tl', 'tc', 'tr', 'ml', 'mr', 'bl', 'bc', 'br'];
+
+    it('shows only the listed svg handles', () => {
+        const draggable = subjx(svgElement).drag({ handles: ['tl', 'br', 're'] });
+        const { handles } = draggable.storage;
+
+        expect(boxHandles.filter(key => handles[key])).toEqual(['tl', 'br']);
+        expect(handles.rotator).toBeDefined();
+        expect(handles.re.getAttribute('pointer-events')).toBeNull();
+        ['te', 'be', 'le'].forEach(key => {
+            expect(handles[key].getAttribute('pointer-events')).toEqual('none');
+            expect(handles[key].getAttribute('visibility')).toBeNull();
+        });
+
+        draggable.disable();
+    });
+
+    it('shows only the listed html handles', () => {
+        const draggable = subjx(domElement).drag({ handles: ['tl'] });
+        const { handles } = draggable.storage;
+
+        expect(boxHandles.filter(key => handles[key])).toEqual(['tl']);
+        ['te', 'be', 'le', 're'].forEach(key => (
+            expect(handles[key].style.pointerEvents).toEqual('none')
+        ));
+
+        draggable.disable();
+    });
+
+    it('filters line endpoints', () => {
+        const draggable = subjx(svgLineElement).drag({ handles: ['p2'] });
+
+        expect(draggable.storage.handles.p1).toBeUndefined();
+        expect(draggable.storage.handles.p2).toBeDefined();
 
         draggable.disable();
     });

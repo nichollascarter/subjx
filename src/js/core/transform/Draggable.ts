@@ -184,17 +184,24 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
             re: [finalVertices.tr, finalVertices.br]
         };
 
-        const resizingHandles = resizable ?
-            {
-                tl: finalVertices.tl,
-                tr: finalVertices.tr,
-                br: finalVertices.br,
-                bl: finalVertices.bl,
-                tc: finalVertices.tc,
-                bc: finalVertices.bc,
-                ml: finalVertices.ml,
-                mr: finalVertices.mr
-            }
+        const boxHandles: Record<string, Vector> = {
+            tl: finalVertices.tl,
+            tr: finalVertices.tr,
+            br: finalVertices.br,
+            bl: finalVertices.bl,
+            tc: finalVertices.tc,
+            bc: finalVertices.bc,
+            ml: finalVertices.ml,
+            mr: finalVertices.mr
+        };
+
+        const resizingHandles = resizable
+            ? keys(boxHandles)
+                .filter(key => this.isHandleEnabled(key))
+                .reduce<Record<string, Vector>>((result, key) => {
+                    result[key] = boxHandles[key];
+                    return result;
+                }, {})
             : {};
 
         const nextTransformOrigin: Vector = Array.isArray(transformOrigin)
@@ -223,6 +230,10 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         );
 
         mapHandlers(resizingEdges, renderLine);
+
+        keys(resizingEdges)
+            .filter(key => !this.isHandleEnabled(key))
+            .forEach(key => helper(handles[key]!).css({ pointerEvents: 'none' }));
         mapHandlers(allHandles, createHandler);
 
         wrapper.appendChild(controls);

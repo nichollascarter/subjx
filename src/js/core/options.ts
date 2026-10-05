@@ -13,6 +13,10 @@ export type HandleKey = 'tl' | 'tc' | 'tr' | 'bl' | 'br' | 'bc' | 'ml' | 'mr' | 
 // Edge keys for transform controls
 export type EdgeKey = 'te' | 'be' | 'le' | 're';
 
+export type PointKey = 'p1' | 'p2';
+
+export type ResizeHandleKey = Exclude<HandleKey, 'center' | 'rotator'> | EdgeKey | PointKey;
+
 // 4x4 transformation matrix
 export type Matrix4x4 = [
     [number, number, number, number],
@@ -316,6 +320,14 @@ export interface DragOptions {
      * @default true
      */
     resizable?: boolean;
+    /**
+     * Resize handles to show: corners and edge midpoints (tl, tc, tr, ml, mr, bl, bc, br),
+     * edges (te, be, le, re) and line endpoints (p1, p2). Edges left out stay visible
+     * but ignore the pointer. Rotator and transform origin handles are controlled by
+     * `rotatable` and `transformOrigin`
+     * @default all handles
+     */
+    handles?: ResizeHandleKey[];
     /**
      * Enable/disable rotation
      * @default true

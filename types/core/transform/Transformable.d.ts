@@ -3,7 +3,7 @@ import SubjectModel from '../SubjectModel';
 import type { PointerInput, ProxyMethods } from '../SubjectModel';
 import type Observable from '../observable/Observable';
 import type { Observer } from '../observable/Observable';
-import type { DragOptions, MimicOptions, Direction, ExeDragParams, ExeResizeParams, ExeRotateParams, TransformEventMap } from '../options';
+import type { DragOptions, MimicOptions, Direction, ExeDragParams, ExeResizeParams, ExeRotateParams, TransformEventMap, ResizeHandleKey } from '../options';
 export interface Point {
     x: number;
     y: number;
@@ -102,6 +102,7 @@ export interface TransformOptions {
     proportions: boolean;
     draggable: boolean;
     resizable: boolean;
+    handles: ResizeHandleKey[] | null;
     rotatable: boolean;
     scalable: boolean;
     applyTranslate: boolean;

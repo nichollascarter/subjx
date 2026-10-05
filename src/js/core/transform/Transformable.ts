@@ -11,7 +11,8 @@ import type {
     ExeDragParams,
     ExeResizeParams,
     ExeRotateParams,
-    TransformEventMap
+    TransformEventMap,
+    ResizeHandleKey
 } from '../options';
 
 import {
@@ -198,6 +199,7 @@ export interface TransformOptions {
     proportions: boolean;
     draggable: boolean;
     resizable: boolean;
+    handles: ResizeHandleKey[] | null;
     rotatable: boolean;
     scalable: boolean;
     applyTranslate: boolean;
@@ -366,6 +368,7 @@ export default abstract class Transformable<
             restrict,
             draggable = true,
             resizable = true,
+            handles,
             rotatable = true,
             scalable = false,
             applyTranslate = false,
@@ -411,6 +414,7 @@ export default abstract class Transformable<
             proportions,
             draggable,
             resizable,
+            handles: Array.isArray(handles) ? handles : null,
             rotatable,
             scalable,
             applyTranslate,
@@ -1125,6 +1129,13 @@ export default abstract class Transformable<
             doH,
             point
         };
+    }
+
+    /** @internal */
+    protected isHandleEnabled(key: string) {
+        const { handles } = this.options;
+
+        return !handles || (handles as string[]).includes(key);
     }
 
     /** @internal */

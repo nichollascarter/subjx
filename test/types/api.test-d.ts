@@ -23,6 +23,7 @@ const options: DragOptions = {
     each: { move: true },
     rotatorAnchor,
     rotatorOffset: 30,
+    handles: ['tl', 'br', 're', 'p1'],
     restrict: '#area',
     container: div,
     controlsContainer: div,
