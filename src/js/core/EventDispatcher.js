@@ -10,8 +10,11 @@ class Event {
     }
 
     removeCallback(cb) {
-        const ix = this.callbacks(cb);
-        this.callbacks.splice(ix, 1);
+        const ix = this.callbacks.indexOf(cb);
+
+        if (ix !== -1) {
+            this.callbacks.splice(ix, 1);
+        }
     }
 
 }
