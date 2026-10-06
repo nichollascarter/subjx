@@ -809,3 +809,34 @@ describe('Test guides option', () => {
         draggable.disable();
     });
 });
+
+describe('Test restrict', () => {
+    it('measures the restriction for an action and drops it on release', () => {
+        const draggable = subjx(svgElement).drag({ restrict: '#svg-container' });
+
+        svgElement.dispatchEvent(createEMouseDown());
+
+        expect(draggable.storage.restriction).toEqual(expect.objectContaining({
+            box: expect.any(Object),
+            area: expect.any(Object)
+        }));
+
+        document.dispatchEvent(createEMouseMove());
+        jest.advanceTimersByTime(1001 / 60);
+        document.dispatchEvent(createEMouseUp());
+
+        expect(draggable.storage.restriction).toBeNull();
+
+        draggable.disable();
+    });
+
+    it('measures nothing without restrict', () => {
+        const draggable = subjx(svgElement).drag();
+
+        svgElement.dispatchEvent(createEMouseDown());
+        expect(draggable.storage.restriction).toBeNull();
+        document.dispatchEvent(createEMouseUp());
+
+        draggable.disable();
+    });
+});

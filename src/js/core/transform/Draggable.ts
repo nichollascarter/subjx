@@ -420,6 +420,11 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
     protected drawGuides() { }
 
     /** @internal */
+    protected prepareRestrict() {
+        return null;
+    }
+
+    /** @internal */
     protected processResize(element: HTMLElement, { dx, dy }: Delta) {
         const {
             storage: {

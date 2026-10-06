@@ -17,6 +17,8 @@ import type {
 } from '../options';
 import { align, alignEdges } from './guides';
 import type { GuideState, GuideLine } from './guides';
+import { clampMove, clampEdge } from './restrict';
+import type { Restriction } from './restrict';
 
 import {
     LIB_CLASS_PREFIX,
@@ -180,6 +182,7 @@ export interface TransformStorage<M = unknown> {
     cursor?: string | null;
     activeHandle?: Element | null;
     guides?: GuideState | null;
+    restriction?: Restriction | null;
     frame?: number;
     controlsMatrix?: M;
     [key: string]: unknown;
@@ -298,6 +301,9 @@ export default abstract class Transformable<
 
     /** @internal */
     protected abstract drawGuides(lines: GuideLine[]): void;
+
+    /** @internal */
+    protected abstract prepareRestrict(): Restriction | null;
 
     /** @internal */
     protected abstract processRotateRestrict(element: Element, radians: number): RestrictPoint;
@@ -503,14 +509,15 @@ export default abstract class Transformable<
             resizable,
             rotatable,
             isGrouped,
-            restrict
+            restrict,
+            proportions
         } = options;
 
         if (doResize && resizable && point) {
-            const { dx, dy } = this.alignPoint(
+            const { dx, dy } = this.clampPoint(this.alignPoint(
                 snapToGrid(clientX - relativeX, snap.x) as number,
                 snapToGrid(clientY - relativeY, snap.y) as number
-            );
+            ));
 
             const result = this.processPointMove(elements[0], point, { dx, dy });
 
@@ -528,17 +535,23 @@ export default abstract class Transformable<
                 super.emitEvent(E_RESIZE, finalArgs);
             }
         } else if (doResize && resizable) {
-            const { dx: distX, dy: distY } = this.alignResize(
+            const aligned = this.alignResize(
                 snapToGrid(clientX - relativeX, snap.x) as number,
                 snapToGrid(clientY - relativeY, snap.y) as number
             );
 
             const {
+                dx: distX,
+                dy: distY,
+                clamped
+            } = this.clampResize(aligned.dx, aligned.dy);
+
+            const {
                 cached,
                 cached: {
                     dist: {
-                        dx: prevDx = distX,
-                        dy: prevDy = distY
+                        dx: prevDx = 0,
+                        dy: prevDy = 0
                     } = {}
                 } = {}
             } = storage;
@@ -551,7 +564,7 @@ export default abstract class Transformable<
                 mouseEvent
             };
 
-            const { x: restX, y: restY } = restrict
+            const { x: restX, y: restY } = restrict && !(clamped && !proportions)
                 ? elements.reduce<RestrictPoint>((res, element) => {
                     const {
                         transform: {
@@ -660,8 +673,13 @@ export default abstract class Transformable<
                 ? align(storage.guides, gridDx, gridDy, { x: dox, y: doy })
                 : null;
 
-            const dx = alignment ? alignment.dx : gridDx;
-            const dy = alignment ? alignment.dy : gridDy;
+            const { dx, dy } = storage.restriction
+                ? clampMove(
+                    storage.restriction,
+                    alignment ? alignment.dx : gridDx,
+                    alignment ? alignment.dy : gridDy
+                )
+                : { dx: alignment ? alignment.dx : gridDx, dy: alignment ? alignment.dy : gridDy };
 
             if (alignment) this.drawGuides(alignment.lines);
 
@@ -669,8 +687,8 @@ export default abstract class Transformable<
                 cached,
                 cached: {
                     dist: {
-                        dx: prevDx = dx,
-                        dy: prevDy = dy
+                        dx: prevDx = 0,
+                        dy: prevDy = 0
                     } = {}
                 } = {}
             } = storage;
@@ -683,7 +701,7 @@ export default abstract class Transformable<
                 mouseEvent
             };
 
-            const { x: restX, y: restY } = restrict
+            const { x: restX, y: restY } = restrict && !storage.restriction
                 ? elements.reduce<RestrictPoint>((res, element) => {
                     const { x, y } = this.processMoveRestrict(element, args);
 
@@ -864,6 +882,7 @@ export default abstract class Transformable<
             doSetCenter,
             onExecution: true,
             guides: (doDrag || doResize) && this.options.guides ? this.prepareGuides() : null,
+            restriction: (doDrag || doResize) && this.options.restrict ? this.prepareRestrict() : null,
             cursor: null,
             dox: /x/.test(axis) && (doResize
                 ?
@@ -1077,6 +1096,8 @@ export default abstract class Transformable<
             this.storage.guides = null;
         }
 
+        this.storage.restriction = null;
+
         helper(document.body).css({ cursor: 'auto' });
         if (isDef(radius)) {
             addClass(radius, `${LIB_CLASS_PREFIX}hidden`);
@@ -1203,8 +1224,6 @@ export default abstract class Transformable<
         const {
             storage: {
                 guides,
-                revX,
-                revY,
                 doW,
                 doH,
                 dox,
@@ -1217,10 +1236,9 @@ export default abstract class Transformable<
 
         if (!guides || !guides.axisAligned) return { dx, dy };
 
-        const { box, flipX, flipY } = guides;
+        const { box } = guides;
 
-        const leftMoves = Boolean(revX) !== Boolean(flipX);
-        const topMoves = Boolean(revY) !== Boolean(flipY);
+        const { leftMoves, topMoves } = this.movingEdges(guides);
         const widthLeads = doW || !doH;
 
         const alignment = alignEdges(
@@ -1246,6 +1264,52 @@ export default abstract class Transformable<
         this.drawGuides(alignment.lines);
 
         return alignment;
+    }
+
+    /** @internal */
+    private movingEdges({ flipX, flipY }: { flipX?: boolean; flipY?: boolean }) {
+        const { revX, revY } = this.storage;
+
+        return {
+            leftMoves: Boolean(revX) !== Boolean(flipX),
+            topMoves: Boolean(revY) !== Boolean(flipY)
+        };
+    }
+
+    /** @internal */
+    private clampResize(dx: number, dy: number) {
+        const {
+            storage: {
+                restriction,
+                dox,
+                doy
+            }
+        } = this;
+
+        if (!restriction || !restriction.axisAligned) return { dx, dy, clamped: false };
+
+        const { box, area } = restriction;
+        const { leftMoves, topMoves } = this.movingEdges(restriction);
+
+        return {
+            dx: dox ? clampEdge(leftMoves ? box.left : box.right, area.left, area.right, dx) : dx,
+            dy: doy ? clampEdge(topMoves ? box.top : box.bottom, area.top, area.bottom, dy) : dy,
+            clamped: true
+        };
+    }
+
+    /** @internal */
+    private clampPoint({ dx, dy }: { dx: number; dy: number }) {
+        const { restriction } = this.storage;
+
+        if (!restriction || !restriction.point) return { dx, dy };
+
+        const { point, area } = restriction;
+
+        return {
+            dx: clampEdge(point.x, area.left, area.right, dx),
+            dy: clampEdge(point.y, area.top, area.bottom, dy)
+        };
     }
 
     /** @internal */
@@ -1564,12 +1628,15 @@ export default abstract class Transformable<
             ...commonState
         };
 
+        const restriction = this.options.restrict ? this.prepareRestrict() : null;
+        const delta = restriction ? clampMove(restriction, dx, dy) : { dx, dy };
+
         elements.map((element) => {
-            super.drag({ element, dx, dy });
+            super.drag({ element, ...delta });
             this.applyTransformToElement(element, E_DRAG);
         });
 
-        this.processControlsMove({ dx, dy });
+        this.processControlsMove(delta);
     }
 
     exeResize({

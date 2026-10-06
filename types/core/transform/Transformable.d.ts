@@ -5,6 +5,7 @@ import type Observable from '../observable/Observable';
 import type { Observer } from '../observable/Observable';
 import type { DragOptions, MimicOptions, Direction, ExeDragParams, ExeResizeParams, ExeRotateParams, TransformEventMap, ResizeHandleKey, GuidesOptions } from '../options';
 import type { GuideState } from './guides';
+import type { Restriction } from './restrict';
 export interface Point {
     x: number;
     y: number;
@@ -82,6 +83,7 @@ export interface TransformStorage<M = unknown> {
     cursor?: string | null;
     activeHandle?: Element | null;
     guides?: GuideState | null;
+    restriction?: Restriction | null;
     frame?: number;
     controlsMatrix?: M;
     [key: string]: unknown;

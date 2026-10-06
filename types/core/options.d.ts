@@ -285,7 +285,9 @@ export interface DragOptions {
     /**
      * Restrict element transformations within the specified container.
      * Can be a CSS selector string, HTMLElement, or SVGElement;
-     * a selector that matches nothing restricts to document.body
+     * a selector that matches nothing restricts to document.body.
+     * SVG elements stop exactly at its edges while dragging, resizing and moving
+     * line endpoints, also with exeDrag(); for an outer <svg> its visible area counts
      */
     restrict?: string | HTMLElement | SVGElement | null;
     /**
