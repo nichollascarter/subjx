@@ -13,9 +13,13 @@
     "module": "dist/js/subjx.esm.js",
     "unpkg": "dist/js/subjx.js",
     "exports": {
-        "types": "./types/index.d.ts",
-        "require": "./index.js",
-        "import": "./dist/js/subjx.esm.js"
+        ".": {
+            "types": "./types/index.d.ts",
+            "require": "./index.js",
+            "import": "./dist/js/subjx.esm.js"
+        },
+        "./dist/*": "./dist/*",
+        "./package.json": "./package.json"
     },
     "scripts": {
         "dev": "cross-env NODE_ENV=development rollup -c",
