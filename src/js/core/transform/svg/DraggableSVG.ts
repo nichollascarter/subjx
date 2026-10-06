@@ -1623,7 +1623,8 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             },
             options: {
                 container,
-                guides
+                guides,
+                isGrouped
             }
         } = this;
 
@@ -1639,6 +1640,20 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         const toBox = (element: SVGGraphicsElement) => boxFromPoints(
             getBoundingRect(element, getTransformToElement(element, container))
         );
+
+        const matrices = elements.map(element => getTransformToElement(element, container));
+        const [firstMatrix] = matrices;
+
+        const line = this.getLine();
+        const { point } = this.storage;
+
+        const pointPosition = line && point
+            ? pointTo(
+                firstMatrix,
+                point === START_POINT ? line.x1.baseVal.value : line.x2.baseVal.value,
+                point === START_POINT ? line.y1.baseVal.value : line.y2.baseVal.value
+            )
+            : null;
 
         const isMoving = (element: Element) => elements.some(item => (
             item === element || item.contains(element) || element.contains(item)
@@ -1675,7 +1690,11 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             box: unionBoxes(elements.map(toBox)),
             targets: targetBoxes,
             threshold: threshold / scale,
-            snap
+            snap,
+            axisAligned: matrices.every(matrix => Math.abs(matrix.b) < 1e-6 && Math.abs(matrix.c) < 1e-6),
+            flipX: !isGrouped && firstMatrix.a < 0,
+            flipY: !isGrouped && firstMatrix.d < 0,
+            point: pointPosition && { x: pointPosition.x, y: pointPosition.y }
         };
     }
 

@@ -1,4 +1,4 @@
-import { align, boxFromPoints, unionBoxes } from '../src/js/core/transform/guides';
+import { align, alignEdges, boxFromPoints, unionBoxes } from '../src/js/core/transform/guides';
 
 const box = { left: 0, top: 0, right: 100, bottom: 50 };
 const target = { left: 200, top: 100, right: 300, bottom: 180 };
@@ -65,4 +65,28 @@ describe('guides', () => {
         expect(boxFromPoints([[10, 5], [0, 20], [30, 0]])).toEqual({ left: 0, top: 0, right: 30, bottom: 20 });
         expect(unionBoxes([box, target])).toEqual({ left: 0, top: 0, right: 300, bottom: 180 });
     });
+
+    it('snaps only the moving edge when resizing', () => {
+        const extent = (dx) => ({ ...box, right: box.right + dx });
+        const { dx, dy, lines } = alignEdges(state(), { x: box.right, y: null }, extent, 97, 3);
+
+        expect([dx, dy]).toEqual([100, 3]);
+        expect(lines).toEqual([{ axis: 'x', value: 200, from: 0, to: 180 }]);
+    });
+
+    it('ignores the center of the resized box', () => {
+        const extent = (dx) => ({ ...box, right: box.right + dx });
+        const { dx } = alignEdges(state(), { x: box.right, y: null }, extent, 398, 0);
+
+        expect(dx).toEqual(398);
+    });
+
+    it('snaps a single point on both axes', () => {
+        const point = { x: 10, y: 10 };
+        const extent = (dx, dy) => ({ left: point.x + dx, right: point.x + dx, top: point.y + dy, bottom: point.y + dy });
+        const { dx, dy } = alignEdges(state(), point, extent, 236, 127);
+
+        expect([dx, dy]).toEqual([240, 130]);
+    });
 });
+

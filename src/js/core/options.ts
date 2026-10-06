@@ -364,8 +364,10 @@ export interface DragOptions {
      */
     showHitAreas?: boolean;
     /**
-     * Snap to edges and centers of other elements and of the container while dragging,
-     * showing alignment guides. `true` uses the defaults of GuidesOptions. SVG only
+     * Snap to edges and centers of other elements and of the container, showing
+     * alignment guides: the whole box while dragging, the moving edge while resizing
+     * (not for rotated elements) and the endpoint of a line. `true` uses the defaults
+     * of GuidesOptions. SVG only
      * @default false
      */
     guides?: boolean | GuidesOptions;

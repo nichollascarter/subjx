@@ -15,15 +15,27 @@ export interface GuideState {
     targets: Box[];
     threshold: number;
     snap: boolean;
+    axisAligned?: boolean;
+    flipX?: boolean;
+    flipY?: boolean;
+    point?: {
+        x: number;
+        y: number;
+    } | null;
 }
 export interface Alignment {
     dx: number;
     dy: number;
     lines: GuideLine[];
 }
-export declare const boxFromPoints: (points: number[][]) => Box;
-export declare const unionBoxes: (boxes: Box[]) => Box;
-export declare const align: ({ box, targets, threshold, snap }: GuideState, dx: number, dy: number, { x: alignX, y: alignY }?: {
+export interface Axes {
     x?: boolean;
     y?: boolean;
-}) => Alignment;
+}
+export declare const boxFromPoints: (points: number[][]) => Box;
+export declare const unionBoxes: (boxes: Box[]) => Box;
+export declare const align: (state: GuideState, dx: number, dy: number, axes?: Axes) => Alignment;
+export declare const alignEdges: (state: GuideState, edges: {
+    x?: number | null;
+    y?: number | null;
+}, extent: (dx: number, dy: number) => Box, dx: number, dy: number, axes?: Axes) => Alignment;

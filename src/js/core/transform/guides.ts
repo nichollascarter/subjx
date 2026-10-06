@@ -17,12 +17,24 @@ export interface GuideState {
     targets: Box[];
     threshold: number;
     snap: boolean;
+    axisAligned?: boolean;
+    flipX?: boolean;
+    flipY?: boolean;
+    point?: {
+        x: number;
+        y: number;
+    } | null;
 }
 
 export interface Alignment {
     dx: number;
     dy: number;
     lines: GuideLine[];
+}
+
+export interface Axes {
+    x?: boolean;
+    y?: boolean;
 }
 
 const EPSILON = 1e-6;
@@ -70,7 +82,7 @@ const nearestOffset = (moving: number[], targets: number[][], threshold: number)
     return best;
 };
 
-const collectLines = (box: Box, targets: Box[], tolerance: number) => {
+const collectLines = (xs: number[], ys: number[], extent: Box, targets: Box[], tolerance: number) => {
     const lines: GuideLine[] = [];
 
     const add = (axis: GuideLine['axis'], value: number, from: number, to: number) => {
@@ -86,14 +98,14 @@ const collectLines = (box: Box, targets: Box[], tolerance: number) => {
 
     targets.forEach(target => {
         xLines(target).forEach(value => {
-            if (xLines(box).some(x => Math.abs(x - value) <= tolerance)) {
-                add('x', value, Math.min(box.top, target.top), Math.max(box.bottom, target.bottom));
+            if (xs.some(x => Math.abs(x - value) <= tolerance)) {
+                add('x', value, Math.min(extent.top, target.top), Math.max(extent.bottom, target.bottom));
             }
         });
 
         yLines(target).forEach(value => {
-            if (yLines(box).some(y => Math.abs(y - value) <= tolerance)) {
-                add('y', value, Math.min(box.left, target.left), Math.max(box.right, target.right));
+            if (ys.some(y => Math.abs(y - value) <= tolerance)) {
+                add('y', value, Math.min(extent.left, target.left), Math.max(extent.right, target.right));
             }
         });
     });
@@ -101,16 +113,21 @@ const collectLines = (box: Box, targets: Box[], tolerance: number) => {
     return lines;
 };
 
-export const align = (
-    { box, targets, threshold, snap }: GuideState,
+const alignProbes = (
+    { targets, threshold, snap }: GuideState,
+    xs: number[],
+    ys: number[],
+    extent: (dx: number, dy: number) => Box,
     dx: number,
     dy: number,
-    { x: alignX = true, y: alignY = true }: { x?: boolean; y?: boolean } = {}
+    { x: alignX = true, y: alignY = true }: Axes
 ): Alignment => {
-    const moved = shift(box, dx, dy);
-
-    const offsetX = snap && alignX ? nearestOffset(xLines(moved), targets.map(xLines), threshold) : null;
-    const offsetY = snap && alignY ? nearestOffset(yLines(moved), targets.map(yLines), threshold) : null;
+    const offsetX = snap && alignX && xs.length
+        ? nearestOffset(xs.map(x => x + dx), targets.map(xLines), threshold)
+        : null;
+    const offsetY = snap && alignY && ys.length
+        ? nearestOffset(ys.map(y => y + dy), targets.map(yLines), threshold)
+        : null;
 
     const nextDx = dx + (offsetX || 0);
     const nextDy = dy + (offsetY || 0);
@@ -118,6 +135,43 @@ export const align = (
     return {
         dx: nextDx,
         dy: nextDy,
-        lines: collectLines(shift(box, nextDx, nextDy), targets, snap ? EPSILON : threshold)
+        lines: collectLines(
+            xs.map(x => x + nextDx),
+            ys.map(y => y + nextDy),
+            extent(nextDx, nextDy),
+            targets,
+            snap ? EPSILON : threshold
+        )
     };
 };
+
+export const align = (state: GuideState, dx: number, dy: number, axes: Axes = {}): Alignment => (
+    alignProbes(
+        state,
+        xLines(state.box),
+        yLines(state.box),
+        (nextDx, nextDy) => shift(state.box, nextDx, nextDy),
+        dx,
+        dy,
+        axes
+    )
+);
+
+export const alignEdges = (
+    state: GuideState,
+    edges: { x?: number | null; y?: number | null },
+    extent: (dx: number, dy: number) => Box,
+    dx: number,
+    dy: number,
+    axes: Axes = {}
+): Alignment => (
+    alignProbes(
+        state,
+        edges.x === null || edges.x === undefined ? [] : [edges.x],
+        edges.y === null || edges.y === undefined ? [] : [edges.y],
+        extent,
+        dx,
+        dy,
+        axes
+    )
+);

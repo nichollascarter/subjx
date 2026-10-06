@@ -15,7 +15,7 @@ import type {
     ResizeHandleKey,
     GuidesOptions
 } from '../options';
-import { align } from './guides';
+import { align, alignEdges } from './guides';
 import type { GuideState, GuideLine } from './guides';
 
 import {
@@ -507,8 +507,10 @@ export default abstract class Transformable<
         } = options;
 
         if (doResize && resizable && point) {
-            const dx = snapToGrid(clientX - relativeX, snap.x) as number;
-            const dy = snapToGrid(clientY - relativeY, snap.y) as number;
+            const { dx, dy } = this.alignPoint(
+                snapToGrid(clientX - relativeX, snap.x) as number,
+                snapToGrid(clientY - relativeY, snap.y) as number
+            );
 
             const result = this.processPointMove(elements[0], point, { dx, dy });
 
@@ -526,8 +528,10 @@ export default abstract class Transformable<
                 super.emitEvent(E_RESIZE, finalArgs);
             }
         } else if (doResize && resizable) {
-            const distX = snapToGrid(clientX - relativeX, snap.x) as number;
-            const distY = snapToGrid(clientY - relativeY, snap.y) as number;
+            const { dx: distX, dy: distY } = this.alignResize(
+                snapToGrid(clientX - relativeX, snap.x) as number,
+                snapToGrid(clientY - relativeY, snap.y) as number
+            );
 
             const {
                 cached,
@@ -859,7 +863,7 @@ export default abstract class Transformable<
             doRotate,
             doSetCenter,
             onExecution: true,
-            guides: doDrag && this.options.guides ? this.prepareGuides() : null,
+            guides: (doDrag || doResize) && this.options.guides ? this.prepareGuides() : null,
             cursor: null,
             dox: /x/.test(axis) && (doResize
                 ?
@@ -1192,6 +1196,92 @@ export default abstract class Transformable<
             doH,
             point
         };
+    }
+
+    /** @internal */
+    private alignResize(dx: number, dy: number) {
+        const {
+            storage: {
+                guides,
+                revX,
+                revY,
+                doW,
+                doH,
+                dox,
+                doy
+            },
+            options: {
+                proportions
+            }
+        } = this;
+
+        if (!guides || !guides.axisAligned) return { dx, dy };
+
+        const { box, flipX, flipY } = guides;
+
+        const leftMoves = Boolean(revX) !== Boolean(flipX);
+        const topMoves = Boolean(revY) !== Boolean(flipY);
+        const widthLeads = doW || !doH;
+
+        const alignment = alignEdges(
+            guides,
+            {
+                x: dox ? (leftMoves ? box.left : box.right) : null,
+                y: doy ? (topMoves ? box.top : box.bottom) : null
+            },
+            (nextDx, nextDy) => ({
+                left: box.left + (dox && leftMoves ? nextDx : 0),
+                right: box.right + (dox && !leftMoves ? nextDx : 0),
+                top: box.top + (doy && topMoves ? nextDy : 0),
+                bottom: box.bottom + (doy && !topMoves ? nextDy : 0)
+            }),
+            dx,
+            dy,
+            {
+                x: Boolean(dox) && (!proportions || widthLeads),
+                y: Boolean(doy) && (!proportions || !widthLeads)
+            }
+        );
+
+        this.drawGuides(alignment.lines);
+
+        return alignment;
+    }
+
+    /** @internal */
+    private alignPoint(dx: number, dy: number) {
+        const {
+            storage: {
+                guides,
+                dox,
+                doy
+            },
+            options: {
+                proportions
+            }
+        } = this;
+
+        if (!guides || !guides.point || proportions) return { dx, dy };
+
+        const { x, y } = guides.point;
+
+        const alignment = alignEdges(
+            guides,
+            { x, y },
+            (nextDx, nextDy) => ({
+                left: x + nextDx,
+                right: x + nextDx,
+                top: y + nextDy,
+                bottom: y + nextDy
+            }),
+            dx,
+            dy,
+            { x: dox, y: doy }
+        );
+
+        this.drawGuides(alignment.lines);
+
+        return alignment;
     }
 
     /** @internal */
