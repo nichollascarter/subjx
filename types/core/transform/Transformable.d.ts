@@ -3,7 +3,8 @@ import SubjectModel from '../SubjectModel';
 import type { PointerInput, ProxyMethods } from '../SubjectModel';
 import type Observable from '../observable/Observable';
 import type { Observer } from '../observable/Observable';
-import type { DragOptions, MimicOptions, Direction, ExeDragParams, ExeResizeParams, ExeRotateParams, TransformEventMap, ResizeHandleKey } from '../options';
+import type { DragOptions, MimicOptions, Direction, ExeDragParams, ExeResizeParams, ExeRotateParams, TransformEventMap, ResizeHandleKey, GuidesOptions } from '../options';
+import type { GuideState } from './guides';
 export interface Point {
     x: number;
     y: number;
@@ -80,6 +81,7 @@ export interface TransformStorage<M = unknown> {
     onExecution?: boolean;
     cursor?: string | null;
     activeHandle?: Element | null;
+    guides?: GuideState | null;
     frame?: number;
     controlsMatrix?: M;
     [key: string]: unknown;
@@ -106,6 +108,7 @@ export interface TransformOptions {
     handles: ResizeHandleKey[] | null;
     hitRadius: number;
     showHitAreas: boolean;
+    guides: GuidesOptions | null;
     rotatable: boolean;
     scalable: boolean;
     applyTranslate: boolean;

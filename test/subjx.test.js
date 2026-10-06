@@ -142,6 +142,7 @@ const defaultOptions = {
     handles: null,
     hitRadius: 0,
     showHitAreas: false,
+    guides: null,
     rotatable: true,
     scalable: false,
     applyTranslate: false,
@@ -771,6 +772,40 @@ describe('Test active handle marking', () => {
         expect(draggable.storage.wrapper.querySelector('.sjx-active')).toBeNull();
 
         document.dispatchEvent(createEMouseUp());
+        draggable.disable();
+    });
+});
+
+describe('Test guides option', () => {
+    it('normalizes the option', () => {
+        const enabled = subjx(svgElement).drag({ guides: true });
+        expect(enabled.options.guides).toEqual({});
+        enabled.disable();
+
+        const custom = subjx(svgElement).drag({ guides: { threshold: 10, snap: false } });
+        expect(custom.options.guides).toEqual({ threshold: 10, snap: false });
+        custom.disable();
+    });
+
+    it('drags with guides and clears them on drop', () => {
+        const draggable = subjx(svgElement).drag({ guides: true });
+
+        svgElement.dispatchEvent(createEMouseDown());
+
+        expect(draggable.storage.guides).toBeTruthy();
+
+        let step = 0;
+        while (step < 5) {
+            document.dispatchEvent(createEMouseMove());
+            jest.advanceTimersByTime(1001 / 60);
+            step++;
+        }
+
+        document.dispatchEvent(createEMouseUp());
+
+        expect(draggable.storage.guides).toBeNull();
+        expect(draggable.storage.wrapper.querySelectorAll('.sjx-svg-guide').length).toEqual(0);
+
         draggable.disable();
     });
 });

@@ -14,6 +14,8 @@ import type { TransformOriginParams, AlignmentDirection } from '../../options';
 import { isDef, isUndef, warn } from '../../util/util';
 import { floatToFixed, getMinMaxOfArray, DEG } from '../common';
 import { movePath, resizePath } from './path';
+import { boxFromPoints, unionBoxes } from '../guides';
+import type { Box, GuideLine, GuideState } from '../guides';
 
 import {
     THEME_COLOR,
@@ -138,6 +140,7 @@ interface SVGStorage extends TransformStorage<DOMMatrix> {
         transformOrigin?: DOMPoint;
     };
     hitAreas: Record<string, SVGCircleElement | SVGLineElement>;
+    guidesLayer?: SVGGElement;
 }
 
 type SVGOptions = TransformOptions & {
@@ -1609,6 +1612,141 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         this.syncHitAreas();
 
         return result;
+    }
+
+    /** @internal */
+    protected prepareGuides(): GuideState | null {
+        const {
+            elements,
+            storage: {
+                wrapper
+            },
+            options: {
+                container,
+                guides
+            }
+        } = this;
+
+        if (!guides) return null;
+
+        const {
+            targets,
+            bounds,
+            threshold = 6,
+            snap = true
+        } = guides;
+
+        const toBox = (element: SVGGraphicsElement) => boxFromPoints(
+            getBoundingRect(element, getTransformToElement(element, container))
+        );
+
+        const isMoving = (element: Element) => elements.some(item => (
+            item === element || item.contains(element) || element.contains(item)
+        ));
+
+        const candidates: Element[] = typeof targets === 'string'
+            ? [...document.querySelectorAll(targets)]
+            : (targets || [...(elements[0].parentNode as Element).children]);
+
+        const targetBoxes = candidates.reduce<Box[]>((result, element) => {
+            if (!('getBBox' in element) || isMoving(element) || wrapper.contains(element)) return result;
+
+            try {
+                result.push(toBox(element as SVGGraphicsElement));
+            } catch {
+                return result;
+            }
+
+            return result;
+        }, []);
+
+        const boundsElement = bounds === false
+            ? null
+            : (bounds ? helper(bounds)[0] : container);
+
+        if (boundsElement) targetBoxes.push(this.getBoundsBox(boundsElement));
+
+        const screenMatrix = container.getScreenCTM();
+        const scale = screenMatrix
+            ? Math.sqrt(Math.abs(screenMatrix.a * screenMatrix.d - screenMatrix.b * screenMatrix.c)) || 1
+            : 1;
+
+        return {
+            box: unionBoxes(elements.map(toBox)),
+            targets: targetBoxes,
+            threshold: threshold / scale,
+            snap
+        };
+    }
+
+    /** @internal */
+    private getBoundsBox(element: Element): Box {
+        const { container } = this.options;
+
+        if (element.tagName.toLowerCase() !== 'svg') {
+            return boxFromPoints(
+                getBoundingRect(element as SVGGraphicsElement, getTransformToElement(element, container))
+            );
+        }
+
+        const { left, top, right, bottom } = element.getBoundingClientRect();
+        const toContainer = (container.getScreenCTM() || createSVGMatrix()).inverse();
+
+        return boxFromPoints(
+            [[left, top], [right, top], [right, bottom], [left, bottom]].map(([x, y]) => {
+                const point = pointTo(toContainer, x, y);
+                return [point.x, point.y];
+            })
+        );
+    }
+
+    /** @internal */
+    protected drawGuides(lines: GuideLine[]) {
+        const {
+            storage,
+            storage: {
+                wrapper,
+                guidesLayer
+            },
+            options: {
+                container
+            }
+        } = this;
+
+        if (guidesLayer) {
+            while (guidesLayer.firstChild) guidesLayer.removeChild(guidesLayer.firstChild);
+        }
+
+        if (!lines.length) return;
+
+        const layer = guidesLayer || createSVGElement('g', ['sjx-svg-guides']);
+
+        if (!guidesLayer) {
+            wrapper.insertBefore(layer, wrapper.firstChild);
+            storage.guidesLayer = layer;
+        }
+
+        layer.setAttribute('transform', matrixToString(getTransformToElement(container, wrapper.parentNode)));
+
+        lines.forEach(({ axis, value, from, to }) => {
+            const line = createSVGElement('line', ['sjx-svg-guide']);
+            const [x1, y1, x2, y2] = axis === 'x'
+                ? [value, from, value, to]
+                : [from, value, to, value];
+
+            entries({
+                x1,
+                y1,
+                x2,
+                y2,
+                stroke: '#ff3d9a',
+                'stroke-width': 1,
+                'vector-effect': 'non-scaling-stroke',
+                'pointer-events': 'none'
+            }).forEach(([attr, attrValue]) => line.setAttribute(attr, String(attrValue)));
+
+            layer.appendChild(line);
+        });
     }
 
     /** @internal */

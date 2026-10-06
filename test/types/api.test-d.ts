@@ -26,6 +26,7 @@ const options: DragOptions = {
     handles: ['tl', 'br', 're', 'p1'],
     hitRadius: 8,
     showHitAreas: true,
+    guides: { targets: '.shape', bounds: '#paper', threshold: 8, snap: true },
     restrict: '#area',
     container: div,
     controlsContainer: div,

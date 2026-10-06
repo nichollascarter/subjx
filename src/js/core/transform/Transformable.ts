@@ -12,8 +12,11 @@ import type {
     ExeResizeParams,
     ExeRotateParams,
     TransformEventMap,
-    ResizeHandleKey
+    ResizeHandleKey,
+    GuidesOptions
 } from '../options';
+import { align } from './guides';
+import type { GuideState, GuideLine } from './guides';
 
 import {
     LIB_CLASS_PREFIX,
@@ -176,6 +179,7 @@ export interface TransformStorage<M = unknown> {
     onExecution?: boolean;
     cursor?: string | null;
     activeHandle?: Element | null;
+    guides?: GuideState | null;
     frame?: number;
     controlsMatrix?: M;
     [key: string]: unknown;
@@ -203,6 +207,7 @@ export interface TransformOptions {
     handles: ResizeHandleKey[] | null;
     hitRadius: number;
     showHitAreas: boolean;
+    guides: GuidesOptions | null;
     rotatable: boolean;
     scalable: boolean;
     applyTranslate: boolean;
@@ -287,6 +292,12 @@ export default abstract class Transformable<
 
     /** @internal */
     protected abstract processPointMove(element: Element, point: string, delta: Delta): object | null;
+
+    /** @internal */
+    protected abstract prepareGuides(): GuideState | null;
+
+    /** @internal */
+    protected abstract drawGuides(lines: GuideLine[]): void;
 
     /** @internal */
     protected abstract processRotateRestrict(element: Element, radians: number): RestrictPoint;
@@ -374,6 +385,7 @@ export default abstract class Transformable<
             handles,
             hitRadius = 0,
             showHitAreas = false,
+            guides = false,
             rotatable = true,
             scalable = false,
             applyTranslate = false,
@@ -422,6 +434,7 @@ export default abstract class Transformable<
             handles: Array.isArray(handles) ? handles : null,
             hitRadius: Math.max(0, Number(hitRadius) || 0),
             showHitAreas: Boolean(showHitAreas),
+            guides: guides === true ? {} : (guides && typeof guides === 'object' ? guides : null),
             rotatable,
             scalable,
             applyTranslate,
@@ -631,13 +644,22 @@ export default abstract class Transformable<
         }
 
         if (doDrag && draggable) {
-            const dx = dox
+            const gridDx = dox
                 ? snapToGrid(clientX - relativeX, snap.x) as number
                 : 0;
 
-            const dy = doy
+            const gridDy = doy
                 ? snapToGrid(clientY - relativeY, snap.y) as number
                 : 0;
+
+            const alignment = storage.guides
+                ? align(storage.guides, gridDx, gridDy, { x: dox, y: doy })
+                : null;
+
+            const dx = alignment ? alignment.dx : gridDx;
+            const dy = alignment ? alignment.dy : gridDy;
+
+            if (alignment) this.drawGuides(alignment.lines);
 
             const {
                 cached,
@@ -837,6 +859,7 @@ export default abstract class Transformable<
             doRotate,
             doSetCenter,
             onExecution: true,
+            guides: doDrag && this.options.guides ? this.prepareGuides() : null,
             cursor: null,
             dox: /x/.test(axis) && (doResize
                 ?
@@ -1044,6 +1067,11 @@ export default abstract class Transformable<
         cancelAnimFrame(frame as number);
 
         this.setActiveHandle(null);
+
+        if (this.storage.guides) {
+            this.drawGuides([]);
+            this.storage.guides = null;
+        }
 
         helper(document.body).css({ cursor: 'auto' });
         if (isDef(radius)) {

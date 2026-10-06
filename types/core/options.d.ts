@@ -219,6 +219,28 @@ export interface TransformOriginParams {
     /** Relative delta Y from center */
     dy?: number;
 }
+export interface GuidesOptions {
+    /**
+     * Elements to align with: a selector or a list.
+     * Defaults to the siblings of the dragged elements
+     */
+    targets?: string | Element[];
+    /**
+     * Element whose edges and center are alignment targets too, or `false` to skip.
+     * Defaults to the container
+     */
+    bounds?: string | Element | false;
+    /**
+     * Distance in screen pixels at which elements snap to an alignment
+     * @default 6
+     */
+    threshold?: number;
+    /**
+     * Snap to the found alignment; `false` only shows the guides
+     * @default true
+     */
+    snap?: boolean;
+}
 export interface DragOptions {
     /**
      * Mimic behavior with other `Subjx` instances for synchronized transformations
@@ -296,6 +318,12 @@ export interface DragOptions {
      * @default false
      */
     showHitAreas?: boolean;
+    /**
+     * Snap to edges and centers of other elements and of the container while dragging,
+     * showing alignment guides. `true` uses the defaults of GuidesOptions. SVG only
+     * @default false
+     */
+    guides?: boolean | GuidesOptions;
     /**
      * Enable/disable rotation
      * @default true
