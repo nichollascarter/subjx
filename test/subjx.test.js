@@ -114,6 +114,7 @@ document.body.innerHTML = `
     </div>
     <svg id="svg-container" xmlns="http://www.w3.org/2000/svg">
         <path id="svg-draggable" d="M691,331 Q711,306,721,331 T761,331 " fill="none" stroke="blue" stroke-width="5"></path>
+        <line id="svg-line" x1="0" y1="0" x2="100" y2="0" stroke="blue"></line>
     </svg>
 `;
 
@@ -124,6 +125,7 @@ const cloneableElement = document.getElementById('cloneable');
 
 const svgElement = document.getElementById('svg-draggable');
 const svgContainerElement = document.getElementById('svg-container');
+const svgLineElement = document.getElementById('svg-line');
 
 const defaultOptions = {
     axis: 'xy',
@@ -137,6 +139,10 @@ const defaultOptions = {
     proportions: false,
     draggable: true,
     resizable: true,
+    handles: null,
+    hitRadius: 0,
+    showHitAreas: false,
+    guides: null,
     rotatable: true,
     scalable: false,
     applyTranslate: false,
@@ -207,6 +213,16 @@ describe('Test subjx "clone" method', () => {
     it('init cloneable with defaults', () => {
         subjx(cloneableElement).clone();
     });
+
+    it('subscribes to every drag event', () => {
+        const cloneable = subjx(cloneableElement).clone();
+
+        expect(() => {
+            ['dragStart', 'drag', 'dragEnd'].forEach(name => cloneable.on(name, () => {}));
+        }).not.toThrow();
+
+        cloneable.disable();
+    });
 });
 
 describe('Test subjx "drag" method', () => {
@@ -216,6 +232,17 @@ describe('Test subjx "drag" method', () => {
             ...defaultOptions,
             container: draggableContainer,
             controlsContainer: draggableContainer
+        });
+
+        draggable.disable();
+    });
+
+    it('fills missing snap values with defaults', () => {
+        const draggable = subjx(domElement).drag({ snap: { x: 5 } });
+
+        expect(draggable.options.snap).toEqual({
+            ...defaultOptions.snap,
+            x: 5
         });
 
         draggable.disable();
@@ -375,6 +402,14 @@ describe('Test svg subjx "drag" method', () => {
         draggable.disable();
     });
 
+    it('applies translate on drag with applyTranslate', () => {
+        const draggable = subjx(svgElement).drag({ applyTranslate: true });
+
+        expect(() => draggable.exeDrag({ dx: 10, dy: 10 })).not.toThrow();
+
+        draggable.disable();
+    });
+
     it('test subjx api', () => {
         const draggable = subjx(svgElement).drag({ each: { move: true } });
 
@@ -515,5 +550,293 @@ describe('Test svg subjx "drag" method', () => {
         });
 
         $draggables.disable();
+    });
+});
+
+describe('Test svg line controls', () => {
+    const boxHandles = ['tl', 'tc', 'tr', 'ml', 'mr', 'bl', 'bc', 'br'];
+
+    it('uses endpoint handles for a single line', () => {
+        const draggable = subjx(svgLineElement).drag();
+        const { handles } = draggable.storage;
+
+        expect(handles.p1).toBeDefined();
+        expect(handles.p2).toBeDefined();
+        boxHandles.forEach(key => expect(handles[key]).toBeUndefined());
+        ['te', 'be', 'le', 're'].forEach(key => (
+            expect(handles[key].getAttribute('pointer-events')).toEqual('none')
+        ));
+
+        draggable.disable();
+    });
+
+    it('keeps box handles for other elements', () => {
+        const draggable = subjx(svgElement).drag();
+        const { handles } = draggable.storage;
+
+        boxHandles.forEach(key => expect(handles[key]).toBeDefined());
+        expect(handles.p1).toBeUndefined();
+        expect(handles.te.getAttribute('pointer-events')).toBeNull();
+
+        draggable.disable();
+    });
+
+    it('has no endpoint handles when not resizable', () => {
+        const draggable = subjx(svgLineElement).drag({ resizable: false });
+
+        expect(draggable.storage.handles.p1).toBeUndefined();
+        expect(draggable.storage.handles.p2).toBeUndefined();
+
+        draggable.disable();
+    });
+
+    it('moves an endpoint as a resize', () => {
+        const events = [];
+        const onResize = jest.fn();
+
+        const draggable = subjx(svgLineElement).drag({ onResize });
+
+        ['resizeStart', 'resize', 'resizeEnd', 'drag'].forEach(name => (
+            draggable.on(name, () => events.push(name))
+        ));
+
+        draggable.storage.handles.p2.dispatchEvent(createEMouseDown());
+
+        let step = 0;
+        while (step < 5) {
+            document.dispatchEvent(createEMouseMove());
+            jest.advanceTimersByTime(1001 / 60);
+            step++;
+        }
+
+        document.dispatchEvent(createEMouseUp());
+
+        expect(svgLineElement.getAttribute('x2')).toEqual('150');
+        expect(svgLineElement.getAttribute('x1')).toEqual('0');
+        expect(onResize).toHaveBeenCalled();
+        expect(events[0]).toEqual('resizeStart');
+        expect(events).toContain('resize');
+        expect(events[events.length - 1]).toEqual('resizeEnd');
+        expect(events).not.toContain('drag');
+
+        draggable.disable();
+    });
+});
+
+describe('Test handles option', () => {
+    const boxHandles = ['tl', 'tc', 'tr', 'ml', 'mr', 'bl', 'bc', 'br'];
+
+    it('shows only the listed svg handles', () => {
+        const draggable = subjx(svgElement).drag({ handles: ['tl', 'br', 're'] });
+        const { handles } = draggable.storage;
+
+        expect(boxHandles.filter(key => handles[key])).toEqual(['tl', 'br']);
+        expect(handles.rotator).toBeDefined();
+        expect(handles.re.getAttribute('pointer-events')).toBeNull();
+        ['te', 'be', 'le'].forEach(key => {
+            expect(handles[key].getAttribute('pointer-events')).toEqual('none');
+            expect(handles[key].getAttribute('visibility')).toBeNull();
+        });
+
+        draggable.disable();
+    });
+
+    it('shows only the listed html handles', () => {
+        const draggable = subjx(domElement).drag({ handles: ['tl'] });
+        const { handles } = draggable.storage;
+
+        expect(boxHandles.filter(key => handles[key])).toEqual(['tl']);
+        ['te', 'be', 'le', 're'].forEach(key => (
+            expect(handles[key].style.pointerEvents).toEqual('none')
+        ));
+
+        draggable.disable();
+    });
+
+    it('filters line endpoints', () => {
+        const draggable = subjx(svgLineElement).drag({ handles: ['p2'] });
+
+        expect(draggable.storage.handles.p1).toBeUndefined();
+        expect(draggable.storage.handles.p2).toBeDefined();
+
+        draggable.disable();
+    });
+});
+
+describe('Test hitRadius option', () => {
+    it('adds no hit areas by default', () => {
+        const draggable = subjx(svgElement).drag();
+
+        expect(Object.keys(draggable.storage.hitAreas)).toEqual([]);
+
+        draggable.disable();
+    });
+
+    it('adds a hit area to every interactive handle', () => {
+        const draggable = subjx(svgElement).drag({ hitRadius: 12 });
+        const { hitAreas, handles } = draggable.storage;
+
+        ['tl', 'br', 'rotator', 'te', 're'].forEach(key => {
+            expect(hitAreas[key].getAttribute('data-sjx-handle')).toEqual(key);
+            expect(handles[key]).toBeDefined();
+        });
+        expect(hitAreas.tl.getAttribute('r')).toEqual('12');
+        expect(hitAreas.te.getAttribute('stroke-width')).toEqual('24');
+
+        draggable.disable();
+    });
+
+    it('marks the controls when hit areas should stay visible', () => {
+        const hidden = subjx(svgElement).drag({ hitRadius: 12 });
+        expect(hidden.controls.classList.contains('sjx-show-hit')).toBe(false);
+        hidden.disable();
+
+        const shown = subjx(svgElement).drag({ hitRadius: 12, showHitAreas: true });
+        expect(shown.controls.classList.contains('sjx-show-hit')).toBe(true);
+        shown.disable();
+    });
+
+    it('skips edges that ignore the pointer', () => {
+        const draggable = subjx(svgLineElement).drag({ hitRadius: 12 });
+        const { hitAreas } = draggable.storage;
+
+        expect(hitAreas.p1).toBeDefined();
+        expect(hitAreas.p2).toBeDefined();
+        ['te', 'be', 'le', 're'].forEach(key => expect(hitAreas[key]).toBeUndefined());
+
+        draggable.disable();
+    });
+
+    it('treats a press on the hit area as a press on its handle', () => {
+        svgLineElement.setAttribute('x2', '100');
+
+        const events = [];
+        const draggable = subjx(svgLineElement).drag({ hitRadius: 12 });
+
+        ['resizeStart', 'drag'].forEach(name => (
+            draggable.on(name, () => events.push(name))
+        ));
+
+        draggable.storage.hitAreas.p2.dispatchEvent(createEMouseDown());
+
+        let step = 0;
+        while (step < 5) {
+            document.dispatchEvent(createEMouseMove());
+            jest.advanceTimersByTime(1001 / 60);
+            step++;
+        }
+
+        document.dispatchEvent(createEMouseUp());
+
+        expect(events).toContain('resizeStart');
+        expect(events).not.toContain('drag');
+        expect(svgLineElement.getAttribute('x2')).toEqual('150');
+
+        draggable.disable();
+    });
+});
+
+describe('Test active handle marking', () => {
+    const press = (target) => {
+        target.dispatchEvent(createEMouseDown());
+        document.dispatchEvent(createEMouseMove());
+        jest.advanceTimersByTime(1001 / 60);
+    };
+
+    it('marks the grabbed handle while resizing or rotating', () => {
+        const draggable = subjx(svgElement).drag();
+        const { handles, wrapper } = draggable.storage;
+
+        ['tr', 'rotator'].forEach(key => {
+            press(handles[key]);
+
+            expect(handles[key].classList.contains('sjx-active')).toBe(true);
+            expect(wrapper.classList.contains('sjx-acting')).toBe(true);
+            expect(handles.tl.classList.contains('sjx-active')).toBe(false);
+
+            document.dispatchEvent(createEMouseUp());
+
+            expect(handles[key].classList.contains('sjx-active')).toBe(false);
+            expect(wrapper.classList.contains('sjx-acting')).toBe(false);
+        });
+
+        draggable.disable();
+    });
+
+    it('marks nothing while dragging the element', () => {
+        const draggable = subjx(svgElement).drag();
+
+        press(svgElement);
+
+        expect(draggable.storage.wrapper.classList.contains('sjx-acting')).toBe(false);
+        expect(draggable.storage.wrapper.querySelector('.sjx-active')).toBeNull();
+
+        document.dispatchEvent(createEMouseUp());
+        draggable.disable();
+    });
+});
+
+describe('Test guides option', () => {
+    it('normalizes the option', () => {
+        const enabled = subjx(svgElement).drag({ guides: true });
+        expect(enabled.options.guides).toEqual({});
+        enabled.disable();
+
+        const custom = subjx(svgElement).drag({ guides: { threshold: 10, snap: false } });
+        expect(custom.options.guides).toEqual({ threshold: 10, snap: false });
+        custom.disable();
+    });
+
+    it('drags with guides and clears them on drop', () => {
+        const draggable = subjx(svgElement).drag({ guides: true });
+
+        svgElement.dispatchEvent(createEMouseDown());
+
+        expect(draggable.storage.guides).toBeTruthy();
+
+        let step = 0;
+        while (step < 5) {
+            document.dispatchEvent(createEMouseMove());
+            jest.advanceTimersByTime(1001 / 60);
+            step++;
+        }
+
+        document.dispatchEvent(createEMouseUp());
+
+        expect(draggable.storage.guides).toBeNull();
+        expect(draggable.storage.wrapper.querySelectorAll('.sjx-svg-guide').length).toEqual(0);
+
+        draggable.disable();
+    });
+});
+
+describe('Test restrict', () => {
+    it('measures the restriction for an action and drops it on release', () => {
+        const draggable = subjx(svgElement).drag({ restrict: '#svg-container' });
+
+        svgElement.dispatchEvent(createEMouseDown());
+
+        expect(draggable.storage.restriction).toEqual(expect.objectContaining({
+            box: expect.any(Object),
+            area: expect.any(Object)
+        }));
+
+        document.dispatchEvent(createEMouseMove());
+        jest.advanceTimersByTime(1001 / 60);
+        document.dispatchEvent(createEMouseUp());
+
+        expect(draggable.storage.restriction).toBeNull();
+
+        draggable.disable();
+    });
+
+    it('measures nothing without restrict', () => {
+        const draggable = subjx(svgElement).drag();
+
+        svgElement.dispatchEvent(createEMouseDown());
+        expect(draggable.storage.restriction).toBeNull();
+        document.dispatchEvent(createEMouseUp());
+
+        draggable.disable();
     });
 });

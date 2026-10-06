@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "noEmit": false,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "stripInternal": true,
+        "rootDir": "src/js",
+        "outDir": "types"
+    },
+    "include": ["src/js"]
+}

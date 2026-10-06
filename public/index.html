@@ -14,9 +14,41 @@
         }
 
         .page {
+            display: none;
+            position: relative;
             height: 100vh;
             min-height: 100vh;
             /* background-color: #000000c4; */
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        #tabs {
+            position: fixed;
+            top: 8px;
+            left: 50%;
+            z-index: 10;
+            display: flex;
+            transform: translateX(-50%);
+            font: 13px system-ui, sans-serif;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px #0002;
+        }
+
+        #tabs button {
+            padding: 6px 18px;
+            border: 0;
+            background: #fff;
+            cursor: pointer;
+        }
+
+        #tabs button.active {
+            background: #00a8ff;
+            color: #fff;
         }
 
         .draggable {
@@ -59,13 +91,150 @@
         #container {
             position: absolute;
         }
+
+        #panel {
+            position: fixed;
+            top: 8px;
+            right: 8px;
+            z-index: 10;
+            width: 260px;
+            max-height: calc(100vh - 16px);
+            overflow: auto;
+            padding: 8px 10px;
+            font: 12px/1.4 system-ui, sans-serif;
+            background: #ffffffee;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px #0002;
+        }
+
+        #panel fieldset {
+            margin: 6px 0;
+            padding: 4px 6px;
+            border: 1px solid #ddd;
+        }
+
+        #panel label {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            margin: 1px 6px 1px 0;
+        }
+
+        #panel input[type="number"] {
+            width: 48px;
+        }
+
+        #panel .handles {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        #panel pre {
+            margin: 6px 0 0;
+            min-height: 7em;
+            font-size: 11px;
+            white-space: pre-wrap;
+            background: #f6f6f6;
+            padding: 4px;
+        }
+
+        #panel .hint {
+            color: #777;
+        }
     </style>
     <script src="subjx.js" type="text/javascript" charset="utf-8"></script>
     <title>Demo</title>
 </head>
 
 <body>
-    <div class="page">
+    <nav id="tabs">
+        <button type="button" data-tab="svg">SVG</button>
+        <button type="button" data-tab="html">HTML</button>
+    </nav>
+    <aside id="panel">
+        <strong id="panel-title">options</strong>
+        <div>
+            <label>mode
+                <select name="mode">
+                    <option value="single">single (click element)</option>
+                    <option value="group">group (all)</option>
+                </select>
+            </label>
+        </div>
+        <div class="hint" id="selection">click an element to select it</div>
+        <fieldset>
+            <legend>flags</legend>
+            <label><input type="checkbox" name="draggable" checked>draggable</label>
+            <label><input type="checkbox" name="resizable" checked>resizable</label>
+            <label><input type="checkbox" name="rotatable" checked>rotatable</label>
+            <label><input type="checkbox" name="proportions">proportions</label>
+            <label><input type="checkbox" name="scalable">scalable</label>
+            <label><input type="checkbox" name="applyTranslate">applyTranslate</label>
+            <label><input type="checkbox" name="showNormal" checked>showNormal</label>
+            <label><input type="checkbox" name="transformOrigin">transformOrigin</label>
+        </fieldset>
+        <fieldset>
+            <legend>movement</legend>
+            <label>axis
+                <select name="axis">
+                    <option>xy</option>
+                    <option>x</option>
+                    <option>y</option>
+                </select>
+            </label>
+            <div>
+                <label>snap x <input type="number" name="snapX" value="0" min="0"></label>
+                <label>y <input type="number" name="snapY" value="0" min="0"></label>
+                <label>angle <input type="number" name="snapAngle" value="0" min="0"></label>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>rotator</legend>
+            <label>anchor
+                <select name="rotatorAnchor">
+                    <option>e</option>
+                    <option>n</option>
+                    <option>s</option>
+                    <option>w</option>
+                </select>
+            </label>
+            <label>offset <input type="number" name="rotatorOffset" value="50"></label>
+        </fieldset>
+        <fieldset>
+            <legend>handles</legend>
+            <label><input type="checkbox" name="handlesAll" checked>all</label>
+            <div class="handles" id="handles"></div>
+            <label>hitRadius <input type="number" name="hitRadius" value="0" min="0"></label>
+            <label><input type="checkbox" name="showHitAreas">show hit areas</label>
+        </fieldset>
+        <fieldset id="guides-svg">
+            <legend>guides (svg)</legend>
+            <label><input type="checkbox" name="guides">enabled</label>
+            <label><input type="checkbox" name="guidesSnap" checked>snap</label>
+            <label>threshold <input type="number" name="guidesThreshold" value="6" min="0"></label>
+            <label>bounds
+                <select name="guidesBounds">
+                    <option value="container">container</option>
+                    <option value="none">none</option>
+                </select>
+            </label>
+        </fieldset>
+        <fieldset id="view-svg">
+            <legend>view (svg)</legend>
+            <label>zoom
+                <select name="zoom">
+                    <option>0.5</option>
+                    <option selected>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                </select>
+            </label>
+            <label><input type="checkbox" name="controlsInZoom">controls in zoomed layer</label>
+        </fieldset>
+        <pre id="log"></pre>
+    </aside>
+    <div class="page" id="page-svg">
         <svg id="svg-container" width="100%" height="100%" transform="scale(1, 1)">
             <g class="drag-svg3">
                 <circle class="drag-svg" cx="1032" cy="392" r="20" stroke="red" fill="transparent" stroke-width="5"
@@ -76,6 +245,8 @@
 
                 <line class="drag-svg" x1="866" x2="906" y1="440" y2="480" stroke="orange" fill="transparent"
                     stroke-width="5" transform="matrix(1,0,0,1,0,0)"></line>
+                <line class="drag-svg" x1="560" y1="580" x2="720" y2="580" stroke="purple" stroke-width="4"></line>
+                <line class="drag-svg" x1="800" y1="520" x2="800" y2="660" stroke="purple" stroke-width="4"></line>
                 <polyline class="drag-svg"
                     points="839 313 844 323 849 318 854 333 859 328 864 343 869 338 874 353 879 348" stroke="orange"
                     fill="transparent" stroke-width="5" transform="matrix(1,0,0,1,0,0)"></polyline>
@@ -161,7 +332,7 @@
             </g>
         </svg>
     </div>
-    <div class="page">
+    <div class="page" id="page-html">
         <div id="stack"
             style="position: absolute; overflow: auto; box-sizing: border-box; width:100%; height:100%;border-top: #32B5FE 1px dashed">
             <div id="container" style="position: absolute; box-sizing: border-box; width:100%; height:100%;">
@@ -189,143 +360,221 @@
 
 <script>
 
-    const svgObservable = subjx.createObservable();
-    const methods = {
-        onInit(elements) {
-            //console.log('init');
+    const panel = document.getElementById('panel');
+    const field = name => panel.querySelector(`[name="${name}"]`);
+
+    const flagNames = ['draggable', 'resizable', 'rotatable', 'proportions', 'scalable', 'applyTranslate', 'showNormal', 'transformOrigin'];
+    const handleKeys = ['tl', 'tc', 'tr', 'ml', 'mr', 'bl', 'bc', 'br', 'te', 'be', 'le', 're', 'p1', 'p2'];
+
+    document.getElementById('handles').innerHTML = handleKeys
+        .map(key => `<label><input type="checkbox" name="handle-${key}" checked disabled>${key}</label>`)
+        .join('');
+
+    const tabs = {
+        svg: {
+            title: 'SVG options',
+            selector: '.drag-svg',
+            area: document.getElementById('svg-container'),
+            wrapper: '.sjx-svg-wrapper',
+            base: {
+                container: '#svg-container'
+            }
         },
-        onMove() {
-            // console.log(arguments);
-        },
-        onResize(dx, dy, handle) {
-            //console.log(handle);
-        },
-        onRotate(rad) {
-            //console.log('is rotating');
-        },
-        onDrop(e) {
-            //console.log('is dropped');
-        },
-        onDestroy(elements) {
-            //console.log('is destroyed');
+        html: {
+            title: 'HTML options',
+            selector: '.draggable',
+            area: document.getElementById('container'),
+            wrapper: '.sjx-wrapper',
+            base: {
+                container: '#container',
+                controlsContainer: '#container',
+                restrict: '#world'
+            }
         }
     };
 
-    const svgOptions = {
-        container: '#svg-container',
-        //restrict: '#restrict',
-        //proportions: true,
-        //rotationPoint: [200, 200],
-        //themeColor: 'white',
-        //scalable: true,
-        each: {
-            resize: true,
-            move: true,
-            rotate: true
-        },
-        snap: {
-            x: 20,
-            y: 20,
-            angle: 0
-        },
-        cursorMove: 'move',
-        cursorRotate: 'crosshair',
-        cursorResize: 'pointer',
-        ...methods
+    const storageKey = 'subjx-demo';
+
+    const saveState = state => {
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(state));
+        } catch (e) {
+            console.warn('demo state not saved', e);
+        }
     };
 
-    const svgs = [
-        subjx('.drag-svg')
-            .drag(svgOptions, svgObservable)
-    ];
+    const loadState = () => {
+        try {
+            return JSON.parse(localStorage.getItem(storageKey)) || {};
+        } catch (e) {
+            return {};
+        }
+    };
+
+    const panelInputs = () => [...panel.querySelectorAll('input, select')];
+
+    const savePanel = () => saveState({
+        tab: current,
+        fields: panelInputs().reduce((result, input) => {
+            result[input.name] = input.type === 'checkbox' ? input.checked : input.value;
+            return result;
+        }, {})
+    });
+
+    const syncHandleInputs = () => {
+        handleKeys.forEach(key => {
+            field(`handle-${key}`).disabled = field('handlesAll').checked;
+        });
+    };
+
+    const logLines = [];
+    const log = (name, args = {}) => {
+        const details = ['dx', 'dy', 'delta', 'width', 'height', 'clientX', 'clientY']
+            .filter(key => typeof args[key] === 'number')
+            .map(key => `${key}=${Math.round(args[key] * 100) / 100}`)
+            .join(' ');
+        const line = `${name} ${details}`;
+
+        if (logLines.length && logLines[0].startsWith(`${name} `)) {
+            logLines[0] = line;
+        } else {
+            logLines.unshift(line);
+            logLines.length = Math.min(logLines.length, 10);
+        }
+
+        document.getElementById('log').textContent = logLines.join('\n');
+    };
+
+    const readOptions = () => {
+        const options = {
+            ...tabs[current].base,
+            cursorMove: 'move',
+            cursorRotate: 'crosshair',
+            cursorResize: 'pointer',
+            axis: field('axis').value,
+            snap: {
+                x: Number(field('snapX').value),
+                y: Number(field('snapY').value),
+                angle: Number(field('snapAngle').value)
+            },
+            rotatorAnchor: field('rotatorAnchor').value,
+            rotatorOffset: Number(field('rotatorOffset').value),
+            hitRadius: Number(field('hitRadius').value),
+            showHitAreas: field('showHitAreas').checked,
+            onMove: args => log('move', args),
+            onResize: args => log('resize', args),
+            onRotate: args => log('rotate', args),
+            onDrop: args => log('drop', args)
+        };
+
+        flagNames.forEach(name => {
+            options[name] = field(name).checked;
+        });
+
+        if (!field('handlesAll').checked) {
+            options.handles = handleKeys.filter(key => field(`handle-${key}`).checked);
+        }
+
+        if (current === 'svg' && field('controlsInZoom').checked) {
+            options.controlsContainer = '.drag-svg3';
+        }
+
+        if (current === 'svg' && field('guides').checked) {
+            options.guides = {
+                snap: field('guidesSnap').checked,
+                threshold: Number(field('guidesThreshold').value),
+                ...(field('guidesBounds').value === 'none' && { bounds: false })
+            };
+        }
+
+        return options;
+    };
+
+    let current = 'svg';
+    let instances = [];
+    let selected = null;
+
+    const apply = () => {
+        instances.forEach(item => item.disable());
+
+        document.querySelector('.drag-svg3').setAttribute('transform', `scale(${field('zoom').value})`);
+        document.getElementById('view-svg').hidden = current !== 'svg';
+        document.getElementById('guides-svg').hidden = current !== 'svg';
+
+        const tab = tabs[current];
+        const mode = field('mode').value;
+        const options = readOptions();
+        const elements = document.querySelectorAll(tab.selector);
+
+        if (mode === 'group') {
+            instances = elements.length ? [subjx(elements).drag(options)] : [];
+        } else {
+            instances = selected ? [subjx(selected).drag(options)] : [];
+        }
+
+        document.getElementById('selection').textContent = mode === 'group'
+            ? `all ${tab.selector} elements in one group`
+            : (selected ? `selected: <${selected.tagName.toLowerCase()}>` : 'click an element to select it');
+
+        console.log('subjx options', options, instances);
+    };
+
+    const switchTab = name => {
+        instances.forEach(item => item.disable());
+        instances = [];
+        selected = null;
+        current = tabs[name] ? name : 'svg';
+
+        Object.keys(tabs).forEach(key => {
+            document.getElementById(`page-${key}`).classList.toggle('active', key === current);
+            document.querySelector(`#tabs [data-tab="${key}"]`).classList.toggle('active', key === current);
+        });
+
+        document.getElementById('panel-title').textContent = tabs[current].title;
+        apply();
+        savePanel();
+    };
+
+    document.getElementById('tabs').addEventListener('click', e => {
+        const button = e.target.closest('[data-tab]');
+        if (button) switchTab(button.dataset.tab);
+    });
+
+    panel.addEventListener('change', () => {
+        syncHandleInputs();
+        apply();
+        savePanel();
+    });
+
+    Object.keys(tabs).forEach(key => {
+        tabs[key].area.addEventListener('mousedown', e => {
+            if (key !== current || field('mode').value !== 'single' || e.target.closest(tabs[key].wrapper)) return;
+
+            const element = e.target.closest(tabs[key].selector);
+
+            if (element === selected) return;
+
+            selected = element;
+            apply();
+        }, true);
+    });
 
     document.onkeydown = e => {
-        e = e || window.event;
+        const step = {
+            ArrowUp: [0, -10],
+            ArrowDown: [0, 10],
+            ArrowLeft: [-10, 0],
+            ArrowRight: [10, 0]
+        }[e.key];
+
+        if (!step || e.target.closest('#panel')) return;
+
         e.preventDefault();
-        if (e.keyCode == "38") {
-            svgs.forEach(item => {
-                item.exeDrag({ dx: 0, dy: -10 });
-            });
-        } else if (e.keyCode == "40") {
-            svgs.forEach(item => {
-                item.exeDrag({ dx: 0, dy: 10 });
-            });
-        } else if (e.keyCode == "37") {
-            svgs.forEach(item => {
-                item.exeDrag({ dx: -10, dy: 0 });
-            });
-        } else if (e.keyCode == "39") {
-            svgs.forEach(item => {
-                item.exeDrag({ dx: 10, dy: 0 });
-            });
-        }
+        instances.forEach(item => item.exeDrag({ dx: step[0], dy: step[1] }));
     };
 
-    svgs.forEach(item => {
-        console.log(item)
-        subjx(item.controls).on('dblclick', () => {
-            item.disable();
-        });
-    });
-
-    // double click activating/deactivating the drag method
-    subjx('.drag-svg').on('dblclick', e => {
-        if (e.currentTarget.classList.contains('sjx-drag')) return;
-        const xDraggable = subjx(e.currentTarget).drag(svgOptions, obs);
-        // adding event to controls
-        const controls = xDraggable.controls;
-        subjx(controls).on('dblclick', () => {
-            xDraggable.disable();
-        });
-    });
-
-    // create Observable instance
-    const obs = subjx.createObservable();
-
-    const options = {
-        container: '#container',
-        controlsContainer: '#container',
-        restrict: '#world',
-        rotationPoint: [10, 10],
-        rotatorAnchor: 's',
-        rotatorOffset: 30,
-        //rotatable: false,
-        // resizable: false,
-        // applyTranslate: true,
-        //scalable: true,
-        //proportions: true,
-        //draggable: false,
-        each: {
-            // move: true,
-            // resize: true
-        },
-        snap: {
-            x: 0,
-            y: 0,
-            angle: 0
-        },
-        cursorMove: 'move',
-        cursorRotate: 'crosshair',
-        cursorResize: 'pointer'
-    };
-
-    const $draggables = document.getElementsByClassName('draggable');
-    const Draggables = [subjx($draggables).drag(options)];
-
-    subjx('.draggable').on('dblclick', e => {
-        if (e.currentTarget.classList.contains('sjx-drag')) return;
-        const xDraggable = subjx(e.currentTarget).drag(options);
-
-        Draggables.push(xDraggable);
-        // adding event to controls
-        const controls = xDraggable.controls;
-        subjx(controls).on('dblclick', () => {
-            xDraggable.disable();
-        });
-    });
-
-    const onDrop = function (e, el) {
-        const stack = subjx('#container')[0],
+    const onDrop = function (e) {
+        const stack = document.getElementById('container'),
             offset = stack.getBoundingClientRect(),
             div = document.createElement('div');
 
@@ -333,12 +582,11 @@
         div.style.left = `${e.clientX - offset.left}px`;
 
         div.classList.add('draggable');
+        div.dataset.created = 'true';
 
         stack.appendChild(div);
 
-        Draggables.push(
-            subjx(div).drag()
-        );
+        if (current === 'html' && field('mode').value === 'group') apply();
     };
 
     subjx('.clone').clone({
@@ -358,12 +606,27 @@
     });
 
     subjx('.clone-clear').on('click', () => {
-        Draggables.forEach(item => {
-            item.disable();
-            [...item.elements].map(element => element.parentNode.removeChild(element));
+        document.querySelectorAll('[data-created]').forEach(element => {
+            if (element === selected) selected = null;
+            element.remove();
         });
-        Draggables.splice(0, Draggables.length);
+        apply();
     });
+
+    const state = loadState();
+
+    panelInputs().forEach(input => {
+        if (!state.fields || !(input.name in state.fields)) return;
+
+        if (input.type === 'checkbox') {
+            input.checked = state.fields[input.name];
+        } else {
+            input.value = state.fields[input.name];
+        }
+    });
+
+    syncHandleInputs();
+    switchTab(state.tab);
 
 </script>
 
