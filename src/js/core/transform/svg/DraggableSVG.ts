@@ -12,7 +12,7 @@ import type {
 import type { PointerInput } from '../../SubjectModel';
 import type { TransformOriginParams, AlignmentDirection } from '../../options';
 import { isDef, isUndef, warn } from '../../util/util';
-import { floatToFixed, getMinMaxOfArray, DEG } from '../common';
+import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle } from '../common';
 import { movePath, resizePath } from './path';
 import { boxFromPoints, unionBoxes } from '../guides';
 import type { Box, GuideLine, GuideState } from '../guides';
@@ -1101,13 +1101,17 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             }
 
             const theta = rotatorAnchor === 'n' || rotatorAnchor === 's'
-                ? Math.atan2(
+                ? rotatorAngle(
+                    nextVertices.bl.x - nextVertices.tl.x,
                     nextVertices.bl.y - nextVertices.tl.y,
-                    nextVertices.bl.x - nextVertices.tl.x
+                    nextVertices.tr.x - nextVertices.tl.x,
+                    nextVertices.tr.y - nextVertices.tl.y
                 )
-                : Math.atan2(
+                : rotatorAngle(
+                    nextVertices.tl.x - nextVertices.tr.x,
                     nextVertices.tl.y - nextVertices.tr.y,
-                    nextVertices.tl.x - nextVertices.tr.x
+                    nextVertices.bl.x - nextVertices.tl.x,
+                    nextVertices.bl.y - nextVertices.tl.y
                 );
 
             const nextRotatorOffset = rotatorOffset * factor;

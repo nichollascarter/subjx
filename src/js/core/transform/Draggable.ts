@@ -12,7 +12,7 @@ import type {
 import type { PointerInput } from '../SubjectModel';
 import type { Matrix, Vector } from '../types';
 import type { TransformOriginParams, AlignmentDirection } from '../options';
-import { floatToFixed, getMinMaxOfArray, DEG } from './common';
+import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle } from './common';
 import { isDef, isUndef, warn } from '../util/util';
 import { addClass, matrixToCSS, getScrollOffset, getElementOffset } from '../util/css-util';
 import { MIN_SIZE, CLIENT_EVENTS_CONSTANTS } from '../consts';
@@ -1235,13 +1235,17 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
             }
 
             const theta = rotatorAnchor === 'n' || rotatorAnchor === 's'
-                ? Math.atan2(
+                ? rotatorAngle(
+                    finalVertices.bl[0] - finalVertices.tl[0],
                     finalVertices.bl[1] - finalVertices.tl[1],
-                    finalVertices.bl[0] - finalVertices.tl[0]
+                    finalVertices.tr[0] - finalVertices.tl[0],
+                    finalVertices.tr[1] - finalVertices.tl[1]
                 )
-                : Math.atan2(
+                : rotatorAngle(
+                    finalVertices.tl[0] - finalVertices.tr[0],
                     finalVertices.tl[1] - finalVertices.tr[1],
-                    finalVertices.tl[0] - finalVertices.tr[0]
+                    finalVertices.bl[0] - finalVertices.tl[0],
+                    finalVertices.bl[1] - finalVertices.tl[1]
                 );
 
             rotator = [
