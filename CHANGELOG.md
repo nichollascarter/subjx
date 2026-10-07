@@ -1,3 +1,10 @@
+# [1.3.0-rc.2](https://github.com/nichollascarter/subjx/compare/v1.3.0-rc.1...v1.3.0-rc.2) (2026-10-07)
+
+
+### Bug Fixes
+
+* **transform:** keep the rotator off a flat box ([#98](https://github.com/nichollascarter/subjx/issues/98)) ([3938736](https://github.com/nichollascarter/subjx/commit/393873689fd530b053b6f4f7206a0fc15a95a754))
+
 # [1.3.0-rc.1](https://github.com/nichollascarter/subjx/compare/v1.2.0...v1.3.0-rc.1) (2026-10-06)
 
 

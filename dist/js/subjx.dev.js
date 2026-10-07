@@ -830,6 +830,9 @@
     }
     return res;
   };
+  var rotatorAngle = function rotatorAngle(alongX, alongY, acrossX, acrossY) {
+    return Math.hypot(alongX, alongY) > 1e-6 ? Math.atan2(alongY, alongX) : Math.atan2(acrossY, acrossX) + Math.PI / 2;
+  };
 
   var common = /*#__PURE__*/Object.freeze({
     __proto__: null,
@@ -837,6 +840,7 @@
     RAD: RAD,
     floatToFixed: floatToFixed,
     getMinMaxOfArray: getMinMaxOfArray,
+    rotatorAngle: rotatorAngle,
     snapToGrid: snapToGrid
   });
 
@@ -3499,7 +3503,7 @@
               anchor.y = finalVertices.mr[1];
               break;
           }
-          var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? Math.atan2(finalVertices.bl[1] - finalVertices.tl[1], finalVertices.bl[0] - finalVertices.tl[0]) : Math.atan2(finalVertices.tl[1] - finalVertices.tr[1], finalVertices.tl[0] - finalVertices.tr[0]);
+          var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? rotatorAngle(finalVertices.bl[0] - finalVertices.tl[0], finalVertices.bl[1] - finalVertices.tl[1], finalVertices.tr[0] - finalVertices.tl[0], finalVertices.tr[1] - finalVertices.tl[1]) : rotatorAngle(finalVertices.tl[0] - finalVertices.tr[0], finalVertices.tl[1] - finalVertices.tr[1], finalVertices.bl[0] - finalVertices.tl[0], finalVertices.bl[1] - finalVertices.tl[1]);
           rotator = [anchor.x - rotatorOffset * factor * Math.cos(theta), anchor.y - rotatorOffset * factor * Math.sin(theta)];
           finalVertices.rotator = rotator;
           finalVertices.anchor = anchor;
@@ -5955,7 +5959,7 @@
                 break;
               }
           }
-          var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? Math.atan2(nextVertices.bl.y - nextVertices.tl.y, nextVertices.bl.x - nextVertices.tl.x) : Math.atan2(nextVertices.tl.y - nextVertices.tr.y, nextVertices.tl.x - nextVertices.tr.x);
+          var theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? rotatorAngle(nextVertices.bl.x - nextVertices.tl.x, nextVertices.bl.y - nextVertices.tl.y, nextVertices.tr.x - nextVertices.tl.x, nextVertices.tr.y - nextVertices.tl.y) : rotatorAngle(nextVertices.tl.x - nextVertices.tr.x, nextVertices.tl.y - nextVertices.tr.y, nextVertices.bl.x - nextVertices.tl.x, nextVertices.bl.y - nextVertices.tl.y);
           var nextRotatorOffset = rotatorOffset * factor;
           var rotator = {
             x: _anchor.x - nextRotatorOffset * Math.cos(theta),
