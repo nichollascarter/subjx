@@ -37,3 +37,14 @@ export const getMinMaxOfArray = (arr: number[][], length = 2): [number, number][
 
     return res;
 };
+
+export const rotatorAngle = (
+    alongX: number,
+    alongY: number,
+    acrossX: number,
+    acrossY: number
+): number => (
+    Math.hypot(alongX, alongY) > 1e-6
+        ? Math.atan2(alongY, alongX)
+        : Math.atan2(acrossY, acrossX) + Math.PI / 2
+);
