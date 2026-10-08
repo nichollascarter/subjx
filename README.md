@@ -188,7 +188,7 @@ reported as a resize (`resizeStart`, `resize`, `resizeEnd`, `onResize`).
 | **cursorMove** / **cursorResize** / **cursorRotate** | Cursor during an action | `string` | 'auto' |
 | **custom** | Arbitrary user data, available as `options.custom` | `object` | null |
 | **handles** | Resize handles to show: `tl`, `tc`, `tr`, `ml`, `mr`, `bl`, `bc`, `br`, edges `te`, `be`, `le`, `re`, line endpoints `p1`, `p2`; edges left out stay visible but ignore the pointer | `Array<string>` | all |
-| **hitRadius** | Extra grab area around handles and edges, in screen pixels (SVG) | `number` | 0 |
+| **hitRadius** | Extra grab area around handles and edges, in screen pixels (SVG). Inside the box an area goes at most a quarter of the box size deep, so a narrow element can still be dragged by its middle | `number` | 0 |
 | **showHitAreas** | Keeps grab areas visible, e.g. to tune `hitRadius` (SVG) | `boolean` | false |
 | **guides** | Alignment guides and snapping to other elements and the container (SVG), see below | `boolean` \| `object` | false |
 
@@ -225,6 +225,8 @@ classes to change their look:
 | `.sjx-svg-hdl`, `.sjx-svg-hdl-{key}` | SVG handle (`tl`, `rotator`, `center`, `p1`...) |
 | `.sjx-svg-line` | SVG edge |
 | `.sjx-svg-hit` | grab area added by `hitRadius` |
+| `.sjx-svg-hit-handle`, `.sjx-svg-hit-edge` | grab area of a handle or of an edge |
+| `.sjx-svg-hit-overlay` | all grab areas drawn as one shape with `showHitAreas` |
 | `.sjx-show-hit` | controls with `showHitAreas` |
 | `.sjx-active` | handle or edge being dragged |
 | `.sjx-acting` | controls during resize/rotate/origin move |

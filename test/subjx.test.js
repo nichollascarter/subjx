@@ -680,8 +680,10 @@ describe('Test hitRadius option', () => {
             expect(hitAreas[key].getAttribute('data-sjx-handle')).toEqual(key);
             expect(handles[key]).toBeDefined();
         });
-        expect(hitAreas.tl.getAttribute('r')).toEqual('12');
-        expect(hitAreas.te.getAttribute('stroke-width')).toEqual('24');
+        expect(hitAreas.tl.tagName).toEqual('path');
+        expect(hitAreas.tl.getAttribute('d')).toMatch(/^M.+Z$/);
+        expect(hitAreas.tl.classList.contains('sjx-svg-hit-handle')).toBe(true);
+        expect(hitAreas.te.classList.contains('sjx-svg-hit-edge')).toBe(true);
 
         draggable.disable();
     });
@@ -689,10 +691,12 @@ describe('Test hitRadius option', () => {
     it('marks the controls when hit areas should stay visible', () => {
         const hidden = subjx(svgElement).drag({ hitRadius: 12 });
         expect(hidden.controls.classList.contains('sjx-show-hit')).toBe(false);
+        expect(hidden.storage.hitOverlay).toBeUndefined();
         hidden.disable();
 
         const shown = subjx(svgElement).drag({ hitRadius: 12, showHitAreas: true });
         expect(shown.controls.classList.contains('sjx-show-hit')).toBe(true);
+        expect(shown.storage.hitOverlay.getAttribute('d')).toContain(shown.storage.hitAreas.tl.getAttribute('d'));
         shown.disable();
     });
 
