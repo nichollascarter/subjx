@@ -1,3 +1,10 @@
+# [1.3.0-rc.3](https://github.com/nichollascarter/subjx/compare/v1.3.0-rc.2...v1.3.0-rc.3) (2026-10-08)
+
+
+### Bug Fixes
+
+* **svg:** cleaner grab area highlight, keep narrow elements draggable ([#99](https://github.com/nichollascarter/subjx/issues/99)) ([20846fd](https://github.com/nichollascarter/subjx/commit/20846fd5cfc9b87bd38e14fab9c3d0043d02599a))
+
 # [1.3.0-rc.2](https://github.com/nichollascarter/subjx/compare/v1.3.0-rc.1...v1.3.0-rc.2) (2026-10-07)
 
 

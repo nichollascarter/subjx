@@ -5233,6 +5233,152 @@
     }
   };
 
+  var CIRCLE_SEGMENTS = 32;
+  var EDGE_KEYS = ['te', 'be', 'le', 're'];
+  var HANDLE_EDGES = {
+    tl: ['te', 'le'],
+    tr: ['te', 're'],
+    bl: ['be', 'le'],
+    br: ['be', 're'],
+    tc: ['te'],
+    bc: ['be'],
+    ml: ['le'],
+    mr: ['re']
+  };
+  var sub = function sub(a, b) {
+    return {
+      x: a.x - b.x,
+      y: a.y - b.y
+    };
+  };
+  var dot = function dot(a, b) {
+    return a.x * b.x + a.y * b.y;
+  };
+  var length = function length(a) {
+    return Math.hypot(a.x, a.y);
+  };
+  var along = function along(point, direction, distance) {
+    return {
+      x: point.x + direction.x * distance,
+      y: point.y + direction.y * distance
+    };
+  };
+  var edgeEnds = function edgeEnds(_ref, edge) {
+    var tl = _ref.tl,
+      tr = _ref.tr,
+      bl = _ref.bl,
+      br = _ref.br;
+    return {
+      te: [tl, tr],
+      be: [bl, br],
+      le: [tl, bl],
+      re: [tr, br]
+    }[edge];
+  };
+  var OPPOSITE = {
+    te: 'be',
+    be: 'te',
+    le: 're',
+    re: 'le'
+  };
+  var edgeNormal = function edgeNormal(corners, edge) {
+    var _edgeEnds = edgeEnds(corners, edge),
+      _edgeEnds2 = _slicedToArray(_edgeEnds, 2),
+      a = _edgeEnds2[0],
+      b = _edgeEnds2[1];
+    var direction = sub(b, a);
+    var size = length(direction);
+    if (size < 1e-9) return {
+      x: 0,
+      y: 0
+    };
+    var normal = {
+      x: direction.y / size,
+      y: -direction.x / size
+    };
+    var _edgeEnds3 = edgeEnds(corners, OPPOSITE[edge]),
+      _edgeEnds4 = _slicedToArray(_edgeEnds3, 1),
+      oppositeStart = _edgeEnds4[0];
+    var towardsOpposite = dot(sub(oppositeStart, a), normal);
+    if (Math.abs(towardsOpposite) > 1e-9) {
+      return towardsOpposite > 0 ? {
+        x: -normal.x,
+        y: -normal.y
+      } : normal;
+    }
+    return edge === 'te' || edge === 're' ? normal : {
+      x: -normal.x,
+      y: -normal.y
+    };
+  };
+  var edgeDepth = function edgeDepth(corners, edge) {
+    var _edgeEnds5 = edgeEnds(corners, edge),
+      _edgeEnds6 = _slicedToArray(_edgeEnds5, 1),
+      a = _edgeEnds6[0];
+    var _edgeEnds7 = edgeEnds(corners, OPPOSITE[edge]),
+      _edgeEnds8 = _slicedToArray(_edgeEnds7, 1),
+      oppositeStart = _edgeEnds8[0];
+    return Math.abs(dot(sub(oppositeStart, a), edgeNormal(corners, edge)));
+  };
+  var clampFor = function clampFor(corners, edge, radius) {
+    return {
+      normal: edgeNormal(corners, edge),
+      depth: Math.min(radius, edgeDepth(corners, edge) / 4)
+    };
+  };
+  var clockwise = function clockwise(points) {
+    var area = points.reduce(function (sum, point, i) {
+      var next = points[(i + 1) % points.length];
+      return sum + point.x * next.y - next.x * point.y;
+    }, 0);
+    return area < 0 ? _toConsumableArray(points).reverse() : points;
+  };
+  var applyClamps = function applyClamps(points, origin, clamps) {
+    return clamps.reduce(function (result, _ref2) {
+      var normal = _ref2.normal,
+        depth = _ref2.depth;
+      return result.map(function (point) {
+        var offset = dot(sub(point, origin), normal);
+        return offset < -depth ? along(point, normal, -depth - offset) : point;
+      });
+    }, points);
+  };
+  var hitAreaOutline = function hitAreaOutline(key, center, corners, radius) {
+    if (radius <= 0) return [];
+    if (corners && EDGE_KEYS.includes(key)) {
+      var edge = key;
+      var _edgeEnds9 = edgeEnds(corners, edge),
+        _edgeEnds0 = _slicedToArray(_edgeEnds9, 2),
+        a = _edgeEnds0[0],
+        b = _edgeEnds0[1];
+      if (length(sub(b, a)) < 1e-9) return [];
+      var _clampFor = clampFor(corners, edge, radius),
+        normal = _clampFor.normal,
+        depth = _clampFor.depth;
+      return clockwise([along(a, normal, radius), along(b, normal, radius), along(b, normal, -depth), along(a, normal, -depth)]);
+    }
+    var circle = Array.from({
+      length: CIRCLE_SEGMENTS
+    }, function (_, i) {
+      var angle = i / CIRCLE_SEGMENTS * Math.PI * 2;
+      return {
+        x: center.x + radius * Math.cos(angle),
+        y: center.y + radius * Math.sin(angle)
+      };
+    });
+    var edges = corners ? HANDLE_EDGES[key] || [] : [];
+    return clockwise(applyClamps(circle, center, edges.map(function (edge) {
+      return clampFor(corners, edge, radius);
+    })));
+  };
+  var outlineToPath = function outlineToPath(points) {
+    return points.length ? "M".concat(points.map(function (_ref3) {
+      var x = _ref3.x,
+        y = _ref3.y;
+      return "".concat(+x.toFixed(3), " ").concat(+y.toFixed(3));
+    }).join('L'), "Z") : '';
+  };
+
   var _excluded = ["rotator", "anchor"],
     _excluded2 = ["cached"],
     _excluded3 = ["anchor", "center"],
@@ -5272,6 +5418,11 @@
         var hitAreas = {};
         var wrapper = createSVGElement('g', showHitAreas ? ['sjx-svg-wrapper', 'sjx-show-hit'] : ['sjx-svg-wrapper']);
         var controls = createSVGElement('g', ['sjx-svg-controls']);
+        var hitOverlay = hitRadius && showHitAreas ? createSVGElement('path', ['sjx-svg-hit-overlay']) : undefined;
+        if (hitOverlay) {
+          hitOverlay.setAttribute('pointer-events', 'none');
+          controls.appendChild(hitOverlay);
+        }
         var line = this.getLine();
         var _this$getVertices = this.getVertices(),
           _this$getVertices$rot = _this$getVertices.rotator,
@@ -5340,7 +5491,7 @@
             handles[key].setAttribute('visibility', 'hidden');
           }
           if (hitRadius && !line && _this.isHandleEnabled(key)) {
-            hitAreas[key] = createHitArea('line', key, hitRadius);
+            hitAreas[key] = createHitArea(key);
             controls.appendChild(hitAreas[key]);
           }
           controls.appendChild(handles[key]);
@@ -5358,7 +5509,7 @@
           var color = key === 'center' ? '#fe3232' : THEME_COLOR;
           handles[key] = createHandler(x, y, color, key);
           if (hitRadius) {
-            hitAreas[key] = createHitArea('circle', key, hitRadius);
+            hitAreas[key] = createHitArea(key);
             controls.appendChild(hitAreas[key]);
           }
           controls.appendChild(handles[key]);
@@ -5391,7 +5542,8 @@
             containerMatrix: getTransformToElement(restrictContainer, restrictContainer.parentNode)
           },
           cached: {},
-          hitAreas: hitAreas
+          hitAreas: hitAreas,
+          hitOverlay: hitOverlay
         };
         this.syncHitAreas();
         [].concat(_toConsumableArray(elements), [controls]).map(function (target) {
@@ -6520,25 +6672,29 @@
           controls = _this$storage22.controls,
           handles = _this$storage22.handles,
           hitAreas = _this$storage22.hitAreas,
+          hitOverlay = _this$storage22.hitOverlay,
           hitRadius = this.options.hitRadius;
         if (!hitAreas) return;
         var screenMatrix = controls.getScreenCTM();
         var scale = screenMatrix ? Math.sqrt(Math.abs(screenMatrix.a * screenMatrix.d - screenMatrix.b * screenMatrix.c)) || 1 : 1;
+        var corners = readCorners(handles.te, handles.be);
+        var radius = hitRadius / scale;
+        var outlines = [];
         entries(hitAreas).forEach(function (_ref41) {
           var _ref42 = _slicedToArray(_ref41, 2),
             key = _ref42[0],
             area = _ref42[1];
           var hdl = handles[key];
           if (isUndef(hdl)) return;
-          var isLine = area.tagName.toLowerCase() === 'line';
-          var attrs = isLine ? ['x1', 'y1', 'x2', 'y2'] : ['cx', 'cy'];
-          attrs.forEach(function (attr) {
-            return area.setAttribute(attr, hdl.getAttribute(attr) || '0');
-          });
-          if (!isLine) {
-            area.setAttribute('r', String(hitRadius / scale));
-          }
+          var center = {
+            x: Number(hdl.getAttribute('cx')) || 0,
+            y: Number(hdl.getAttribute('cy')) || 0
+          };
+          var path = outlineToPath(hitAreaOutline(key, center, corners, radius));
+          area.setAttribute('d', path);
+          outlines.push(path);
         });
+        if (hitOverlay) hitOverlay.setAttribute('d', outlines.join(''));
       }
     }, {
       key: "setCenterPoint",
@@ -6987,15 +7143,25 @@
     });
     return handler;
   };
-  var createHitArea = function createHitArea(tag, key, radius) {
-    var area = createSVGElement(tag, ['sjx-svg-hit', "sjx-svg-hit-".concat(key)]);
+  var readCorners = function readCorners(top, bottom) {
+    if (!top || !bottom) return null;
+    var point = function point(line, n) {
+      return {
+        x: Number(line.getAttribute("x".concat(n))) || 0,
+        y: Number(line.getAttribute("y".concat(n))) || 0
+      };
+    };
+    return {
+      tl: point(top, 1),
+      tr: point(top, 2),
+      bl: point(bottom, 1),
+      br: point(bottom, 2)
+    };
+  };
+  var createHitArea = function createHitArea(key) {
+    var area = createSVGElement('path', ['sjx-svg-hit', "sjx-svg-hit-".concat(key), EDGE_KEYS.includes(key) ? 'sjx-svg-hit-edge' : 'sjx-svg-hit-handle']);
     area.setAttribute('data-sjx-handle', key);
     area.setAttribute('fill', 'transparent');
-    if (tag === 'line') {
-      area.setAttribute('stroke', 'transparent');
-      area.setAttribute('stroke-width', String(radius * 2));
-      area.setAttribute('vector-effect', 'non-scaling-stroke');
-    }
     return area;
   };
   var setLineStyle = function setLineStyle(line, color) {
