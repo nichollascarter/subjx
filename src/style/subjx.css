@@ -69,46 +69,18 @@
     filter: drop-shadow(0 0 3px rgba(0, 168, 255, 0.9));
 }
 
-.sjx-svg-wrapper:not(.sjx-acting) circle.sjx-svg-hit:hover {
+.sjx-svg-wrapper:not(.sjx-acting) .sjx-svg-hit-handle:hover,
+.sjx-svg-wrapper:not(.sjx-acting) .sjx-svg-hit-handle:has(+ .sjx-svg-hdl:hover),
+.sjx-svg-hit-handle:has(+ .sjx-svg-hdl.sjx-active) {
     fill: rgba(0, 168, 255, 0.15);
 }
 
-.sjx-svg-wrapper:not(.sjx-acting) line.sjx-svg-hit:hover {
-    stroke: rgba(0, 168, 255, 0.15);
-}
-
-.sjx-svg-wrapper:not(.sjx-acting) circle.sjx-svg-hit:has(+ .sjx-svg-hdl:hover),
-circle.sjx-svg-hit:has(+ .sjx-svg-hdl.sjx-active) {
+.sjx-svg-hit-overlay {
     fill: rgba(0, 168, 255, 0.15);
 }
 
-.sjx-svg-wrapper:not(.sjx-acting) line.sjx-svg-hit:has(+ .sjx-svg-line:hover),
-line.sjx-svg-hit:has(+ .sjx-svg-line.sjx-active) {
-    stroke: rgba(0, 168, 255, 0.15);
-}
-
-.sjx-show-hit circle.sjx-svg-hit {
+.sjx-show-hit:not(.sjx-acting) .sjx-svg-hit-edge:hover,
+.sjx-show-hit:not(.sjx-acting) .sjx-svg-hit-edge:has(+ .sjx-svg-line:hover),
+.sjx-show-hit .sjx-svg-hit-edge:has(+ .sjx-svg-line.sjx-active) {
     fill: rgba(0, 168, 255, 0.15);
-}
-
-.sjx-show-hit line.sjx-svg-hit {
-    stroke: rgba(0, 168, 255, 0.15);
-}
-
-.sjx-show-hit:not(.sjx-acting) circle.sjx-svg-hit:hover {
-    fill: rgba(0, 168, 255, 0.3);
-}
-
-.sjx-show-hit:not(.sjx-acting) line.sjx-svg-hit:hover {
-    stroke: rgba(0, 168, 255, 0.3);
-}
-
-.sjx-show-hit:not(.sjx-acting) circle.sjx-svg-hit:has(+ .sjx-svg-hdl:hover),
-.sjx-show-hit circle.sjx-svg-hit:has(+ .sjx-svg-hdl.sjx-active) {
-    fill: rgba(0, 168, 255, 0.3);
-}
-
-.sjx-show-hit:not(.sjx-acting) line.sjx-svg-hit:has(+ .sjx-svg-line:hover),
-.sjx-show-hit line.sjx-svg-hit:has(+ .sjx-svg-line.sjx-active) {
-    stroke: rgba(0, 168, 255, 0.3);
 }
