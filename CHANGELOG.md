@@ -1,3 +1,27 @@
+# [1.3.0](https://github.com/nichollascarter/subjx/compare/v1.2.0...v1.3.0) (2026-10-09)
+
+
+### Bug Fixes
+
+* **svg:** `restrict` stops elements exactly at the boundary ([8e01f56](https://github.com/nichollascarter/subjx/commit/8e01f560c1e459d32982a73ead26c6475ea5edea))
+* **svg:** cleaner grab area highlight, keep narrow elements draggable ([#99](https://github.com/nichollascarter/subjx/issues/99)) ([20846fd](https://github.com/nichollascarter/subjx/commit/20846fd5cfc9b87bd38e14fab9c3d0043d02599a))
+* **svg:** drag end threw with applyTranslate enabled ([ff7df2c](https://github.com/nichollascarter/subjx/commit/ff7df2c0efac15f7cc555945a527b719ea110106))
+* **clone:** dragEnd listener threw TypeError ([d8ba99d](https://github.com/nichollascarter/subjx/commit/d8ba99d543978f6a3abfa7e970b151ce10648fb2))
+* **package:** export the stylesheet and dist files ([87c15f7](https://github.com/nichollascarter/subjx/commit/87c15f7d84df76c44f2709b4b09adff401ff4656))
+* **transform:** keep the rotator off a flat box ([#98](https://github.com/nichollascarter/subjx/issues/98)) ([3938736](https://github.com/nichollascarter/subjx/commit/393873689fd530b053b6f4f7206a0fc15a95a754))
+* **events:** off() threw TypeError ([c21bde5](https://github.com/nichollascarter/subjx/commit/c21bde5ca00d270936d62c32b1a8d631f81adfcd))
+* **drag:** partial snap option broke drag/resize/rotate ([77a2e49](https://github.com/nichollascarter/subjx/commit/77a2e496d9044ed2536c229d76de43ff8365a31e))
+
+
+### Features
+
+* **svg:** `hitRadius` option and handle highlighting ([8eb86d5](https://github.com/nichollascarter/subjx/commit/8eb86d576fafb164e334c26bd8853e0d5f64f0a4))
+* **svg:** alignment guides and snapping while dragging ([fbc7eb1](https://github.com/nichollascarter/subjx/commit/fbc7eb1ad5eb72ad32d777b15937fa1a7b591a11))
+* **svg:** alignment guides while resizing and moving line endpoints ([c115d28](https://github.com/nichollascarter/subjx/commit/c115d28bbdbf0c4f84af39ea442d9f731efc5d82))
+* choose resize handles with the `handles` option ([b7e4f63](https://github.com/nichollascarter/subjx/commit/b7e4f63d09d892aaba34afbbbb23d9be3426271d))
+* **svg:** endpoint controls for line elements ([5e48e7e](https://github.com/nichollascarter/subjx/commit/5e48e7e3a89793ebf3701986ef3893174c63621c))
+* typings generated from the TypeScript source ([9d2c8b8](https://github.com/nichollascarter/subjx/commit/9d2c8b88333baa1abc5ee1885d156b45e1af4bed))
+
 # [1.3.0-rc.3](https://github.com/nichollascarter/subjx/compare/v1.3.0-rc.2...v1.3.0-rc.3) (2026-10-08)
 
 
