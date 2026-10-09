@@ -59,3 +59,28 @@
 .sjx-hidden {
     display: none;
 }
+
+.sjx-svg-wrapper:not(.sjx-acting) .sjx-svg-hdl:hover,
+.sjx-svg-wrapper:not(.sjx-acting) .sjx-svg-line:not(.sjx-svg-line-normal):hover,
+.sjx-svg-wrapper:not(.sjx-acting) .sjx-svg-hit:hover + .sjx-svg-hdl,
+.sjx-svg-wrapper:not(.sjx-acting) .sjx-svg-hit:hover + .sjx-svg-line,
+.sjx-svg-hdl.sjx-active,
+.sjx-svg-line.sjx-active {
+    filter: drop-shadow(0 0 3px rgba(0, 168, 255, 0.9));
+}
+
+.sjx-svg-wrapper:not(.sjx-acting) .sjx-svg-hit-handle:hover,
+.sjx-svg-wrapper:not(.sjx-acting) .sjx-svg-hit-handle:has(+ .sjx-svg-hdl:hover),
+.sjx-svg-hit-handle:has(+ .sjx-svg-hdl.sjx-active) {
+    fill: rgba(0, 168, 255, 0.15);
+}
+
+.sjx-svg-hit-overlay {
+    fill: rgba(0, 168, 255, 0.15);
+}
+
+.sjx-show-hit:not(.sjx-acting) .sjx-svg-hit-edge:hover,
+.sjx-show-hit:not(.sjx-acting) .sjx-svg-hit-edge:has(+ .sjx-svg-line:hover),
+.sjx-show-hit .sjx-svg-hit-edge:has(+ .sjx-svg-line.sjx-active) {
+    fill: rgba(0, 168, 255, 0.15);
+}

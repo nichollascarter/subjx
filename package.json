@@ -1,6 +1,6 @@
 {
     "name": "subjx",
-    "version": "1.2.0",
+    "version": "1.3.0-rc.3",
     "description": "Drag, Rotate, Resize library",
     "author": "Karen Sarksyan (https://github.com/nichollascarter)",
     "license": "MIT",
@@ -13,19 +13,27 @@
     "module": "dist/js/subjx.esm.js",
     "unpkg": "dist/js/subjx.js",
     "exports": {
-        "require": "./index.js",
-        "import": "./dist/js/subjx.esm.js"
+        ".": {
+            "types": "./types/index.d.ts",
+            "require": "./index.js",
+            "import": "./dist/js/subjx.esm.js"
+        },
+        "./dist/*": "./dist/*",
+        "./package.json": "./package.json"
     },
     "scripts": {
         "dev": "cross-env NODE_ENV=development rollup -c",
-        "prebuild": "npm run lint",
-        "build": "cross-env NODE_ENV=production rollup -c",
+        "prebuild": "npm run lint && npm run typecheck",
+        "build": "cross-env NODE_ENV=production rollup -c && npm run build:types",
+        "build:types": "node scripts/clean-types.js && tsc -p tsconfig.build.json",
         "build:all": "npm run dev && npm run build",
         "start": "cross-env NODE_ENV=development LIVE_MODE=enable rollup -c -w",
         "lint": "eslint src/",
         "lint:fix": "eslint src/ --fix",
+        "typecheck": "tsc -p .",
         "test": "jest",
         "test:coverage": "jest --coverage",
+        "test:types": "tsc -p test/types",
         "publish:local": "npm run test && npm run build:all && sh ./scripts/publish-local.sh",
         "semantic-release": "semantic-release",
         "commit": "git add . && git-cz"
@@ -35,14 +43,15 @@
         "@babel/eslint-parser": "^7.26.0",
         "@babel/plugin-transform-runtime": "^7.28.3",
         "@babel/preset-env": "^7.26.0",
+        "@babel/preset-typescript": "^7.29.7",
         "@babel/runtime": "^7.28.3",
         "@rollup/plugin-babel": "^6.0.4",
         "@rollup/plugin-commonjs": "^25.0.7",
         "@rollup/plugin-node-resolve": "^15.2.3",
-        "@rollup/plugin-terser": "^0.4.4",
+        "@rollup/plugin-terser": "^1.0.0",
         "@semantic-release/changelog": "^6.0.3",
         "@semantic-release/git": "^10.0.1",
-        "@semantic-release/github": "^8.1.0",
+        "@semantic-release/github": "^12.0.10",
         "commitizen": "^4.3.1",
         "cross-env": "^7.0.3",
         "cz-conventional-changelog": "^3.3.0",
@@ -55,15 +64,16 @@
         "rollup-plugin-import-css": "^4.0.2",
         "rollup-plugin-livereload": "^2.0.5",
         "rollup-plugin-serve": "^1.1.0",
-        "semantic-release": "^24.2.7",
-        "typescript": "^5.5.4"
+        "semantic-release": "^25.0.9",
+        "typescript": "^5.5.4",
+        "typescript-eslint": "^8.70.1"
     },
     "files": [
         "LICENSE",
         "README.md",
         "index.js",
         "dist/",
-        "types/*.d.ts"
+        "types/**/*.d.ts"
     ],
     "keywords": [
         "subjx",

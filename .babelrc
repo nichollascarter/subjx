@@ -7,7 +7,8 @@
                     "esmodules": true
                 }
             }
-        ]
+        ],
+        "@babel/preset-typescript"
     ],
     "env": {
         "cjs": {
@@ -24,7 +25,8 @@
                         },
                         "modules": "commonjs"
                     }
-                ]
+                ],
+                "@babel/preset-typescript"
             ]
         },
         "esm": {
@@ -37,7 +39,8 @@
                         },
                         "modules": false
                     }
-                ]
+                ],
+                "@babel/preset-typescript"
             ]
         }
     }

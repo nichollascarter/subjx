@@ -19,6 +19,8 @@
 ## Usage
 
 Library provides dragging/resizing/rotating/snapping SVG/HTML Elements.
+Alignment guides, endpoint handles for `<line>`, `hitRadius` and the
+`handles` option are available for SVG elements.
 
 ## Installation
 
@@ -97,10 +99,11 @@ const EVENTS = [
     'resizeEnd',
     'rotateStart',
     'rotate',
-    'rotateEnd'
+    'rotateEnd',
+    'setPointEnd' // transform origin moved
 ];
 
-// execute dragging manually
+// execute dragging manually, `restrict` is respected
 xDraggable.exeDrag({
     dx, // drag along the x axis
     dy // drag along the y axis
@@ -135,8 +138,8 @@ xDraggable.fitControlsToSize();
 // Sets the origin for an element's transformations
 xDraggable.setTransformOrigin(
     {
-        x, // absolute the origin's position x coordinate
-        y, // absolute he origin's position y coordinate
+        x, // absolute x coordinate of the origin
+        y, // absolute y coordinate of the origin
         dx, // offset the origin's position x coordinate
         dy // offset the origin's position y coordinate
     },
@@ -148,28 +151,87 @@ xDraggable.resetTransformOrigin();
 
 // Returns element's current dimensions
 xDraggable.getDimensions();
+
+// Returns handle positions in container coordinates:
+// { x, y } points for SVG, [x, y, ...] arrays for HTML
+const { tl, tr, br, bl, center, rotator } = xDraggable.getVertices();
+
+// Returns the element's bounding vertices
+// SVG: getBoundingRect(element), HTML: getBoundingRect()
+xDraggable.getBoundingRect(element);
 ```
+
+A single SVG `<line>` gets two endpoint handles (`p1`, `p2`) instead of the
+bounding box handles. Moving an endpoint rewrites `x1`/`y1` or `x2`/`y2` and is
+reported as a resize (`resizeStart`, `resize`, `resizeEnd`, `onResize`).
 
 ### Options
 
 |Property|Description|Type|Default|
 |--|--|--|--|
 | **container** | Transformation coordinate system | `'selector'` \| `element` | element.parentNode |
-| **controlsContainer** | Parent element of 'controls' | `'selector'` \| `element` | element.parentNode |
+| **controlsContainer** | Parent element of 'controls' | `'selector'` \| `element` | container |
 | **axis** | Constrain movement along an axis | `string`: 'x' \| 'y' \| 'xy' | 'xy' |
-| **snap** | Snapping to grid in pixels/radians | `object` | { x: 10, y: 10, angle: 10 } |
+| **snap** | Snapping to grid: x/y in pixels, angle in degrees; missing values use the defaults, 0 disables | `object` | { x: 10, y: 10, angle: 10 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
 | **proportions** | Keep aspect ratio on resizing / scaling | `boolean` | false |
 | **draggable** | Allow or deny an action | `boolean` | true |
 | **resizable** | Allow or deny an action | `boolean` | true |
 | **rotatable** | Allow or deny an action | `boolean` | true |
 | **scalable** | Applies scaling only to root element | `boolean` | false |
-| **restrict** | Restricts element dragging/resizing/rotation | `'selector'` \| `element` | - |
+| **restrict** | Keeps the element inside this element while dragging/resizing/rotating; SVG elements stop exactly at its edges (an outer `<svg>` counts by its visible area) | `'selector'` \| `element` | - |
+| **applyTranslate** | Applies the drag result to left/top (HTML) or position attributes such as x/y, cx/cy, points, d (SVG) instead of the transform | `boolean` | false |
 | **rotatorAnchor** | Rotator anchor direction | `string`: 'n' \| 's' \| 'w' \| 'e' | 'e' |
 | **rotatorOffset** | Rotator offset  | `number` | 50 |
+| **showNormal** | Shows the line between the element and the rotator | `boolean` | true |
 | **transformOrigin** | Sets the origin for an element's transformations | `boolean` \| Array<number> | false |
+| **cursorMove** / **cursorResize** / **cursorRotate** | Cursor during an action | `string` | 'auto' |
+| **custom** | Arbitrary user data, available as `options.custom` | `object` | null |
+| **handles** | Resize handles to show: `tl`, `tc`, `tr`, `ml`, `mr`, `bl`, `bc`, `br`, edges `te`, `be`, `le`, `re`, line endpoints `p1`, `p2`; edges left out stay visible but ignore the pointer | `Array<string>` | all |
+| **hitRadius** | Extra grab area around handles and edges, in screen pixels (SVG). Inside the box an area goes at most a quarter of the box size deep, so a narrow element can still be dragged by its middle | `number` | 0 |
+| **showHitAreas** | Keeps grab areas visible, e.g. to tune `hitRadius` (SVG) | `boolean` | false |
+| **guides** | Alignment guides and snapping to other elements and the container (SVG), see below | `boolean` \| `object` | false |
 
 #### Notice: In most cases, it is recommended to use 'proportions' option
+
+### Alignment guides (SVG)
+
+With `guides`, the dragged box snaps to the edges and centers of other elements
+and of the container, and the matching guides are drawn. While resizing, the
+moving edge snaps (not for rotated elements); a line endpoint snaps as a point.
+`restrict` is applied after the guides.
+
+```javascript
+subjx('.shape').drag({
+    guides: {
+        targets: '.shape',      // selector or elements, default: siblings
+        bounds: '#paper',       // element with edges/center to snap to,
+                                // default: container, `false` to skip
+        threshold: 6,           // snapping distance in screen pixels
+        snap: true              // `false` only shows the guides
+    }
+});
+
+// `guides: true` uses the defaults
+```
+
+### Styling
+
+Controls are plain SVG/HTML elements styled by `subjx.css`; override these
+classes to change their look:
+
+|Class|Element|
+|--|--|
+| `.sjx-svg-hdl`, `.sjx-svg-hdl-{key}` | SVG handle (`tl`, `rotator`, `center`, `p1`...) |
+| `.sjx-svg-line` | SVG edge |
+| `.sjx-svg-hit` | grab area added by `hitRadius` |
+| `.sjx-svg-hit-handle`, `.sjx-svg-hit-edge` | grab area of a handle or of an edge |
+| `.sjx-svg-hit-overlay` | all grab areas drawn as one shape with `showHitAreas` |
+| `.sjx-show-hit` | controls with `showHitAreas` |
+| `.sjx-active` | handle or edge being dragged |
+| `.sjx-acting` | controls during resize/rotate/origin move |
+| `.sjx-svg-guide` | alignment guide |
+| `.sjx-hdl`, `.sjx-hdl-line` | HTML handle and edge |
 
 ### Methods
 
@@ -210,7 +272,8 @@ const createDraggableAndSubscribe = e => {
 ```
 
 Allowed SVG elements:
-`g`, `path`, `rect`, `ellipse`, `line`, `polyline`, `polygon`, `circle`
+`g`, `path`, `rect`, `ellipse`, `circle`, `line`, `polyline`, `polygon`, `text`,
+`image`, `use`, `foreignObject`
 
 ## Cloning
 
@@ -237,11 +300,12 @@ subjx('.cloneable').clone({
     onInit(el) {
         // fires on tool activation
     },
-    onMove(dx, dy) {
+    onMove({ dx, dy }) {
         // fires on moving
     },
-    onDrop(e) {
-        // fires on drop
+    onDrop(event, elements, clone) {
+        // fires when the clone is dropped inside `stack`;
+        // event is a MouseEvent, or a Touch on touch devices
     },
     onDestroy() {
         // fires on tool deactivation
@@ -249,11 +313,36 @@ subjx('.cloneable').clone({
 });
 ```
 
+Events: `dragStart`, `drag`, `dragEnd`
+
+```javascript
+xCloneable.on('dragEnd', cb);
+```
+
 Disabling
 
 ```javascript
 xCloneable.disable();
 ```
+
+## TypeScript
+
+Typings are bundled with the package. The renderer is inferred from the element:
+
+```typescript
+import subjx, { createObservable } from 'subjx';
+import type { DragOptions, DraggableSVG, Draggable } from 'subjx';
+
+const svgItem: DraggableSVG = subjx(svgElement).drag();
+const htmlItem: Draggable = subjx(divElement).drag();
+
+// selectors and mixed lists give `Draggable | DraggableSVG`
+const item = subjx('.shape').drag() as DraggableSVG;
+
+item.on('resize', ({ width, height }) => {});
+```
+
+Named exports: `createObservable`, `Observable`, `matrix`, `svgMatrix`, `common`.
 
 ## License
 

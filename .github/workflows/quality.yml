@@ -20,4 +20,5 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build:all --if-present
+      - run: npm run test:types
       #- run: npx semantic-release --dry-run --no-ci --branches $(git branch --show-current)

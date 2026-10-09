@@ -13,7 +13,7 @@ export default {
             }
         }],
         ["@semantic-release/git", {
-            "assets": ["dist/", "package.json", "CHANGELOG.md", "package-lock.json"],
+            "assets": ["dist/", "types/", "package.json", "CHANGELOG.md", "package-lock.json"],
             "message": "chore(release): ${nextRelease.version} \n\n${nextRelease.notes}"
         }]
     ],
