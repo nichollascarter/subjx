@@ -168,13 +168,20 @@ export const arrayToChunks = <T>(a: T[], size: number): T[][] =>
         (_, i) => a.slice(i * size, i * size + size)
     );
 
+export const childLocalMatrix = (
+    childCTM: DOMMatrix,
+    transformMatrix: DOMMatrix
+): DOMMatrix => childCTM.inverse()
+    .multiply(transformMatrix)
+    .multiply(childCTM);
+
 export const groupedChildMatrix = (
     { matrix, childCTM }: { matrix: DOMMatrix; childCTM: DOMMatrix },
     transformMatrix: DOMMatrix
-): DOMMatrix => matrix.multiply(
-    childCTM.inverse()
-        .multiply(transformMatrix)
-        .multiply(childCTM)
+): DOMMatrix => matrix.multiply(childLocalMatrix(childCTM, transformMatrix));
+
+export const isAxisAligned = (matrix: DOMMatrix): boolean => (
+    Math.abs(matrix.b) < 1e-6 && Math.abs(matrix.c) < 1e-6
 );
 
 export const keepFixedPoint = (

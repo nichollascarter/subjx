@@ -41,6 +41,8 @@ import {
     pointTo,
     isIdentity,
     groupedChildMatrix,
+    childLocalMatrix,
+    isAxisAligned,
     keepFixedPoint
 } from './util';
 
@@ -2284,9 +2286,25 @@ const applyResize = (element: Element, data: ResizeParams) => {
                     ['height', newHeight]
                 );
             } else {
-                // TODO: need to find how to resize rect within elements group but not to scale
+                const local = childLocalMatrix(storedData.childCTM, transformMatrix);
+
+                if (!isAxisAligned(local)) {
+                    attrs.push(
+                        ['transform', matrixToString(groupedChildMatrix(storedData, transformMatrix))]
+                    );
+                    break;
+                }
+
+                const { width, height, x, y } = storedData;
+
+                const start = pointTo(local, x, y),
+                    end = pointTo(local, x + width, y + height);
+
                 attrs.push(
-                    ['transform', matrixToString(groupedChildMatrix(storedData, transformMatrix))]
+                    ['x', Math.min(start.x, end.x)],
+                    ['y', Math.min(start.y, end.y)],
+                    ['width', Math.abs(end.x - start.x)],
+                    ['height', Math.abs(end.y - start.y)]
                 );
             }
             break;
