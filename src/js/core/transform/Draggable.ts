@@ -12,10 +12,10 @@ import type {
 import type { PointerInput } from '../SubjectModel';
 import type { Matrix, Vector } from '../types';
 import type { TransformOriginParams, AlignmentDirection } from '../options';
-import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle } from './common';
+import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle, resizeBox } from './common';
 import { isDef, isUndef, warn } from '../util/util';
 import { addClass, matrixToCSS, getScrollOffset, getElementOffset } from '../util/css-util';
-import { MIN_SIZE, CLIENT_EVENTS_CONSTANTS } from '../consts';
+import { CLIENT_EVENTS_CONSTANTS } from '../consts';
 
 import {
     matrixInvert,
@@ -458,20 +458,6 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
             cached
         } = elementData;
 
-        const getScale = (distX: number, distY: number): [number, number, number, number] => {
-            const ratio = doW || (!doW && !doH)
-                ? (boxWidth + distX) / boxWidth
-                : (boxHeight + distY) / boxHeight;
-
-            const newWidth = proportions ? boxWidth * ratio : boxWidth + distX,
-                newHeight = proportions ? boxHeight * ratio : boxHeight + distY;
-
-            const scaleX = newWidth / boxWidth,
-                scaleY = newHeight / boxHeight;
-
-            return [scaleX, scaleY, newWidth, newHeight];
-        };
-
         const getScaleMatrix = (scaleX: number, scaleY: number) => {
             const scaleMatrix = createScaleMatrix(scaleX, scaleY);
 
@@ -506,20 +492,12 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
             scaleY,
             newWidth,
             newHeight
-        ] = getScale(dx, dy);
+        ] = resizeBox({ width: boxWidth, height: boxHeight, dx, dy, doW, doH, proportions, flip: false });
 
         const scaleMatrix = getScaleMatrix(scaleX, scaleY);
         const resultMatrix = scalable
             ? multiplyMatrix(scaleMatrix, matrix)
             : getTranslateMatrix(scaleMatrix, matrix);
-
-        if (newWidth <= MIN_SIZE || newHeight <= MIN_SIZE) {
-            return {
-                transform: resultMatrix,
-                width: newWidth,
-                height: newHeight
-            };
-        };
 
         this.updateElementView(
             element,
@@ -1116,20 +1094,6 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
             }
         } = elementData;
 
-        const getScale = (distX: number, distY: number): [number, number, number, number] => {
-            const ratio = doW || (!doW && !doH)
-                ? (boxWidth + distX) / boxWidth
-                : (boxHeight + distY) / boxHeight;
-
-            const newWidth = proportions ? boxWidth * ratio : boxWidth + distX,
-                newHeight = proportions ? boxHeight * ratio : boxHeight + distY;
-
-            const scaleX = newWidth / boxWidth,
-                scaleY = newHeight / boxHeight;
-
-            return [scaleX, scaleY, newWidth, newHeight];
-        };
-
         const getScaleMatrix = (scaleX: number, scaleY: number) => {
             const scaleMatrix = createScaleMatrix(scaleX, scaleY);
 
@@ -1159,7 +1123,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
             );
         };
 
-        const [pScaleX, pScaleY] = getScale(dx, dy);
+        const [pScaleX, pScaleY] = resizeBox({ width: boxWidth, height: boxHeight, dx, dy, doW, doH, proportions, flip: false });
 
         const preScaleMatrix = getScaleMatrix(pScaleX, pScaleY);
 

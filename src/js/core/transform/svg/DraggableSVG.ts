@@ -12,7 +12,7 @@ import type {
 import type { PointerInput } from '../../SubjectModel';
 import type { TransformOriginParams, AlignmentDirection } from '../../options';
 import { isDef, isUndef, warn } from '../../util/util';
-import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle } from '../common';
+import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle, resizeBox } from '../common';
 import { movePath, resizePath } from './path';
 import { boxFromPoints, unionBoxes } from '../guides';
 import type { Box, GuideLine, GuideState } from '../guides';
@@ -39,7 +39,9 @@ import {
     getTransformToElement,
     matrixToString,
     pointTo,
-    isIdentity
+    isIdentity,
+    groupedChildMatrix,
+    keepFixedPoint
 } from './util';
 
 const { E_DRAG, E_RESIZE, E_ROTATE } = EVENT_EMITTER_CONSTANTS;
@@ -47,12 +49,6 @@ const { E_MOUSEDOWN, E_TOUCHSTART } = CLIENT_EVENTS_CONSTANTS;
 const { START_POINT, END_POINT } = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_POINT_KEYS;
 
 const { keys, entries, values } = Object;
-
-const MIN_SIZE = 1;
-
-const nonZeroSize = (size: number) => (
-    Math.abs(size) < MIN_SIZE ? (size < 0 ? -MIN_SIZE : MIN_SIZE) : size
-);
 
 interface BBox {
     x: number;
@@ -634,7 +630,8 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             options: {
                 isGrouped,
                 proportions,
-                scalable
+                scalable,
+                flip
             }
         } = this;
 
@@ -652,23 +649,6 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             cached = {}
         } = elementData;
 
-        const getScale = (distX: number, distY: number): [number, number, number, number] => {
-            const actualBoxWidth = Math.max(1, boxWidth);
-            const actualBoxHeight = Math.max(1, boxHeight);
-
-            const ratio = doW || (!doW && !doH)
-                ? (actualBoxWidth + distX) / actualBoxWidth
-                : (actualBoxHeight + distY) / actualBoxHeight;
-
-            const newWidth = nonZeroSize(proportions ? actualBoxWidth * ratio : actualBoxWidth + distX),
-                newHeight = nonZeroSize(proportions ? actualBoxHeight * ratio : actualBoxHeight + distY);
-
-            const scaleX = newWidth / actualBoxWidth,
-                scaleY = newHeight / actualBoxHeight;
-
-            return [scaleX, scaleY, newWidth, newHeight];
-        };
-
         const getScaleMatrix = (scaleX: number, scaleY: number) => {
             const scaleMatrix = createScaleMatrix(scaleX, scaleY);
 
@@ -682,7 +662,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             scaleY,
             newWidth,
             newHeight
-        ] = getScale(dx, dy);
+        ] = resizeBox({ width: boxWidth, height: boxHeight, dx, dy, doW, doH, proportions, flip });
 
         const scaleMatrix = getScaleMatrix(scaleX, scaleY);
 
@@ -1331,7 +1311,8 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 }
             },
             options: {
-                proportions
+                proportions,
+                flip
             }
         } = this;
 
@@ -1348,23 +1329,6 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             }
         } = elementData;
 
-        const getScale = (distX: number, distY: number): [number, number, number, number] => {
-            const actualBoxWidth = Math.max(1, boxWidth);
-            const actualBoxHeight = Math.max(1, boxHeight);
-
-            const ratio = doW || (!doW && !doH)
-                ? (actualBoxWidth + distX) / actualBoxWidth
-                : (actualBoxHeight + distY) / actualBoxHeight;
-
-            const newWidth = nonZeroSize(proportions ? actualBoxWidth * ratio : actualBoxWidth + distX),
-                newHeight = nonZeroSize(proportions ? actualBoxHeight * ratio : actualBoxHeight + distY);
-
-            const scaleX = newWidth / actualBoxWidth,
-                scaleY = newHeight / actualBoxHeight;
-
-            return [scaleX, scaleY, newWidth, newHeight];
-        };
-
         const getScaleMatrix = (scaleX: number, scaleY: number) => {
             const scaleMatrix = createScaleMatrix(scaleX, scaleY);
 
@@ -1373,7 +1337,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 .multiply(translateMatrix.inverse());
         };
 
-        const [scaleX, scaleY] = getScale(dx, dy);
+        const [scaleX, scaleY] = resizeBox({ width: boxWidth, height: boxHeight, dx, dy, doW, doH, proportions, flip });
 
         const preScaledMatrix = matrix.multiply(
             getScaleMatrix(scaleX, scaleY)
@@ -2213,31 +2177,6 @@ interface ResizeParams {
     __data__: WeakMap<Element, StoredAttributes>;
     isGrouped: boolean;
 }
-
-const groupedChildMatrix = (
-    { matrix, childCTM }: Required<StoredAttributes>,
-    transformMatrix: DOMMatrix
-) => matrix.multiply(
-    childCTM.inverse()
-        .multiply(transformMatrix)
-        .multiply(childCTM)
-);
-
-const keepFixedPoint = (
-    scale: number,
-    translate: number,
-    actualStart: number,
-    actualSize: number,
-    targetStart: number,
-    targetSize: number
-) => {
-    if (Math.abs(1 - scale) < 1e-6 || !targetSize) return 0;
-
-    const fixed = translate / (1 - scale);
-    const ratio = (fixed - targetStart) / targetSize;
-
-    return fixed - (actualStart + ratio * actualSize);
-};
 
 const applyResize = (element: Element, data: ResizeParams) => {
     const {

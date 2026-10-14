@@ -205,6 +205,7 @@ export interface TransformOptions {
     };
     each: MimicOptions;
     proportions: boolean;
+    flip: boolean;
     draggable: boolean;
     resizable: boolean;
     handles: ResizeHandleKey[] | null;
@@ -404,6 +405,7 @@ export default abstract class Transformable<
             container = elements[0].parentNode,
             controlsContainer = container,
             proportions = false,
+            flip = true,
             rotatorAnchor = null,
             rotatorOffset = 50,
             showNormal = true,
@@ -435,6 +437,7 @@ export default abstract class Transformable<
             },
             each,
             proportions,
+            flip,
             draggable,
             resizable,
             handles: Array.isArray(handles) ? handles : null,

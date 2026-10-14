@@ -169,6 +169,7 @@
             <label><input type="checkbox" name="resizable" checked>resizable</label>
             <label><input type="checkbox" name="rotatable" checked>rotatable</label>
             <label><input type="checkbox" name="proportions">proportions</label>
+            <label><input type="checkbox" name="flip" checked>flip</label>
             <label><input type="checkbox" name="scalable">scalable</label>
             <label><input type="checkbox" name="applyTranslate">applyTranslate</label>
             <label><input type="checkbox" name="showNormal" checked>showNormal</label>
@@ -364,7 +365,7 @@
     const panel = document.getElementById('panel');
     const field = name => panel.querySelector(`[name="${name}"]`);
 
-    const flagNames = ['draggable', 'resizable', 'rotatable', 'proportions', 'scalable', 'applyTranslate', 'showNormal', 'transformOrigin'];
+    const flagNames = ['draggable', 'resizable', 'rotatable', 'proportions', 'flip', 'scalable', 'applyTranslate', 'showNormal', 'transformOrigin'];
     const handleKeys = ['tl', 'tc', 'tr', 'ml', 'mr', 'bl', 'bc', 'br', 'te', 'be', 'le', 're', 'p1', 'p2'];
 
     document.getElementById('handles').innerHTML = handleKeys
