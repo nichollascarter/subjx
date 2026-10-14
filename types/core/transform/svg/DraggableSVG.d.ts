@@ -11,6 +11,8 @@ interface StoredAttributes {
     x?: number;
     y?: number;
     textLength?: number | null;
+    fontSize?: number;
+    textBox?: BBox;
     r?: number;
     cx?: number;
     cy?: number;

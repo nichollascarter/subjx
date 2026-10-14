@@ -48,6 +48,12 @@ const { START_POINT, END_POINT } = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_POINT_K
 
 const { keys, entries, values } = Object;
 
+const MIN_SIZE = 1;
+
+const nonZeroSize = (size: number) => (
+    Math.abs(size) < MIN_SIZE ? (size < 0 ? -MIN_SIZE : MIN_SIZE) : size
+);
+
 interface BBox {
     x: number;
     y: number;
@@ -59,6 +65,8 @@ interface StoredAttributes {
     x?: number;
     y?: number;
     textLength?: number | null;
+    fontSize?: number;
+    textBox?: BBox;
     r?: number;
     cx?: number;
     cy?: number;
@@ -652,8 +660,8 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 ? (actualBoxWidth + distX) / actualBoxWidth
                 : (actualBoxHeight + distY) / actualBoxHeight;
 
-            const newWidth = proportions ? actualBoxWidth * ratio : actualBoxWidth + distX,
-                newHeight = proportions ? actualBoxHeight * ratio : actualBoxHeight + distY;
+            const newWidth = nonZeroSize(proportions ? actualBoxWidth * ratio : actualBoxWidth + distX),
+                newHeight = nonZeroSize(proportions ? actualBoxHeight * ratio : actualBoxHeight + distY);
 
             const scaleX = newWidth / actualBoxWidth,
                 scaleY = newHeight / actualBoxHeight;
@@ -1348,8 +1356,8 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 ? (actualBoxWidth + distX) / actualBoxWidth
                 : (actualBoxHeight + distY) / actualBoxHeight;
 
-            const newWidth = proportions ? actualBoxWidth * ratio : actualBoxWidth + distX,
-                newHeight = proportions ? actualBoxHeight * ratio : actualBoxHeight + distY;
+            const newWidth = nonZeroSize(proportions ? actualBoxWidth * ratio : actualBoxWidth + distX),
+                newHeight = nonZeroSize(proportions ? actualBoxHeight * ratio : actualBoxHeight + distY);
 
             const scaleX = newWidth / actualBoxWidth,
                 scaleY = newHeight / actualBoxHeight;
@@ -2206,15 +2214,36 @@ interface ResizeParams {
     isGrouped: boolean;
 }
 
+const groupedChildMatrix = (
+    { matrix, childCTM }: Required<StoredAttributes>,
+    transformMatrix: DOMMatrix
+) => matrix.multiply(
+    childCTM.inverse()
+        .multiply(transformMatrix)
+        .multiply(childCTM)
+);
+
+const keepFixedPoint = (
+    scale: number,
+    translate: number,
+    actualStart: number,
+    actualSize: number,
+    targetStart: number,
+    targetSize: number
+) => {
+    if (Math.abs(1 - scale) < 1e-6 || !targetSize) return 0;
+
+    const fixed = translate / (1 - scale);
+    const ratio = (fixed - targetStart) / targetSize;
+
+    return fixed - (actualStart + ratio * actualSize);
+};
+
 const applyResize = (element: Element, data: ResizeParams) => {
     const {
         scaleX,
         scaleY,
         localCTM,
-        bBox: {
-            width: boxW,
-            height: boxH
-        },
         __data__,
         transformMatrix,
         isGrouped
@@ -2228,20 +2257,46 @@ const applyResize = (element: Element, data: ResizeParams) => {
 
         case 'text':
         case 'tspan': {
-            const { x, y, textLength } = storedData;
-            const {
-                x: resX,
-                y: resY
-            } = pointTo(
-                localCTM,
-                x,
-                y
-            );
+            if (isGrouped && element.tagName.toLowerCase() === 'text') {
+                attrs.push(['transform', matrixToString(groupedChildMatrix(storedData, transformMatrix))]);
+                break;
+            }
+
+            const { x, y, textLength, fontSize, textBox } = storedData;
+            const absX = Math.abs(scaleX),
+                absY = Math.abs(scaleY);
+
+            const corners = [
+                [textBox.x, textBox.y],
+                [textBox.x + textBox.width, textBox.y + textBox.height]
+            ].map(([px, py]) => pointTo(localCTM, px, py));
+
+            const left = Math.min(corners[0].x, corners[1].x),
+                top = Math.min(corners[0].y, corners[1].y);
+
+            const textElement = element as SVGTextContentElement;
+            const nextFontSize = fontSize * absY;
+
+            if (textElement.style.fontSize) {
+                textElement.style.fontSize = `${nextFontSize}px`;
+            } else {
+                textElement.setAttribute('font-size', String(nextFontSize));
+            }
+
+            textElement.setAttribute('textLength', String(absX * (textLength as number)));
+            textElement.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+
+            const nextX = left + (x - textBox.x) * absX,
+                nextY = top + (y - textBox.y) * absY;
+
+            textElement.setAttribute('x', String(nextX));
+            textElement.setAttribute('y', String(nextY));
+
+            const actual = textElement.getBBox();
 
             attrs.push(
-                ['x', resX + (scaleX < 0 ? boxW : 0)],
-                ['y', resY - (scaleY < 0 ? boxH : 0)],
-                ['textLength', Math.abs(scaleX * (textLength as number))]
+                ['x', nextX + keepFixedPoint(localCTM.a, localCTM.e, actual.x, actual.width, left, textBox.width * absX)],
+                ['y', nextY + keepFixedPoint(localCTM.d, localCTM.f, actual.y, actual.height, top, textBox.height * absY)]
             );
             break;
         }
@@ -2290,15 +2345,9 @@ const applyResize = (element: Element, data: ResizeParams) => {
                     ['height', newHeight]
                 );
             } else {
-                const { matrix, childCTM } = storedData;
-                const local = childCTM.inverse()
-                    .multiply(transformMatrix)
-                    .multiply(childCTM);
-
-                const nextResult = matrix.multiply(local);
                 // TODO: need to find how to resize rect within elements group but not to scale
                 attrs.push(
-                    ['transform', matrixToString(nextResult)]
+                    ['transform', matrixToString(groupedChildMatrix(storedData, transformMatrix))]
                 );
             }
             break;
@@ -2484,7 +2533,10 @@ const storeElementAttributes = (
                 ? el.textLength.baseVal.value
                 : (Number(element.getAttribute('textLength')) || null);
 
-            data = { x, y, textLength };
+            const { x: bx, y: by, width, height } = el.getBBox();
+            const fontSize = parseFloat(getComputedStyle(el).fontSize);
+
+            data = { x, y, textLength, fontSize, textBox: { x: bx, y: by, width, height } };
             break;
         }
         case 'circle': {
