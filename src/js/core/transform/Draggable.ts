@@ -14,7 +14,7 @@ import type { Matrix, Vector } from '../types';
 import type { TransformOriginParams, AlignmentDirection } from '../options';
 import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle, resizeBox } from './common';
 import { isDef, isUndef, warn } from '../util/util';
-import { addClass, matrixToCSS, getScrollOffset, getElementOffset } from '../util/css-util';
+import { addClass, matrixToCSS, getScrollOffset, getElementOffset, getLayoutSize } from '../util/css-util';
 import { CLIENT_EVENTS_CONSTANTS } from '../consts';
 
 import {
@@ -654,10 +654,10 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
 
         const {
             offsetLeft: elOffsetLeft,
-            offsetTop: elOffsetTop,
-            offsetWidth: elWidth,
-            offsetHeight: elHeight
+            offsetTop: elOffsetTop
         } = element;
+
+        const { width: elWidth, height: elHeight } = getLayoutSize(element);
 
         const matrix = getTransform(element);
         const ctm = getCurrentTransformMatrix(element, container);
@@ -833,10 +833,10 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
 
             const {
                 offsetLeft: elOffsetLeft,
-                offsetTop: elOffsetTop,
-                offsetWidth: elWidth,
-                offsetHeight: elHeight
+                offsetTop: elOffsetTop
             } = element;
+
+            const { width: elWidth, height: elHeight } = getLayoutSize(element);
 
             return {
                 x: elOffsetLeft,
@@ -1236,9 +1236,9 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         const [offsetLeft, offsetTop] = getAbsoluteOffset(element, container);
 
         const {
-            offsetWidth,
-            offsetHeight
-        } = element;
+            width: offsetWidth,
+            height: offsetHeight
+        } = getLayoutSize(element);
 
         const vertices = {
             tl: [0, 0, 0, 1],
@@ -1312,9 +1312,9 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
             const [offsetLeft, offsetTop] = getAbsoluteOffset(element, container);
 
             const {
-                offsetWidth,
-                offsetHeight
-            } = element;
+                width: offsetWidth,
+                height: offsetHeight
+            } = getLayoutSize(element);
 
             const vertices = [
                 [0, 0, 0, 1],
