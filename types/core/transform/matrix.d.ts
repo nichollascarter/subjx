@@ -8,6 +8,7 @@ export declare const createRotateMatrix: (sin: number, cos: number) => Matrix;
 export declare const dropTranslate: (matrix: Matrix, clone?: boolean) => Matrix;
 export declare const multiplyMatrixAndPoint: (mat: Matrix, point: Vector) => Vector;
 export declare const multiplyMatrix: (m1: Matrix, m2: Matrix) => Matrix;
+export declare const composeMatrix: (...matrices: Matrix[]) => Matrix;
 export declare const matrixInvert: (matrix: Matrix) => Matrix;
 export declare const computeTransformMatrix: (tx: Matrix, [x, y, z]: Vector) => Matrix;
 export declare const getCurrentTransformMatrix: (element: Element, container?: Node | null, newTransform?: Matrix | null) => Matrix;

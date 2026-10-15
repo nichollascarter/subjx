@@ -18,4 +18,8 @@ declare const getElementOffset: (el: HTMLElement | null) => {
     left: number;
     top: number;
 };
-export { getOffset, addClass, removeClass, objectsCollide, matrixToCSS, getStyle, getScrollOffset, getElementOffset };
+declare const getLayoutSize: (el: HTMLElement) => {
+    width: number;
+    height: number;
+};
+export { getOffset, addClass, removeClass, objectsCollide, matrixToCSS, getStyle, getScrollOffset, getElementOffset, getLayoutSize };

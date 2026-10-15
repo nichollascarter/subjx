@@ -1,3 +1,18 @@
+# [1.4.0-rc.1](https://github.com/nichollascarter/subjx/compare/v1.3.0...v1.4.0-rc.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* **svg:** avoid singular matrix on resize past an edge, fix text resize and mirroring ([ce8745e](https://github.com/nichollascarter/subjx/commit/ce8745e64b9935943dc2f0997c53c66ebd9a34db))
+* **html:** build controls from fractional layout size so handles stop jittering ([f786b86](https://github.com/nichollascarter/subjx/commit/f786b86626f4d2465e5d123ea084346c7f34711d))
+* **svg:** resize axis-aligned rect, image and foreignObject in a group through geometry ([32f2324](https://github.com/nichollascarter/subjx/commit/32f2324c253b543827bf0271f77e62ad93eb59db))
+* **html:** rotated elements, group resize/rotate and transform origin ([ce876b8](https://github.com/nichollascarter/subjx/commit/ce876b871aab2fd577081b8219766f4b43779c2c))
+
+
+### Features
+
+* **transform:** `flip` option, working min size for SVG and HTML resize ([03ab499](https://github.com/nichollascarter/subjx/commit/03ab49990a67f0f194985a9d744f6aaedc17a1a1))
+
 # [1.3.0](https://github.com/nichollascarter/subjx/compare/v1.2.0...v1.3.0) (2026-10-09)
 
 
