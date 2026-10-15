@@ -283,6 +283,11 @@ export default abstract class Transformable<
     protected abstract pointToControls(point: Point, transform?: S['transform']): Point;
 
     /** @internal */
+    protected pointToGroup(point: Point): Point {
+        return point;
+    }
+
+    /** @internal */
     protected abstract processRotate(element: Element, radians: number): unknown;
 
     /** @internal */
@@ -585,7 +590,7 @@ export default abstract class Transformable<
                                 matrix: ctm
                             }
                         )
-                        : { x: distX, y: distY };
+                        : this.pointToGroup({ x: distX, y: distY });
 
                     const dx = dox ? (revX ? -x : x) : 0;
                     const dy = doy ? (revY ? -y : y) : 0;
@@ -631,7 +636,7 @@ export default abstract class Transformable<
                             matrix: ctm
                         }
                     )
-                    : { x: newDx, y: newDy };
+                    : this.pointToGroup({ x: newDx, y: newDy });
 
                 const dx = dox ? (revX ? -x : x) : 0;
                 const dy = doy ? (revY ? -y : y) : 0;
@@ -1497,7 +1502,7 @@ export default abstract class Transformable<
                         matrix: ctm
                     }
                 )
-                : { x: dx, y: dy };
+                : this.pointToGroup({ x: dx, y: dy });
 
             this.resize({
                 element,

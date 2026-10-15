@@ -191,7 +191,22 @@ describe('Matrix util test', () => {
         ]);
     });
 
-    it('applies matrix to point', () => {
+    it('inverses matrix with a zero on the diagonal', () => {
+        const matrix = [
+            [0, -1, 0, 30],
+            [1, 0, 0, 40],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1]
+        ];
+
+        const product = matrixUtil.multiplyMatrix(matrix, matrixInvert(matrix));
+
+        product.forEach((row, i) => row.forEach((value, j) => {
+            expect(value).toBeCloseTo(i === j ? 1 : 0);
+        }));
+    });
+
+        it('applies matrix to point', () => {
         const matrix = [
             [1.5, 0, 0, 0],
             [0, 1.5, 0, 0],
