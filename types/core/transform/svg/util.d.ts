@@ -16,3 +16,8 @@ export declare const isSVGGroup: (element: Element) => boolean;
 export declare const normalizeString: (str?: string) => string;
 export declare const parsePoints: (pts: string) => string[][];
 export declare const arrayToChunks: <T>(a: T[], size: number) => T[][];
+export declare const groupedChildMatrix: ({ matrix, childCTM }: {
+    matrix: DOMMatrix;
+    childCTM: DOMMatrix;
+}, transformMatrix: DOMMatrix) => DOMMatrix;
+export declare const keepFixedPoint: (scale: number, translate: number, actualStart: number, actualSize: number, targetStart: number, targetSize: number) => number;

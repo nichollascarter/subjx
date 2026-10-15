@@ -205,6 +205,7 @@ export interface TransformOptions {
     };
     each: MimicOptions;
     proportions: boolean;
+    flip: boolean;
     draggable: boolean;
     resizable: boolean;
     handles: ResizeHandleKey[] | null;
@@ -280,6 +281,11 @@ export default abstract class Transformable<
 
     /** @internal */
     protected abstract pointToControls(point: Point, transform?: S['transform']): Point;
+
+    /** @internal */
+    protected pointToGroup(point: Point): Point {
+        return point;
+    }
 
     /** @internal */
     protected abstract processRotate(element: Element, radians: number): unknown;
@@ -404,6 +410,7 @@ export default abstract class Transformable<
             container = elements[0].parentNode,
             controlsContainer = container,
             proportions = false,
+            flip = true,
             rotatorAnchor = null,
             rotatorOffset = 50,
             showNormal = true,
@@ -435,6 +442,7 @@ export default abstract class Transformable<
             },
             each,
             proportions,
+            flip,
             draggable,
             resizable,
             handles: Array.isArray(handles) ? handles : null,
@@ -582,7 +590,7 @@ export default abstract class Transformable<
                                 matrix: ctm
                             }
                         )
-                        : { x: distX, y: distY };
+                        : this.pointToGroup({ x: distX, y: distY });
 
                     const dx = dox ? (revX ? -x : x) : 0;
                     const dy = doy ? (revY ? -y : y) : 0;
@@ -628,7 +636,7 @@ export default abstract class Transformable<
                             matrix: ctm
                         }
                     )
-                    : { x: newDx, y: newDy };
+                    : this.pointToGroup({ x: newDx, y: newDy });
 
                 const dx = dox ? (revX ? -x : x) : 0;
                 const dy = doy ? (revY ? -y : y) : 0;
@@ -1494,7 +1502,7 @@ export default abstract class Transformable<
                         matrix: ctm
                     }
                 )
-                : { x: dx, y: dy };
+                : this.pointToGroup({ x: dx, y: dy });
 
             this.resize({
                 element,

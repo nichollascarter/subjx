@@ -74,59 +74,47 @@ export const multiplyMatrix = (m1: Matrix, m2: Matrix): Matrix => {
     return result;
 };
 
+export const composeMatrix = (...matrices: Matrix[]): Matrix => (
+    matrices.reduce((result, matrix) => multiplyMatrix(matrix, result))
+);
+
 export const matrixInvert = (matrix: Matrix): Matrix => {
     const A = cloneMatrix(matrix);
     const N = A.length;
-
-    let temp: number;
-    const E: Matrix = [];
-
-    for (let i = 0; i < N; i++)
-        E[i] = [];
-
-    for (let i = 0; i < N; i++)
-        for (let j = 0; j < N; j++) {
-            E[i][j] = 0;
-            if (i === j)
-                E[i][j] = 1;
-        }
+    const E: Matrix = A.map((_, i) => A.map((__, j) => (i === j ? 1 : 0)));
 
     for (let k = 0; k < N; k++) {
-        temp = A[k][k];
-
-        if (temp !== 0) {
-            for (let j = 0; j < N; j++) {
-                A[k][j] /= temp;
-                E[k][j] /= temp;
-            }
-        }
+        let pivot = k;
 
         for (let i = k + 1; i < N; i++) {
-            temp = A[i][k];
+            if (Math.abs(A[i][k]) > Math.abs(A[pivot][k])) pivot = i;
+        }
+
+        if (A[pivot][k] === 0) continue;
+
+        [A[k], A[pivot]] = [A[pivot], A[k]];
+        [E[k], E[pivot]] = [E[pivot], E[k]];
+
+        const temp = A[k][k];
+
+        for (let j = 0; j < N; j++) {
+            A[k][j] /= temp;
+            E[k][j] /= temp;
+        }
+
+        for (let i = 0; i < N; i++) {
+            const factor = A[i][k];
+
+            if (i === k || !factor) continue;
 
             for (let j = 0; j < N; j++) {
-                A[i][j] -= A[k][j] * temp;
-                E[i][j] -= E[k][j] * temp;
+                A[i][j] -= A[k][j] * factor;
+                E[i][j] -= E[k][j] * factor;
             }
         }
     }
 
-    for (let k = N - 1; k > 0; k--) {
-        for (let i = k - 1; i >= 0; i--) {
-            temp = A[i][k];
-
-            for (let j = 0; j < N; j++) {
-                A[i][j] -= A[k][j] * temp;
-                E[i][j] -= E[k][j] * temp;
-            }
-        }
-    }
-
-    for (let i = 0; i < N; i++)
-        for (let j = 0; j < N; j++)
-            A[i][j] = E[i][j];
-
-    return A;
+    return E;
 };
 
 export const computeTransformMatrix = (tx: Matrix, [x, y, z]: Vector): Matrix => {

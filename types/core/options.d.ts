@@ -384,6 +384,12 @@ export interface DragOptions {
      */
     proportions?: boolean;
     /**
+     * Mirror the element when a resize handle is dragged past the opposite edge (SVG).
+     * When `false`, the size stops at the minimum instead
+     * @default true
+     */
+    flip?: boolean;
+    /**
      * Position of the rotation handle: 'n' (north), 's' (south), 'w' (west), 'e' (east)
      * @default 'e'
      */
