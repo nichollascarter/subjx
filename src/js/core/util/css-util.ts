@@ -97,6 +97,29 @@ const getElementOffset = (el: HTMLElement | null) => {
     return { left, top };
 };
 
+const sumPx = (...values: string[]) => values.reduce((sum, value) => sum + (parseFloat(value) || 0), 0);
+
+const getLayoutSize = (el: HTMLElement) => {
+    const { offsetWidth, offsetHeight } = el;
+    const style = window.getComputedStyle(el);
+
+    const isBorderBox = style.boxSizing === 'border-box';
+
+    const width = parseFloat(style.width) + (isBorderBox
+        ? 0
+        : sumPx(style.paddingLeft, style.paddingRight, style.borderLeftWidth, style.borderRightWidth));
+    const height = parseFloat(style.height) + (isBorderBox
+        ? 0
+        : sumPx(style.paddingTop, style.paddingBottom, style.borderTopWidth, style.borderBottomWidth));
+
+    const isPrecise = (value: number, rounded: number) => Number.isFinite(value) && Math.abs(value - rounded) < 1;
+
+    return {
+        width: isPrecise(width, offsetWidth) ? width : offsetWidth,
+        height: isPrecise(height, offsetHeight) ? height : offsetHeight
+    };
+};
+
 export {
     getOffset,
     addClass,
@@ -105,5 +128,6 @@ export {
     matrixToCSS,
     getStyle,
     getScrollOffset,
-    getElementOffset
+    getElementOffset,
+    getLayoutSize
 };

@@ -19,6 +19,7 @@ interface HTMLBBox extends BoxSize {
 interface HTMLElementTransform {
     ctm: Matrix;
     matrix: Matrix;
+    origin: Vector;
     parentMatrix: Matrix;
     auxiliary: {
         scale: {

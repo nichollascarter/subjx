@@ -105,6 +105,7 @@ export interface TransformOptions {
     };
     each: MimicOptions;
     proportions: boolean;
+    flip: boolean;
     draggable: boolean;
     resizable: boolean;
     handles: ResizeHandleKey[] | null;

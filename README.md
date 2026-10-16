@@ -175,6 +175,7 @@ reported as a resize (`resizeStart`, `resize`, `resizeEnd`, `onResize`).
 | **snap** | Snapping to grid: x/y in pixels, angle in degrees; missing values use the defaults, 0 disables | `object` | { x: 10, y: 10, angle: 10 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
 | **proportions** | Keep aspect ratio on resizing / scaling | `boolean` | false |
+| **flip** | Mirror the element when a resize handle is dragged past the opposite edge (SVG); `false` stops it at the minimum size | `boolean` | true |
 | **draggable** | Allow or deny an action | `boolean` | true |
 | **resizable** | Allow or deny an action | `boolean` | true |
 | **rotatable** | Allow or deny an action | `boolean` | true |

@@ -137,6 +137,7 @@ const defaultOptions = {
     snap: { x: 10, y: 10, angle: 0.17453292519943295 },
     each: { move: false, resize: false, rotate: false },
     proportions: false,
+    flip: true,
     draggable: true,
     resizable: true,
     handles: null,

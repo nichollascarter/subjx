@@ -12,7 +12,7 @@ import type {
 import type { PointerInput } from '../../SubjectModel';
 import type { TransformOriginParams, AlignmentDirection } from '../../options';
 import { isDef, isUndef, warn } from '../../util/util';
-import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle } from '../common';
+import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle, resizeBox } from '../common';
 import { movePath, resizePath } from './path';
 import { boxFromPoints, unionBoxes } from '../guides';
 import type { Box, GuideLine, GuideState } from '../guides';
@@ -39,7 +39,11 @@ import {
     getTransformToElement,
     matrixToString,
     pointTo,
-    isIdentity
+    isIdentity,
+    groupedChildMatrix,
+    childLocalMatrix,
+    isAxisAligned,
+    keepFixedPoint
 } from './util';
 
 const { E_DRAG, E_RESIZE, E_ROTATE } = EVENT_EMITTER_CONSTANTS;
@@ -59,6 +63,8 @@ interface StoredAttributes {
     x?: number;
     y?: number;
     textLength?: number | null;
+    fontSize?: number;
+    textBox?: BBox;
     r?: number;
     cx?: number;
     cy?: number;
@@ -626,7 +632,8 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             options: {
                 isGrouped,
                 proportions,
-                scalable
+                scalable,
+                flip
             }
         } = this;
 
@@ -644,23 +651,6 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             cached = {}
         } = elementData;
 
-        const getScale = (distX: number, distY: number): [number, number, number, number] => {
-            const actualBoxWidth = Math.max(1, boxWidth);
-            const actualBoxHeight = Math.max(1, boxHeight);
-
-            const ratio = doW || (!doW && !doH)
-                ? (actualBoxWidth + distX) / actualBoxWidth
-                : (actualBoxHeight + distY) / actualBoxHeight;
-
-            const newWidth = proportions ? actualBoxWidth * ratio : actualBoxWidth + distX,
-                newHeight = proportions ? actualBoxHeight * ratio : actualBoxHeight + distY;
-
-            const scaleX = newWidth / actualBoxWidth,
-                scaleY = newHeight / actualBoxHeight;
-
-            return [scaleX, scaleY, newWidth, newHeight];
-        };
-
         const getScaleMatrix = (scaleX: number, scaleY: number) => {
             const scaleMatrix = createScaleMatrix(scaleX, scaleY);
 
@@ -674,7 +664,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             scaleY,
             newWidth,
             newHeight
-        ] = getScale(dx, dy);
+        ] = resizeBox({ width: boxWidth, height: boxHeight, dx, dy, doW, doH, proportions, flip });
 
         const scaleMatrix = getScaleMatrix(scaleX, scaleY);
 
@@ -1323,7 +1313,8 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 }
             },
             options: {
-                proportions
+                proportions,
+                flip
             }
         } = this;
 
@@ -1340,23 +1331,6 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             }
         } = elementData;
 
-        const getScale = (distX: number, distY: number): [number, number, number, number] => {
-            const actualBoxWidth = Math.max(1, boxWidth);
-            const actualBoxHeight = Math.max(1, boxHeight);
-
-            const ratio = doW || (!doW && !doH)
-                ? (actualBoxWidth + distX) / actualBoxWidth
-                : (actualBoxHeight + distY) / actualBoxHeight;
-
-            const newWidth = proportions ? actualBoxWidth * ratio : actualBoxWidth + distX,
-                newHeight = proportions ? actualBoxHeight * ratio : actualBoxHeight + distY;
-
-            const scaleX = newWidth / actualBoxWidth,
-                scaleY = newHeight / actualBoxHeight;
-
-            return [scaleX, scaleY, newWidth, newHeight];
-        };
-
         const getScaleMatrix = (scaleX: number, scaleY: number) => {
             const scaleMatrix = createScaleMatrix(scaleX, scaleY);
 
@@ -1365,7 +1339,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
                 .multiply(translateMatrix.inverse());
         };
 
-        const [scaleX, scaleY] = getScale(dx, dy);
+        const [scaleX, scaleY] = resizeBox({ width: boxWidth, height: boxHeight, dx, dy, doW, doH, proportions, flip });
 
         const preScaledMatrix = matrix.multiply(
             getScaleMatrix(scaleX, scaleY)
@@ -2211,10 +2185,6 @@ const applyResize = (element: Element, data: ResizeParams) => {
         scaleX,
         scaleY,
         localCTM,
-        bBox: {
-            width: boxW,
-            height: boxH
-        },
         __data__,
         transformMatrix,
         isGrouped
@@ -2228,20 +2198,46 @@ const applyResize = (element: Element, data: ResizeParams) => {
 
         case 'text':
         case 'tspan': {
-            const { x, y, textLength } = storedData;
-            const {
-                x: resX,
-                y: resY
-            } = pointTo(
-                localCTM,
-                x,
-                y
-            );
+            if (isGrouped && element.tagName.toLowerCase() === 'text') {
+                attrs.push(['transform', matrixToString(groupedChildMatrix(storedData, transformMatrix))]);
+                break;
+            }
+
+            const { x, y, textLength, fontSize, textBox } = storedData;
+            const absX = Math.abs(scaleX),
+                absY = Math.abs(scaleY);
+
+            const corners = [
+                [textBox.x, textBox.y],
+                [textBox.x + textBox.width, textBox.y + textBox.height]
+            ].map(([px, py]) => pointTo(localCTM, px, py));
+
+            const left = Math.min(corners[0].x, corners[1].x),
+                top = Math.min(corners[0].y, corners[1].y);
+
+            const textElement = element as SVGTextContentElement;
+            const nextFontSize = fontSize * absY;
+
+            if (textElement.style.fontSize) {
+                textElement.style.fontSize = `${nextFontSize}px`;
+            } else {
+                textElement.setAttribute('font-size', String(nextFontSize));
+            }
+
+            textElement.setAttribute('textLength', String(absX * (textLength as number)));
+            textElement.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+
+            const nextX = left + (x - textBox.x) * absX,
+                nextY = top + (y - textBox.y) * absY;
+
+            textElement.setAttribute('x', String(nextX));
+            textElement.setAttribute('y', String(nextY));
+
+            const actual = textElement.getBBox();
 
             attrs.push(
-                ['x', resX + (scaleX < 0 ? boxW : 0)],
-                ['y', resY - (scaleY < 0 ? boxH : 0)],
-                ['textLength', Math.abs(scaleX * (textLength as number))]
+                ['x', nextX + keepFixedPoint(localCTM.a, localCTM.e, actual.x, actual.width, left, textBox.width * absX)],
+                ['y', nextY + keepFixedPoint(localCTM.d, localCTM.f, actual.y, actual.height, top, textBox.height * absY)]
             );
             break;
         }
@@ -2290,15 +2286,25 @@ const applyResize = (element: Element, data: ResizeParams) => {
                     ['height', newHeight]
                 );
             } else {
-                const { matrix, childCTM } = storedData;
-                const local = childCTM.inverse()
-                    .multiply(transformMatrix)
-                    .multiply(childCTM);
+                const local = childLocalMatrix(storedData.childCTM, transformMatrix);
 
-                const nextResult = matrix.multiply(local);
-                // TODO: need to find how to resize rect within elements group but not to scale
+                if (!isAxisAligned(local)) {
+                    attrs.push(
+                        ['transform', matrixToString(groupedChildMatrix(storedData, transformMatrix))]
+                    );
+                    break;
+                }
+
+                const { width, height, x, y } = storedData;
+
+                const start = pointTo(local, x, y),
+                    end = pointTo(local, x + width, y + height);
+
                 attrs.push(
-                    ['transform', matrixToString(nextResult)]
+                    ['x', Math.min(start.x, end.x)],
+                    ['y', Math.min(start.y, end.y)],
+                    ['width', Math.abs(end.x - start.x)],
+                    ['height', Math.abs(end.y - start.y)]
                 );
             }
             break;
@@ -2484,7 +2490,10 @@ const storeElementAttributes = (
                 ? el.textLength.baseVal.value
                 : (Number(element.getAttribute('textLength')) || null);
 
-            data = { x, y, textLength };
+            const { x: bx, y: by, width, height } = el.getBBox();
+            const fontSize = parseFloat(getComputedStyle(el).fontSize);
+
+            data = { x, y, textLength, fontSize, textBox: { x: bx, y: by, width, height } };
             break;
         }
         case 'circle': {
