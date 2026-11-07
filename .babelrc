@@ -17,12 +17,12 @@
                     "@babel/preset-env",
                     {
                         "targets": {
-                            "node": "18",
+                            "node": "12",
                             "browsers": [
-                                "defaults"
+                                ">0.25%",
+                                "not dead"
                             ]
                         },
-                        "bugfixes": true,
                         "modules": false
                     }
                 ],
@@ -34,8 +34,9 @@
                 [
                     "@babel/preset-env",
                     {
-                        "targets": "defaults",
-                        "bugfixes": true,
+                        "targets": {
+                            "esmodules": true
+                        },
                         "modules": false
                     }
                 ],
