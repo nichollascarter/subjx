@@ -49,7 +49,7 @@ const babelPlugins = (target) => ([
 ]);
 
 const umdPlugins = [
-    ...babelPlugins('cjs'),
+    ...babelPlugins('umd'),
     production && terser({
         compress: {
             evaluate: false,
