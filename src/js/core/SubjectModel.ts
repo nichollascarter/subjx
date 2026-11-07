@@ -116,6 +116,7 @@ export default abstract class SubjectModel<
 
     /** @internal */
     protected onMouseDown(e: MouseEvent) {
+        if (e.button !== 0) return;
         this.start(e);
         helper(document)
             .on(E_MOUSEMOVE, this.onMouseMove)
