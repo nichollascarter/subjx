@@ -255,7 +255,6 @@ describe('Test subjx "drag" method', () => {
         expect(() => {
             draggable.fitControlsToSize();
             draggable.getBoundingRect();
-            draggable.setCenterPoint();
             draggable.setTransformOrigin({ x: 0, y: 0 });
             draggable.getDimensions();
             ['t', 'b', 'l', 'r', 'v', 'h'].map(align => draggable.applyAlignment(align));
@@ -417,7 +416,6 @@ describe('Test svg subjx "drag" method', () => {
         expect(() => {
             draggable.fitControlsToSize();
             draggable.getBoundingRect(svgElement);
-            draggable.setCenterPoint();
             draggable.setTransformOrigin({ x: 0, y: 0 });
             draggable.getDimensions();
             ['t', 'b', 'l', 'r', 'v', 'h'].map((align) => draggable.applyAlignment(align));

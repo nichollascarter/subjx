@@ -13,7 +13,8 @@ import type {
     ExeRotateParams,
     TransformEventMap,
     ResizeHandleKey,
-    GuidesOptions
+    GuidesOptions,
+    TransformOriginParams
 } from '../options';
 import { align, alignEdges } from './guides';
 import type { GuideState, GuideLine } from './guides';
@@ -34,8 +35,7 @@ import {
     isDef,
     isUndef,
     createMethod,
-    noop,
-    warn
+    noop
 } from '../util/util';
 
 import {
@@ -344,9 +344,7 @@ export default abstract class Transformable<
 
     abstract getBoundingRect(elementOrMatrix?: Element | M | null, matrix?: M | null): number[][];
 
-    abstract setCenterPoint(...args: unknown[]): void;
-
-    abstract setTransformOrigin(params?: { x?: number; y?: number; dx?: number; dy?: number }, pin?: boolean): void;
+    abstract setTransformOrigin(params?: TransformOriginParams, pin?: boolean): void;
 
     /** @internal */
     private rotate({ element, radians, ...rest }: { element: Element; radians: number; [key: string]: unknown }) {
@@ -1737,11 +1735,6 @@ export default abstract class Transformable<
         });
 
         this.processControlsRotate({ radians: delta });
-    }
-
-    resetCenterPoint() {
-        warn('"resetCenterPoint" method is replaced by "resetTransformOrigin" and would be removed soon');
-        this.setTransformOrigin({ dx: 0, dy: 0 }, false);
     }
 
     resetTransformOrigin() {

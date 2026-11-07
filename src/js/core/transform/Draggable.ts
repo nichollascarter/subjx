@@ -13,7 +13,7 @@ import type { PointerInput } from '../SubjectModel';
 import type { Matrix, Vector } from '../types';
 import type { TransformOriginParams, AlignmentDirection } from '../options';
 import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle, resizeBox } from './common';
-import { isDef, isUndef, warn } from '../util/util';
+import { isDef, isUndef } from '../util/util';
 import { addClass, matrixToCSS, getScrollOffset, getElementOffset, getLayoutSize } from '../util/css-util';
 import { CLIENT_EVENTS_CONSTANTS } from '../consts';
 
@@ -1643,11 +1643,6 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
 
             return result;
         }, {});
-    }
-
-    setCenterPoint(...args: [TransformOriginParams?, boolean?]) {
-        warn('"setCenterPoint" method is replaced by "setTransformOrigin" and would be removed soon');
-        this.setTransformOrigin(...args);
     }
 
     setTransformOrigin({ x, y, dx, dy }: TransformOriginParams = {}, pin = true) {

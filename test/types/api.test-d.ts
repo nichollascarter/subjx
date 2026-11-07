@@ -66,7 +66,9 @@ draggable.exeRotate({ delta: 0.5 });
 draggable.setTransformOrigin({ x: 1, y: 1 }, true);
 draggable.setTransformOrigin({ dx: 0, dy: 0 });
 draggable.resetTransformOrigin();
+// @ts-expect-error
 draggable.setCenterPoint();
+// @ts-expect-error
 draggable.resetCenterPoint();
 draggable.fitControlsToSize();
 

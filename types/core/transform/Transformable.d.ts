@@ -3,7 +3,7 @@ import SubjectModel from '../SubjectModel';
 import type { PointerInput, ProxyMethods } from '../SubjectModel';
 import type Observable from '../observable/Observable';
 import type { Observer } from '../observable/Observable';
-import type { DragOptions, MimicOptions, Direction, ExeDragParams, ExeResizeParams, ExeRotateParams, TransformEventMap, ResizeHandleKey, GuidesOptions } from '../options';
+import type { DragOptions, MimicOptions, Direction, ExeDragParams, ExeResizeParams, ExeRotateParams, TransformEventMap, ResizeHandleKey, GuidesOptions, TransformOriginParams } from '../options';
 import type { GuideState } from './guides';
 import type { Restriction } from './restrict';
 export interface Point {
@@ -146,13 +146,7 @@ export default abstract class Transformable<M = unknown, S extends TransformStor
     observable: Observable;
     constructor(elements: Element[], options: DragOptions | undefined, observable: Observable);
     abstract getBoundingRect(elementOrMatrix?: Element | M | null, matrix?: M | null): number[][];
-    abstract setCenterPoint(...args: unknown[]): void;
-    abstract setTransformOrigin(params?: {
-        x?: number;
-        y?: number;
-        dx?: number;
-        dy?: number;
-    }, pin?: boolean): void;
+    abstract setTransformOrigin(params?: TransformOriginParams, pin?: boolean): void;
     notifyMove({ dx, dy }: Delta): void;
     notifyRotate({ radians, ...rest }: {
         radians: number;
@@ -167,7 +161,6 @@ export default abstract class Transformable<M = unknown, S extends TransformStor
     exeDrag({ dx, dy }: ExeDragParams): void;
     exeResize({ dx, dy, revX, revY, doW, doH }: ExeResizeParams): void;
     exeRotate({ delta }: ExeRotateParams): void;
-    resetCenterPoint(): void;
     resetTransformOrigin(): void;
     get controls(): S['wrapper'];
 }
