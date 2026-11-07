@@ -246,6 +246,7 @@ export default abstract class Transformable<
     S extends TransformStorage<M> = TransformStorage<M>
 > extends SubjectModel<S, TransformProxyMethods, TransformEventMap> {
 
+    /** Internal state. Its shape is not part of the public API and may change in any minor release. Prefer `handles`, `controls`, `getBoundingRect()` and `getDimensions()`. */
     storage!: S;
     /** @internal */
     protected proxyMethods!: TransformProxyMethods;

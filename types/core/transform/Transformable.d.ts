@@ -125,6 +125,7 @@ export interface TransformProxyMethods extends ProxyMethods {
     onRotate: ProxyMethods['onMove'];
 }
 export default abstract class Transformable<M = unknown, S extends TransformStorage<M> = TransformStorage<M>> extends SubjectModel<S, TransformProxyMethods, TransformEventMap> {
+    /** Internal state. Its shape is not part of the public API and may change in any minor release. Prefer `handles`, `controls`, `getBoundingRect()` and `getDimensions()`. */
     storage: S;
     options: TransformOptions;
     private readonly observable;

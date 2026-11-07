@@ -40,6 +40,7 @@ export default abstract class SubjectModel<
 > {
 
     elements: Element[];
+    /** Internal state. Its shape is not part of the public API and may change in any minor release. */
     storage?: S | null;
     /** @internal */
     protected proxyMethods: P | null;
