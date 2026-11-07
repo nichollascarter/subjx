@@ -21,7 +21,7 @@ export type { DragResult } from './core/Subjx';
 export type { default as Helper, HelperParams as Target } from './core/Helper';
 export type { default as SubjectModel } from './core/SubjectModel';
 export type { Observer, NotifierEvent, NotifierPayloads, NotifyMoveArgs, NotifyRotateArgs, NotifyResizeArgs, NotifyActionArgs, NotifyGetStateArgs } from './core/observable/Observable';
-export type { default as Transformable, TransformStorage, TransformHandles } from './core/transform/Transformable';
+export type { default as Transformable, TransformStorage, TransformHandles } from './core/transform/transformable';
 export type { default as Draggable } from './core/transform/Draggable';
 export type { default as DraggableSVG } from './core/transform/svg/DraggableSVG';
 export type { default as Cloneable } from './core/clone/Cloneable';

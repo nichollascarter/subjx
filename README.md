@@ -85,6 +85,9 @@ xDraggable.on(eventName, cb);
 // removes event listener for some events
 xDraggable.off(eventName, cb);
 
+// changes options without recreating the instance, see "Updating options"
+xDraggable.update({ axis: 'x', resizable: false });
+
 // Event names
 const EVENTS = [
     'dragStart',
@@ -190,6 +193,33 @@ reported as a resize (`resizeStart`, `resize`, `resizeEnd`, `onResize`).
 | **guides** | Alignment guides and snapping to other elements and the container (SVG), see below | `boolean` \| `object` | false |
 
 #### Notice: In most cases, it is recommended to use 'proportions' option
+
+### Updating options
+
+`update(options)` merges the passed options into the current ones. Keys that are
+left out keep their values, a key set to `undefined` goes back to its default.
+Values equal to the current ones are ignored, arrays and plain objects are
+compared by their items, so passing a new `handles` array with the same keys on
+every render does nothing.
+
+```javascript
+const xDraggable = subjx('.shape').drag({ snap: { x: 10, y: 10 } });
+
+xDraggable.update({ axis: 'x', onMove: handleMove });
+xDraggable.update({ resizable: false, handles: ['tl', 'br'] });
+```
+
+Behavior options (`axis`, `snap`, `each`, `proportions`, `flip`, `draggable`,
+`scalable`, `applyTranslate`, `guides`, cursors, `custom` and the `on*` callbacks)
+apply at once, even in the middle of a drag.
+
+Options that shape the controls (`resizable`, `rotatable`, `handles`, `hitRadius`,
+`showHitAreas`, `showNormal`, `rotatorAnchor`, `rotatorOffset`, `transformOrigin`,
+`restrict`, `container`, `controlsContainer`) redraw the handles. While a drag,
+resize or rotation is running, they wait until it ends. The redraw keeps the same
+`controls` element, with any nodes and classes you added to it, keeps a
+transform origin that was moved by the user, and does not call `onInit` again.
+Listeners added with `on()` stay attached.
 
 ### Alignment guides (SVG)
 

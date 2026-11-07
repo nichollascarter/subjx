@@ -1,5 +1,5 @@
-import Transformable from '../Transformable';
-import type { Point, Delta, ElementData, TransformHandles, TransformOptions, TransformStorage } from '../Transformable';
+import Transformable from '../transformable';
+import type { Point, Delta, ElementData, TransformHandles, TransformOptions, TransformStorage } from '../transformable';
 import type { TransformOriginParams, AlignmentDirection } from '../../options';
 interface BBox {
     x: number;

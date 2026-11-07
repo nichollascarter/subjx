@@ -66,8 +66,12 @@ export default abstract class SubjectModel<
     enable(options?: object) {
         this.processOptions(options);
         this.init(this.elements);
+        this.afterInit();
         this.proxyMethods!.onInit.call(this, this.elements);
     }
+
+    /** @internal */
+    protected afterInit() { }
 
     abstract disable(): void;
 

@@ -1,5 +1,5 @@
 import { helper } from '../../Helper';
-import Transformable from '../Transformable';
+import Transformable from '../transformable';
 import type {
     Point,
     Delta,
@@ -8,7 +8,7 @@ import type {
     TransformHandles,
     TransformOptions,
     TransformStorage
-} from '../Transformable';
+} from '../transformable';
 import type { PointerInput } from '../../SubjectModel';
 import type { TransformOriginParams, AlignmentDirection } from '../../options';
 import { isDef, isUndef } from '../../util/util';

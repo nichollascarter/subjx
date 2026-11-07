@@ -74,6 +74,10 @@ draggable.resetCenterPoint();
 // @ts-expect-error
 draggable.observable;
 draggable.fitControlsToSize();
+draggable.update({ axis: 'x', resizable: false, handles: ['tl', 'br'], onMove() {} });
+draggable.update();
+// @ts-expect-error
+draggable.update({ axis: 'z' });
 
 const direction: AlignmentDirection = 't';
 draggable.applyAlignment(direction);

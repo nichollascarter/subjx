@@ -1,40 +1,33 @@
-import Helper, { helper } from '../Helper';
-import SubjectModel from '../SubjectModel';
-import type { PointerInput, MoveArgs, ProxyMethods } from '../SubjectModel';
-import type Observable from '../observable/Observable';
+import Helper, { helper } from '../../Helper';
+import SubjectModel from '../../SubjectModel';
+import type { PointerInput, MoveArgs } from '../../SubjectModel';
+import type Observable from '../../observable/Observable';
 import type {
     Observer,
     NotifyRotateArgs,
     NotifyResizeArgs,
     NotifyActionArgs,
     NotifyGetStateArgs
-} from '../observable/Observable';
-import { getMinMaxOfArray, snapToGrid, RAD } from './common';
+} from '../../observable/Observable';
+import {
+    getMinMaxOfArray,
+    snapToGrid,
+    RAD
+} from '../common';
 import type {
     DragOptions,
     MimicOptions,
-    Direction,
     ExeDragParams,
     ExeResizeParams,
     ExeRotateParams,
     TransformEventMap,
-    ResizeHandleKey,
-    GuidesOptions,
     TransformOriginParams
-} from '../options';
-import { align, alignEdges } from './guides';
-import type { GuideState, GuideLine } from './guides';
-import { clampMove, clampEdge } from './restrict';
-import type { Restriction } from './restrict';
-
-import {
-    LIB_CLASS_PREFIX,
-    NOTIFIER_CONSTANTS,
-    EVENT_EMITTER_CONSTANTS,
-    TRANSFORM_HANDLES_CONSTANTS,
-    CLIENT_EVENTS_CONSTANTS
-} from '../consts';
-
+} from '../../options';
+import { align, alignEdges } from '../guides';
+import type { GuideState, GuideLine } from '../guides';
+import { clampMove, clampEdge } from '../restrict';
+import type { Restriction } from '../restrict';
+import { LIB_CLASS_PREFIX } from '../../consts';
 import {
     requestAnimFrame,
     cancelAnimFrame,
@@ -42,23 +35,27 @@ import {
     isUndef,
     createMethod,
     noop
-} from '../util/util';
-
+} from '../../util/util';
+import { addClass, removeClass } from '../../util/css-util';
+import type {
+    RestrictPoint,
+    Delta,
+    ResizeFlags,
+    ElementData,
+    TransformHandles,
+    TransformStorage,
+    TransformOptions,
+    TransformProxyMethods,
+    ActiveSession,
+    Point
+} from './types';
 import {
-    addClass,
-    removeClass
-} from '../util/css-util';
-
-const {
     NOTIFIER_EVENTS,
     ON_GETSTATE,
     ON_APPLY,
     ON_MOVE,
     ON_RESIZE,
-    ON_ROTATE
-} = NOTIFIER_CONSTANTS;
-
-const {
+    ON_ROTATE,
     EMITTER_EVENTS,
     E_DRAG_START,
     E_DRAG,
@@ -70,20 +67,13 @@ const {
     E_ROTATE,
     E_ROTATE_END,
     E_SET_POINT,
-    E_SET_POINT_END
-} = EVENT_EMITTER_CONSTANTS;
-
-const { TRANSFORM_HANDLES_KEYS, TRANSFORM_EDGES_KEYS, TRANSFORM_POINT_KEYS } = TRANSFORM_HANDLES_CONSTANTS;
-const {
+    E_SET_POINT_END,
     E_MOUSEDOWN,
     E_TOUCHSTART,
     E_MOUSEMOVE,
     E_MOUSEUP,
     E_TOUCHMOVE,
-    E_TOUCHEND
-} = CLIENT_EVENTS_CONSTANTS;
-
-const {
+    E_TOUCHEND,
     TOP_LEFT,
     TOP_CENTER,
     TOP_RIGHT,
@@ -91,155 +81,22 @@ const {
     BOTTOM_RIGHT,
     BOTTOM_CENTER,
     MIDDLE_LEFT,
-    MIDDLE_RIGHT
-} = TRANSFORM_HANDLES_KEYS;
-
-const {
+    MIDDLE_RIGHT,
     TOP_EDGE,
     BOTTOM_EDGE,
     LEFT_EDGE,
-    RIGHT_EDGE
-} = TRANSFORM_EDGES_KEYS;
-
-const { START_POINT, END_POINT } = TRANSFORM_POINT_KEYS;
+    RIGHT_EDGE,
+    START_POINT,
+    END_POINT
+} from './consts';
+import {
+    RUNTIME_OPTIONS,
+    ORIGIN_OPTIONS,
+    isSameOption
+} from './options';
+import { syncTransform } from './dom';
 
 const { keys, values } = Object;
-
-export interface Point {
-    x: number;
-    y: number;
-}
-
-export interface RestrictPoint {
-    x: number | null;
-    y: number | null;
-}
-
-export interface Delta {
-    dx: number;
-    dy: number;
-}
-
-export interface ResizeFlags {
-    revX: boolean;
-    revY: boolean;
-    doW: boolean;
-    doH: boolean;
-}
-
-export interface ElementData<M = unknown> {
-    transform: {
-        ctm: M;
-        [key: string]: unknown;
-    };
-    cx?: number;
-    cy?: number;
-    [key: string]: unknown;
-}
-
-export type TransformHandles = Record<string, Element | null | undefined>;
-
-export interface TransformStorage<M = unknown> {
-    wrapper: Element;
-    controls: Element;
-    handles: TransformHandles;
-    data: WeakMap<Element, ElementData<M>>;
-    center: {
-        isShifted: boolean;
-        x?: number;
-        y?: number;
-        [key: string]: unknown;
-    };
-    transformOrigin: unknown;
-    transform: {
-        controlsMatrix?: M;
-        containerMatrix?: M;
-        [key: string]: unknown;
-    };
-    cached: {
-        dist?: Delta;
-        transformOrigin?: unknown;
-        controlsMatrix?: M;
-        [key: string]: unknown;
-    };
-    isTarget?: boolean;
-    mouseEvent?: PointerInput;
-    clientX?: number;
-    clientY?: number;
-    relativeX?: number;
-    relativeY?: number;
-    bx?: number;
-    by?: number;
-    pressang?: number;
-    handle?: Helper;
-    dox?: boolean;
-    doy?: boolean;
-    revX?: boolean;
-    revY?: boolean;
-    doW?: boolean;
-    doH?: boolean;
-    doResize?: boolean;
-    point?: string | null;
-    doDrag?: boolean;
-    doRotate?: boolean;
-    doSetCenter?: boolean;
-    doDraw?: boolean;
-    onExecution?: boolean;
-    cursor?: string | null;
-    activeHandle?: Element | null;
-    guides?: GuideState | null;
-    restriction?: Restriction | null;
-    frame?: number;
-    controlsMatrix?: M;
-    [key: string]: unknown;
-}
-
-export interface TransformOptions {
-    axis: string;
-    cursorMove: string;
-    cursorRotate: string;
-    cursorResize: string;
-    rotationPoint: boolean;
-    transformOrigin: boolean | [number, number];
-    restrict: Element | null;
-    container: Element;
-    controlsContainer: Element;
-    snap: {
-        x: number;
-        y: number;
-        angle: number;
-    };
-    each: MimicOptions;
-    proportions: boolean;
-    flip: boolean;
-    draggable: boolean;
-    resizable: boolean;
-    handles: ResizeHandleKey[] | null;
-    hitRadius: number;
-    showHitAreas: boolean;
-    guides: GuidesOptions | null;
-    rotatable: boolean;
-    scalable: boolean;
-    applyTranslate: boolean;
-    custom: Record<string, unknown> | null;
-    rotatorAnchor: Direction | null;
-    rotatorOffset: number;
-    showNormal: boolean;
-    isGrouped: boolean;
-}
-
-export interface TransformProxyMethods extends ProxyMethods {
-    onResize: ProxyMethods['onMove'];
-    onRotate: ProxyMethods['onMove'];
-}
-
-type ActiveSession = Required<Pick<TransformStorage,
-    | 'clientX' | 'clientY' | 'relativeX' | 'relativeY' | 'bx' | 'by' | 'pressang'
-    | 'dox' | 'doy' | 'revX' | 'revY' | 'mouseEvent'
-    | 'doDrag' | 'doResize' | 'doRotate' | 'doSetCenter'
->> & {
-    center: Point;
-};
 
 export default abstract class Transformable<
     M = unknown,
@@ -252,6 +109,9 @@ export default abstract class Transformable<
     protected proxyMethods!: TransformProxyMethods;
     options!: TransformOptions;
     private readonly observable: Observable;
+    private rawOptions!: DragOptions;
+    private pendingOptions?: DragOptions | null;
+    private initClasses?: { wrapper: string[]; controls: string[] };
 
     private readonly observer: Observer = {
         notifyMove: data => this.notifyMove(data),
@@ -373,6 +233,8 @@ export default abstract class Transformable<
     /** @internal */
     protected processOptions(options: DragOptions = {}) {
         const { elements } = this;
+
+        this.rawOptions = options;
 
         [...elements].map(element => addClass(element, `${LIB_CLASS_PREFIX}drag`));
 
@@ -1108,6 +970,26 @@ export default abstract class Transformable<
         if (isDef(radius)) {
             addClass(radius, `${LIB_CLASS_PREFIX}hidden`);
         }
+
+        const { pendingOptions } = this;
+
+        if (pendingOptions) {
+            this.pendingOptions = null;
+            this.applyOptions(pendingOptions);
+        }
+    }
+
+    /** @internal */
+    protected afterInit() {
+        this.initClasses = this.readInitClasses(this.storage);
+    }
+
+    /** @internal */
+    private readInitClasses({ wrapper, controls }: S) {
+        return {
+            wrapper: Array.from(wrapper.classList),
+            controls: Array.from(controls.classList)
+        };
     }
 
     /** @internal */
@@ -1593,11 +1475,150 @@ export default abstract class Transformable<
 
         elements.map((element) => removeClass(element, `${LIB_CLASS_PREFIX}drag`));
 
+        this.pendingOptions = null;
         this.unsubscribe();
         this.destroy();
 
         proxyMethods.onDestroy.call(this, elements);
         delete (this as { storage?: S }).storage;
+    }
+
+    update(options: DragOptions = {}) {
+        const { storage } = this;
+
+        if (isUndef(storage)) return;
+
+        if (!storage.onExecution) {
+            this.applyOptions(options);
+            return;
+        }
+
+        const runtime: DragOptions = {};
+        const structural: DragOptions = {};
+
+        (keys(options) as (keyof DragOptions)[]).forEach((key) => {
+            const target = RUNTIME_OPTIONS.includes(key) ? runtime : structural;
+            (target as Record<string, unknown>)[key] = options[key];
+        });
+
+        if (keys(structural).length) {
+            this.pendingOptions = { ...this.pendingOptions, ...structural };
+        }
+
+        this.applyOptions(runtime);
+    }
+
+    /** @internal */
+    private applyOptions(options: DragOptions) {
+        const { rawOptions, options: prevOptions } = this;
+
+        const changed = (keys(options) as (keyof DragOptions)[])
+            .filter(key => !isSameOption(options[key], rawOptions[key]));
+
+        if (!changed.length) return;
+
+        this.unsubscribe();
+        this.processOptions({ ...rawOptions, ...options });
+
+        const { options: nextOptions } = this;
+
+        const structural = changed.filter(key => (
+            !RUNTIME_OPTIONS.includes(key) &&
+            !isSameOption(
+                nextOptions[key as keyof TransformOptions],
+                prevOptions[key as keyof TransformOptions]
+            )
+        ));
+
+        if (structural.length) this.rebuildControls(structural);
+    }
+
+    /** @internal */
+    private rebuildControls(changed: (keyof DragOptions)[]) {
+        const {
+            elements,
+            storage: prev,
+            initClasses
+        } = this;
+
+        const {
+            wrapper,
+            controls,
+            transformOrigin,
+            center
+        } = prev;
+
+        const owned = [
+            ...values(prev.handles),
+            ...values((prev.hitAreas || {}) as Record<string, Element>),
+            prev.hitOverlay,
+            prev.guidesLayer
+        ].filter(isDef) as Element[];
+
+        [...elements, controls].forEach(target => (
+            helper(target)
+                .off(E_MOUSEDOWN, this.onMouseDown)
+                .off(E_TOUCHSTART, this.onTouchStart)
+        ));
+
+        owned.forEach((node) => {
+            if (node.parentNode) node.parentNode.removeChild(node);
+        });
+
+        this.init(elements);
+
+        const fresh = this.storage;
+        const freshClasses = this.readInitClasses(fresh);
+
+        helper(fresh.controls)
+            .off(E_MOUSEDOWN, this.onMouseDown)
+            .off(E_TOUCHSTART, this.onTouchStart);
+
+        helper(controls)
+            .on(E_MOUSEDOWN, this.onMouseDown)
+            .on(E_TOUCHSTART, this.onTouchStart);
+
+        const firstForeign = controls.firstChild;
+
+        while (fresh.controls.firstChild) {
+            controls.insertBefore(fresh.controls.firstChild, firstForeign);
+        }
+
+        Array.from(fresh.wrapper.childNodes)
+            .filter(node => node !== fresh.controls)
+            .forEach(node => wrapper.insertBefore(node, controls));
+
+        ([
+            [wrapper, fresh.wrapper, initClasses?.wrapper],
+            [controls, fresh.controls, initClasses?.controls]
+        ] as [Element, Element, string[] | undefined][]).forEach(([target, source, previous = []]) => {
+            previous.forEach(name => removeClass(target, name));
+            Array.from(source.classList).forEach(name => addClass(target, name));
+            syncTransform(target, source);
+        });
+
+        const parent = fresh.wrapper.parentNode!;
+
+        if (wrapper.parentNode !== parent) parent.insertBefore(wrapper, fresh.wrapper);
+        parent.removeChild(fresh.wrapper);
+
+        this.storage = {
+            ...fresh,
+            wrapper,
+            controls
+        };
+
+        this.initClasses = freshClasses;
+
+        if (center.isShifted && !changed.some(key => ORIGIN_OPTIONS.includes(key))) {
+            const [x, y] = Array.isArray(transformOrigin)
+                ? transformOrigin
+                : [(transformOrigin as Point).x, (transformOrigin as Point).y];
+
+            this.setTransformOrigin({ x, y }, true);
+            this.storage.transformOrigin = transformOrigin;
+            this.storage.center.isShifted = true;
+        }
     }
 
     exeDrag({ dx, dy }: ExeDragParams) {
