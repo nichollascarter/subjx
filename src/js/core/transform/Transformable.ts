@@ -254,13 +254,21 @@ type ActiveSession = Required<Pick<TransformStorage,
 export default abstract class Transformable<
     M = unknown,
     S extends TransformStorage<M> = TransformStorage<M>
-> extends SubjectModel<S, TransformProxyMethods, TransformEventMap> implements Observer {
+> extends SubjectModel<S, TransformProxyMethods, TransformEventMap> {
 
     storage!: S;
     /** @internal */
     protected proxyMethods!: TransformProxyMethods;
     options!: TransformOptions;
     observable: Observable;
+
+    private readonly observer: Observer = {
+        notifyMove: data => this.notifyMove(data),
+        notifyRotate: data => this.notifyRotate(data),
+        notifyResize: data => this.notifyResize(data),
+        notifyApply: data => this.notifyApply(data),
+        notifyGetState: data => this.notifyGetState(data)
+    };
 
     constructor(elements: Element[], options: DragOptions | undefined, observable: Observable) {
         super(elements);
@@ -661,7 +669,7 @@ export default abstract class Transformable<
             if (resizeEach) {
                 observable.notify(
                     ON_RESIZE,
-                    self,
+                    self.observer,
                     nextArgs
                 );
             }
@@ -750,7 +758,7 @@ export default abstract class Transformable<
             if (moveEach) {
                 observable.notify(
                     ON_MOVE,
-                    self,
+                    self.observer,
                     nextArgs
                 );
             }
@@ -796,7 +804,7 @@ export default abstract class Transformable<
             if (rotateEach) {
                 observable.notify(
                     ON_ROTATE,
-                    self,
+                    self.observer,
                     {
                         radians,
                         ...args
@@ -956,7 +964,7 @@ export default abstract class Transformable<
 
         observable.notify(
             ON_GETSTATE,
-            this,
+            this.observer,
             {
                 clientX,
                 clientY,
@@ -1085,7 +1093,7 @@ export default abstract class Transformable<
 
         observable.notify(
             ON_APPLY,
-            this,
+            this.observer,
             {
                 clientX,
                 clientY,
@@ -1451,12 +1459,12 @@ export default abstract class Transformable<
         };
     }
 
-    notifyMove({ dx, dy }: Delta) {
+    private notifyMove({ dx, dy }: Delta) {
         this.elements.map((element) => super.drag({ element, dx, dy }));
         this.processControlsMove({ dx, dy });
     }
 
-    notifyRotate({ radians, ...rest }: { radians: number; [key: string]: unknown }) {
+    private notifyRotate({ radians, ...rest }: { radians: number; [key: string]: unknown }) {
         const {
             elements,
             options: {
@@ -1475,7 +1483,7 @@ export default abstract class Transformable<
         this.processControlsRotate({ radians });
     }
 
-    notifyResize({ dx, dy, revX, revY, dox, doy }: NotifyResizeArgs) {
+    private notifyResize({ dx, dy, revX, revY, dox, doy }: NotifyResizeArgs) {
         const {
             elements,
             storage: {
@@ -1513,7 +1521,7 @@ export default abstract class Transformable<
         this.processControlsResize({ dx, dy });
     }
 
-    notifyApply({ clientX, clientY, actionName, triggerEvent }: NotifyActionArgs) {
+    private notifyApply({ clientX, clientY, actionName, triggerEvent }: NotifyActionArgs) {
         this.proxyMethods.onDrop.call(this, { clientX, clientY });
         if (triggerEvent) {
             this.elements.map((element) => this.applyTransformToElement(element, actionName));
@@ -1521,7 +1529,7 @@ export default abstract class Transformable<
         }
     }
 
-    notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest }: NotifyGetStateArgs) {
+    private notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest }: NotifyGetStateArgs) {
         if (triggerEvent) {
             const {
                 elements,
@@ -1550,28 +1558,28 @@ export default abstract class Transformable<
         }
     }
 
-    subscribe({ resize, move, rotate }: MimicOptions) {
-        const { observable: ob } = this;
+    private subscribe({ resize, move, rotate }: MimicOptions) {
+        const { observable: ob, observer } = this;
 
         if (move || resize || rotate) {
-            ob.subscribe(ON_GETSTATE, this)
-                .subscribe(ON_APPLY, this);
+            ob.subscribe(ON_GETSTATE, observer)
+                .subscribe(ON_APPLY, observer);
         }
 
         if (move) {
-            ob.subscribe(ON_MOVE, this);
+            ob.subscribe(ON_MOVE, observer);
         }
         if (resize) {
-            ob.subscribe(ON_RESIZE, this);
+            ob.subscribe(ON_RESIZE, observer);
         }
         if (rotate) {
-            ob.subscribe(ON_ROTATE, this);
+            ob.subscribe(ON_ROTATE, observer);
         }
     }
 
-    unsubscribe() {
-        const { observable: ob } = this;
-        NOTIFIER_EVENTS.map(eventName => ob.unsubscribe(eventName, this));
+    private unsubscribe() {
+        const { observable: ob, observer } = this;
+        NOTIFIER_EVENTS.map(eventName => ob.unsubscribe(eventName, observer));
     }
 
     disable() {

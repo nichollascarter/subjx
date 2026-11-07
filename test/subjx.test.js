@@ -1,4 +1,4 @@
-import Subjx from '../src/js/core';
+import Subjx, { Observable } from '../src/js/core';
 
 function subjx(params) {
     return new Subjx(params);
@@ -387,6 +387,43 @@ describe('Test subjx "drag" method', () => {
         });
 
         $draggables.disable();
+    });
+
+    it('moves subscribed peers through a shared observable', () => {
+        const [leader, follower] = ['leader', 'follower'].map((id) => {
+            const element = document.createElement('div');
+            element.id = id;
+            element.style.cssText = 'display: block; position: absolute';
+            draggableContainer.appendChild(element);
+            return element;
+        });
+
+        const observable = new Observable();
+        const $follower = subjx(follower).drag({ each: { move: true } }, observable);
+        const $leader = subjx(leader).drag({ each: { move: true } }, observable);
+        const leaderDrops = jest.fn();
+        $leader.on('dragEnd', leaderDrops);
+
+        const dragLeader = () => {
+            leader.dispatchEvent(createEMouseDown());
+            document.dispatchEvent(createEMouseMove());
+            jest.advanceTimersByTime(1001 / 60);
+            document.dispatchEvent(createEMouseUp());
+        };
+
+        dragLeader();
+        const movedTransform = follower.style.transform;
+
+        expect(movedTransform).toBe(leader.style.transform);
+        expect(movedTransform).toContain('140,140');
+
+        $follower.disable();
+        dragLeader();
+
+        expect(leaderDrops).toHaveBeenCalledTimes(2);
+        expect(follower.style.transform).toBe(movedTransform);
+
+        $leader.disable();
     });
 });
 
