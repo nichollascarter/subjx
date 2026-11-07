@@ -15,7 +15,7 @@ const rules = {
     'semi': 'error',
     'semi-spacing': 'error',
     'padded-blocks': ['error', { 'blocks': 'never', 'classes': 'always', 'switches': 'always' }],
-    'no-unused-vars': ['error', { 'vars': 'all', 'args': 'after-used', 'ignoreRestSiblings': false }],
+    'no-unused-vars': ['error', { 'vars': 'all', 'args': 'after-used', 'argsIgnorePattern': '^_', 'ignoreRestSiblings': false }],
     'comma-dangle': ['error', {
         'arrays': 'never',
         'objects': 'never',

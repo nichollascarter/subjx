@@ -264,9 +264,6 @@ export default abstract class Transformable<
 
     constructor(elements: Element[], options: DragOptions | undefined, observable: Observable) {
         super(elements);
-        if (this.constructor === Transformable) {
-            throw new TypeError('Cannot construct Transformable instances directly');
-        }
         this.observable = observable;
 
         EMITTER_EVENTS.forEach(eventName => this.eventDispatcher.registerEvent(eventName));
@@ -303,13 +300,17 @@ export default abstract class Transformable<
     protected abstract processPointMove(element: Element, point: string, delta: Delta): object | null;
 
     /** @internal */
-    protected abstract prepareGuides(): GuideState | null;
+    protected prepareGuides(): GuideState | null {
+        return null;
+    }
 
     /** @internal */
-    protected abstract drawGuides(lines: GuideLine[]): void;
+    protected drawGuides(_lines: GuideLine[]): void { }
 
     /** @internal */
-    protected abstract prepareRestrict(): Restriction | null;
+    protected prepareRestrict(): Restriction | null {
+        return null;
+    }
 
     /** @internal */
     protected abstract processRotateRestrict(element: Element, radians: number): RestrictPoint;
@@ -330,7 +331,7 @@ export default abstract class Transformable<
     protected abstract applyTransformToElement(element: Element, actionName: string): void;
 
     /** @internal */
-    protected abstract processActions(actionName: string): void;
+    protected processActions(_actionName: string): void { }
 
     /** @internal */
     protected abstract getCommonState(): Partial<S> & { center: { x: number; y: number }; transform: S['transform'] };

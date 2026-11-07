@@ -421,23 +421,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
     }
 
     /** @internal */
-    protected processActions() { }
-
-    /** @internal */
     protected processPointMove() {
-        return null;
-    }
-
-    /** @internal */
-    protected prepareGuides() {
-        return null;
-    }
-
-    /** @internal */
-    protected drawGuides() { }
-
-    /** @internal */
-    protected prepareRestrict() {
         return null;
     }
 
