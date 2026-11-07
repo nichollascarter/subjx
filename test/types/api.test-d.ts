@@ -9,7 +9,8 @@ import type {
     DragOptions,
     Draggable,
     DraggableSVG,
-    Observable
+    Observable,
+    TransformHandles
 } from 'subjx';
 
 declare const div: HTMLDivElement;
@@ -84,6 +85,8 @@ dimensions.rotation.toFixed();
 box.forEach(([x, y]) => x + y);
 
 draggable.controls.querySelector('.sjx-hdl');
+const handles: TransformHandles = draggable.handles;
+handles.tl?.getBoundingClientRect();
 draggable.elements.map(el => el.getAttribute('id'));
 const { te } = draggable.storage.handles;
 te?.setAttribute('stroke', 'red');

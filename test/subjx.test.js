@@ -389,6 +389,15 @@ describe('Test subjx "drag" method', () => {
         $draggables.disable();
     });
 
+    it('exposes handles without going through storage', () => {
+        const draggable = subjx(domElement).drag();
+
+        expect(draggable.handles).toBe(draggable.storage.handles);
+        expect(draggable.handles.tl).toBeInstanceOf(HTMLElement);
+
+        draggable.disable();
+    });
+
     it('moves subscribed peers through a shared observable', () => {
         const [leader, follower] = ['leader', 'follower'].map((id) => {
             const element = document.createElement('div');

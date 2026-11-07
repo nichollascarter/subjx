@@ -69,12 +69,8 @@ xDraggable.disable();
 // getter returns root DOM element of 'controls'
 xDraggable.controls;
 
-// provides access to useful options
-xDraggable.storage;
-// for example: to get reference to any handle's DOM
-const {
-  handles: { tl, tr, ...etc }
-} = xDraggable.storage;
+// getter returns DOM elements of the handles
+const { tl, tr, ...etc } = xDraggable.handles;
 
 // enables dragging
 // there is no need to call this method manually

@@ -1743,4 +1743,8 @@ export default abstract class Transformable<
         return this.storage.wrapper;
     }
 
+    get handles(): S['handles'] {
+        return this.storage.handles;
+    }
+
 }

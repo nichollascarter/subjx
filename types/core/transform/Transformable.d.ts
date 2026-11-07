@@ -145,4 +145,5 @@ export default abstract class Transformable<M = unknown, S extends TransformStor
     exeRotate({ delta }: ExeRotateParams): void;
     resetTransformOrigin(): void;
     get controls(): S['wrapper'];
+    get handles(): S['handles'];
 }
