@@ -70,6 +70,8 @@ draggable.resetTransformOrigin();
 draggable.setCenterPoint();
 // @ts-expect-error
 draggable.resetCenterPoint();
+// @ts-expect-error
+draggable.observable;
 draggable.fitControlsToSize();
 
 const direction: AlignmentDirection = 't';

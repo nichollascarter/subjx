@@ -250,7 +250,7 @@ export default abstract class Transformable<
     /** @internal */
     protected proxyMethods!: TransformProxyMethods;
     options!: TransformOptions;
-    observable: Observable;
+    private readonly observable: Observable;
 
     private readonly observer: Observer = {
         notifyMove: data => this.notifyMove(data),

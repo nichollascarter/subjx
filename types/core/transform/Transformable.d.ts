@@ -127,7 +127,7 @@ export interface TransformProxyMethods extends ProxyMethods {
 export default abstract class Transformable<M = unknown, S extends TransformStorage<M> = TransformStorage<M>> extends SubjectModel<S, TransformProxyMethods, TransformEventMap> {
     storage: S;
     options: TransformOptions;
-    observable: Observable;
+    private readonly observable;
     private readonly observer;
     constructor(elements: Element[], options: DragOptions | undefined, observable: Observable);
     abstract getBoundingRect(elementOrMatrix?: Element | M | null, matrix?: M | null): number[][];
