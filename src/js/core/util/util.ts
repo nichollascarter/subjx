@@ -1,27 +1,15 @@
-type LegacyWindow = Window & {
-    mozRequestAnimationFrame?: typeof requestAnimationFrame;
-    webkitRequestAnimationFrame?: typeof requestAnimationFrame;
-    msRequestAnimationFrame?: typeof requestAnimationFrame;
-    mozCancelAnimationFrame?: typeof cancelAnimationFrame;
-};
+export const requestAnimFrame = (callback: FrameRequestCallback): number =>
+    typeof requestAnimationFrame === 'function'
+        ? requestAnimationFrame(callback)
+        : setTimeout(callback, 1000 / 60) as unknown as number;
 
-const legacyWindow = window as LegacyWindow;
-
-export const requestAnimFrame: (callback: FrameRequestCallback) => number =
-    window.requestAnimationFrame ||
-    legacyWindow.mozRequestAnimationFrame ||
-    legacyWindow.webkitRequestAnimationFrame ||
-    legacyWindow.msRequestAnimationFrame ||
-    function (f: FrameRequestCallback) {
-        return setTimeout(f, 1000 / 60);
-    };
-
-export const cancelAnimFrame: (requestID: number) => void =
-    window.cancelAnimationFrame ||
-    legacyWindow.mozCancelAnimationFrame ||
-    function (requestID: number) {
+export const cancelAnimFrame = (requestID: number): void => {
+    if (typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(requestID);
+    } else {
         clearTimeout(requestID);
-    };
+    }
+};
 
 export const {
     forEach,
@@ -29,12 +17,10 @@ export const {
     map: arrMap,
     reduce: arrReduce
 } = Array.prototype;
-/* eslint-disable no-console */
+
 export const { warn } = console;
 
 export const noop = <T>(_: T): T => _;
-
-/* eslint-disable no-console */
 
 export const isDef = <T>(val: T): val is NonNullable<T> => val !== undefined && val !== null;
 
