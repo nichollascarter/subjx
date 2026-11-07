@@ -87,7 +87,6 @@ export interface TransformOptions {
     cursorMove: string;
     cursorRotate: string;
     cursorResize: string;
-    rotationPoint: boolean;
     transformOrigin: boolean | [number, number];
     restrict: Element | null;
     container: Element;

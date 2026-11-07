@@ -73,6 +73,8 @@ draggable.setCenterPoint();
 draggable.resetCenterPoint();
 // @ts-expect-error
 draggable.observable;
+// @ts-expect-error
+subjx(div).drag({ rotationPoint: true });
 draggable.fitControlsToSize();
 draggable.update({ axis: 'x', resizable: false, handles: ['tl', 'br'], onMove() {} });
 draggable.update();

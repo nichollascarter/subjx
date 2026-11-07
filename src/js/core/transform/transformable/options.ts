@@ -24,7 +24,7 @@ export const RUNTIME_OPTIONS: ReadonlyArray<keyof DragOptions> = [
     'onDestroy'
 ];
 
-export const ORIGIN_OPTIONS: ReadonlyArray<keyof DragOptions> = ['transformOrigin', 'rotationPoint', 'container'];
+export const ORIGIN_OPTIONS: ReadonlyArray<keyof DragOptions> = ['transformOrigin', 'container'];
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> => (
     typeof value === 'object' && value !== null && Object.getPrototypeOf(value) === Object.prototype

@@ -249,7 +249,6 @@ export default abstract class Transformable<
             cursorMove = 'auto',
             cursorResize = 'auto',
             cursorRotate = 'auto',
-            rotationPoint = false,
             transformOrigin = false,
             restrict,
             draggable = true,
@@ -289,8 +288,7 @@ export default abstract class Transformable<
             cursorMove,
             cursorRotate,
             cursorResize,
-            rotationPoint,
-            transformOrigin: transformOrigin || rotationPoint,
+            transformOrigin,
             restrict: restrict
                 ? helper(restrict)[0] || document.body
                 : null,

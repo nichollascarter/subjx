@@ -132,7 +132,6 @@ const defaultOptions = {
     cursorMove: 'auto',
     cursorRotate: 'auto',
     cursorResize: 'auto',
-    rotationPoint: false,
     restrict: null,
     snap: { x: 10, y: 10, angle: 0.17453292519943295 },
     each: { move: false, resize: false, rotate: false },
@@ -156,7 +155,7 @@ const defaultOptions = {
 };
 
 const options = {
-    rotationPoint: true,
+    transformOrigin: true,
     proportions: true,
     axis: 'x',
     each: {
