@@ -17,13 +17,13 @@
                     "@babel/preset-env",
                     {
                         "targets": {
-                            "node": "12",
+                            "node": "18",
                             "browsers": [
-                                ">0.25%",
-                                "not dead"
+                                "defaults"
                             ]
                         },
-                        "modules": "commonjs"
+                        "bugfixes": true,
+                        "modules": false
                     }
                 ],
                 "@babel/preset-typescript"
@@ -34,9 +34,8 @@
                 [
                     "@babel/preset-env",
                     {
-                        "targets": {
-                            "esmodules": true
-                        },
+                        "targets": "defaults",
+                        "bugfixes": true,
                         "modules": false
                     }
                 ],

@@ -43,7 +43,6 @@ const babelPlugins = (target) => ([
     babel({
         exclude: 'node_modules/**',
         extensions,
-        presets: ['@babel/preset-env'],
         babelHelpers: 'bundled',
         envName: target
     })
@@ -127,7 +126,6 @@ export default [
                     babel({
                         exclude: 'node_modules/**',
                         extensions,
-                        presets: ['@babel/preset-env'],
                         babelHelpers: 'runtime',
                         plugins: [
                             ['@babel/plugin-transform-runtime', {

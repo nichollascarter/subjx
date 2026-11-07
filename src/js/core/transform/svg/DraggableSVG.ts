@@ -17,8 +17,8 @@ import { movePath, resizePath } from './path';
 import { boxFromPoints, unionBoxes } from '../guides';
 import type { Box, GuideLine, GuideState } from '../guides';
 import type { Restriction } from '../restrict';
-import { EDGE_KEYS, hitAreaOutline, outlineToPath } from './hitAreas';
-import type { HitCorners } from './hitAreas';
+import { EDGE_KEYS, hitAreaOutline, outlineToPath } from './hit-areas';
+import type { HitCorners } from './hit-areas';
 
 import {
     THEME_COLOR,
