@@ -297,7 +297,7 @@ export default abstract class Transformable<
     protected abstract processResizeRestrict(element: Element, delta: Delta): RestrictPoint;
 
     /** @internal */
-    protected abstract processPointMove(element: Element, point: string, delta: Delta): object | null;
+    protected processPointMove?(element: Element, point: string, delta: Delta): object | null;
 
     /** @internal */
     protected prepareGuides(): GuideState | null {
@@ -526,7 +526,7 @@ export default abstract class Transformable<
                 snapToGrid(clientY - relativeY, snap.y) as number
             ));
 
-            const result = this.processPointMove(elements[0], point, { dx, dy });
+            const result = this.processPointMove?.(elements[0], point, { dx, dy });
 
             if (result) {
                 const finalArgs = {

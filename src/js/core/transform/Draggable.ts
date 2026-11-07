@@ -421,11 +421,6 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
     }
 
     /** @internal */
-    protected processPointMove() {
-        return null;
-    }
-
-    /** @internal */
     protected processResize(element: HTMLElement, { dx, dy }: Delta) {
         if (this.options.isGrouped) return this.processGroupResize(element, { dx, dy });
 
