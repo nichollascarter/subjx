@@ -44,7 +44,7 @@ export default class Observable {
 
         if (isDef(obs[eventName])) {
             const index = obs[eventName].indexOf(f);
-            obs[eventName].splice(index, 1);
+            if (index !== -1) obs[eventName].splice(index, 1);
         }
 
         return this;
