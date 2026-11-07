@@ -2,7 +2,13 @@ import Helper, { helper } from '../Helper';
 import SubjectModel from '../SubjectModel';
 import type { PointerInput, MoveArgs, ProxyMethods } from '../SubjectModel';
 import type Observable from '../observable/Observable';
-import type { Observer } from '../observable/Observable';
+import type {
+    Observer,
+    NotifyRotateArgs,
+    NotifyResizeArgs,
+    NotifyActionArgs,
+    NotifyGetStateArgs
+} from '../observable/Observable';
 import { getMinMaxOfArray, snapToGrid, RAD } from './common';
 import type {
     DragOptions,
@@ -227,22 +233,6 @@ export interface TransformProxyMethods extends ProxyMethods {
     onRotate: ProxyMethods['onMove'];
 }
 
-export interface NotifyResizeArgs extends Delta {
-    revX: boolean;
-    revY: boolean;
-    dox: boolean;
-    doy: boolean;
-}
-
-export interface NotifyActionArgs {
-    clientX: number;
-    clientY: number;
-    actionName: string;
-    triggerEvent: boolean;
-}
-
-export type NotifyGetStateArgs = NotifyActionArgs & Partial<ResizeFlags> & { factor?: number };
-
 type ActiveSession = Required<Pick<TransformStorage,
     | 'clientX' | 'clientY' | 'relativeX' | 'relativeY' | 'bx' | 'by' | 'pressang'
     | 'dox' | 'doy' | 'revX' | 'revY' | 'mouseEvent'
@@ -345,7 +335,7 @@ export default abstract class Transformable<
     protected abstract getCommonState(): Partial<S> & { center: { x: number; y: number }; transform: S['transform'] };
 
     /** @internal */
-    protected abstract getElementState(element: Element, flags: Partial<ResizeFlags> & { factor?: number }): Partial<ElementData<M>>;
+    protected abstract getElementState(element: Element, flags: Partial<ResizeFlags>): Partial<ElementData<M>>;
 
     /** @internal */
     protected abstract getRestrictedBBox(): number[][];
@@ -862,7 +852,6 @@ export default abstract class Transformable<
             onTopEdge,
             onLeftEdge,
             handle,
-            factor,
             revX,
             revY,
             doW,
@@ -957,10 +946,11 @@ export default abstract class Transformable<
             ? E_RESIZE
             : (doRotate ? E_ROTATE : E_DRAG);
 
-        const triggerEvent =
+        const triggerEvent = Boolean(
             (doResize && resize) ||
             (doRotate && rotate) ||
-            (doDrag && move);
+            (doDrag && move)
+        );
 
         observable.notify(
             ON_GETSTATE,
@@ -970,7 +960,6 @@ export default abstract class Transformable<
                 clientY,
                 actionName,
                 triggerEvent,
-                factor,
                 revX,
                 revY,
                 doW,
@@ -1086,10 +1075,11 @@ export default abstract class Transformable<
             rotate
         } = each;
 
-        const triggerEvent =
+        const triggerEvent = Boolean(
             (doResize && resize) ||
             (doRotate && rotate) ||
-            (doDrag && move);
+            (doDrag && move)
+        );
 
         observable.notify(
             ON_APPLY,
@@ -1464,7 +1454,7 @@ export default abstract class Transformable<
         this.processControlsMove({ dx, dy });
     }
 
-    private notifyRotate({ radians, ...rest }: { radians: number; [key: string]: unknown }) {
+    private notifyRotate({ radians, ...rest }: NotifyRotateArgs) {
         const {
             elements,
             options: {

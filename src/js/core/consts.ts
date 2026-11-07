@@ -50,13 +50,13 @@ const ON_MOVE = 'onmove';
 const ON_RESIZE = 'onresize';
 const ON_ROTATE = 'onrotate';
 
-const NOTIFIER_EVENTS: string[] = [
+const NOTIFIER_EVENTS = [
     ON_GETSTATE,
     ON_APPLY,
     ON_MOVE,
     ON_RESIZE,
     ON_ROTATE
-];
+] as const;
 
 export const NOTIFIER_CONSTANTS = {
     NOTIFIER_EVENTS,
@@ -65,7 +65,7 @@ export const NOTIFIER_CONSTANTS = {
     ON_MOVE,
     ON_RESIZE,
     ON_ROTATE
-};
+} as const;
 
 export const EVENT_EMITTER_CONSTANTS = {
     EMITTER_EVENTS,

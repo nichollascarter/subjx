@@ -124,21 +124,6 @@ export interface TransformProxyMethods extends ProxyMethods {
     onResize: ProxyMethods['onMove'];
     onRotate: ProxyMethods['onMove'];
 }
-export interface NotifyResizeArgs extends Delta {
-    revX: boolean;
-    revY: boolean;
-    dox: boolean;
-    doy: boolean;
-}
-export interface NotifyActionArgs {
-    clientX: number;
-    clientY: number;
-    actionName: string;
-    triggerEvent: boolean;
-}
-export type NotifyGetStateArgs = NotifyActionArgs & Partial<ResizeFlags> & {
-    factor?: number;
-};
 export default abstract class Transformable<M = unknown, S extends TransformStorage<M> = TransformStorage<M>> extends SubjectModel<S, TransformProxyMethods, TransformEventMap> {
     storage: S;
     options: TransformOptions;

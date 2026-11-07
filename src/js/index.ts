@@ -27,7 +27,16 @@ export type { Subjx };
 export type { DragResult } from './core/Subjx';
 export type { default as Helper, HelperParams as Target } from './core/Helper';
 export type { default as SubjectModel } from './core/SubjectModel';
-export type { Observer } from './core/observable/Observable';
+export type {
+    Observer,
+    NotifierEvent,
+    NotifierPayloads,
+    NotifyMoveArgs,
+    NotifyRotateArgs,
+    NotifyResizeArgs,
+    NotifyActionArgs,
+    NotifyGetStateArgs
+} from './core/observable/Observable';
 export type {
     default as Transformable,
     TransformStorage,
