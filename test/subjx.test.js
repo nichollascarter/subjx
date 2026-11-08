@@ -130,10 +130,10 @@ const svgLineElement = document.getElementById('svg-line');
 const defaultOptions = {
     axis: 'xy',
     cursorMove: 'auto',
-    cursorRotate: 'auto',
-    cursorResize: 'auto',
+    cursorRotate: null,
+    cursorResize: null,
     restrict: null,
-    snap: { x: 10, y: 10, angle: 0.17453292519943295 },
+    snap: { x: 0, y: 0, angle: 0 },
     each: { move: false, resize: false, rotate: false },
     proportions: false,
     flip: true,
@@ -258,6 +258,8 @@ describe('Test subjx "drag" method', () => {
             draggable.getDimensions();
             ['t', 'b', 'l', 'r', 'v', 'h'].map(align => draggable.applyAlignment(align));
         }).not.toThrow();
+
+        draggable.disable();
     });
 
     it('init draggable with options', () => {
@@ -465,6 +467,8 @@ describe('Test svg subjx "drag" method', () => {
             draggable.getDimensions();
             ['t', 'b', 'l', 'r', 'v', 'h'].map((align) => draggable.applyAlignment(align));
         }).not.toThrow();
+
+        draggable.disable();
     });
 
     it('init draggable with options', () => {
@@ -904,7 +908,7 @@ describe('Test update method', () => {
 
         expect(draggable.options).toMatchObject({
             axis: 'x',
-            snap: { x: 5, y: 10 },
+            snap: { x: 5, y: 0 },
             proportions: true
         });
         expect(draggable.storage.handles.tl).toBe(tl);
@@ -1101,5 +1105,123 @@ describe('Test update method', () => {
         expect(() => draggable.update({ resizable: false })).not.toThrow();
         expect(wrapper.parentNode).toBeNull();
         expect(draggable.storage).toBeUndefined();
+    });
+});
+
+describe('Test cursors', () => {
+    const place = (element, x, y) => {
+        element.getBoundingClientRect = () => ({ left: x, top: y, width: 0, height: 0 });
+    };
+
+    const placeBox = ({ te, be, tl, tr }) => {
+        place(te, 50, 0);
+        place(be, 50, 100);
+        if (tl) place(tl, 0, 0);
+        if (tr) place(tr, 100, 0);
+    };
+
+    const hover = target => target.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+
+    const press = (target) => {
+        target.dispatchEvent(createEMouseDown());
+        document.dispatchEvent(createEMouseMove());
+        jest.advanceTimersByTime(1001 / 60);
+    };
+
+    afterEach(() => {
+        document.body.style.cursor = '';
+    });
+
+    it('shows a direction cursor on a hovered resize handle and its hit area', () => {
+        const draggable = subjx(svgElement).drag({ hitRadius: 10 });
+        const { handles, hitAreas } = draggable.storage;
+
+        placeBox(handles);
+        hover(hitAreas.tr);
+
+        expect(handles.tr.style.cursor).toEqual('nesw-resize');
+        expect(hitAreas.tr.style.cursor).toEqual('nesw-resize');
+
+        hover(handles.tl);
+
+        expect(handles.tl.style.cursor).toEqual('nwse-resize');
+
+        draggable.disable();
+    });
+
+    it('keeps the grabbed handle cursor on the page while resizing', () => {
+        const draggable = subjx(svgElement).drag();
+        const { handles, wrapper } = draggable.storage;
+
+        placeBox(handles);
+        press(handles.tl);
+
+        expect(document.body.style.cursor).toEqual('nwse-resize');
+        expect(wrapper.style.cursor).toEqual('nwse-resize');
+
+        document.dispatchEvent(createEMouseUp());
+
+        expect(document.body.style.cursor).toEqual('auto');
+        expect(wrapper.style.cursor).toEqual('');
+
+        draggable.disable();
+    });
+
+    it('grabs while rotating', () => {
+        const draggable = subjx(svgElement).drag();
+
+        press(draggable.storage.handles.rotator);
+
+        expect(document.body.style.cursor).toEqual('grabbing');
+
+        document.dispatchEvent(createEMouseUp());
+        draggable.disable();
+    });
+
+    it('prefers the cursor options', () => {
+        const draggable = subjx(svgElement).drag({ cursorResize: 'pointer', cursorRotate: 'crosshair' });
+        const { handles } = draggable.storage;
+
+        placeBox(handles);
+        press(handles.tl);
+        expect(document.body.style.cursor).toEqual('pointer');
+        document.dispatchEvent(createEMouseUp());
+
+        press(handles.rotator);
+        expect(document.body.style.cursor).toEqual('crosshair');
+        document.dispatchEvent(createEMouseUp());
+
+        draggable.disable();
+    });
+
+    it('clears the cursor of edges that cannot resize', () => {
+        const draggable = subjx(svgElement).drag();
+        const { handles } = draggable.storage;
+
+        placeBox(handles);
+        hover(handles.te);
+        expect(handles.te.style.cursor).toEqual('ns-resize');
+
+        draggable.update({ resizable: false });
+
+        const next = draggable.storage.handles;
+        placeBox(next);
+        next.te.style.cursor = 'ns-resize';
+        hover(next.te);
+
+        expect(next.te.style.cursor).toEqual('');
+
+        draggable.disable();
+    });
+
+    it('stops listening for hover after disable', () => {
+        const draggable = subjx(svgElement).drag();
+        const { handles } = draggable.storage;
+
+        placeBox(handles);
+        draggable.disable();
+        hover(handles.tl);
+
+        expect(handles.tl.style.cursor).toEqual('');
     });
 });

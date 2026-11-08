@@ -37,7 +37,8 @@ export const {
     E_MOUSEMOVE,
     E_MOUSEUP,
     E_TOUCHMOVE,
-    E_TOUCHEND
+    E_TOUCHEND,
+    E_MOUSEOVER
 } = CLIENT_EVENTS_CONSTANTS;
 
 export const {

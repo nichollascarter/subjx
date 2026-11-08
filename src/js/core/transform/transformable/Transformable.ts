@@ -74,6 +74,7 @@ import {
     E_MOUSEUP,
     E_TOUCHMOVE,
     E_TOUCHEND,
+    E_MOUSEOVER,
     TOP_LEFT,
     TOP_CENTER,
     TOP_RIGHT,
@@ -95,6 +96,7 @@ import {
     isSameOption
 } from './options';
 import { syncTransform } from './dom';
+import { RESIZE_KEYS, ROTATE_CURSOR, handleCursor, resizeCursor } from './cursors';
 
 const { keys, values } = Object;
 
@@ -119,6 +121,24 @@ export default abstract class Transformable<
         notifyResize: data => this.notifyResize(data),
         notifyApply: data => this.notifyApply(data),
         notifyGetState: data => this.notifyGetState(data)
+    };
+
+    private readonly onControlsOver = (e: Event) => {
+        const { storage } = this;
+
+        if (isUndef(storage) || storage.onExecution) return;
+
+        const target = e.target as Element;
+        const handle = this.resolveHandle(target);
+        const key = this.handleKey(handle);
+
+        if (!key || !RESIZE_KEYS.includes(key)) return;
+
+        const cursor = this.options.resizable ? resizeCursor(storage.handles, key) || '' : '';
+
+        [handle, target].forEach((node) => {
+            (node as HTMLElement).style.cursor = cursor;
+        });
     };
 
     constructor(elements: Element[], options: DragOptions | undefined, observable: Observable) {
@@ -247,8 +267,8 @@ export default abstract class Transformable<
             snap: snapOptions,
             axis = 'xy',
             cursorMove = 'auto',
-            cursorResize = 'auto',
-            cursorRotate = 'auto',
+            cursorResize = null,
+            cursorRotate = null,
             transformOrigin = false,
             restrict,
             draggable = true,
@@ -277,9 +297,9 @@ export default abstract class Transformable<
         } = options;
 
         const snap = {
-            x: 10,
-            y: 10,
-            angle: 10,
+            x: 0,
+            y: 0,
+            angle: 0,
             ...snapOptions
         };
 
@@ -703,6 +723,8 @@ export default abstract class Transformable<
 
         if (!isTarget) return;
 
+        storage.handleCursor = handleCursor(handles, this.handleKey(target));
+
         const computed = this.compute(e, elements);
 
         keys(computed).map(prop => (storage as Record<string, unknown>)[prop] = (computed as Record<string, unknown>)[prop]);
@@ -848,6 +870,7 @@ export default abstract class Transformable<
             doRotate,
             doDrag,
             doResize,
+            handleCursor: pressedCursor,
             cursor
         } = storage;
 
@@ -861,11 +884,12 @@ export default abstract class Transformable<
             if (doDrag) {
                 cursor = cursorMove;
             } else if (doRotate) {
-                cursor = cursorRotate;
+                cursor = cursorRotate ?? ROTATE_CURSOR;
             } else if (doResize) {
-                cursor = cursorResize;
+                cursor = cursorResize ?? pressedCursor ?? 'auto';
             }
             helper(document.body).css({ cursor });
+            (storage.wrapper as HTMLElement).style.cursor = cursor || '';
         }
     }
 
@@ -965,6 +989,7 @@ export default abstract class Transformable<
         this.storage.restriction = null;
 
         helper(document.body).css({ cursor: 'auto' });
+        (this.storage.wrapper as HTMLElement).style.cursor = '';
         if (isDef(radius)) {
             addClass(radius, `${LIB_CLASS_PREFIX}hidden`);
         }
@@ -980,6 +1005,14 @@ export default abstract class Transformable<
     /** @internal */
     protected afterInit() {
         this.initClasses = this.readInitClasses(this.storage);
+        helper(this.storage.controls).on(E_MOUSEOVER, this.onControlsOver);
+    }
+
+    /** @internal */
+    private handleKey(handle: Element | null) {
+        const { handles } = this.storage;
+
+        return keys(handles).find(key => handles[key] === handle) ?? null;
     }
 
     /** @internal */
@@ -1295,6 +1328,8 @@ export default abstract class Transformable<
                 .off(E_MOUSEDOWN, this.onMouseDown)
                 .off(E_TOUCHSTART, this.onTouchStart)
         ));
+
+        helper(controls).off(E_MOUSEOVER, this.onControlsOver);
 
         wrapper.parentNode!.removeChild(wrapper);
     }

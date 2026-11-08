@@ -88,6 +88,7 @@ export interface TransformStorage<M = unknown> {
     doDraw?: boolean;
     onExecution?: boolean;
     cursor?: string | null;
+    handleCursor?: string | null;
     activeHandle?: Element | null;
     guides?: GuideState | null;
     restriction?: Restriction | null;
@@ -99,8 +100,8 @@ export interface TransformStorage<M = unknown> {
 export interface TransformOptions {
     axis: string;
     cursorMove: string;
-    cursorRotate: string;
-    cursorResize: string;
+    cursorRotate: string | null;
+    cursorResize: string | null;
     transformOrigin: boolean | [number, number];
     restrict: Element | null;
     container: Element;
