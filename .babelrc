@@ -37,6 +37,7 @@
                         "targets": {
                             "esmodules": true
                         },
+                        "bugfixes": true,
                         "modules": false
                     }
                 ],
