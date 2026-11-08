@@ -1,3 +1,36 @@
+# [2.0.0-rc.1](https://github.com/nichollascarter/subjx/compare/v1.4.0...v2.0.0-rc.1) (2026-11-08)
+
+
+* build!: keep the UMD bundle in ES5 for script tag users ([725c88c](https://github.com/nichollascarter/subjx/commit/725c88c412afe23976192c0caa77361fb1bf0fa5))
+* refactor(observable)!: typed notifier payloads and a handler map instead of a switch ([8f4a984](https://github.com/nichollascarter/subjx/commit/8f4a9848452c47eec1877fa4921d0e38e130b036))
+* refactor(transform)!: make the observable field private ([d93d4a9](https://github.com/nichollascarter/subjx/commit/d93d4a97bf26397703af09faade309f86e7d05f5))
+* refactor(transform)!: observe peers through a private adapter instead of implements Observer ([8844864](https://github.com/nichollascarter/subjx/commit/8844864223bea8718e16691441ea8f4f307a2688))
+* refactor(transform)!: remove deprecated rotationPoint option ([45d953c](https://github.com/nichollascarter/subjx/commit/45d953c832ba88b0ca39e5742276968d537df05b))
+* refactor(transform)!: remove deprecated setCenterPoint and resetCenterPoint ([5422082](https://github.com/nichollascarter/subjx/commit/54220827f188b9d68caacaeb2bbe046f72cd42f4))
+
+
+### Bug Fixes
+
+* **util:** resolve animation frame functions at call time so the library imports without a DOM ([b7f8365](https://github.com/nichollascarter/subjx/commit/b7f8365de4157e06da6b710a2ecc2eb6ca27b384))
+* start drag, resize and rotate only on the primary mouse button ([ec2e7c4](https://github.com/nichollascarter/subjx/commit/ec2e7c485946e6718e4c6973398af60994776851))
+* **observable:** unsubscribing an unknown observer no longer removes the last one ([2976ee3](https://github.com/nichollascarter/subjx/commit/2976ee36d09789a5bfe6c4bedfbcfaf15ff53b40))
+
+
+### Features
+
+* **transform:** handles getter as the public way to reach handle elements ([ebf2fe0](https://github.com/nichollascarter/subjx/commit/ebf2fe0b750136f3194f8913d2a8688890af1e08))
+* **transform:** update(options) changes options in place and redraws only the handles that depend on them ([c5b2442](https://github.com/nichollascarter/subjx/commit/c5b2442066888125544c013ad64aeb99ede686c5))
+
+
+### BREAKING CHANGES
+
+* the ESM build now targets browsers with ES module support (Chrome 61+, Safari 10.1+, Firefox 60+) and the CommonJS build targets Node 12+ and browsers matched by ">0.25%, not dead". Only the UMD build (dist/js/subjx.js, the unpkg entry) stays ES5, so projects that bundle subjx for ES5 environments need to transpile it.
+* the rotationPoint option is removed, use transformOrigin instead.
+* Transformable.observable is no longer public, pass a shared Observable through drag(options, observable) instead.
+* Observable.subscribe, unsubscribe and notify accept only notifier event names, and notify checks the payload type per event.
+* notifyMove, notifyRotate, notifyResize, notifyApply, notifyGetState, subscribe and unsubscribe are no longer part of the public Transformable API.
+* setCenterPoint and resetCenterPoint are removed, use setTransformOrigin and resetTransformOrigin instead.
+
 # [1.4.0](https://github.com/nichollascarter/subjx/compare/v1.3.0...v1.4.0) (2026-10-16)
 
 

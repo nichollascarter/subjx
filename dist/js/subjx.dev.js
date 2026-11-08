@@ -243,7 +243,7 @@
       if ("object" != typeof i) return i;
       throw new TypeError("@@toPrimitive must return a primitive value.");
     }
-    return (String )(t);
+    return ("string" === r ? String : Number)(t);
   }
   function _toPropertyKey(t) {
     var i = _toPrimitive(t, "string");
@@ -266,12 +266,15 @@
     }
   }
 
-  var legacyWindow = window;
-  var requestAnimFrame = window.requestAnimationFrame || legacyWindow.mozRequestAnimationFrame || legacyWindow.webkitRequestAnimationFrame || legacyWindow.msRequestAnimationFrame || function (f) {
-    return setTimeout(f, 1000 / 60);
+  var requestAnimFrame = function requestAnimFrame(callback) {
+    return typeof requestAnimationFrame === 'function' ? requestAnimationFrame(callback) : setTimeout(callback, 1000 / 60);
   };
-  var cancelAnimFrame = window.cancelAnimationFrame || legacyWindow.mozCancelAnimationFrame || function (requestID) {
-    clearTimeout(requestID);
+  var cancelAnimFrame = function cancelAnimFrame(requestID) {
+    if (typeof cancelAnimationFrame === 'function') {
+      cancelAnimationFrame(requestID);
+    } else {
+      clearTimeout(requestID);
+    }
   };
   var _Array$prototype = Array.prototype,
     forEach = _Array$prototype.forEach,
@@ -281,9 +284,6 @@
   var noop = function noop(_) {
     return _;
   };
-
-  /* eslint-disable no-console */
-
   var isDef = function isDef(val) {
     return val !== undefined && val !== null;
   };
@@ -556,6 +556,17 @@
     ON_MOVE$1 = NOTIFIER_CONSTANTS.ON_MOVE,
     ON_RESIZE$1 = NOTIFIER_CONSTANTS.ON_RESIZE,
     ON_ROTATE$1 = NOTIFIER_CONSTANTS.ON_ROTATE;
+  var handlers = _defineProperty(_defineProperty(_defineProperty(_defineProperty(_defineProperty({}, ON_GETSTATE$1, function (observer, data) {
+    return observer.notifyGetState(data);
+  }), ON_APPLY$1, function (observer, data) {
+    return observer.notifyApply(data);
+  }), ON_MOVE$1, function (observer, data) {
+    return observer.notifyMove(data);
+  }), ON_RESIZE$1, function (observer, data) {
+    return observer.notifyResize(data);
+  }), ON_ROTATE$1, function (observer, data) {
+    return observer.notifyRotate(data);
+  });
   var Observable = /*#__PURE__*/function () {
     function Observable() {
       _classCallCheck(this, Observable);
@@ -579,33 +590,18 @@
         var obs = this.observers;
         if (isDef(obs[eventName])) {
           var index = obs[eventName].indexOf(f);
-          obs[eventName].splice(index, 1);
+          if (index !== -1) obs[eventName].splice(index, 1);
         }
         return this;
       }
     }, {
       key: "notify",
       value: function notify(eventName, source, data) {
-        if (isUndef(this.observers[eventName])) return;
-        this.observers[eventName].forEach(function (observer) {
-          if (source === observer) return;
-          switch (eventName) {
-            case ON_MOVE$1:
-              observer.notifyMove(data);
-              break;
-            case ON_ROTATE$1:
-              observer.notifyRotate(data);
-              break;
-            case ON_RESIZE$1:
-              observer.notifyResize(data);
-              break;
-            case ON_APPLY$1:
-              observer.notifyApply(data);
-              break;
-            case ON_GETSTATE$1:
-              observer.notifyGetState(data);
-              break;
-          }
+        var observers = this.observers[eventName];
+        var handler = handlers[eventName];
+        if (isUndef(observers) || isUndef(handler)) return;
+        observers.forEach(function (observer) {
+          if (source !== observer) handler(observer, data);
         });
       }
     }]);
@@ -669,6 +665,8 @@
     E_TOUCHMOVE$1 = CLIENT_EVENTS_CONSTANTS.E_TOUCHMOVE,
     E_TOUCHEND$1 = CLIENT_EVENTS_CONSTANTS.E_TOUCHEND;
   var SubjectModel = /*#__PURE__*/function () {
+    /** Internal state. Its shape is not part of the public API and may change in any minor release. */
+
     /** @internal */
 
     /** @internal */
@@ -692,8 +690,14 @@
       value: function enable(options) {
         this.processOptions(options);
         this.init(this.elements);
+        this.afterInit();
         this.proxyMethods.onInit.call(this, this.elements);
       }
+
+      /** @internal */
+    }, {
+      key: "afterInit",
+      value: function afterInit() {}
     }, {
       key: "drag",
       value: /** @internal */
@@ -726,6 +730,7 @@
     }, {
       key: "onMouseDown",
       value: function onMouseDown(e) {
+        if (e.button !== 0) return;
         this.start(e);
         helper(document).on(E_MOUSEMOVE$1, this.onMouseMove).on(E_MOUSEUP$1, this.onMouseUp);
       }
@@ -1146,12 +1151,6 @@
     };
   };
 
-  var _excluded$2 = ["element", "radians"],
-    _excluded2$2 = ["element", "dx", "dy"],
-    _excluded3$2 = ["revX", "revY", "doW", "doH"],
-    _excluded4$1 = ["transform"],
-    _excluded5 = ["radians"],
-    _excluded6 = ["clientX", "clientY", "actionName", "triggerEvent"];
   var NOTIFIER_EVENTS = NOTIFIER_CONSTANTS.NOTIFIER_EVENTS,
     ON_GETSTATE = NOTIFIER_CONSTANTS.ON_GETSTATE,
     ON_APPLY = NOTIFIER_CONSTANTS.ON_APPLY,
@@ -1193,18 +1192,73 @@
     RIGHT_EDGE = TRANSFORM_EDGES_KEYS.RIGHT_EDGE;
   var START_POINT$1 = TRANSFORM_POINT_KEYS.START_POINT,
     END_POINT$1 = TRANSFORM_POINT_KEYS.END_POINT;
+
+  var keys$3 = Object.keys;
+  var RUNTIME_OPTIONS = ['axis', 'snap', 'each', 'proportions', 'flip', 'draggable', 'scalable', 'applyTranslate', 'guides', 'cursorMove', 'cursorResize', 'cursorRotate', 'custom', 'onInit', 'onMove', 'onResize', 'onRotate', 'onDrop', 'onDestroy'];
+  var ORIGIN_OPTIONS = ['transformOrigin', 'container'];
+  var isPlainObject = function isPlainObject(value) {
+    return _typeof(value) === 'object' && value !== null && Object.getPrototypeOf(value) === Object.prototype;
+  };
+  var isSameOption = function isSameOption(a, b) {
+    if (a === b) return true;
+    if (Array.isArray(a) && Array.isArray(b)) {
+      return a.length === b.length && a.every(function (item, index) {
+        return item === b[index];
+      });
+    }
+    if (isPlainObject(a) && isPlainObject(b)) {
+      var aKeys = keys$3(a);
+      return aKeys.length === keys$3(b).length && aKeys.every(function (key) {
+        return a[key] === b[key];
+      });
+    }
+    return false;
+  };
+
+  var syncTransform = function syncTransform(target, source) {
+    var value = source.getAttribute('transform');
+    if (value === null) {
+      target.removeAttribute('transform');
+    } else {
+      target.setAttribute('transform', value);
+    }
+    var targetStyle = target.style;
+    var sourceStyle = source.style;
+    if (targetStyle && sourceStyle) targetStyle.transform = sourceStyle.transform;
+  };
+
+  var _excluded$2 = ["element", "radians"],
+    _excluded2$2 = ["element", "dx", "dy"],
+    _excluded3$2 = ["revX", "revY", "doW", "doH"],
+    _excluded4$1 = ["transform"],
+    _excluded5 = ["radians"],
+    _excluded6 = ["clientX", "clientY", "actionName", "triggerEvent"];
   var keys$2 = Object.keys,
     values$2 = Object.values;
   var Transformable = /*#__PURE__*/function (_SubjectModel) {
-    /** @internal */
-
     function Transformable(elements, options, observable) {
       var _this;
       _classCallCheck(this, Transformable);
       _this = _callSuper(this, Transformable, [elements]);
-      if (_this.constructor === Transformable) {
-        throw new TypeError('Cannot construct Transformable instances directly');
-      }
+      /** Internal state. Its shape is not part of the public API and may change in any minor release. Prefer `handles`, `controls`, `getBoundingRect()` and `getDimensions()`. */
+      /** @internal */
+      _defineProperty(_this, "observer", {
+        notifyMove: function notifyMove(data) {
+          return _this.notifyMove(data);
+        },
+        notifyRotate: function notifyRotate(data) {
+          return _this.notifyRotate(data);
+        },
+        notifyResize: function notifyResize(data) {
+          return _this.notifyResize(data);
+        },
+        notifyApply: function notifyApply(data) {
+          return _this.notifyApply(data);
+        },
+        notifyGetState: function notifyGetState(data) {
+          return _this.notifyGetState(data);
+        }
+      });
       _this.observable = observable;
       EMITTER_EVENTS$1.forEach(function (eventName) {
         return _this.eventDispatcher.registerEvent(eventName);
@@ -1221,6 +1275,32 @@
       function pointToGroup(point) {
         return point;
       }
+
+      /** @internal */
+    }, {
+      key: "prepareGuides",
+      value: /** @internal */
+      function prepareGuides() {
+        return null;
+      }
+
+      /** @internal */
+    }, {
+      key: "drawGuides",
+      value: function drawGuides(_lines) {}
+
+      /** @internal */
+    }, {
+      key: "prepareRestrict",
+      value: function prepareRestrict() {
+        return null;
+      }
+
+      /** @internal */
+    }, {
+      key: "processActions",
+      value: /** @internal */
+      function processActions(_actionName) {}
 
       /** @internal */
     }, {
@@ -1265,6 +1345,7 @@
       value: function processOptions() {
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
         var elements = this.elements;
+        this.rawOptions = options;
         _toConsumableArray(elements).map(function (element) {
           return addClass(element, "".concat(LIB_CLASS_PREFIX, "drag"));
         });
@@ -1283,8 +1364,6 @@
           cursorResize = _options$cursorResize === void 0 ? 'auto' : _options$cursorResize,
           _options$cursorRotate = options.cursorRotate,
           cursorRotate = _options$cursorRotate === void 0 ? 'auto' : _options$cursorRotate,
-          _options$rotationPoin = options.rotationPoint,
-          rotationPoint = _options$rotationPoin === void 0 ? false : _options$rotationPoin,
           _options$transformOri = options.transformOrigin,
           transformOrigin = _options$transformOri === void 0 ? false : _options$transformOri,
           restrict = options.restrict,
@@ -1342,8 +1421,7 @@
           cursorMove: cursorMove,
           cursorRotate: cursorRotate,
           cursorResize: cursorResize,
-          rotationPoint: rotationPoint,
-          transformOrigin: transformOrigin || rotationPoint,
+          transformOrigin: transformOrigin,
           restrict: restrict ? helper(restrict)[0] || document.body : null,
           container: helper(container)[0],
           controlsContainer: helper(controlsContainer)[0],
@@ -1421,10 +1499,11 @@
           restrict = options.restrict,
           proportions = options.proportions;
         if (doResize && resizable && point) {
+          var _this$processPointMov;
           var _this$clampPoint = this.clampPoint(this.alignPoint(snapToGrid(clientX - relativeX, snap.x), snapToGrid(clientY - relativeY, snap.y))),
             dx = _this$clampPoint.dx,
             dy = _this$clampPoint.dy;
-          var result = this.processPointMove(elements[0], point, {
+          var result = (_this$processPointMov = this.processPointMove) === null || _this$processPointMov === void 0 ? void 0 : _this$processPointMov.call(this, elements[0], point, {
             dx: dx,
             dy: dy
           });
@@ -1538,7 +1617,7 @@
             dy: newDy
           });
           if (resizeEach) {
-            observable.notify(ON_RESIZE, self, nextArgs);
+            observable.notify(ON_RESIZE, self.observer, nextArgs);
           }
         }
         if (doDrag && draggable) {
@@ -1613,7 +1692,7 @@
             dy: _newDy
           });
           if (moveEach) {
-            observable.notify(ON_MOVE, self, _nextArgs);
+            observable.notify(ON_MOVE, self.observer, _nextArgs);
           }
         }
         if (doRotate && rotatable) {
@@ -1646,7 +1725,7 @@
             radians: _radians
           });
           if (rotateEach) {
-            observable.notify(ON_ROTATE, self, _objectSpread2({
+            observable.notify(ON_ROTATE, self.observer, _objectSpread2({
               radians: _radians
             }, _args2));
           }
@@ -1695,7 +1774,6 @@
           onTopEdge = computed.onTopEdge,
           onLeftEdge = computed.onLeftEdge,
           handle = computed.handle,
-          factor = computed.factor,
           revX = computed.revX,
           revY = computed.revY,
           doW = computed.doW,
@@ -1743,13 +1821,12 @@
           resize = each.resize,
           rotate = each.rotate;
         var actionName = doResize ? E_RESIZE$1 : doRotate ? E_ROTATE$1 : E_DRAG$1;
-        var triggerEvent = doResize && resize || doRotate && rotate || doDrag && move;
-        observable.notify(ON_GETSTATE, this, {
+        var triggerEvent = Boolean(doResize && resize || doRotate && rotate || doDrag && move);
+        observable.notify(ON_GETSTATE, this.observer, {
           clientX: clientX,
           clientY: clientY,
           actionName: actionName,
           triggerEvent: triggerEvent,
-          factor: factor,
           revX: revX,
           revY: revY,
           doW: doW,
@@ -1854,8 +1931,8 @@
         var move = each.move,
           resize = each.resize,
           rotate = each.rotate;
-        var triggerEvent = doResize && resize || doRotate && rotate || doDrag && move;
-        observable.notify(ON_APPLY, this, {
+        var triggerEvent = Boolean(doResize && resize || doRotate && rotate || doDrag && move);
+        observable.notify(ON_APPLY, this.observer, {
           clientX: clientX,
           clientY: clientY,
           actionName: actionName,
@@ -1874,6 +1951,30 @@
         if (isDef(radius)) {
           addClass(radius, "".concat(LIB_CLASS_PREFIX, "hidden"));
         }
+        var pendingOptions = this.pendingOptions;
+        if (pendingOptions) {
+          this.pendingOptions = null;
+          this.applyOptions(pendingOptions);
+        }
+      }
+
+      /** @internal */
+    }, {
+      key: "afterInit",
+      value: function afterInit() {
+        this.initClasses = this.readInitClasses(this.storage);
+      }
+
+      /** @internal */
+    }, {
+      key: "readInitClasses",
+      value: function readInitClasses(_ref14) {
+        var wrapper = _ref14.wrapper,
+          controls = _ref14.controls;
+        return {
+          wrapper: Array.from(wrapper.classList),
+          controls: Array.from(controls.classList)
+        };
       }
 
       /** @internal */
@@ -2040,9 +2141,9 @@
       /** @internal */
     }, {
       key: "movingEdges",
-      value: function movingEdges(_ref14) {
-        var flipX = _ref14.flipX,
-          flipY = _ref14.flipY;
+      value: function movingEdges(_ref15) {
+        var flipX = _ref15.flipX,
+          flipY = _ref15.flipY;
         var _this$storage7 = this.storage,
           revX = _this$storage7.revX,
           revY = _this$storage7.revY;
@@ -2080,9 +2181,9 @@
       /** @internal */
     }, {
       key: "clampPoint",
-      value: function clampPoint(_ref15) {
-        var dx = _ref15.dx,
-          dy = _ref15.dy;
+      value: function clampPoint(_ref16) {
+        var dx = _ref16.dx,
+          dy = _ref16.dy;
         var restriction = this.storage.restriction;
         if (!restriction || !restriction.point) return {
           dx: dx,
@@ -2227,10 +2328,10 @@
       }
     }, {
       key: "notifyMove",
-      value: function notifyMove(_ref16) {
+      value: function notifyMove(_ref17) {
         var _this6 = this;
-        var dx = _ref16.dx,
-          dy = _ref16.dy;
+        var dx = _ref17.dx,
+          dy = _ref17.dy;
         this.elements.map(function (element) {
           return _superPropGet(Transformable, "drag", _this6)([{
             element: element,
@@ -2245,10 +2346,10 @@
       }
     }, {
       key: "notifyRotate",
-      value: function notifyRotate(_ref17) {
+      value: function notifyRotate(_ref18) {
         var _this7 = this;
-        var radians = _ref17.radians,
-          rest = _objectWithoutProperties(_ref17, _excluded5);
+        var radians = _ref18.radians,
+          rest = _objectWithoutProperties(_ref18, _excluded5);
         var elements = this.elements,
           _this$options2 = this.options,
           _this$options3 = _this$options2 === void 0 ? {} : _this$options2,
@@ -2265,21 +2366,21 @@
       }
     }, {
       key: "notifyResize",
-      value: function notifyResize(_ref18) {
+      value: function notifyResize(_ref19) {
         var _this8 = this;
-        var dx = _ref18.dx,
-          dy = _ref18.dy,
-          revX = _ref18.revX,
-          revY = _ref18.revY,
-          dox = _ref18.dox,
-          doy = _ref18.doy;
+        var dx = _ref19.dx,
+          dy = _ref19.dy,
+          revX = _ref19.revX,
+          revY = _ref19.revY,
+          dox = _ref19.dox,
+          doy = _ref19.doy;
         var elements = this.elements,
           data = this.storage.data,
           isGrouped = this.options.isGrouped;
         elements.map(function (element) {
-          var _ref19 = data.get(element),
-            ctm = _ref19.transform.ctm;
-          var _ref20 = !isGrouped ? _this8.pointToTransform({
+          var _ref20 = data.get(element),
+            ctm = _ref20.transform.ctm;
+          var _ref21 = !isGrouped ? _this8.pointToTransform({
               x: dx,
               y: dy,
               matrix: ctm
@@ -2287,8 +2388,8 @@
               x: dx,
               y: dy
             }),
-            x = _ref20.x,
-            y = _ref20.y;
+            x = _ref21.x,
+            y = _ref21.y;
           _this8.resize({
             element: element,
             dx: dox ? revX ? -x : x : 0,
@@ -2302,12 +2403,12 @@
       }
     }, {
       key: "notifyApply",
-      value: function notifyApply(_ref21) {
+      value: function notifyApply(_ref22) {
         var _this9 = this;
-        var clientX = _ref21.clientX,
-          clientY = _ref21.clientY,
-          actionName = _ref21.actionName,
-          triggerEvent = _ref21.triggerEvent;
+        var clientX = _ref22.clientX,
+          clientY = _ref22.clientY,
+          actionName = _ref22.actionName,
+          triggerEvent = _ref22.triggerEvent;
         this.proxyMethods.onDrop.call(this, {
           clientX: clientX,
           clientY: clientY
@@ -2324,13 +2425,13 @@
       }
     }, {
       key: "notifyGetState",
-      value: function notifyGetState(_ref22) {
+      value: function notifyGetState(_ref23) {
         var _this0 = this;
-        var clientX = _ref22.clientX,
-          clientY = _ref22.clientY,
-          actionName = _ref22.actionName,
-          triggerEvent = _ref22.triggerEvent,
-          rest = _objectWithoutProperties(_ref22, _excluded6);
+        var clientX = _ref23.clientX,
+          clientY = _ref23.clientY,
+          actionName = _ref23.actionName,
+          triggerEvent = _ref23.triggerEvent,
+          rest = _objectWithoutProperties(_ref23, _excluded6);
         if (triggerEvent) {
           var elements = this.elements,
             data = this.storage.data;
@@ -2348,31 +2449,32 @@
       }
     }, {
       key: "subscribe",
-      value: function subscribe(_ref23) {
-        var resize = _ref23.resize,
-          move = _ref23.move,
-          rotate = _ref23.rotate;
-        var ob = this.observable;
+      value: function subscribe(_ref24) {
+        var resize = _ref24.resize,
+          move = _ref24.move,
+          rotate = _ref24.rotate;
+        var ob = this.observable,
+          observer = this.observer;
         if (move || resize || rotate) {
-          ob.subscribe(ON_GETSTATE, this).subscribe(ON_APPLY, this);
+          ob.subscribe(ON_GETSTATE, observer).subscribe(ON_APPLY, observer);
         }
         if (move) {
-          ob.subscribe(ON_MOVE, this);
+          ob.subscribe(ON_MOVE, observer);
         }
         if (resize) {
-          ob.subscribe(ON_RESIZE, this);
+          ob.subscribe(ON_RESIZE, observer);
         }
         if (rotate) {
-          ob.subscribe(ON_ROTATE, this);
+          ob.subscribe(ON_ROTATE, observer);
         }
       }
     }, {
       key: "unsubscribe",
       value: function unsubscribe() {
-        var _this1 = this;
-        var ob = this.observable;
+        var ob = this.observable,
+          observer = this.observer;
         NOTIFIER_EVENTS.map(function (eventName) {
-          return ob.unsubscribe(eventName, _this1);
+          return ob.unsubscribe(eventName, observer);
         });
       }
     }, {
@@ -2390,17 +2492,129 @@
         elements.map(function (element) {
           return removeClass(element, "".concat(LIB_CLASS_PREFIX, "drag"));
         });
+        this.pendingOptions = null;
         this.unsubscribe();
         this.destroy();
         proxyMethods.onDestroy.call(this, elements);
         delete this.storage;
       }
     }, {
+      key: "update",
+      value: function update() {
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+        var storage = this.storage;
+        if (isUndef(storage)) return;
+        if (!storage.onExecution) {
+          this.applyOptions(options);
+          return;
+        }
+        var runtime = {};
+        var structural = {};
+        keys$2(options).forEach(function (key) {
+          var target = RUNTIME_OPTIONS.includes(key) ? runtime : structural;
+          target[key] = options[key];
+        });
+        if (keys$2(structural).length) {
+          this.pendingOptions = _objectSpread2(_objectSpread2({}, this.pendingOptions), structural);
+        }
+        this.applyOptions(runtime);
+      }
+
+      /** @internal */
+    }, {
+      key: "applyOptions",
+      value: function applyOptions(options) {
+        var rawOptions = this.rawOptions,
+          prevOptions = this.options;
+        var changed = keys$2(options).filter(function (key) {
+          return !isSameOption(options[key], rawOptions[key]);
+        });
+        if (!changed.length) return;
+        this.unsubscribe();
+        this.processOptions(_objectSpread2(_objectSpread2({}, rawOptions), options));
+        var nextOptions = this.options;
+        var structural = changed.filter(function (key) {
+          return !RUNTIME_OPTIONS.includes(key) && !isSameOption(nextOptions[key], prevOptions[key]);
+        });
+        if (structural.length) this.rebuildControls(structural);
+      }
+
+      /** @internal */
+    }, {
+      key: "rebuildControls",
+      value: function rebuildControls(changed) {
+        var _this1 = this;
+        var elements = this.elements,
+          prev = this.storage,
+          initClasses = this.initClasses;
+        var wrapper = prev.wrapper,
+          controls = prev.controls,
+          transformOrigin = prev.transformOrigin,
+          center = prev.center;
+        var owned = [].concat(_toConsumableArray(values$2(prev.handles)), _toConsumableArray(values$2(prev.hitAreas || {})), [prev.hitOverlay, prev.guidesLayer]).filter(isDef);
+        [].concat(_toConsumableArray(elements), [controls]).forEach(function (target) {
+          return helper(target).off(E_MOUSEDOWN$3, _this1.onMouseDown).off(E_TOUCHSTART$3, _this1.onTouchStart);
+        });
+        owned.forEach(function (node) {
+          if (node.parentNode) node.parentNode.removeChild(node);
+        });
+        this.init(elements);
+        var fresh = this.storage;
+        var freshClasses = this.readInitClasses(fresh);
+        helper(fresh.controls).off(E_MOUSEDOWN$3, this.onMouseDown).off(E_TOUCHSTART$3, this.onTouchStart);
+        helper(controls).on(E_MOUSEDOWN$3, this.onMouseDown).on(E_TOUCHSTART$3, this.onTouchStart);
+        var firstForeign = controls.firstChild;
+        while (fresh.controls.firstChild) {
+          controls.insertBefore(fresh.controls.firstChild, firstForeign);
+        }
+        Array.from(fresh.wrapper.childNodes).filter(function (node) {
+          return node !== fresh.controls;
+        }).forEach(function (node) {
+          return wrapper.insertBefore(node, controls);
+        });
+        [[wrapper, fresh.wrapper, initClasses === null || initClasses === void 0 ? void 0 : initClasses.wrapper], [controls, fresh.controls, initClasses === null || initClasses === void 0 ? void 0 : initClasses.controls]].forEach(function (_ref25) {
+          var _ref26 = _slicedToArray(_ref25, 3),
+            target = _ref26[0],
+            source = _ref26[1],
+            _ref26$ = _ref26[2],
+            previous = _ref26$ === void 0 ? [] : _ref26$;
+          previous.forEach(function (name) {
+            return removeClass(target, name);
+          });
+          Array.from(source.classList).forEach(function (name) {
+            return addClass(target, name);
+          });
+          syncTransform(target, source);
+        });
+        var parent = fresh.wrapper.parentNode;
+        if (wrapper.parentNode !== parent) parent.insertBefore(wrapper, fresh.wrapper);
+        parent.removeChild(fresh.wrapper);
+        this.storage = _objectSpread2(_objectSpread2({}, fresh), {}, {
+          wrapper: wrapper,
+          controls: controls
+        });
+        this.initClasses = freshClasses;
+        if (center.isShifted && !changed.some(function (key) {
+          return ORIGIN_OPTIONS.includes(key);
+        })) {
+          var _ref27 = Array.isArray(transformOrigin) ? transformOrigin : [transformOrigin.x, transformOrigin.y],
+            _ref28 = _slicedToArray(_ref27, 2),
+            _x3 = _ref28[0],
+            _y3 = _ref28[1];
+          this.setTransformOrigin({
+            x: _x3,
+            y: _y3
+          }, true);
+          this.storage.transformOrigin = transformOrigin;
+          this.storage.center.isShifted = true;
+        }
+      }
+    }, {
       key: "exeDrag",
-      value: function exeDrag(_ref24) {
+      value: function exeDrag(_ref29) {
         var _this10 = this;
-        var dx = _ref24.dx,
-          dy = _ref24.dy;
+        var dx = _ref29.dx,
+          dy = _ref29.dy;
         var elements = this.elements,
           draggable = this.options.draggable,
           storage = this.storage,
@@ -2432,18 +2646,18 @@
       }
     }, {
       key: "exeResize",
-      value: function exeResize(_ref25) {
+      value: function exeResize(_ref30) {
         var _this11 = this;
-        var dx = _ref25.dx,
-          dy = _ref25.dy,
-          _ref25$revX = _ref25.revX,
-          revX = _ref25$revX === void 0 ? false : _ref25$revX,
-          _ref25$revY = _ref25.revY,
-          revY = _ref25$revY === void 0 ? false : _ref25$revY,
-          _ref25$doW = _ref25.doW,
-          doW = _ref25$doW === void 0 ? false : _ref25$doW,
-          _ref25$doH = _ref25.doH,
-          doH = _ref25$doH === void 0 ? false : _ref25$doH;
+        var dx = _ref30.dx,
+          dy = _ref30.dy,
+          _ref30$revX = _ref30.revX,
+          revX = _ref30$revX === void 0 ? false : _ref30$revX,
+          _ref30$revY = _ref30.revY,
+          revY = _ref30$revY === void 0 ? false : _ref30$revY,
+          _ref30$doW = _ref30.doW,
+          doW = _ref30$doW === void 0 ? false : _ref30$doW,
+          _ref30$doH = _ref30.doH,
+          doH = _ref30$doH === void 0 ? false : _ref30$doH;
         var elements = this.elements,
           resizable = this.options.resizable,
           storage = this.storage,
@@ -2475,9 +2689,9 @@
       }
     }, {
       key: "exeRotate",
-      value: function exeRotate(_ref26) {
+      value: function exeRotate(_ref31) {
         var _this12 = this;
-        var delta = _ref26.delta;
+        var delta = _ref31.delta;
         var elements = this.elements,
           rotatable = this.options.rotatable,
           storage = this.storage,
@@ -2506,15 +2720,6 @@
         });
       }
     }, {
-      key: "resetCenterPoint",
-      value: function resetCenterPoint() {
-        warn('"resetCenterPoint" method is replaced by "resetTransformOrigin" and would be removed soon');
-        this.setTransformOrigin({
-          dx: 0,
-          dy: 0
-        }, false);
-      }
-    }, {
       key: "resetTransformOrigin",
       value: function resetTransformOrigin() {
         this.setTransformOrigin({
@@ -2526,6 +2731,11 @@
       key: "controls",
       get: function get() {
         return this.storage.wrapper;
+      }
+    }, {
+      key: "handles",
+      get: function get() {
+        return this.storage.handles;
       }
     }]);
   }(SubjectModel);
@@ -3009,37 +3219,6 @@
           $el.css(css);
           $controls.css(css);
         }
-      }
-
-      /** @internal */
-    }, {
-      key: "processActions",
-      value: function processActions() {}
-
-      /** @internal */
-    }, {
-      key: "processPointMove",
-      value: function processPointMove() {
-        return null;
-      }
-
-      /** @internal */
-    }, {
-      key: "prepareGuides",
-      value: function prepareGuides() {
-        return null;
-      }
-
-      /** @internal */
-    }, {
-      key: "drawGuides",
-      value: function drawGuides() {}
-
-      /** @internal */
-    }, {
-      key: "prepareRestrict",
-      value: function prepareRestrict() {
-        return null;
       }
 
       /** @internal */
@@ -3939,12 +4118,6 @@
           });
           return result;
         }, {});
-      }
-    }, {
-      key: "setCenterPoint",
-      value: function setCenterPoint() {
-        warn('"setCenterPoint" method is replaced by "setTransformOrigin" and would be removed soon');
-        this.setTransformOrigin.apply(this, arguments);
       }
     }, {
       key: "setTransformOrigin",
@@ -6115,9 +6288,9 @@
         var elementData = data.get(element);
         var __data__ = elementData.__data__;
         storeElementAttributes(element, elementData, container);
-        __data__["delete"](element);
+        __data__.delete(element);
         _checkChildElements(element).forEach(function (child) {
-          __data__["delete"](child);
+          __data__.delete(child);
           storeElementAttributes(child, elementData, element, isGrouped);
         });
         var bBox = this.getBBox();
@@ -6924,12 +7097,6 @@
           outlines.push(path);
         });
         if (hitOverlay) hitOverlay.setAttribute('d', outlines.join(''));
-      }
-    }, {
-      key: "setCenterPoint",
-      value: function setCenterPoint() {
-        warn('"setCenterPoint" method is replaced by "setTransformOrigin" and would be removed soon');
-        this.setTransformOrigin.apply(this, arguments);
       }
     }, {
       key: "setTransformOrigin",
