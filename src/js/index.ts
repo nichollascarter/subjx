@@ -42,6 +42,6 @@ export type {
     TransformStorage,
     TransformHandles
 } from './core/transform/transformable';
-export type { default as Draggable } from './core/transform/Draggable';
+export type { default as Draggable } from './core/transform/html/Draggable';
 export type { default as DraggableSVG } from './core/transform/svg/DraggableSVG';
 export type { default as Cloneable } from './core/clone/Cloneable';

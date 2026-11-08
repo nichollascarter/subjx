@@ -10,7 +10,9 @@ import {
     DEG,
     resizeBox,
     rotatorPlacement,
-    alignmentOffset
+    alignmentOffset,
+    boxVertices,
+    edgeSegments
 } from '../common';
 import { boxFromPoints, unionBoxes } from '../guides';
 import type { Box, GuideLine, GuideState } from '../guides';
@@ -44,7 +46,7 @@ import {
     screenScale,
     setAttributes
 } from './controls';
-import { bBoxPoints, boxVertices, edgeSegments, lineRotator, transformVertices } from './vertices';
+import { bBoxPoints, lineRotator, transformVertices } from './vertices';
 import { readAttributes, resizeElement, translateElement } from './shapes';
 import type {
     BBox,

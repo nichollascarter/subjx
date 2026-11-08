@@ -164,3 +164,34 @@ export const alignmentOffset = (
         [/[v]/, ((maxY + minY) / 2) - ((elMaxY + elMinY) / 2)]
     ])
 ];
+
+export interface BoxRect {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+export const boxVertices = ({ x, y, width, height }: BoxRect): Record<string, number[]> => {
+    const hW = width / 2,
+        hH = height / 2;
+
+    return {
+        tl: [x, y],
+        tr: [x + width, y],
+        mr: [x + width, y + hH],
+        ml: [x, y + hH],
+        tc: [x + hW, y],
+        bc: [x + hW, y + height],
+        br: [x + width, y + height],
+        bl: [x, y + height],
+        center: [x + hW, y + hH]
+    };
+};
+
+export const edgeSegments = <T>({ tl, tr, bl, br }: Record<string, T>): Record<string, T[]> => ({
+    te: [tl, tr],
+    be: [bl, br],
+    le: [tl, bl],
+    re: [tr, br]
+});

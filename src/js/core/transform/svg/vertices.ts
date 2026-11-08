@@ -4,36 +4,12 @@ import type { BBox, Vertices } from './types';
 
 const { entries } = Object;
 
-export const boxVertices = ({ x, y, width, height }: BBox): Record<string, number[]> => {
-    const hW = width / 2,
-        hH = height / 2;
-
-    return {
-        tl: [x, y],
-        tr: [x + width, y],
-        mr: [x + width, y + hH],
-        ml: [x, y + hH],
-        tc: [x + hW, y],
-        bc: [x + hW, y + height],
-        br: [x + width, y + height],
-        bl: [x, y + height],
-        center: [x + hW, y + hH]
-    };
-};
-
 export const transformVertices = (vertices: Record<string, number[]>, matrix: DOMMatrix): Vertices => (
     entries(vertices).reduce<Vertices>((result, [key, [x, y]]) => {
         result[key] = pointTo(matrix, x, y);
         return result;
     }, {})
 );
-
-export const edgeSegments = ({ tl, tr, bl, br }: Vertices): Record<string, Point[]> => ({
-    te: [tl, tr],
-    be: [bl, br],
-    le: [tl, bl],
-    re: [tr, br]
-});
 
 export const bBoxPoints = (element: SVGGraphicsElement, ctm: DOMMatrix, bBox: BBox = element.getBBox()) => {
     const { x, y, width, height } = bBox;

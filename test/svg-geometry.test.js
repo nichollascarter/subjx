@@ -1,5 +1,5 @@
-import { rotatorPlacement, alignmentOffset } from '../src/js/core/transform/common';
-import { boxVertices, edgeSegments, lineRotator } from '../src/js/core/transform/svg/vertices';
+import { rotatorPlacement, alignmentOffset, boxVertices, edgeSegments } from '../src/js/core/transform/common';
+import { lineRotator } from '../src/js/core/transform/svg/vertices';
 
 const toPoints = vertices => Object.keys(vertices).reduce((res, key) => {
     const [x, y] = vertices[key];
