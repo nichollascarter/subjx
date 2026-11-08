@@ -1,15 +1,9 @@
-import Helper from '../Helper';
-import SubjectModel from '../SubjectModel';
-import type { PointerInput, ProxyMethods } from '../SubjectModel';
-import type Observable from '../observable/Observable';
-import type { Observer } from '../observable/Observable';
-import type { DragOptions, MimicOptions, Direction, ExeDragParams, ExeResizeParams, ExeRotateParams, TransformEventMap, ResizeHandleKey, GuidesOptions } from '../options';
-import type { GuideState } from './guides';
-import type { Restriction } from './restrict';
-export interface Point {
-    x: number;
-    y: number;
-}
+import type Helper from '../../Helper';
+import type { PointerInput, ProxyMethods } from '../../SubjectModel';
+import type { Point, MimicOptions, Direction, ResizeHandleKey, GuidesOptions } from '../../options';
+import type { GuideState } from '../guides';
+import type { Restriction } from '../restrict';
+export type { Point };
 export interface RestrictPoint {
     x: number | null;
     y: number | null;
@@ -93,7 +87,6 @@ export interface TransformOptions {
     cursorMove: string;
     cursorRotate: string;
     cursorResize: string;
-    rotationPoint: boolean;
     transformOrigin: boolean | [number, number];
     restrict: Element | null;
     container: Element;
@@ -125,49 +118,6 @@ export interface TransformProxyMethods extends ProxyMethods {
     onResize: ProxyMethods['onMove'];
     onRotate: ProxyMethods['onMove'];
 }
-export interface NotifyResizeArgs extends Delta {
-    revX: boolean;
-    revY: boolean;
-    dox: boolean;
-    doy: boolean;
-}
-export interface NotifyActionArgs {
-    clientX: number;
-    clientY: number;
-    actionName: string;
-    triggerEvent: boolean;
-}
-export type NotifyGetStateArgs = NotifyActionArgs & Partial<ResizeFlags> & {
-    factor?: number;
+export type ActiveSession = Required<Pick<TransformStorage, 'clientX' | 'clientY' | 'relativeX' | 'relativeY' | 'bx' | 'by' | 'pressang' | 'dox' | 'doy' | 'revX' | 'revY' | 'mouseEvent' | 'doDrag' | 'doResize' | 'doRotate' | 'doSetCenter'>> & {
+    center: Point;
 };
-export default abstract class Transformable<M = unknown, S extends TransformStorage<M> = TransformStorage<M>> extends SubjectModel<S, TransformProxyMethods, TransformEventMap> implements Observer {
-    storage: S;
-    options: TransformOptions;
-    observable: Observable;
-    constructor(elements: Element[], options: DragOptions | undefined, observable: Observable);
-    abstract getBoundingRect(elementOrMatrix?: Element | M | null, matrix?: M | null): number[][];
-    abstract setCenterPoint(...args: unknown[]): void;
-    abstract setTransformOrigin(params?: {
-        x?: number;
-        y?: number;
-        dx?: number;
-        dy?: number;
-    }, pin?: boolean): void;
-    notifyMove({ dx, dy }: Delta): void;
-    notifyRotate({ radians, ...rest }: {
-        radians: number;
-        [key: string]: unknown;
-    }): void;
-    notifyResize({ dx, dy, revX, revY, dox, doy }: NotifyResizeArgs): void;
-    notifyApply({ clientX, clientY, actionName, triggerEvent }: NotifyActionArgs): void;
-    notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest }: NotifyGetStateArgs): void;
-    subscribe({ resize, move, rotate }: MimicOptions): void;
-    unsubscribe(): void;
-    disable(): void;
-    exeDrag({ dx, dy }: ExeDragParams): void;
-    exeResize({ dx, dy, revX, revY, doW, doH }: ExeResizeParams): void;
-    exeRotate({ delta }: ExeRotateParams): void;
-    resetCenterPoint(): void;
-    resetTransformOrigin(): void;
-    get controls(): S['wrapper'];
-}

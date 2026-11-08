@@ -272,11 +272,6 @@ export interface DragOptions {
      */
     cursorRotate?: string;
     /**
-     * @deprecated Use `transformOrigin` instead
-     * Show rotation point handle
-     */
-    rotationPoint?: boolean;
-    /**
      * Show and enable custom transform origin handle.
      * Can be boolean or initial position as [x, y] array
      * @default false

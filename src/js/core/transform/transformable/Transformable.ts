@@ -1,58 +1,61 @@
-import Helper, { helper } from '../Helper';
-import SubjectModel from '../SubjectModel';
-import type { PointerInput, MoveArgs, ProxyMethods } from '../SubjectModel';
-import type Observable from '../observable/Observable';
-import type { Observer } from '../observable/Observable';
-import { getMinMaxOfArray, snapToGrid, RAD } from './common';
+import Helper, { helper } from '../../Helper';
+import SubjectModel from '../../SubjectModel';
+import type { PointerInput, MoveArgs } from '../../SubjectModel';
+import type Observable from '../../observable/Observable';
+import type {
+    Observer,
+    NotifyRotateArgs,
+    NotifyResizeArgs,
+    NotifyActionArgs,
+    NotifyGetStateArgs
+} from '../../observable/Observable';
+import {
+    getMinMaxOfArray,
+    snapToGrid,
+    RAD
+} from '../common';
 import type {
     DragOptions,
     MimicOptions,
-    Direction,
     ExeDragParams,
     ExeResizeParams,
     ExeRotateParams,
     TransformEventMap,
-    ResizeHandleKey,
-    GuidesOptions
-} from '../options';
-import { align, alignEdges } from './guides';
-import type { GuideState, GuideLine } from './guides';
-import { clampMove, clampEdge } from './restrict';
-import type { Restriction } from './restrict';
-
-import {
-    LIB_CLASS_PREFIX,
-    NOTIFIER_CONSTANTS,
-    EVENT_EMITTER_CONSTANTS,
-    TRANSFORM_HANDLES_CONSTANTS,
-    CLIENT_EVENTS_CONSTANTS
-} from '../consts';
-
+    TransformOriginParams
+} from '../../options';
+import { align, alignEdges } from '../guides';
+import type { GuideState, GuideLine } from '../guides';
+import { clampMove, clampEdge } from '../restrict';
+import type { Restriction } from '../restrict';
+import { LIB_CLASS_PREFIX } from '../../consts';
 import {
     requestAnimFrame,
     cancelAnimFrame,
     isDef,
     isUndef,
     createMethod,
-    noop,
-    warn
-} from '../util/util';
-
+    noop
+} from '../../util/util';
+import { addClass, removeClass } from '../../util/css-util';
+import type {
+    RestrictPoint,
+    Delta,
+    ResizeFlags,
+    ElementData,
+    TransformHandles,
+    TransformStorage,
+    TransformOptions,
+    TransformProxyMethods,
+    ActiveSession,
+    Point
+} from './types';
 import {
-    addClass,
-    removeClass
-} from '../util/css-util';
-
-const {
     NOTIFIER_EVENTS,
     ON_GETSTATE,
     ON_APPLY,
     ON_MOVE,
     ON_RESIZE,
-    ON_ROTATE
-} = NOTIFIER_CONSTANTS;
-
-const {
+    ON_ROTATE,
     EMITTER_EVENTS,
     E_DRAG_START,
     E_DRAG,
@@ -64,20 +67,13 @@ const {
     E_ROTATE,
     E_ROTATE_END,
     E_SET_POINT,
-    E_SET_POINT_END
-} = EVENT_EMITTER_CONSTANTS;
-
-const { TRANSFORM_HANDLES_KEYS, TRANSFORM_EDGES_KEYS, TRANSFORM_POINT_KEYS } = TRANSFORM_HANDLES_CONSTANTS;
-const {
+    E_SET_POINT_END,
     E_MOUSEDOWN,
     E_TOUCHSTART,
     E_MOUSEMOVE,
     E_MOUSEUP,
     E_TOUCHMOVE,
-    E_TOUCHEND
-} = CLIENT_EVENTS_CONSTANTS;
-
-const {
+    E_TOUCHEND,
     TOP_LEFT,
     TOP_CENTER,
     TOP_RIGHT,
@@ -85,188 +81,48 @@ const {
     BOTTOM_RIGHT,
     BOTTOM_CENTER,
     MIDDLE_LEFT,
-    MIDDLE_RIGHT
-} = TRANSFORM_HANDLES_KEYS;
-
-const {
+    MIDDLE_RIGHT,
     TOP_EDGE,
     BOTTOM_EDGE,
     LEFT_EDGE,
-    RIGHT_EDGE
-} = TRANSFORM_EDGES_KEYS;
-
-const { START_POINT, END_POINT } = TRANSFORM_POINT_KEYS;
+    RIGHT_EDGE,
+    START_POINT,
+    END_POINT
+} from './consts';
+import {
+    RUNTIME_OPTIONS,
+    ORIGIN_OPTIONS,
+    isSameOption
+} from './options';
+import { syncTransform } from './dom';
 
 const { keys, values } = Object;
-
-export interface Point {
-    x: number;
-    y: number;
-}
-
-export interface RestrictPoint {
-    x: number | null;
-    y: number | null;
-}
-
-export interface Delta {
-    dx: number;
-    dy: number;
-}
-
-export interface ResizeFlags {
-    revX: boolean;
-    revY: boolean;
-    doW: boolean;
-    doH: boolean;
-}
-
-export interface ElementData<M = unknown> {
-    transform: {
-        ctm: M;
-        [key: string]: unknown;
-    };
-    cx?: number;
-    cy?: number;
-    [key: string]: unknown;
-}
-
-export type TransformHandles = Record<string, Element | null | undefined>;
-
-export interface TransformStorage<M = unknown> {
-    wrapper: Element;
-    controls: Element;
-    handles: TransformHandles;
-    data: WeakMap<Element, ElementData<M>>;
-    center: {
-        isShifted: boolean;
-        x?: number;
-        y?: number;
-        [key: string]: unknown;
-    };
-    transformOrigin: unknown;
-    transform: {
-        controlsMatrix?: M;
-        containerMatrix?: M;
-        [key: string]: unknown;
-    };
-    cached: {
-        dist?: Delta;
-        transformOrigin?: unknown;
-        controlsMatrix?: M;
-        [key: string]: unknown;
-    };
-    isTarget?: boolean;
-    mouseEvent?: PointerInput;
-    clientX?: number;
-    clientY?: number;
-    relativeX?: number;
-    relativeY?: number;
-    bx?: number;
-    by?: number;
-    pressang?: number;
-    handle?: Helper;
-    dox?: boolean;
-    doy?: boolean;
-    revX?: boolean;
-    revY?: boolean;
-    doW?: boolean;
-    doH?: boolean;
-    doResize?: boolean;
-    point?: string | null;
-    doDrag?: boolean;
-    doRotate?: boolean;
-    doSetCenter?: boolean;
-    doDraw?: boolean;
-    onExecution?: boolean;
-    cursor?: string | null;
-    activeHandle?: Element | null;
-    guides?: GuideState | null;
-    restriction?: Restriction | null;
-    frame?: number;
-    controlsMatrix?: M;
-    [key: string]: unknown;
-}
-
-export interface TransformOptions {
-    axis: string;
-    cursorMove: string;
-    cursorRotate: string;
-    cursorResize: string;
-    rotationPoint: boolean;
-    transformOrigin: boolean | [number, number];
-    restrict: Element | null;
-    container: Element;
-    controlsContainer: Element;
-    snap: {
-        x: number;
-        y: number;
-        angle: number;
-    };
-    each: MimicOptions;
-    proportions: boolean;
-    flip: boolean;
-    draggable: boolean;
-    resizable: boolean;
-    handles: ResizeHandleKey[] | null;
-    hitRadius: number;
-    showHitAreas: boolean;
-    guides: GuidesOptions | null;
-    rotatable: boolean;
-    scalable: boolean;
-    applyTranslate: boolean;
-    custom: Record<string, unknown> | null;
-    rotatorAnchor: Direction | null;
-    rotatorOffset: number;
-    showNormal: boolean;
-    isGrouped: boolean;
-}
-
-export interface TransformProxyMethods extends ProxyMethods {
-    onResize: ProxyMethods['onMove'];
-    onRotate: ProxyMethods['onMove'];
-}
-
-export interface NotifyResizeArgs extends Delta {
-    revX: boolean;
-    revY: boolean;
-    dox: boolean;
-    doy: boolean;
-}
-
-export interface NotifyActionArgs {
-    clientX: number;
-    clientY: number;
-    actionName: string;
-    triggerEvent: boolean;
-}
-
-export type NotifyGetStateArgs = NotifyActionArgs & Partial<ResizeFlags> & { factor?: number };
-
-type ActiveSession = Required<Pick<TransformStorage,
-    | 'clientX' | 'clientY' | 'relativeX' | 'relativeY' | 'bx' | 'by' | 'pressang'
-    | 'dox' | 'doy' | 'revX' | 'revY' | 'mouseEvent'
-    | 'doDrag' | 'doResize' | 'doRotate' | 'doSetCenter'
->> & {
-    center: Point;
-};
 
 export default abstract class Transformable<
     M = unknown,
     S extends TransformStorage<M> = TransformStorage<M>
-> extends SubjectModel<S, TransformProxyMethods, TransformEventMap> implements Observer {
+> extends SubjectModel<S, TransformProxyMethods, TransformEventMap> {
 
+    /** Internal state. Its shape is not part of the public API and may change in any minor release. Prefer `handles`, `controls`, `getBoundingRect()` and `getDimensions()`. */
     storage!: S;
     /** @internal */
     protected proxyMethods!: TransformProxyMethods;
     options!: TransformOptions;
-    observable: Observable;
+    private readonly observable: Observable;
+    private rawOptions!: DragOptions;
+    private pendingOptions?: DragOptions | null;
+    private initClasses?: { wrapper: string[]; controls: string[] };
+
+    private readonly observer: Observer = {
+        notifyMove: data => this.notifyMove(data),
+        notifyRotate: data => this.notifyRotate(data),
+        notifyResize: data => this.notifyResize(data),
+        notifyApply: data => this.notifyApply(data),
+        notifyGetState: data => this.notifyGetState(data)
+    };
 
     constructor(elements: Element[], options: DragOptions | undefined, observable: Observable) {
         super(elements);
-        if (this.constructor === Transformable) {
-            throw new TypeError('Cannot construct Transformable instances directly');
-        }
         this.observable = observable;
 
         EMITTER_EVENTS.forEach(eventName => this.eventDispatcher.registerEvent(eventName));
@@ -300,16 +156,20 @@ export default abstract class Transformable<
     protected abstract processResizeRestrict(element: Element, delta: Delta): RestrictPoint;
 
     /** @internal */
-    protected abstract processPointMove(element: Element, point: string, delta: Delta): object | null;
+    protected processPointMove?(element: Element, point: string, delta: Delta): object | null;
 
     /** @internal */
-    protected abstract prepareGuides(): GuideState | null;
+    protected prepareGuides(): GuideState | null {
+        return null;
+    }
 
     /** @internal */
-    protected abstract drawGuides(lines: GuideLine[]): void;
+    protected drawGuides(_lines: GuideLine[]): void { }
 
     /** @internal */
-    protected abstract prepareRestrict(): Restriction | null;
+    protected prepareRestrict(): Restriction | null {
+        return null;
+    }
 
     /** @internal */
     protected abstract processRotateRestrict(element: Element, radians: number): RestrictPoint;
@@ -330,22 +190,20 @@ export default abstract class Transformable<
     protected abstract applyTransformToElement(element: Element, actionName: string): void;
 
     /** @internal */
-    protected abstract processActions(actionName: string): void;
+    protected processActions(_actionName: string): void { }
 
     /** @internal */
     protected abstract getCommonState(): Partial<S> & { center: { x: number; y: number }; transform: S['transform'] };
 
     /** @internal */
-    protected abstract getElementState(element: Element, flags: Partial<ResizeFlags> & { factor?: number }): Partial<ElementData<M>>;
+    protected abstract getElementState(element: Element, flags: Partial<ResizeFlags>): Partial<ElementData<M>>;
 
     /** @internal */
     protected abstract getRestrictedBBox(): number[][];
 
     abstract getBoundingRect(elementOrMatrix?: Element | M | null, matrix?: M | null): number[][];
 
-    abstract setCenterPoint(...args: unknown[]): void;
-
-    abstract setTransformOrigin(params?: { x?: number; y?: number; dx?: number; dy?: number }, pin?: boolean): void;
+    abstract setTransformOrigin(params?: TransformOriginParams, pin?: boolean): void;
 
     /** @internal */
     private rotate({ element, radians, ...rest }: { element: Element; radians: number; [key: string]: unknown }) {
@@ -376,6 +234,8 @@ export default abstract class Transformable<
     protected processOptions(options: DragOptions = {}) {
         const { elements } = this;
 
+        this.rawOptions = options;
+
         [...elements].map(element => addClass(element, `${LIB_CLASS_PREFIX}drag`));
 
         const {
@@ -389,7 +249,6 @@ export default abstract class Transformable<
             cursorMove = 'auto',
             cursorResize = 'auto',
             cursorRotate = 'auto',
-            rotationPoint = false,
             transformOrigin = false,
             restrict,
             draggable = true,
@@ -429,8 +288,7 @@ export default abstract class Transformable<
             cursorMove,
             cursorRotate,
             cursorResize,
-            rotationPoint,
-            transformOrigin: transformOrigin || rotationPoint,
+            transformOrigin,
             restrict: restrict
                 ? helper(restrict)[0] || document.body
                 : null,
@@ -527,7 +385,7 @@ export default abstract class Transformable<
                 snapToGrid(clientY - relativeY, snap.y) as number
             ));
 
-            const result = this.processPointMove(elements[0], point, { dx, dy });
+            const result = this.processPointMove?.(elements[0], point, { dx, dy });
 
             if (result) {
                 const finalArgs = {
@@ -662,7 +520,7 @@ export default abstract class Transformable<
             if (resizeEach) {
                 observable.notify(
                     ON_RESIZE,
-                    self,
+                    self.observer,
                     nextArgs
                 );
             }
@@ -751,7 +609,7 @@ export default abstract class Transformable<
             if (moveEach) {
                 observable.notify(
                     ON_MOVE,
-                    self,
+                    self.observer,
                     nextArgs
                 );
             }
@@ -797,7 +655,7 @@ export default abstract class Transformable<
             if (rotateEach) {
                 observable.notify(
                     ON_ROTATE,
-                    self,
+                    self.observer,
                     {
                         radians,
                         ...args
@@ -855,7 +713,6 @@ export default abstract class Transformable<
             onTopEdge,
             onLeftEdge,
             handle,
-            factor,
             revX,
             revY,
             doW,
@@ -950,20 +807,20 @@ export default abstract class Transformable<
             ? E_RESIZE
             : (doRotate ? E_ROTATE : E_DRAG);
 
-        const triggerEvent =
+        const triggerEvent = Boolean(
             (doResize && resize) ||
             (doRotate && rotate) ||
-            (doDrag && move);
+            (doDrag && move)
+        );
 
         observable.notify(
             ON_GETSTATE,
-            this,
+            this.observer,
             {
                 clientX,
                 clientY,
                 actionName,
                 triggerEvent,
-                factor,
                 revX,
                 revY,
                 doW,
@@ -1079,14 +936,15 @@ export default abstract class Transformable<
             rotate
         } = each;
 
-        const triggerEvent =
+        const triggerEvent = Boolean(
             (doResize && resize) ||
             (doRotate && rotate) ||
-            (doDrag && move);
+            (doDrag && move)
+        );
 
         observable.notify(
             ON_APPLY,
-            this,
+            this.observer,
             {
                 clientX,
                 clientY,
@@ -1110,6 +968,26 @@ export default abstract class Transformable<
         if (isDef(radius)) {
             addClass(radius, `${LIB_CLASS_PREFIX}hidden`);
         }
+
+        const { pendingOptions } = this;
+
+        if (pendingOptions) {
+            this.pendingOptions = null;
+            this.applyOptions(pendingOptions);
+        }
+    }
+
+    /** @internal */
+    protected afterInit() {
+        this.initClasses = this.readInitClasses(this.storage);
+    }
+
+    /** @internal */
+    private readInitClasses({ wrapper, controls }: S) {
+        return {
+            wrapper: Array.from(wrapper.classList),
+            controls: Array.from(controls.classList)
+        };
     }
 
     /** @internal */
@@ -1452,12 +1330,12 @@ export default abstract class Transformable<
         };
     }
 
-    notifyMove({ dx, dy }: Delta) {
+    private notifyMove({ dx, dy }: Delta) {
         this.elements.map((element) => super.drag({ element, dx, dy }));
         this.processControlsMove({ dx, dy });
     }
 
-    notifyRotate({ radians, ...rest }: { radians: number; [key: string]: unknown }) {
+    private notifyRotate({ radians, ...rest }: NotifyRotateArgs) {
         const {
             elements,
             options: {
@@ -1476,7 +1354,7 @@ export default abstract class Transformable<
         this.processControlsRotate({ radians });
     }
 
-    notifyResize({ dx, dy, revX, revY, dox, doy }: NotifyResizeArgs) {
+    private notifyResize({ dx, dy, revX, revY, dox, doy }: NotifyResizeArgs) {
         const {
             elements,
             storage: {
@@ -1514,7 +1392,7 @@ export default abstract class Transformable<
         this.processControlsResize({ dx, dy });
     }
 
-    notifyApply({ clientX, clientY, actionName, triggerEvent }: NotifyActionArgs) {
+    private notifyApply({ clientX, clientY, actionName, triggerEvent }: NotifyActionArgs) {
         this.proxyMethods.onDrop.call(this, { clientX, clientY });
         if (triggerEvent) {
             this.elements.map((element) => this.applyTransformToElement(element, actionName));
@@ -1522,7 +1400,7 @@ export default abstract class Transformable<
         }
     }
 
-    notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest }: NotifyGetStateArgs) {
+    private notifyGetState({ clientX, clientY, actionName, triggerEvent, ...rest }: NotifyGetStateArgs) {
         if (triggerEvent) {
             const {
                 elements,
@@ -1551,28 +1429,28 @@ export default abstract class Transformable<
         }
     }
 
-    subscribe({ resize, move, rotate }: MimicOptions) {
-        const { observable: ob } = this;
+    private subscribe({ resize, move, rotate }: MimicOptions) {
+        const { observable: ob, observer } = this;
 
         if (move || resize || rotate) {
-            ob.subscribe(ON_GETSTATE, this)
-                .subscribe(ON_APPLY, this);
+            ob.subscribe(ON_GETSTATE, observer)
+                .subscribe(ON_APPLY, observer);
         }
 
         if (move) {
-            ob.subscribe(ON_MOVE, this);
+            ob.subscribe(ON_MOVE, observer);
         }
         if (resize) {
-            ob.subscribe(ON_RESIZE, this);
+            ob.subscribe(ON_RESIZE, observer);
         }
         if (rotate) {
-            ob.subscribe(ON_ROTATE, this);
+            ob.subscribe(ON_ROTATE, observer);
         }
     }
 
-    unsubscribe() {
-        const { observable: ob } = this;
-        NOTIFIER_EVENTS.map(eventName => ob.unsubscribe(eventName, this));
+    private unsubscribe() {
+        const { observable: ob, observer } = this;
+        NOTIFIER_EVENTS.map(eventName => ob.unsubscribe(eventName, observer));
     }
 
     disable() {
@@ -1595,11 +1473,150 @@ export default abstract class Transformable<
 
         elements.map((element) => removeClass(element, `${LIB_CLASS_PREFIX}drag`));
 
+        this.pendingOptions = null;
         this.unsubscribe();
         this.destroy();
 
         proxyMethods.onDestroy.call(this, elements);
         delete (this as { storage?: S }).storage;
+    }
+
+    update(options: DragOptions = {}) {
+        const { storage } = this;
+
+        if (isUndef(storage)) return;
+
+        if (!storage.onExecution) {
+            this.applyOptions(options);
+            return;
+        }
+
+        const runtime: DragOptions = {};
+        const structural: DragOptions = {};
+
+        (keys(options) as (keyof DragOptions)[]).forEach((key) => {
+            const target = RUNTIME_OPTIONS.includes(key) ? runtime : structural;
+            (target as Record<string, unknown>)[key] = options[key];
+        });
+
+        if (keys(structural).length) {
+            this.pendingOptions = { ...this.pendingOptions, ...structural };
+        }
+
+        this.applyOptions(runtime);
+    }
+
+    /** @internal */
+    private applyOptions(options: DragOptions) {
+        const { rawOptions, options: prevOptions } = this;
+
+        const changed = (keys(options) as (keyof DragOptions)[])
+            .filter(key => !isSameOption(options[key], rawOptions[key]));
+
+        if (!changed.length) return;
+
+        this.unsubscribe();
+        this.processOptions({ ...rawOptions, ...options });
+
+        const { options: nextOptions } = this;
+
+        const structural = changed.filter(key => (
+            !RUNTIME_OPTIONS.includes(key) &&
+            !isSameOption(
+                nextOptions[key as keyof TransformOptions],
+                prevOptions[key as keyof TransformOptions]
+            )
+        ));
+
+        if (structural.length) this.rebuildControls(structural);
+    }
+
+    /** @internal */
+    private rebuildControls(changed: (keyof DragOptions)[]) {
+        const {
+            elements,
+            storage: prev,
+            initClasses
+        } = this;
+
+        const {
+            wrapper,
+            controls,
+            transformOrigin,
+            center
+        } = prev;
+
+        const owned = [
+            ...values(prev.handles),
+            ...values((prev.hitAreas || {}) as Record<string, Element>),
+            prev.hitOverlay,
+            prev.guidesLayer
+        ].filter(isDef) as Element[];
+
+        [...elements, controls].forEach(target => (
+            helper(target)
+                .off(E_MOUSEDOWN, this.onMouseDown)
+                .off(E_TOUCHSTART, this.onTouchStart)
+        ));
+
+        owned.forEach((node) => {
+            if (node.parentNode) node.parentNode.removeChild(node);
+        });
+
+        this.init(elements);
+
+        const fresh = this.storage;
+        const freshClasses = this.readInitClasses(fresh);
+
+        helper(fresh.controls)
+            .off(E_MOUSEDOWN, this.onMouseDown)
+            .off(E_TOUCHSTART, this.onTouchStart);
+
+        helper(controls)
+            .on(E_MOUSEDOWN, this.onMouseDown)
+            .on(E_TOUCHSTART, this.onTouchStart);
+
+        const firstForeign = controls.firstChild;
+
+        while (fresh.controls.firstChild) {
+            controls.insertBefore(fresh.controls.firstChild, firstForeign);
+        }
+
+        Array.from(fresh.wrapper.childNodes)
+            .filter(node => node !== fresh.controls)
+            .forEach(node => wrapper.insertBefore(node, controls));
+
+        ([
+            [wrapper, fresh.wrapper, initClasses?.wrapper],
+            [controls, fresh.controls, initClasses?.controls]
+        ] as [Element, Element, string[] | undefined][]).forEach(([target, source, previous = []]) => {
+            previous.forEach(name => removeClass(target, name));
+            Array.from(source.classList).forEach(name => addClass(target, name));
+            syncTransform(target, source);
+        });
+
+        const parent = fresh.wrapper.parentNode!;
+
+        if (wrapper.parentNode !== parent) parent.insertBefore(wrapper, fresh.wrapper);
+        parent.removeChild(fresh.wrapper);
+
+        this.storage = {
+            ...fresh,
+            wrapper,
+            controls
+        };
+
+        this.initClasses = freshClasses;
+
+        if (center.isShifted && !changed.some(key => ORIGIN_OPTIONS.includes(key))) {
+            const [x, y] = Array.isArray(transformOrigin)
+                ? transformOrigin
+                : [(transformOrigin as Point).x, (transformOrigin as Point).y];
+
+            this.setTransformOrigin({ x, y }, true);
+            this.storage.transformOrigin = transformOrigin;
+            this.storage.center.isShifted = true;
+        }
     }
 
     exeDrag({ dx, dy }: ExeDragParams) {
@@ -1738,17 +1755,16 @@ export default abstract class Transformable<
         this.processControlsRotate({ radians: delta });
     }
 
-    resetCenterPoint() {
-        warn('"resetCenterPoint" method is replaced by "resetTransformOrigin" and would be removed soon');
-        this.setTransformOrigin({ dx: 0, dy: 0 }, false);
-    }
-
     resetTransformOrigin() {
         this.setTransformOrigin({ dx: 0, dy: 0 }, false);
     }
 
     get controls(): S['wrapper'] {
         return this.storage.wrapper;
+    }
+
+    get handles(): S['handles'] {
+        return this.storage.handles;
     }
 
 }

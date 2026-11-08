@@ -23,7 +23,7 @@
                                 "not dead"
                             ]
                         },
-                        "modules": "commonjs"
+                        "modules": false
                     }
                 ],
                 "@babel/preset-typescript"
@@ -36,6 +36,21 @@
                     {
                         "targets": {
                             "esmodules": true
+                        },
+                        "bugfixes": true,
+                        "modules": false
+                    }
+                ],
+                "@babel/preset-typescript"
+            ]
+        },
+        "umd": {
+            "presets": [
+                [
+                    "@babel/preset-env",
+                    {
+                        "targets": {
+                            "ie": "11"
                         },
                         "modules": false
                     }

@@ -1,5 +1,5 @@
 import { helper } from '../../Helper';
-import Transformable from '../Transformable';
+import Transformable from '../transformable';
 import type {
     Point,
     Delta,
@@ -8,17 +8,17 @@ import type {
     TransformHandles,
     TransformOptions,
     TransformStorage
-} from '../Transformable';
+} from '../transformable';
 import type { PointerInput } from '../../SubjectModel';
 import type { TransformOriginParams, AlignmentDirection } from '../../options';
-import { isDef, isUndef, warn } from '../../util/util';
+import { isDef, isUndef } from '../../util/util';
 import { floatToFixed, getMinMaxOfArray, DEG, rotatorAngle, resizeBox } from '../common';
 import { movePath, resizePath } from './path';
 import { boxFromPoints, unionBoxes } from '../guides';
 import type { Box, GuideLine, GuideState } from '../guides';
 import type { Restriction } from '../restrict';
-import { EDGE_KEYS, hitAreaOutline, outlineToPath } from './hitAreas';
-import type { HitCorners } from './hitAreas';
+import { EDGE_KEYS, hitAreaOutline, outlineToPath } from './hit-areas';
+import type { HitCorners } from './hit-areas';
 
 import {
     THEME_COLOR,
@@ -1821,11 +1821,6 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
         });
 
         if (hitOverlay) hitOverlay.setAttribute('d', outlines.join(''));
-    }
-
-    setCenterPoint(...args: [TransformOriginParams?, boolean?]) {
-        warn('"setCenterPoint" method is replaced by "setTransformOrigin" and would be removed soon');
-        this.setTransformOrigin(...args);
     }
 
     setTransformOrigin({ x, y, dx, dy }: TransformOriginParams = {}, pin = true) {

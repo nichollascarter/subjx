@@ -1,5 +1,5 @@
-import Transformable from './Transformable';
-import type { Point, Delta, ElementData, TransformHandles, TransformOptions, TransformStorage } from './Transformable';
+import Transformable from './transformable';
+import type { Point, Delta, ElementData, TransformHandles, TransformOptions, TransformStorage } from './transformable';
 import type { Matrix, Vector } from '../types';
 import type { TransformOriginParams, AlignmentDirection } from '../options';
 interface BoxSize {
@@ -95,7 +95,6 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
      * @param transformMatrix matrix applied on top of the element transform
      */
     getVertices(transformMatrix?: Matrix): VertexMap;
-    setCenterPoint(...args: [TransformOriginParams?, boolean?]): void;
     setTransformOrigin({ x, y, dx, dy }?: TransformOriginParams, pin?: boolean): void;
     fitControlsToSize(): void;
     getBoundingRect(transformMatrix?: Matrix | null): number[][];

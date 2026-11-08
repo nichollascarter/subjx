@@ -1,4 +1,4 @@
-import { hitAreaOutline, outlineToPath } from '../src/js/core/transform/svg/hitAreas';
+import { hitAreaOutline, outlineToPath } from '../src/js/core/transform/svg/hit-areas';
 
 const box = (left, top, right, bottom) => ({
     tl: { x: left, y: top },
