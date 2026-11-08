@@ -105,3 +105,62 @@ export const resizeBox = ({
 
     return [newWidth / baseWidth, newHeight / baseHeight, newWidth, newHeight];
 };
+
+interface XY {
+    x: number;
+    y: number;
+}
+
+const ROTATOR_ANCHORS: Record<string, string> = {
+    n: 'tc',
+    s: 'bc',
+    w: 'ml',
+    e: 'mr'
+};
+
+export const rotatorPlacement = (
+    vertices: Record<string, XY>,
+    rotatorAnchor: string | null,
+    rotatorOffset: number
+): { anchor: XY; rotator: XY } => {
+    const { tl, tr, bl } = vertices;
+    const { x, y } = vertices[(rotatorAnchor && ROTATOR_ANCHORS[rotatorAnchor]) || 'mr'];
+    const factor = rotatorAnchor === 's' || rotatorAnchor === 'w' ? -1 : 1;
+
+    const theta = rotatorAnchor === 'n' || rotatorAnchor === 's'
+        ? rotatorAngle(bl.x - tl.x, bl.y - tl.y, tr.x - tl.x, tr.y - tl.y)
+        : rotatorAngle(tl.x - tr.x, tl.y - tr.y, bl.x - tl.x, bl.y - tl.y);
+
+    const offset = rotatorOffset * factor;
+
+    return {
+        anchor: { x, y },
+        rotator: {
+            x: x - offset * Math.cos(theta),
+            y: y - offset * Math.sin(theta)
+        }
+    };
+};
+
+const axisOffset = (direction: string, rules: [RegExp, number][]): number => {
+    const rule = rules.find(([pattern]) => pattern.test(direction));
+
+    return rule ? rule[1] : 0;
+};
+
+export const alignmentOffset = (
+    direction: string,
+    [[minX, maxX], [minY, maxY]]: [number, number][],
+    [[elMinX, elMaxX], [elMinY, elMaxY]]: [number, number][]
+): [number, number] => [
+    axisOffset(direction, [
+        [/[l]/, minX - elMinX],
+        [/[r]/, maxX - elMaxX],
+        [/[h]/, ((maxX + minX) / 2) - ((elMaxX + elMinX) / 2)]
+    ]),
+    axisOffset(direction, [
+        [/[t]/, minY - elMinY],
+        [/[b]/, maxY - elMaxY],
+        [/[v]/, ((maxY + minY) / 2) - ((elMaxY + elMinY) / 2)]
+    ])
+];
