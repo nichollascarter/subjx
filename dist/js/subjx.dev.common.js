@@ -196,6 +196,7 @@ const E_MOUSEMOVE$2 = 'mousemove';
 const E_TOUCHSTART$4 = 'touchstart';
 const E_TOUCHEND$2 = 'touchend';
 const E_TOUCHMOVE$2 = 'touchmove';
+const E_MOUSEOVER$1 = 'mouseover';
 const E_DRAG_START$1 = 'dragStart';
 const E_DRAG$3 = 'drag';
 const E_DRAG_END$1 = 'dragEnd';
@@ -244,7 +245,8 @@ const CLIENT_EVENTS_CONSTANTS = {
   E_MOUSEMOVE: E_MOUSEMOVE$2,
   E_TOUCHSTART: E_TOUCHSTART$4,
   E_TOUCHEND: E_TOUCHEND$2,
-  E_TOUCHMOVE: E_TOUCHMOVE$2
+  E_TOUCHMOVE: E_TOUCHMOVE$2,
+  E_MOUSEOVER: E_MOUSEOVER$1
 };
 const TRANSFORM_HANDLES_KEYS$1 = {
   TOP_LEFT: 'tl',
@@ -542,15 +544,85 @@ const resizeBox = ({
   }
   return [newWidth / baseWidth, newHeight / baseHeight, newWidth, newHeight];
 };
+const ROTATOR_ANCHORS = {
+  n: 'tc',
+  s: 'bc',
+  w: 'ml',
+  e: 'mr'
+};
+const rotatorPlacement = (vertices, rotatorAnchor, rotatorOffset) => {
+  const {
+    tl,
+    tr,
+    bl
+  } = vertices;
+  const {
+    x,
+    y
+  } = vertices[rotatorAnchor && ROTATOR_ANCHORS[rotatorAnchor] || 'mr'];
+  const factor = rotatorAnchor === 's' || rotatorAnchor === 'w' ? -1 : 1;
+  const theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? rotatorAngle(bl.x - tl.x, bl.y - tl.y, tr.x - tl.x, tr.y - tl.y) : rotatorAngle(tl.x - tr.x, tl.y - tr.y, bl.x - tl.x, bl.y - tl.y);
+  const offset = rotatorOffset * factor;
+  return {
+    anchor: {
+      x,
+      y
+    },
+    rotator: {
+      x: x - offset * Math.cos(theta),
+      y: y - offset * Math.sin(theta)
+    }
+  };
+};
+const axisOffset = (direction, rules) => {
+  const rule = rules.find(([pattern]) => pattern.test(direction));
+  return rule ? rule[1] : 0;
+};
+const alignmentOffset = (direction, [[minX, maxX], [minY, maxY]], [[elMinX, elMaxX], [elMinY, elMaxY]]) => [axisOffset(direction, [[/[l]/, minX - elMinX], [/[r]/, maxX - elMaxX], [/[h]/, (maxX + minX) / 2 - (elMaxX + elMinX) / 2]]), axisOffset(direction, [[/[t]/, minY - elMinY], [/[b]/, maxY - elMaxY], [/[v]/, (maxY + minY) / 2 - (elMaxY + elMinY) / 2]])];
+const boxVertices = ({
+  x,
+  y,
+  width,
+  height
+}) => {
+  const hW = width / 2,
+    hH = height / 2;
+  return {
+    tl: [x, y],
+    tr: [x + width, y],
+    mr: [x + width, y + hH],
+    ml: [x, y + hH],
+    tc: [x + hW, y],
+    bc: [x + hW, y + height],
+    br: [x + width, y + height],
+    bl: [x, y + height],
+    center: [x + hW, y + hH]
+  };
+};
+const edgeSegments = ({
+  tl,
+  tr,
+  bl,
+  br
+}) => ({
+  te: [tl, tr],
+  be: [bl, br],
+  le: [tl, bl],
+  re: [tr, br]
+});
 
 var common = /*#__PURE__*/Object.freeze({
     __proto__: null,
     DEG: DEG,
     RAD: RAD,
+    alignmentOffset: alignmentOffset,
+    boxVertices: boxVertices,
+    edgeSegments: edgeSegments,
     floatToFixed: floatToFixed,
     getMinMaxOfArray: getMinMaxOfArray,
     resizeBox: resizeBox,
     rotatorAngle: rotatorAngle,
+    rotatorPlacement: rotatorPlacement,
     snapToGrid: snapToGrid
 });
 
@@ -664,6 +736,20 @@ const clampMove = ({
   dy: clampAxis(box.top, box.bottom, area.top, area.bottom, dy)
 });
 const clampEdge = (edge, areaMin, areaMax, delta) => clampAxis(edge, edge, areaMin, areaMax, delta);
+const overflowPoint = (points, bounds) => {
+  const [[minX, maxX], [minY, maxY]] = getMinMaxOfArray(bounds);
+  let x = null,
+    y = null;
+  for (let i = 0, len = points.length; i < len; i++) {
+    const [px, py] = points[i];
+    if (px < minX || px > maxX) x = px;
+    if (py < minY || py > maxY) y = py;
+  }
+  return {
+    x,
+    y
+  };
+};
 
 const getOffset = node => node.getBoundingClientRect();
 const addClass = (node, cls) => {
@@ -794,7 +880,8 @@ const {
   E_MOUSEMOVE,
   E_MOUSEUP,
   E_TOUCHMOVE,
-  E_TOUCHEND
+  E_TOUCHEND,
+  E_MOUSEOVER
 } = CLIENT_EVENTS_CONSTANTS;
 const {
   TOP_LEFT,
@@ -818,7 +905,7 @@ const {
 } = TRANSFORM_POINT_KEYS;
 
 const {
-  keys: keys$3
+  keys: keys$2
 } = Object;
 const RUNTIME_OPTIONS = ['axis', 'snap', 'each', 'proportions', 'flip', 'draggable', 'scalable', 'applyTranslate', 'guides', 'cursorMove', 'cursorResize', 'cursorRotate', 'custom', 'onInit', 'onMove', 'onResize', 'onRotate', 'onDrop', 'onDestroy'];
 const ORIGIN_OPTIONS = ['transformOrigin', 'container'];
@@ -829,11 +916,96 @@ const isSameOption = (a, b) => {
     return a.length === b.length && a.every((item, index) => item === b[index]);
   }
   if (isPlainObject(a) && isPlainObject(b)) {
-    const aKeys = keys$3(a);
-    return aKeys.length === keys$3(b).length && aKeys.every(key => a[key] === b[key]);
+    const aKeys = keys$2(a);
+    return aKeys.length === keys$2(b).length && aKeys.every(key => a[key] === b[key]);
   }
   return false;
 };
+const normalizeOptions = (options, elements) => {
+  const {
+    each = {
+      move: false,
+      resize: false,
+      rotate: false
+    },
+    snap: snapOptions,
+    axis = 'xy',
+    cursorMove = 'auto',
+    cursorResize = null,
+    cursorRotate = null,
+    transformOrigin = false,
+    restrict,
+    draggable = true,
+    resizable = true,
+    handles,
+    hitRadius = 0,
+    showHitAreas = false,
+    guides = false,
+    rotatable = true,
+    scalable = false,
+    applyTranslate = false,
+    container = elements[0].parentNode,
+    controlsContainer = container,
+    proportions = false,
+    flip = true,
+    rotatorAnchor = null,
+    rotatorOffset = 50,
+    showNormal = true,
+    custom
+  } = options;
+  const snap = {
+    x: 0,
+    y: 0,
+    angle: 0,
+    ...snapOptions
+  };
+  return {
+    axis,
+    cursorMove,
+    cursorRotate,
+    cursorResize,
+    transformOrigin,
+    restrict: restrict ? helper(restrict)[0] || document.body : null,
+    container: helper(container)[0],
+    controlsContainer: helper(controlsContainer)[0],
+    snap: {
+      ...snap,
+      angle: snap.angle * RAD
+    },
+    each,
+    proportions,
+    flip,
+    draggable,
+    resizable,
+    handles: Array.isArray(handles) ? handles : null,
+    hitRadius: Math.max(0, Number(hitRadius) || 0),
+    showHitAreas: Boolean(showHitAreas),
+    guides: guides === true ? {} : guides && typeof guides === 'object' ? guides : null,
+    rotatable,
+    scalable,
+    applyTranslate,
+    custom: typeof custom === 'object' && custom || null,
+    rotatorAnchor,
+    rotatorOffset,
+    showNormal,
+    isGrouped: elements.length > 1
+  };
+};
+const proxyMethodsOf = ({
+  onInit = noop,
+  onDrop = noop,
+  onMove = noop,
+  onResize = noop,
+  onRotate = noop,
+  onDestroy = noop
+}) => ({
+  onInit: createMethod(onInit),
+  onDrop: createMethod(onDrop),
+  onMove: createMethod(onMove),
+  onResize: createMethod(onResize),
+  onRotate: createMethod(onRotate),
+  onDestroy: createMethod(onDestroy)
+});
 
 const syncTransform = (target, source) => {
   const value = source.getAttribute('transform');
@@ -846,11 +1018,290 @@ const syncTransform = (target, source) => {
   const sourceStyle = source.style;
   if (targetStyle && sourceStyle) targetStyle.transform = sourceStyle.transform;
 };
+const readClasses = ({
+  wrapper,
+  controls
+}) => ({
+  wrapper: Array.from(wrapper.classList),
+  controls: Array.from(controls.classList)
+});
+const adoptControls = (target, fresh, previous) => {
+  const {
+    wrapper,
+    controls
+  } = target;
+  const firstForeign = controls.firstChild;
+  while (fresh.controls.firstChild) {
+    controls.insertBefore(fresh.controls.firstChild, firstForeign);
+  }
+  Array.from(fresh.wrapper.childNodes).filter(node => node !== fresh.controls).forEach(node => wrapper.insertBefore(node, controls));
+  [[wrapper, fresh.wrapper, previous === null || previous === void 0 ? void 0 : previous.wrapper], [controls, fresh.controls, previous === null || previous === void 0 ? void 0 : previous.controls]].forEach(([node, source, classes = []]) => {
+    classes.forEach(name => removeClass(node, name));
+    Array.from(source.classList).forEach(name => addClass(node, name));
+    syncTransform(node, source);
+  });
+  const parent = fresh.wrapper.parentNode;
+  if (wrapper.parentNode !== parent) parent.insertBefore(wrapper, fresh.wrapper);
+  parent.removeChild(fresh.wrapper);
+};
+
+const RESIZE_CURSORS = ['ew-resize', 'nwse-resize', 'ns-resize', 'nesw-resize'];
+const SECTOR = Math.PI / 4;
+const RESIZE_KEYS = [TOP_LEFT, TOP_CENTER, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, BOTTOM_CENTER, MIDDLE_LEFT, MIDDLE_RIGHT, TOP_EDGE, BOTTOM_EDGE, LEFT_EDGE, RIGHT_EDGE];
+const POINT_KEYS = [START_POINT$1, END_POINT$1];
+const POINT_CURSOR = 'crosshair';
+const ROTATE_CURSOR = 'grabbing';
+const screenCenter = element => {
+  const {
+    left,
+    top,
+    width,
+    height
+  } = element.getBoundingClientRect();
+  return [left + width / 2, top + height / 2];
+};
+const cursorFromAngle = radians => RESIZE_CURSORS[(Math.round(radians / SECTOR) % 4 + 4) % 4];
+const resizeCursor = (handles, key) => {
+  const {
+    [TOP_EDGE]: top,
+    [BOTTOM_EDGE]: bottom,
+    [key]: handle
+  } = handles;
+  if (!top || !bottom || !handle) return null;
+  const [tx, ty] = screenCenter(top);
+  const [bx, by] = screenCenter(bottom);
+  const [hx, hy] = screenCenter(handle);
+  return cursorFromAngle(Math.atan2(hy - (ty + by) / 2, hx - (tx + bx) / 2));
+};
+const handleCursor = (handles, key) => {
+  if (!key) return null;
+  if (POINT_KEYS.includes(key)) return POINT_CURSOR;
+  if (RESIZE_KEYS.includes(key)) return resizeCursor(handles, key);
+  return null;
+};
 
 const {
-  keys: keys$2,
+  keys: keys$1
+} = Object;
+const REVERSE_X = [TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT, TOP_CENTER, LEFT_EDGE];
+const REVERSE_Y = [TOP_LEFT, TOP_RIGHT, TOP_CENTER, MIDDLE_LEFT, TOP_EDGE];
+const ON_TOP = [TOP_CENTER, TOP_RIGHT, TOP_LEFT, TOP_EDGE];
+const ON_LEFT = [TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT, LEFT_EDGE];
+const ON_RIGHT = [TOP_RIGHT, MIDDLE_RIGHT, BOTTOM_RIGHT, RIGHT_EDGE];
+const ON_BOTTOM = [BOTTOM_RIGHT, BOTTOM_CENTER, BOTTOM_LEFT, BOTTOM_EDGE];
+const WIDTH_ONLY = [MIDDLE_LEFT, MIDDLE_RIGHT, LEFT_EDGE, RIGHT_EDGE];
+const HEIGHT_ONLY = [TOP_CENTER, BOTTOM_CENTER, BOTTOM_EDGE, TOP_EDGE];
+const POINTS = [START_POINT$1, END_POINT$1];
+const RESIZE_X = [MIDDLE_LEFT, MIDDLE_RIGHT, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, LEFT_EDGE, RIGHT_EDGE];
+const RESIZE_Y = [BOTTOM_RIGHT, BOTTOM_LEFT, BOTTOM_CENTER, TOP_RIGHT, TOP_LEFT, TOP_CENTER, TOP_EDGE, BOTTOM_EDGE];
+const matcher = (handle, handles) => {
+  const isHandle = key => {
+    const hdl = handles[key];
+    return isDef(hdl) ? handle.is(hdl) : false;
+  };
+  return {
+    isHandle,
+    some: items => items.some(isHandle)
+  };
+};
+const handleKey = (handles, handle) => {
+  var _keys$find;
+  return (_keys$find = keys$1(handles).find(key => handles[key] === handle)) !== null && _keys$find !== void 0 ? _keys$find : null;
+};
+const handleFlags = (handle, handles) => {
+  const {
+    isHandle,
+    some
+  } = matcher(handle, handles);
+  return {
+    revX: some(REVERSE_X),
+    revY: some(REVERSE_Y),
+    onTopEdge: some(ON_TOP),
+    onLeftEdge: some(ON_LEFT),
+    onRightEdge: some(ON_RIGHT),
+    onBottomEdge: some(ON_BOTTOM),
+    doW: some(WIDTH_ONLY),
+    doH: some(HEIGHT_ONLY),
+    point: POINTS.find(isHandle) || null
+  };
+};
+const resizeAxes = (handle, handles) => {
+  const {
+    some
+  } = matcher(handle, handles);
+  return {
+    x: some(RESIZE_X),
+    y: some(RESIZE_Y)
+  };
+};
+
+const START_EVENTS = {
+  [E_RESIZE$1]: E_RESIZE_START,
+  [E_ROTATE$1]: E_ROTATE_START,
+  [E_DRAG$1]: E_DRAG_START
+};
+const END_EVENTS = {
+  [E_RESIZE$1]: E_RESIZE_END,
+  [E_ROTATE$1]: E_ROTATE_END,
+  [E_DRAG$1]: E_DRAG_END,
+  [E_SET_POINT]: E_SET_POINT_END
+};
+const actionOf = ({
+  doResize,
+  doDrag,
+  doRotate,
+  doSetCenter
+}) => {
+  if (doResize) return E_RESIZE$1;
+  if (doDrag) return E_DRAG$1;
+  if (doRotate) return E_ROTATE$1;
+  if (doSetCenter) return E_SET_POINT;
+  return E_DRAG$1;
+};
+const isMimicked = ({
+  doResize,
+  doDrag,
+  doRotate
+}, {
+  move,
+  resize,
+  rotate
+}) => Boolean(doResize && resize || doRotate && rotate || doDrag && move);
+const startEventOf = action => {
+  var _START_EVENTS$action;
+  return (_START_EVENTS$action = START_EVENTS[action]) !== null && _START_EVENTS$action !== void 0 ? _START_EVENTS$action : null;
+};
+const endEventOf = action => {
+  var _END_EVENTS$action;
+  return (_END_EVENTS$action = END_EVENTS[action]) !== null && _END_EVENTS$action !== void 0 ? _END_EVENTS$action : null;
+};
+
+const movingEdges = ({
+  revX,
+  revY
+}, {
+  flipX,
+  flipY
+}) => ({
+  leftMoves: Boolean(revX) !== Boolean(flipX),
+  topMoves: Boolean(revY) !== Boolean(flipY)
+});
+const alignResize = (guides, session, proportions, {
+  dx,
+  dy
+}) => {
+  if (!guides || !guides.axisAligned) return null;
+  const {
+    box
+  } = guides;
+  const {
+    dox,
+    doy,
+    doW,
+    doH
+  } = session;
+  const {
+    leftMoves,
+    topMoves
+  } = movingEdges(session, guides);
+  const widthLeads = doW || !doH;
+  return alignEdges(guides, {
+    x: dox ? leftMoves ? box.left : box.right : null,
+    y: doy ? topMoves ? box.top : box.bottom : null
+  }, (nextDx, nextDy) => ({
+    left: box.left + (dox && leftMoves ? nextDx : 0),
+    right: box.right + (dox && !leftMoves ? nextDx : 0),
+    top: box.top + (doy && topMoves ? nextDy : 0),
+    bottom: box.bottom + (doy && !topMoves ? nextDy : 0)
+  }), dx, dy, {
+    x: Boolean(dox) && (!proportions || widthLeads),
+    y: Boolean(doy) && (!proportions || !widthLeads)
+  });
+};
+const alignPoint = (guides, {
+  dox,
+  doy
+}, proportions, {
+  dx,
+  dy
+}) => {
+  if (!guides || !guides.point || proportions) return null;
+  const {
+    x,
+    y
+  } = guides.point;
+  return alignEdges(guides, {
+    x,
+    y
+  }, (nextDx, nextDy) => ({
+    left: x + nextDx,
+    right: x + nextDx,
+    top: y + nextDy,
+    bottom: y + nextDy
+  }), dx, dy, {
+    x: dox,
+    y: doy
+  });
+};
+const clampResize = (restriction, session, {
+  dx,
+  dy
+}) => {
+  if (!restriction || !restriction.axisAligned) return {
+    dx,
+    dy,
+    clamped: false
+  };
+  const {
+    box,
+    area
+  } = restriction;
+  const {
+    dox,
+    doy
+  } = session;
+  const {
+    leftMoves,
+    topMoves
+  } = movingEdges(session, restriction);
+  return {
+    dx: dox ? clampEdge(leftMoves ? box.left : box.right, area.left, area.right, dx) : dx,
+    dy: doy ? clampEdge(topMoves ? box.top : box.bottom, area.top, area.bottom, dy) : dy,
+    clamped: true
+  };
+};
+const clampPoint = (restriction, {
+  dx,
+  dy
+}) => {
+  if (!restriction || !restriction.point) return {
+    dx,
+    dy
+  };
+  const {
+    point,
+    area
+  } = restriction;
+  return {
+    dx: clampEdge(point.x, area.left, area.right, dx),
+    dy: clampEdge(point.y, area.top, area.bottom, dy)
+  };
+};
+
+const {
+  keys,
   values: values$2
 } = Object;
+const NO_FLAGS = {
+  revX: false,
+  revY: false,
+  doW: false,
+  doH: false
+};
+const overflows = ({
+  x,
+  y
+}) => x !== null || y !== null;
 class Transformable extends SubjectModel {
   /** Internal state. Its shape is not part of the public API and may change in any minor release. Prefer `handles`, `controls`, `getBoundingRect()` and `getDimensions()`. */
 
@@ -862,6 +1313,20 @@ class Transformable extends SubjectModel {
     notifyResize: data => this.notifyResize(data),
     notifyApply: data => this.notifyApply(data),
     notifyGetState: data => this.notifyGetState(data)
+  };
+  onControlsOver = e => {
+    const {
+      storage
+    } = this;
+    if (isUndef(storage) || storage.onExecution) return;
+    const target = e.target;
+    const handle = this.resolveHandle(target);
+    const key = handleKey(storage.handles, handle);
+    if (!key || !RESIZE_KEYS.includes(key)) return;
+    const cursor = this.options.resizable ? resizeCursor(storage.handles, key) || '' : '';
+    [handle, target].forEach(node => {
+      node.style.cursor = cursor;
+    });
   };
   constructor(elements, options, observable) {
     super(elements);
@@ -968,407 +1433,331 @@ class Transformable extends SubjectModel {
       elements
     } = this;
     this.rawOptions = options;
-    [...elements].map(element => addClass(element, `${LIB_CLASS_PREFIX}drag`));
-    const {
-      each = {
-        move: false,
-        resize: false,
-        rotate: false
-      },
-      snap: snapOptions,
-      axis = 'xy',
-      cursorMove = 'auto',
-      cursorResize = 'auto',
-      cursorRotate = 'auto',
-      transformOrigin = false,
-      restrict,
-      draggable = true,
-      resizable = true,
-      handles,
-      hitRadius = 0,
-      showHitAreas = false,
-      guides = false,
-      rotatable = true,
-      scalable = false,
-      applyTranslate = false,
-      onInit = noop,
-      onDrop = noop,
-      onMove = noop,
-      onResize = noop,
-      onRotate = noop,
-      onDestroy = noop,
-      container = elements[0].parentNode,
-      controlsContainer = container,
-      proportions = false,
-      flip = true,
-      rotatorAnchor = null,
-      rotatorOffset = 50,
-      showNormal = true,
-      custom
-    } = options;
-    const snap = {
-      x: 10,
-      y: 10,
-      angle: 10,
-      ...snapOptions
-    };
-    this.options = {
-      axis,
-      cursorMove,
-      cursorRotate,
-      cursorResize,
-      transformOrigin,
-      restrict: restrict ? helper(restrict)[0] || document.body : null,
-      container: helper(container)[0],
-      controlsContainer: helper(controlsContainer)[0],
-      snap: {
-        ...snap,
-        angle: snap.angle * RAD
-      },
-      each,
-      proportions,
-      flip,
-      draggable,
-      resizable,
-      handles: Array.isArray(handles) ? handles : null,
-      hitRadius: Math.max(0, Number(hitRadius) || 0),
-      showHitAreas: Boolean(showHitAreas),
-      guides: guides === true ? {} : guides && typeof guides === 'object' ? guides : null,
-      rotatable,
-      scalable,
-      applyTranslate,
-      custom: typeof custom === 'object' && custom || null,
-      rotatorAnchor,
-      rotatorOffset,
-      showNormal,
-      isGrouped: elements.length > 1
-    };
-    this.proxyMethods = {
-      onInit: createMethod(onInit),
-      onDrop: createMethod(onDrop),
-      onMove: createMethod(onMove),
-      onResize: createMethod(onResize),
-      onRotate: createMethod(onRotate),
-      onDestroy: createMethod(onDestroy)
-    };
-    this.subscribe(each);
+    elements.forEach(element => addClass(element, `${LIB_CLASS_PREFIX}drag`));
+    this.options = normalizeOptions(options, elements);
+    this.proxyMethods = proxyMethodsOf(options);
+    this.subscribe(this.options.each);
   }
 
   /** @internal */
   animate() {
-    const self = this;
     const {
-      observable,
       storage,
-      options,
-      elements
-    } = self;
+      options
+    } = this;
     if (isUndef(storage)) return;
-    storage.frame = requestAnimFrame(self.animate);
+    storage.frame = requestAnimFrame(this.animate);
     if (!storage.doDraw) return;
     storage.doDraw = false;
-    let {
-      dox,
-      doy,
-      clientX,
-      clientY,
-      relativeX,
-      relativeY,
+    const {
       doDrag,
       doResize,
       doRotate,
       doSetCenter,
-      revX,
-      revY,
-      mouseEvent,
-      data,
       point
     } = storage;
     const {
-      snap,
-      each: {
-        move: moveEach,
-        resize: resizeEach,
-        rotate: rotateEach
-      },
       draggable,
       resizable,
-      rotatable,
-      isGrouped,
-      restrict,
-      proportions
+      rotatable
     } = options;
-    if (doResize && resizable && point) {
-      var _this$processPointMov;
-      const {
-        dx,
-        dy
-      } = this.clampPoint(this.alignPoint(snapToGrid(clientX - relativeX, snap.x), snapToGrid(clientY - relativeY, snap.y)));
-      const result = (_this$processPointMov = this.processPointMove) === null || _this$processPointMov === void 0 ? void 0 : _this$processPointMov.call(this, elements[0], point, {
-        dx,
-        dy
-      });
-      if (result) {
-        const finalArgs = {
-          ...result,
-          dx,
-          dy,
-          clientX,
-          clientY,
-          mouseEvent
-        };
-        this.proxyMethods.onResize.call(this, finalArgs);
-        super.emitEvent(E_RESIZE$1, finalArgs);
+    if (doResize && resizable) {
+      if (point) {
+        this.drawPoint(point);
+      } else {
+        this.drawResize();
       }
-    } else if (doResize && resizable) {
-      const aligned = this.alignResize(snapToGrid(clientX - relativeX, snap.x), snapToGrid(clientY - relativeY, snap.y));
-      const {
-        dx: distX,
-        dy: distY,
-        clamped
-      } = this.clampResize(aligned.dx, aligned.dy);
-      const {
-        cached,
-        cached: {
-          dist: {
-            dx: prevDx = 0,
-            dy: prevDy = 0
-          } = {}
-        } = {}
-      } = storage;
-      const args = {
-        dx: distX,
-        dy: distY,
+    }
+    if (doDrag && draggable) this.drawDrag();
+    if (doRotate && rotatable) this.drawRotate();
+    if (doSetCenter && rotatable) this.drawCenter();
+  }
+
+  /** @internal */
+  get session() {
+    return this.storage;
+  }
+
+  /** @internal */
+  pointerDelta() {
+    const {
+      session: {
         clientX,
         clientY,
-        mouseEvent
-      };
-      const {
-        x: restX,
-        y: restY
-      } = restrict && !(clamped && !proportions) ? elements.reduce((res, element) => {
-        const {
-          transform: {
-            // scX,
-            // scY,
-            ctm
-          }
-        } = data.get(element);
-        const {
-          x,
-          y
-        } = !isGrouped ? this.pointToTransform({
-          x: distX,
-          y: distY,
-          matrix: ctm
-        }) : this.pointToGroup({
-          x: distX,
-          y: distY
-        });
-        const dx = dox ? revX ? -x : x : 0;
-        const dy = doy ? revY ? -y : y : 0;
-        const {
-          x: newX,
-          y: newY
-        } = this.processResizeRestrict(element, {
-          dx,
-          dy
-        });
-        return {
-          x: newX !== null && res.x === null ? distX : res.x,
-          y: newY !== null && res.y === null ? distY : res.y
-        };
-      }, {
-        x: null,
-        y: null
-      }) : {
-        x: null,
-        y: null
-      };
-      const isBounding = restrict && (restX !== null || restY !== null);
-      const newDx = isBounding ? prevDx : distX;
-      const newDy = isBounding ? prevDy : distY;
-      const nextArgs = {
-        ...args,
-        dx: newDx,
-        dy: newDy,
+        relativeX,
+        relativeY
+      },
+      options: {
+        snap
+      }
+    } = this;
+    return {
+      dx: snapToGrid(clientX - relativeX, snap.x),
+      dy: snapToGrid(clientY - relativeY, snap.y)
+    };
+  }
+
+  /** @internal */
+  pointerArgs() {
+    const {
+      clientX,
+      clientY,
+      mouseEvent
+    } = this.session;
+    return {
+      clientX,
+      clientY,
+      mouseEvent
+    };
+  }
+
+  /** @internal */
+  cachedDist() {
+    var _this$storage$cached$, _this$storage$cached;
+    const {
+      dx = 0,
+      dy = 0
+    } = (_this$storage$cached$ = (_this$storage$cached = this.storage.cached) === null || _this$storage$cached === void 0 ? void 0 : _this$storage$cached.dist) !== null && _this$storage$cached$ !== void 0 ? _this$storage$cached$ : {};
+    return {
+      dx,
+      dy
+    };
+  }
+
+  /** @internal */
+  cacheDist(dist) {
+    this.storage.cached = {
+      ...this.storage.cached,
+      dist
+    };
+  }
+
+  /** @internal */
+  guide(alignment, delta) {
+    if (!alignment) return delta;
+    this.drawGuides(alignment.lines);
+    return alignment;
+  }
+
+  /** @internal */
+  localDelta(element, {
+    dx,
+    dy
+  }, {
+    revX,
+    revY,
+    dox,
+    doy
+  }) {
+    const {
+      x,
+      y
+    } = this.options.isGrouped ? this.pointToGroup({
+      x: dx,
+      y: dy
+    }) : this.pointToTransform({
+      x: dx,
+      y: dy,
+      matrix: this.storage.data.get(element).transform.ctm
+    });
+    return {
+      dx: dox ? revX ? -x : x : 0,
+      dy: doy ? revY ? -y : y : 0
+    };
+  }
+
+  /** @internal */
+  drawPoint(point) {
+    var _this$processPointMov;
+    const {
+      storage,
+      session,
+      options: {
+        proportions
+      }
+    } = this;
+    const pointer = this.pointerDelta();
+    const {
+      dx,
+      dy
+    } = clampPoint(storage.restriction, this.guide(alignPoint(storage.guides, session, proportions, pointer), pointer));
+    const result = (_this$processPointMov = this.processPointMove) === null || _this$processPointMov === void 0 ? void 0 : _this$processPointMov.call(this, this.elements[0], point, {
+      dx,
+      dy
+    });
+    if (!result) return;
+    const finalArgs = {
+      ...result,
+      dx,
+      dy,
+      ...this.pointerArgs()
+    };
+    this.proxyMethods.onResize.call(this, finalArgs);
+    super.emitEvent(E_RESIZE$1, finalArgs);
+  }
+
+  /** @internal */
+  drawResize() {
+    const {
+      elements,
+      observable,
+      observer,
+      storage,
+      session,
+      session: {
         revX,
         revY,
         dox,
         doy
-      };
-      elements.map(element => {
-        const {
-          transform: {
-            // scX,
-            // scY,
-            ctm
-          }
-        } = data.get(element);
-        const {
-          x,
-          y
-        } = !isGrouped ? this.pointToTransform({
-          x: newDx,
-          y: newDy,
-          matrix: ctm
-        }) : this.pointToGroup({
-          x: newDx,
-          y: newDy
-        });
-        const dx = dox ? revX ? -x : x : 0;
-        const dy = doy ? revY ? -y : y : 0;
-        self.resize({
-          ...nextArgs,
-          element,
-          dx,
-          dy
-        });
-      });
-      this.storage.cached = {
-        ...cached,
-        dist: {
-          dx: newDx,
-          dy: newDy
-        }
-      };
-      this.processControlsResize({
-        dx: newDx,
-        dy: newDy
-      });
-      if (resizeEach) {
-        observable.notify(ON_RESIZE, self.observer, nextArgs);
+      },
+      options: {
+        restrict,
+        proportions,
+        each
       }
-    }
-    if (doDrag && draggable) {
-      const gridDx = dox ? snapToGrid(clientX - relativeX, snap.x) : 0;
-      const gridDy = doy ? snapToGrid(clientY - relativeY, snap.y) : 0;
-      const alignment = storage.guides ? align(storage.guides, gridDx, gridDy, {
-        x: dox,
-        y: doy
-      }) : null;
-      const {
-        dx,
-        dy
-      } = storage.restriction ? clampMove(storage.restriction, alignment ? alignment.dx : gridDx, alignment ? alignment.dy : gridDy) : {
-        dx: alignment ? alignment.dx : gridDx,
-        dy: alignment ? alignment.dy : gridDy
-      };
-      if (alignment) this.drawGuides(alignment.lines);
-      const {
-        cached,
-        cached: {
-          dist: {
-            dx: prevDx = 0,
-            dy: prevDy = 0
-          } = {}
-        } = {}
-      } = storage;
-      const args = {
-        dx,
-        dy,
+    } = this;
+    const pointer = this.pointerDelta();
+    const aligned = this.guide(alignResize(storage.guides, session, proportions, pointer), pointer);
+    const {
+      dx,
+      dy,
+      clamped
+    } = clampResize(storage.restriction, session, aligned);
+    const dist = {
+      dx,
+      dy
+    };
+    const isBounding = Boolean(restrict) && !(clamped && !proportions) && elements.map(element => this.processResizeRestrict(element, this.localDelta(element, dist, session))).some(overflows);
+    const next = isBounding ? this.cachedDist() : dist;
+    const nextArgs = {
+      ...next,
+      ...this.pointerArgs(),
+      revX,
+      revY,
+      dox,
+      doy
+    };
+    elements.forEach(element => this.resize({
+      ...nextArgs,
+      element,
+      ...this.localDelta(element, next, session)
+    }));
+    this.cacheDist(next);
+    this.processControlsResize(next);
+    if (each.resize) observable.notify(ON_RESIZE, observer, nextArgs);
+  }
+
+  /** @internal */
+  drawDrag() {
+    const {
+      elements,
+      observable,
+      observer,
+      storage: {
+        guides,
+        restriction
+      },
+      session: {
+        dox,
+        doy
+      },
+      options: {
+        restrict,
+        each
+      }
+    } = this;
+    const pointer = this.pointerDelta();
+    const grid = {
+      dx: dox ? pointer.dx : 0,
+      dy: doy ? pointer.dy : 0
+    };
+    const aligned = this.guide(guides ? align(guides, grid.dx, grid.dy, {
+      x: dox,
+      y: doy
+    }) : null, grid);
+    const delta = restriction ? clampMove(restriction, aligned.dx, aligned.dy) : {
+      dx: aligned.dx,
+      dy: aligned.dy
+    };
+    const args = {
+      ...delta,
+      ...this.pointerArgs()
+    };
+    const overflow = restrict && !restriction ? elements.map(element => this.processMoveRestrict(element, args)) : [];
+    const prev = this.cachedDist();
+    const next = {
+      dx: overflow.some(({
+        x
+      }) => x !== null) ? prev.dx : delta.dx,
+      dy: overflow.some(({
+        y
+      }) => y !== null) ? prev.dy : delta.dy
+    };
+    const nextArgs = {
+      ...args,
+      ...next
+    };
+    this.cacheDist(next);
+    elements.forEach(element => super.drag({
+      element,
+      ...nextArgs
+    }));
+    this.processControlsMove(next);
+    if (each.move) observable.notify(ON_MOVE, observer, nextArgs);
+  }
+
+  /** @internal */
+  drawRotate() {
+    const {
+      elements,
+      observable,
+      observer,
+      session: {
         clientX,
         clientY,
-        mouseEvent
-      };
-      const {
-        x: restX,
-        y: restY
-      } = restrict && !storage.restriction ? elements.reduce((res, element) => {
-        const {
-          x,
-          y
-        } = this.processMoveRestrict(element, args);
-        return {
-          x: res.x === null && restrict ? x : res.x,
-          y: res.y === null && restrict ? y : res.y
-        };
-      }, {
-        x: null,
-        y: null
-      }) : {
-        x: null,
-        y: null
-      };
-      const newDx = restX !== null && restrict ? prevDx : dx;
-      const newDy = restY !== null && restrict ? prevDy : dy;
-      const nextArgs = {
-        ...args,
-        dx: newDx,
-        dy: newDy
-      };
-      this.storage.cached = {
-        ...cached,
-        dist: {
-          dx: newDx,
-          dy: newDy
-        }
-      };
-      elements.map(element => super.drag({
-        element,
-        ...nextArgs,
-        dx: newDx,
-        dy: newDy
-      }));
-      this.processControlsMove({
-        dx: newDx,
-        dy: newDy
-      });
-      if (moveEach) {
-        observable.notify(ON_MOVE, self.observer, nextArgs);
-      }
-    }
-    if (doRotate && rotatable) {
-      const {
         pressang,
         center
-      } = storage;
-      const delta = Math.atan2(clientY - center.y, clientX - center.x);
-      const radians = snapToGrid(delta - pressang, snap.angle);
-      if (restrict) {
-        const isBounding = elements.some(element => {
-          const {
-            x: restX,
-            y: restY
-          } = this.processRotateRestrict(element, radians);
-          return restX !== null || restY !== null;
-        });
-        if (isBounding) return;
+      },
+      options: {
+        snap,
+        restrict,
+        each
       }
-      const args = {
-        clientX,
-        clientY,
-        mouseEvent
-      };
-      elements.map(element => self.rotate({
-        element,
-        radians,
-        ...args
-      }));
-      this.processControlsRotate({
-        radians
-      });
-      if (rotateEach) {
-        observable.notify(ON_ROTATE, self.observer, {
-          radians,
-          ...args
-        });
-      }
-    }
-    if (doSetCenter && rotatable) {
-      const {
-        bx,
-        by
-      } = storage;
-      const {
-        x,
-        y
-      } = this.pointToControls({
-        x: clientX,
-        y: clientY
-      });
-      self.moveCenterHandle(x - bx, y - by);
-    }
+    } = this;
+    const angle = Math.atan2(clientY - center.y, clientX - center.x);
+    const radians = snapToGrid(angle - pressang, snap.angle);
+    if (restrict && elements.some(element => overflows(this.processRotateRestrict(element, radians)))) return;
+    const args = this.pointerArgs();
+    elements.forEach(element => this.rotate({
+      element,
+      radians,
+      ...args
+    }));
+    this.processControlsRotate({
+      radians
+    });
+    if (each.rotate) observable.notify(ON_ROTATE, observer, {
+      radians,
+      ...args
+    });
+  }
+
+  /** @internal */
+  drawCenter() {
+    const {
+      clientX,
+      clientY,
+      bx,
+      by
+    } = this.session;
+    const {
+      x,
+      y
+    } = this.pointToControls({
+      x: clientX,
+      y: clientY
+    });
+    this.moveCenterHandle(x - bx, y - by);
   }
 
   /** @internal */
@@ -1383,7 +1772,9 @@ class Transformable extends SubjectModel {
       observable,
       options: {
         axis,
-        each
+        each,
+        guides,
+        restrict
       },
       storage,
       storage: {
@@ -1393,8 +1784,9 @@ class Transformable extends SubjectModel {
     const isTarget = values$2(handles).some(hdl => helper(target).is(hdl)) || elements.some(element => element.contains(target));
     storage.isTarget = isTarget;
     if (!isTarget) return;
+    storage.handleCursor = handleCursor(handles, handleKey(handles, target));
     const computed = this.compute(e, elements);
-    keys$2(computed).map(prop => storage[prop] = computed[prop]);
+    keys(computed).forEach(prop => storage[prop] = computed[prop]);
     const {
       onRightEdge,
       onBottomEdge,
@@ -1407,61 +1799,49 @@ class Transformable extends SubjectModel {
       doH,
       point
     } = computed;
-    const doResize = onRightEdge || onBottomEdge || onTopEdge || onLeftEdge || Boolean(point);
     const {
       rotator,
       center,
       radius
     } = handles;
     if (isDef(radius)) removeClass(radius, `${LIB_CLASS_PREFIX}hidden`);
-    const doRotate = handle.is(rotator),
-      doSetCenter = isDef(center) ? handle.is(center) : false;
-    const doDrag = isTarget && !(doRotate || doResize || doSetCenter);
-    const nextStorage = {
-      mouseEvent: e,
-      clientX,
-      clientY,
+    const doResize = onRightEdge || onBottomEdge || onTopEdge || onLeftEdge || Boolean(point);
+    const doRotate = handle.is(rotator);
+    const doSetCenter = isDef(center) ? handle.is(center) : false;
+    const doDrag = !(doRotate || doResize || doSetCenter);
+    const flags = {
       doResize,
       doDrag,
       doRotate,
-      doSetCenter,
-      onExecution: true,
-      guides: (doDrag || doResize) && this.options.guides ? this.prepareGuides() : null,
-      restriction: (doDrag || doResize) && this.options.restrict ? this.prepareRestrict() : null,
-      cursor: null,
-      dox: /x/.test(axis) && (doResize ? Boolean(point) || handle.is(handles.ml) || handle.is(handles.mr) || handle.is(handles.tl) || handle.is(handles.tr) || handle.is(handles.bl) || handle.is(handles.br) || handle.is(handles.le) || handle.is(handles.re) : true),
-      doy: /y/.test(axis) && (doResize ? Boolean(point) || handle.is(handles.br) || handle.is(handles.bl) || handle.is(handles.bc) || handle.is(handles.tr) || handle.is(handles.tl) || handle.is(handles.tc) || handle.is(handles.te) || handle.is(handles.be) : true)
+      doSetCenter
     };
+    const axes = resizeAxes(handle, handles);
+    const prepared = doDrag || doResize;
     this.storage = {
       ...storage,
-      ...nextStorage
+      ...flags,
+      mouseEvent: e,
+      clientX,
+      clientY,
+      onExecution: true,
+      guides: prepared && guides ? this.prepareGuides() : null,
+      restriction: prepared && restrict ? this.prepareRestrict() : null,
+      cursor: null,
+      dox: /x/.test(axis) && (!doResize || Boolean(point) || axes.x),
+      doy: /y/.test(axis) && (!doResize || Boolean(point) || axes.y)
     };
-    if (doResize || doRotate || doSetCenter) {
-      this.setActiveHandle(handle[0]);
-    }
-    const eventArgs = {
+    if (!doDrag) this.setActiveHandle(handle[0]);
+    const actionName = actionOf(flags);
+    const startEvent = startEventOf(actionName);
+    if (startEvent) super.emitEvent(startEvent, {
       clientX,
       clientY
-    };
-    if (doResize) {
-      super.emitEvent(E_RESIZE_START, eventArgs);
-    } else if (doRotate) {
-      super.emitEvent(E_ROTATE_START, eventArgs);
-    } else if (doDrag) {
-      super.emitEvent(E_DRAG_START, eventArgs);
-    }
-    const {
-      move,
-      resize,
-      rotate
-    } = each;
-    const actionName = doResize ? E_RESIZE$1 : doRotate ? E_ROTATE$1 : E_DRAG$1;
-    const triggerEvent = Boolean(doResize && resize || doRotate && rotate || doDrag && move);
+    });
     observable.notify(ON_GETSTATE, this.observer, {
       clientX,
       clientY,
       actionName,
-      triggerEvent,
+      triggerEvent: isMimicked(flags, each),
       revX,
       revY,
       doW,
@@ -1485,29 +1865,31 @@ class Transformable extends SubjectModel {
     storage.clientX = x;
     storage.clientY = y;
     storage.doDraw = true;
-    let {
+    if (!isUndef(storage.cursor)) return;
+    const {
       doRotate,
       doDrag,
       doResize,
-      cursor
+      handleCursor: pressedCursor
     } = storage;
     const {
       cursorMove,
       cursorResize,
       cursorRotate
     } = options;
-    if (isUndef(cursor)) {
-      if (doDrag) {
-        cursor = cursorMove;
-      } else if (doRotate) {
-        cursor = cursorRotate;
-      } else if (doResize) {
-        cursor = cursorResize;
-      }
-      helper(document.body).css({
-        cursor
-      });
+    let cursor = null;
+    if (doDrag) {
+      cursor = cursorMove;
+    } else if (doRotate) {
+      cursor = cursorRotate !== null && cursorRotate !== void 0 ? cursorRotate : ROTATE_CURSOR;
+    } else if (doResize) {
+      var _ref;
+      cursor = (_ref = cursorResize !== null && cursorResize !== void 0 ? cursorResize : pressedCursor) !== null && _ref !== void 0 ? _ref : 'auto';
     }
+    helper(document.body).css({
+      cursor
+    });
+    storage.wrapper.style.cursor = cursor || '';
   }
 
   /** @internal */
@@ -1521,11 +1903,8 @@ class Transformable extends SubjectModel {
         each
       },
       observable,
+      storage,
       storage: {
-        doResize,
-        doDrag,
-        doRotate,
-        doSetCenter,
         frame,
         handles: {
           radius
@@ -1535,24 +1914,9 @@ class Transformable extends SubjectModel {
       proxyMethods
     } = this;
     if (!isTarget) return;
-    const {
-      actionName = E_DRAG$1
-    } = [{
-      actionName: E_RESIZE$1,
-      condition: doResize
-    }, {
-      actionName: E_DRAG$1,
-      condition: doDrag
-    }, {
-      actionName: E_ROTATE$1,
-      condition: doRotate
-    }, {
-      actionName: E_SET_POINT,
-      condition: doSetCenter
-    }].find(({
-      condition
-    }) => condition) || {};
-    elements.map(element => this.applyTransformToElement(element, actionName));
+    const actionName = actionOf(storage);
+    const triggerEvent = isMimicked(storage, each);
+    elements.forEach(element => this.applyTransformToElement(element, actionName));
     this.processActions(actionName);
     this.updateStorage();
     const eventArgs = {
@@ -1560,21 +1924,8 @@ class Transformable extends SubjectModel {
       clientY
     };
     proxyMethods.onDrop.call(this, eventArgs);
-    if (doResize) {
-      super.emitEvent(E_RESIZE_END, eventArgs);
-    } else if (doRotate) {
-      super.emitEvent(E_ROTATE_END, eventArgs);
-    } else if (doDrag) {
-      super.emitEvent(E_DRAG_END, eventArgs);
-    } else if (doSetCenter) {
-      super.emitEvent(E_SET_POINT_END, eventArgs);
-    }
-    const {
-      move,
-      resize,
-      rotate
-    } = each;
-    const triggerEvent = Boolean(doResize && resize || doRotate && rotate || doDrag && move);
+    const endEvent = endEventOf(actionName);
+    if (endEvent) super.emitEvent(endEvent, eventArgs);
     observable.notify(ON_APPLY, this.observer, {
       clientX,
       clientY,
@@ -1591,9 +1942,8 @@ class Transformable extends SubjectModel {
     helper(document.body).css({
       cursor: 'auto'
     });
-    if (isDef(radius)) {
-      addClass(radius, `${LIB_CLASS_PREFIX}hidden`);
-    }
+    this.storage.wrapper.style.cursor = '';
+    if (isDef(radius)) addClass(radius, `${LIB_CLASS_PREFIX}hidden`);
     const {
       pendingOptions
     } = this;
@@ -1605,18 +1955,8 @@ class Transformable extends SubjectModel {
 
   /** @internal */
   afterInit() {
-    this.initClasses = this.readInitClasses(this.storage);
-  }
-
-  /** @internal */
-  readInitClasses({
-    wrapper,
-    controls
-  }) {
-    return {
-      wrapper: Array.from(wrapper.classList),
-      controls: Array.from(controls.classList)
-    };
+    this.initClasses = readClasses(this.storage);
+    helper(this.storage.controls).on(E_MOUSEOVER, this.onControlsOver);
   }
 
   /** @internal */
@@ -1654,7 +1994,7 @@ class Transformable extends SubjectModel {
       doW,
       doH,
       ...rest
-    } = this.checkHandles(handle, handles);
+    } = handleFlags(handle, handles);
     const commonState = this.getCommonState();
     const {
       x,
@@ -1667,7 +2007,7 @@ class Transformable extends SubjectModel {
       x,
       y
     }, commonState.transform);
-    elements.map(element => {
+    elements.forEach(element => {
       const {
         transform,
         ...nextData
@@ -1697,7 +2037,7 @@ class Transformable extends SubjectModel {
     return {
       data,
       ...rest,
-      handle: values$2(handles).some(hdl => helper(target).is(hdl)) ? handle : helper(elements[0]),
+      handle: values$2(handles).some(hdl => handle.is(hdl)) ? handle : helper(elements[0]),
       pressang,
       ...commonState,
       revX,
@@ -1709,176 +2049,6 @@ class Transformable extends SubjectModel {
       bx,
       by
     };
-  }
-
-  /** @internal */
-  checkHandles(handle, handles) {
-    const checkIsHandle = hdl => isDef(hdl) ? handle.is(hdl) : false;
-    const checkAction = items => items.some(key => checkIsHandle(handles[key]));
-    const revX = checkAction([TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT, TOP_CENTER, LEFT_EDGE]);
-    const revY = checkAction([TOP_LEFT, TOP_RIGHT, TOP_CENTER, MIDDLE_LEFT, TOP_EDGE]);
-    const onTopEdge = checkAction([TOP_CENTER, TOP_RIGHT, TOP_LEFT, TOP_EDGE]);
-    const onLeftEdge = checkAction([TOP_LEFT, MIDDLE_LEFT, BOTTOM_LEFT, LEFT_EDGE]);
-    const onRightEdge = checkAction([TOP_RIGHT, MIDDLE_RIGHT, BOTTOM_RIGHT, RIGHT_EDGE]);
-    const onBottomEdge = checkAction([BOTTOM_RIGHT, BOTTOM_CENTER, BOTTOM_LEFT, BOTTOM_EDGE]);
-    const doW = checkAction([MIDDLE_LEFT, MIDDLE_RIGHT, LEFT_EDGE, RIGHT_EDGE]);
-    const doH = checkAction([TOP_CENTER, BOTTOM_CENTER, BOTTOM_EDGE, TOP_EDGE]);
-    const point = [START_POINT$1, END_POINT$1].find(key => checkIsHandle(handles[key])) || null;
-    return {
-      revX,
-      revY,
-      onTopEdge,
-      onLeftEdge,
-      onRightEdge,
-      onBottomEdge,
-      doW,
-      doH,
-      point
-    };
-  }
-
-  /** @internal */
-  alignResize(dx, dy) {
-    const {
-      storage: {
-        guides,
-        doW,
-        doH,
-        dox,
-        doy
-      },
-      options: {
-        proportions
-      }
-    } = this;
-    if (!guides || !guides.axisAligned) return {
-      dx,
-      dy
-    };
-    const {
-      box
-    } = guides;
-    const {
-      leftMoves,
-      topMoves
-    } = this.movingEdges(guides);
-    const widthLeads = doW || !doH;
-    const alignment = alignEdges(guides, {
-      x: dox ? leftMoves ? box.left : box.right : null,
-      y: doy ? topMoves ? box.top : box.bottom : null
-    }, (nextDx, nextDy) => ({
-      left: box.left + (dox && leftMoves ? nextDx : 0),
-      right: box.right + (dox && !leftMoves ? nextDx : 0),
-      top: box.top + (doy && topMoves ? nextDy : 0),
-      bottom: box.bottom + (doy && !topMoves ? nextDy : 0)
-    }), dx, dy, {
-      x: Boolean(dox) && (!proportions || widthLeads),
-      y: Boolean(doy) && (!proportions || !widthLeads)
-    });
-    this.drawGuides(alignment.lines);
-    return alignment;
-  }
-
-  /** @internal */
-  movingEdges({
-    flipX,
-    flipY
-  }) {
-    const {
-      revX,
-      revY
-    } = this.storage;
-    return {
-      leftMoves: Boolean(revX) !== Boolean(flipX),
-      topMoves: Boolean(revY) !== Boolean(flipY)
-    };
-  }
-
-  /** @internal */
-  clampResize(dx, dy) {
-    const {
-      storage: {
-        restriction,
-        dox,
-        doy
-      }
-    } = this;
-    if (!restriction || !restriction.axisAligned) return {
-      dx,
-      dy,
-      clamped: false
-    };
-    const {
-      box,
-      area
-    } = restriction;
-    const {
-      leftMoves,
-      topMoves
-    } = this.movingEdges(restriction);
-    return {
-      dx: dox ? clampEdge(leftMoves ? box.left : box.right, area.left, area.right, dx) : dx,
-      dy: doy ? clampEdge(topMoves ? box.top : box.bottom, area.top, area.bottom, dy) : dy,
-      clamped: true
-    };
-  }
-
-  /** @internal */
-  clampPoint({
-    dx,
-    dy
-  }) {
-    const {
-      restriction
-    } = this.storage;
-    if (!restriction || !restriction.point) return {
-      dx,
-      dy
-    };
-    const {
-      point,
-      area
-    } = restriction;
-    return {
-      dx: clampEdge(point.x, area.left, area.right, dx),
-      dy: clampEdge(point.y, area.top, area.bottom, dy)
-    };
-  }
-
-  /** @internal */
-  alignPoint(dx, dy) {
-    const {
-      storage: {
-        guides,
-        dox,
-        doy
-      },
-      options: {
-        proportions
-      }
-    } = this;
-    if (!guides || !guides.point || proportions) return {
-      dx,
-      dy
-    };
-    const {
-      x,
-      y
-    } = guides.point;
-    const alignment = alignEdges(guides, {
-      x,
-      y
-    }, (nextDx, nextDy) => ({
-      left: x + nextDx,
-      right: x + nextDx,
-      top: y + nextDy,
-      bottom: y + nextDy
-    }), dx, dy, {
-      x: dox,
-      y: doy
-    });
-    this.drawGuides(alignment.lines);
-    return alignment;
   }
 
   /** @internal */
@@ -1898,24 +2068,12 @@ class Transformable extends SubjectModel {
 
   /** @internal */
   restrictHandler(element, matrix) {
-    let restrictX = null,
-      restrictY = null;
-    const elBox = this.getBoundingRect(element, matrix);
-    const containerBBox = this.getRestrictedBBox();
-    const [[minX, maxX], [minY, maxY]] = getMinMaxOfArray(containerBBox);
-    for (let i = 0, len = elBox.length; i < len; i++) {
-      const [x, y] = elBox[i];
-      if (x < minX || x > maxX) {
-        restrictX = x;
-      }
-      if (y < minY || y > maxY) {
-        restrictY = y;
-      }
-    }
-    return {
-      x: restrictX,
-      y: restrictY
-    };
+    return overflowPoint(this.getBoundingRect(element, matrix), this.getRestrictedBBox());
+  }
+
+  /** @internal */
+  unbindPress(targets) {
+    targets.forEach(target => helper(target).off(E_MOUSEDOWN$3, this.onMouseDown).off(E_TOUCHSTART$3, this.onTouchStart));
   }
 
   /** @internal */
@@ -1927,7 +2085,8 @@ class Transformable extends SubjectModel {
         wrapper
       } = {}
     } = this;
-    [...elements, controls].map(target => helper(target).off(E_MOUSEDOWN$3, this.onMouseDown).off(E_TOUCHSTART$3, this.onTouchStart));
+    this.unbindPress([...elements, controls]);
+    helper(controls).off(E_MOUSEOVER, this.onControlsOver);
     wrapper.parentNode.removeChild(wrapper);
   }
 
@@ -1960,11 +2119,33 @@ class Transformable extends SubjectModel {
       cached: {}
     };
   }
+
+  /** @internal */
+  prepareState(flags = NO_FLAGS) {
+    const {
+      elements,
+      storage,
+      storage: {
+        data
+      }
+    } = this;
+    const commonState = this.getCommonState();
+    elements.forEach(element => {
+      data.set(element, {
+        ...data.get(element),
+        ...this.getElementState(element, flags)
+      });
+    });
+    this.storage = {
+      ...storage,
+      ...commonState
+    };
+  }
   notifyMove({
     dx,
     dy
   }) {
-    this.elements.map(element => super.drag({
+    this.elements.forEach(element => super.drag({
       element,
       dx,
       dy
@@ -1986,7 +2167,7 @@ class Transformable extends SubjectModel {
         }
       } = {}
     } = this;
-    elements.map(element => this.rotate({
+    elements.forEach(element => this.rotate({
       element,
       radians: snapToGrid(radians, angle),
       ...rest
@@ -2003,38 +2184,18 @@ class Transformable extends SubjectModel {
     dox,
     doy
   }) {
-    const {
-      elements,
-      storage: {
-        data
-      },
-      options: {
-        isGrouped
-      }
-    } = this;
-    elements.map(element => {
-      const {
-        transform: {
-          ctm
-        }
-      } = data.get(element);
-      const {
-        x,
-        y
-      } = !isGrouped ? this.pointToTransform({
-        x: dx,
-        y: dy,
-        matrix: ctm
-      }) : this.pointToGroup({
-        x: dx,
-        y: dy
-      });
-      this.resize({
-        element,
-        dx: dox ? revX ? -x : x : 0,
-        dy: doy ? revY ? -y : y : 0
-      });
-    });
+    this.elements.forEach(element => this.resize({
+      element,
+      ...this.localDelta(element, {
+        dx,
+        dy
+      }, {
+        revX,
+        revY,
+        dox,
+        doy
+      })
+    }));
     this.processControlsResize({
       dx,
       dy
@@ -2051,7 +2212,7 @@ class Transformable extends SubjectModel {
       clientY
     });
     if (triggerEvent) {
-      this.elements.map(element => this.applyTransformToElement(element, actionName));
+      this.elements.forEach(element => this.applyTransformToElement(element, actionName));
       super.emitEvent(`${actionName}End`, {
         clientX,
         clientY
@@ -2065,30 +2226,27 @@ class Transformable extends SubjectModel {
     triggerEvent,
     ...rest
   }) {
-    if (triggerEvent) {
-      const {
-        elements,
-        storage: {
-          data
-        }
-      } = this;
-      elements.map(element => {
-        const nextData = this.getElementState(element, rest);
-        data.set(element, {
-          ...data.get(element),
-          ...nextData
-        });
+    if (!triggerEvent) return;
+    const {
+      elements,
+      storage: {
+        data
+      }
+    } = this;
+    elements.forEach(element => {
+      data.set(element, {
+        ...data.get(element),
+        ...this.getElementState(element, rest)
       });
-      const recalc = this.getCommonState();
-      this.storage = {
-        ...this.storage,
-        ...recalc
-      };
-      super.emitEvent(`${actionName}Start`, {
-        clientX,
-        clientY
-      });
-    }
+    });
+    this.storage = {
+      ...this.storage,
+      ...this.getCommonState()
+    };
+    super.emitEvent(`${actionName}Start`, {
+      clientX,
+      clientY
+    });
   }
   subscribe({
     resize,
@@ -2117,7 +2275,7 @@ class Transformable extends SubjectModel {
       observable: ob,
       observer
     } = this;
-    NOTIFIER_EVENTS.map(eventName => ob.unsubscribe(eventName, observer));
+    NOTIFIER_EVENTS.forEach(eventName => ob.unsubscribe(eventName, observer));
   }
   disable() {
     const {
@@ -2126,12 +2284,10 @@ class Transformable extends SubjectModel {
       elements
     } = this;
     if (isUndef(storage)) return;
-
-    // unexpected case
     if (storage.onExecution) {
       helper(document).off(E_MOUSEMOVE, this.onMouseMove).off(E_MOUSEUP, this.onMouseUp).off(E_TOUCHMOVE, this.onTouchMove).off(E_TOUCHEND, this.onTouchEnd);
     }
-    elements.map(element => removeClass(element, `${LIB_CLASS_PREFIX}drag`));
+    elements.forEach(element => removeClass(element, `${LIB_CLASS_PREFIX}drag`));
     this.pendingOptions = null;
     this.unsubscribe();
     this.destroy();
@@ -2149,11 +2305,11 @@ class Transformable extends SubjectModel {
     }
     const runtime = {};
     const structural = {};
-    keys$2(options).forEach(key => {
+    keys(options).forEach(key => {
       const target = RUNTIME_OPTIONS.includes(key) ? runtime : structural;
       target[key] = options[key];
     });
-    if (keys$2(structural).length) {
+    if (keys(structural).length) {
       this.pendingOptions = {
         ...this.pendingOptions,
         ...structural
@@ -2168,7 +2324,7 @@ class Transformable extends SubjectModel {
       rawOptions,
       options: prevOptions
     } = this;
-    const changed = keys$2(options).filter(key => !isSameOption(options[key], rawOptions[key]));
+    const changed = keys(options).filter(key => !isSameOption(options[key], rawOptions[key]));
     if (!changed.length) return;
     this.unsubscribe();
     this.processOptions({
@@ -2196,28 +2352,16 @@ class Transformable extends SubjectModel {
       center
     } = prev;
     const owned = [...values$2(prev.handles), ...values$2(prev.hitAreas || {}), prev.hitOverlay, prev.guidesLayer].filter(isDef);
-    [...elements, controls].forEach(target => helper(target).off(E_MOUSEDOWN$3, this.onMouseDown).off(E_TOUCHSTART$3, this.onTouchStart));
+    this.unbindPress([...elements, controls]);
     owned.forEach(node => {
       if (node.parentNode) node.parentNode.removeChild(node);
     });
     this.init(elements);
     const fresh = this.storage;
-    const freshClasses = this.readInitClasses(fresh);
-    helper(fresh.controls).off(E_MOUSEDOWN$3, this.onMouseDown).off(E_TOUCHSTART$3, this.onTouchStart);
+    const freshClasses = readClasses(fresh);
+    this.unbindPress([fresh.controls]);
     helper(controls).on(E_MOUSEDOWN$3, this.onMouseDown).on(E_TOUCHSTART$3, this.onTouchStart);
-    const firstForeign = controls.firstChild;
-    while (fresh.controls.firstChild) {
-      controls.insertBefore(fresh.controls.firstChild, firstForeign);
-    }
-    Array.from(fresh.wrapper.childNodes).filter(node => node !== fresh.controls).forEach(node => wrapper.insertBefore(node, controls));
-    [[wrapper, fresh.wrapper, initClasses === null || initClasses === void 0 ? void 0 : initClasses.wrapper], [controls, fresh.controls, initClasses === null || initClasses === void 0 ? void 0 : initClasses.controls]].forEach(([target, source, previous = []]) => {
-      previous.forEach(name => removeClass(target, name));
-      Array.from(source.classList).forEach(name => addClass(target, name));
-      syncTransform(target, source);
-    });
-    const parent = fresh.wrapper.parentNode;
-    if (wrapper.parentNode !== parent) parent.insertBefore(wrapper, fresh.wrapper);
-    parent.removeChild(fresh.wrapper);
+    adoptControls(prev, fresh, initClasses);
     this.storage = {
       ...fresh,
       wrapper,
@@ -2241,37 +2385,18 @@ class Transformable extends SubjectModel {
     const {
       elements,
       options: {
-        draggable
-      },
-      storage,
-      storage: {
-        data
+        draggable,
+        restrict
       }
     } = this;
     if (!draggable) return;
-    const commonState = this.getCommonState();
-    elements.map(element => {
-      const nextData = this.getElementState(element, {
-        revX: false,
-        revY: false,
-        doW: false,
-        doH: false
-      });
-      data.set(element, {
-        ...data.get(element),
-        ...nextData
-      });
-    });
-    this.storage = {
-      ...storage,
-      ...commonState
-    };
-    const restriction = this.options.restrict ? this.prepareRestrict() : null;
+    this.prepareState();
+    const restriction = restrict ? this.prepareRestrict() : null;
     const delta = restriction ? clampMove(restriction, dx, dy) : {
       dx,
       dy
     };
-    elements.map(element => {
+    elements.forEach(element => {
       super.drag({
         element,
         ...delta
@@ -2292,31 +2417,16 @@ class Transformable extends SubjectModel {
       elements,
       options: {
         resizable
-      },
-      storage,
-      storage: {
-        data
       }
     } = this;
     if (!resizable) return;
-    const commonState = this.getCommonState();
-    elements.map(element => {
-      const nextData = this.getElementState(element, {
-        revX,
-        revY,
-        doW,
-        doH
-      });
-      data.set(element, {
-        ...data.get(element),
-        ...nextData
-      });
+    this.prepareState({
+      revX,
+      revY,
+      doW,
+      doH
     });
-    this.storage = {
-      ...storage,
-      ...commonState
-    };
-    elements.map(element => {
+    elements.forEach(element => {
       this.resize({
         element,
         dx,
@@ -2336,31 +2446,11 @@ class Transformable extends SubjectModel {
       elements,
       options: {
         rotatable
-      },
-      storage,
-      storage: {
-        data
       }
     } = this;
     if (!rotatable) return;
-    const commonState = this.getCommonState();
-    elements.map(element => {
-      const nextData = this.getElementState(element, {
-        revX: false,
-        revY: false,
-        doW: false,
-        doH: false
-      });
-      data.set(element, {
-        ...data.get(element),
-        ...nextData
-      });
-    });
-    this.storage = {
-      ...storage,
-      ...commonState
-    };
-    elements.map(element => {
+    this.prepareState();
+    elements.forEach(element => {
       this.rotate({
         element,
         radians: delta
@@ -2579,15 +2669,104 @@ var matrix = /*#__PURE__*/Object.freeze({
     multiplyMatrixAndPoint: multiplyMatrixAndPoint
 });
 
+const createElement = (classNames = []) => {
+  const element = document.createElement('div');
+  classNames.forEach(className => addClass(element, className));
+  return element;
+};
+const lineStyle = ([x1, y1], [x2, y2], thickness = 1) => {
+  const length = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+  const cx = (x1 + x2) / 2 - length / 2;
+  const cy = (y1 + y2) / 2 - thickness / 2;
+  const theta = Math.atan2(y1 - y2, x1 - x2) * (180 / Math.PI);
+  return {
+    transform: `translate(${cx}px, ${cy}px) rotate(${theta}deg)`,
+    width: `${length}px`
+  };
+};
+const createHandler$1 = ([x, y], key = 'handler') => {
+  const element = createElement(['sjx-hdl', `sjx-hdl-${key}`]);
+  helper(element).css({
+    transform: `translate(${x}px, ${y}px)`
+  });
+  return element;
+};
+const renderLine$1 = ([from, to], key) => {
+  const thickness = 1;
+  const line = createElement(['sjx-hdl-line', `sjx-hdl-${key}`]);
+  const {
+    transform,
+    width
+  } = lineStyle(from, to, thickness);
+  helper(line).css({
+    transform,
+    height: `${thickness}px`,
+    width
+  });
+  return line;
+};
+
+const {
+  entries: entries$4
+} = Object;
+const rotation = radians => createRotateMatrix$1(Math.sin(radians), Math.cos(radians));
+const conjugate = (matrix, pivot) => multiplyMatrix(multiplyMatrix(matrixInvert(pivot), matrix), pivot);
+const pinnedMatrix = (scaleMatrix, ctm, revX, revY) => {
+  const translateX = scaleMatrix[0][3];
+  const translateY = scaleMatrix[1][3];
+  const inverted = createTranslateMatrix$1(translateX * (revX ? -1 : 1), translateY * (revY ? -1 : 1));
+  return multiplyMatrix(multiplyMatrix(inverted, ctm), matrixInvert(createTranslateMatrix$1(translateX, translateY)));
+};
+const toVectors = vertices => entries$4(vertices).reduce((result, [key, [x, y]]) => {
+  result[key] = [x, y, 0, 1];
+  return result;
+}, {});
+const mapVertices = (vertices, map) => entries$4(vertices).reduce((result, [key, [x, y]]) => {
+  result[key] = map([x, y, 0, 1]);
+  return result;
+}, {});
+const toPoints = vertices => entries$4(vertices).reduce((result, [key, [x, y]]) => {
+  result[key] = {
+    x,
+    y
+  };
+  return result;
+}, {});
+const ownBox = (element, container) => {
+  const [left, top] = getAbsoluteOffset(element, container);
+  return {
+    width: element.offsetWidth,
+    height: element.offsetHeight,
+    offset: {
+      left,
+      top
+    }
+  };
+};
+const bBoxPoints$1 = (element, container, ctm, bBox) => {
+  const {
+    width,
+    height,
+    offset: {
+      left,
+      top
+    } = {}
+  } = bBox || ownBox(element, container);
+  return [[0, 0, 0, 1], [width, 0, 0, 1], [0, height, 0, 1], [width, height, 0, 1]].map(vertex => {
+    const [x, y, z, w] = multiplyMatrixAndPoint(ctm, vertex);
+    return [x + left, y + top, z, w];
+  });
+};
+
 const {
   E_MOUSEDOWN: E_MOUSEDOWN$2,
   E_TOUCHSTART: E_TOUCHSTART$2
 } = CLIENT_EVENTS_CONSTANTS;
 const {
-  keys: keys$1,
-  entries: entries$1,
+  entries: entries$3,
   values: values$1
 } = Object;
+const BOX_HANDLES$1 = ['tl', 'tr', 'br', 'bl', 'tc', 'bc', 'ml', 'mr'];
 class Draggable extends Transformable {
   /** @internal */
   init(elements) {
@@ -2596,78 +2775,29 @@ class Draggable extends Transformable {
         transformOrigin,
         container,
         controlsContainer,
-        resizable,
         rotatable,
-        showNormal,
         restrict
       }
     } = this;
     const wrapper = createElement(['sjx-wrapper']);
     const controls = createElement(['sjx-controls']);
-    const handles = {};
     const {
       rotator = null,
       anchor = null,
-      ...finalVertices
+      ...vertices
     } = this.getVertices();
-    let rotationHandles = {};
-    if (rotatable) {
-      const normalLine = showNormal ? renderLine$1([[anchor.x, anchor.y], rotator], 'normal') : null;
-      if (showNormal) controls.appendChild(normalLine);
-      let radius = null;
-      if (transformOrigin) {
-        radius = renderLine$1([finalVertices.center, finalVertices.center], 'radius');
-        addClass(radius, 'sjx-hidden');
-        controls.appendChild(radius);
-      }
-      rotationHandles = {
-        ...rotationHandles,
-        normal: normalLine,
-        radius
-      };
-    }
-    const resizingEdges = {
-      te: [finalVertices.tl, finalVertices.tr],
-      be: [finalVertices.bl, finalVertices.br],
-      le: [finalVertices.tl, finalVertices.bl],
-      re: [finalVertices.tr, finalVertices.br]
-    };
-    const boxHandles = {
-      tl: finalVertices.tl,
-      tr: finalVertices.tr,
-      br: finalVertices.br,
-      bl: finalVertices.bl,
-      tc: finalVertices.tc,
-      bc: finalVertices.bc,
-      ml: finalVertices.ml,
-      mr: finalVertices.mr
-    };
-    const resizingHandles = resizable ? keys$1(boxHandles).filter(key => this.isHandleEnabled(key)).reduce((result, key) => {
-      result[key] = boxHandles[key];
-      return result;
-    }, {}) : {};
-    const nextTransformOrigin = Array.isArray(transformOrigin) ? [...transformOrigin, 0, 1] : [...finalVertices.center, 0, 1];
-    const allHandles = {
-      ...resizingHandles,
+    const rotationHandles = rotatable ? this.renderRotationHandles(controls, anchor, rotator, vertices.center) : {};
+    const nextTransformOrigin = Array.isArray(transformOrigin) ? [...transformOrigin, 0, 1] : [...vertices.center, 0, 1];
+    const edgeHandles = this.renderEdges(controls, vertices);
+    const pointHandles = this.renderPoints(controls, {
+      ...this.resizingPoints(vertices),
       center: transformOrigin && rotatable ? [...nextTransformOrigin].slice(0, 2) : undefined,
       rotator
-    };
-    const mapHandlers = (obj, renderFunc) => keys$1(obj).map(key => {
-      const data = obj[key];
-      if (isUndef(data)) return;
-      const handler = renderFunc(data, key);
-      handles[key] = handler;
-      controls.appendChild(handler);
     });
-    mapHandlers(resizingEdges, renderLine$1);
-    keys$1(resizingEdges).filter(key => !this.isHandleEnabled(key)).forEach(key => helper(handles[key]).css({
-      pointerEvents: 'none'
-    }));
-    mapHandlers(allHandles, createHandler$1);
     wrapper.appendChild(controls);
     controlsContainer.appendChild(wrapper);
     const data = new WeakMap();
-    elements.map(element => data.set(element, {
+    elements.forEach(element => data.set(element, {
       parent: element.parentNode,
       transform: {
         ctm: getCurrentTransformMatrix(element, container)
@@ -2681,7 +2811,8 @@ class Draggable extends Transformable {
       wrapper,
       controls,
       handles: {
-        ...handles,
+        ...edgeHandles,
+        ...pointHandles,
         ...rotationHandles
       },
       data,
@@ -2694,7 +2825,62 @@ class Draggable extends Transformable {
       },
       cached: {}
     };
-    [...elements, controls].map(target => helper(target).on(E_MOUSEDOWN$2, this.onMouseDown).on(E_TOUCHSTART$2, this.onTouchStart));
+    [...elements, controls].forEach(target => helper(target).on(E_MOUSEDOWN$2, this.onMouseDown).on(E_TOUCHSTART$2, this.onTouchStart));
+  }
+
+  /** @internal */
+  renderRotationHandles(controls, anchor, rotator, center) {
+    const {
+      showNormal,
+      transformOrigin
+    } = this.options;
+    const normal = showNormal ? renderLine$1([[anchor.x, anchor.y], rotator], 'normal') : null;
+    if (normal) controls.appendChild(normal);
+    let radius = null;
+    if (transformOrigin) {
+      radius = renderLine$1([center, center], 'radius');
+      addClass(radius, 'sjx-hidden');
+      controls.appendChild(radius);
+    }
+    return {
+      normal,
+      radius
+    };
+  }
+
+  /** @internal */
+  renderEdges(controls, vertices) {
+    const handles = {};
+    entries$3(edgeSegments(vertices)).forEach(([key, segment]) => {
+      const edge = renderLine$1(segment, key);
+      if (!this.isHandleEnabled(key)) helper(edge).css({
+        pointerEvents: 'none'
+      });
+      controls.appendChild(edge);
+      handles[key] = edge;
+    });
+    return handles;
+  }
+
+  /** @internal */
+  resizingPoints(vertices) {
+    if (!this.options.resizable) return {};
+    return BOX_HANDLES$1.filter(key => this.isHandleEnabled(key)).reduce((result, key) => {
+      result[key] = vertices[key];
+      return result;
+    }, {});
+  }
+
+  /** @internal */
+  renderPoints(controls, points) {
+    const handles = {};
+    entries$3(points).forEach(([key, point]) => {
+      if (isUndef(point)) return;
+      const handle = createHandler$1(point, key);
+      controls.appendChild(handle);
+      handles[key] = handle;
+    });
+    return handles;
   }
 
   /** @internal */
@@ -2773,7 +2959,7 @@ class Draggable extends Transformable {
       }
     } = this;
     const restrictEl = restrict || container;
-    return getBoundingRect$1(restrictEl, container, force ? getCurrentTransformMatrix(restrictEl, container) : containerMatrix);
+    return bBoxPoints$1(restrictEl, container, force ? getCurrentTransformMatrix(restrictEl, container) : containerMatrix);
   }
 
   /** @internal */
@@ -2812,14 +2998,10 @@ class Draggable extends Transformable {
   }
 
   /** @internal */
-  processResize(element, {
+  resizeResult(element, {
     dx,
     dy
   }) {
-    if (this.options.isGrouped) return this.processGroupResize(element, {
-      dx,
-      dy
-    });
     const {
       storage: {
         revX,
@@ -2828,8 +3010,8 @@ class Draggable extends Transformable {
         doH,
         data,
         bBox: {
-          width: boxWidth,
-          height: boxHeight
+          width,
+          height
         }
       },
       options: {
@@ -2837,32 +3019,17 @@ class Draggable extends Transformable {
         scalable
       }
     } = this;
-    const elementData = data.get(element);
     const {
-      transform: {
-        matrix,
-        auxiliary: {
-          scale: {
-            translateMatrix
-          }
+      matrix,
+      auxiliary: {
+        scale: {
+          translateMatrix
         }
-      },
-      cached
-    } = elementData;
-    const getScaleMatrix = (scaleX, scaleY) => {
-      const scaleMatrix = createScaleMatrix$1(scaleX, scaleY);
-      return multiplyMatrix(multiplyMatrix(translateMatrix, scaleMatrix), matrixInvert(translateMatrix));
-    };
-    const getTranslateMatrix = (scM, ctm) => {
-      const translateX = scM[0][3];
-      const translateY = scM[1][3];
-      const trMatrix = createTranslateMatrix$1(translateX, translateY);
-      const inverted = createTranslateMatrix$1(translateX * (revX ? -1 : 1), translateY * (revY ? -1 : 1));
-      return multiplyMatrix(multiplyMatrix(inverted, ctm), matrixInvert(trMatrix));
-    };
+      }
+    } = data.get(element).transform;
     const [scaleX, scaleY, newWidth, newHeight] = resizeBox({
-      width: boxWidth,
-      height: boxHeight,
+      width,
+      height,
       dx,
       dy,
       doW,
@@ -2870,8 +3037,82 @@ class Draggable extends Transformable {
       proportions,
       flip: false
     });
-    const scaleMatrix = getScaleMatrix(scaleX, scaleY);
-    const resultMatrix = scalable ? multiplyMatrix(scaleMatrix, matrix) : getTranslateMatrix(scaleMatrix, matrix);
+    const scaleMatrix = multiplyMatrix(multiplyMatrix(translateMatrix, createScaleMatrix$1(scaleX, scaleY)), matrixInvert(translateMatrix));
+    return {
+      resultMatrix: scalable ? multiplyMatrix(scaleMatrix, matrix) : pinnedMatrix(scaleMatrix, matrix, revX, revY),
+      newWidth,
+      newHeight
+    };
+  }
+
+  /** @internal */
+  cacheResize(element, {
+    dx,
+    dy
+  }, width, height) {
+    const {
+      data
+    } = this.storage;
+    const elementData = data.get(element);
+    data.set(element, {
+      ...elementData,
+      cached: {
+        ...elementData.cached,
+        dx,
+        dy,
+        bBox: {
+          width,
+          height
+        }
+      }
+    });
+  }
+
+  /** @internal */
+  rotatedMatrix(element, radians) {
+    const {
+      matrix,
+      auxiliary: {
+        rotate: {
+          translateMatrix
+        }
+      }
+    } = this.storage.data.get(element).transform;
+    return multiplyMatrix(matrix, conjugate(rotation(radians), translateMatrix));
+  }
+
+  /** @internal */
+  translatedMatrix(element, {
+    dx,
+    dy
+  }) {
+    const {
+      matrix,
+      auxiliary: {
+        translate: {
+          parentMatrix
+        }
+      }
+    } = this.storage.data.get(element).transform;
+    const [nx, ny] = multiplyMatrixAndPoint(parentMatrix, [dx, dy, 0, 1]);
+    return {
+      matrix: multiplyMatrix(matrix, createTranslateMatrix$1(nx, ny)),
+      nx,
+      ny
+    };
+  }
+
+  /** @internal */
+  processResize(element, delta) {
+    if (this.options.isGrouped) return this.processGroupResize(element, delta);
+    const {
+      scalable
+    } = this.options;
+    const {
+      resultMatrix,
+      newWidth,
+      newHeight
+    } = this.resizeResult(element, delta);
     this.updateElementView(element, {
       ...matrixToCSS(flatMatrix(resultMatrix)),
       ...(!scalable && {
@@ -2879,18 +3120,7 @@ class Draggable extends Transformable {
         height: `${newHeight}px`
       })
     });
-    data.set(element, {
-      ...elementData,
-      cached: {
-        ...cached,
-        dx,
-        dy,
-        bBox: {
-          width: newWidth,
-          height: newHeight
-        }
-      }
-    });
+    this.cacheResize(element, delta, newWidth, newHeight);
     return {
       transform: resultMatrix,
       width: newWidth,
@@ -2939,8 +3169,7 @@ class Draggable extends Transformable {
           left = 0,
           top = 0
         } = {}
-      },
-      cached
+      }
     } = elementData;
     const [scaleX, scaleY, newWidth, newHeight] = resizeBox({
       width: boxWidth,
@@ -2977,18 +3206,10 @@ class Draggable extends Transformable {
       resultMatrix = composeMatrix(createTranslateMatrix$1(-nextOriginX, -nextOriginY), toOrigin, matrix, fromOrigin, createTranslateMatrix$1(local[0][3], local[1][3]), createTranslateMatrix$1(nextOriginX, nextOriginY));
       this.updateElementView(element, matrixToCSS(flatMatrix(resultMatrix)));
     }
-    data.set(element, {
-      ...elementData,
-      cached: {
-        ...cached,
-        dx,
-        dy,
-        bBox: {
-          width: newWidth,
-          height: newHeight
-        }
-      }
-    });
+    this.cacheResize(element, {
+      dx,
+      dy
+    }, newWidth, newHeight);
     return {
       transform: resultMatrix,
       width: newWidth,
@@ -2997,38 +3218,24 @@ class Draggable extends Transformable {
   }
 
   /** @internal */
-  processMove(element, {
-    dx,
-    dy
-  }) {
+  processMove(element, delta) {
     const {
-      storage: {
-        data
-      }
-    } = this;
+      data
+    } = this.storage;
     const elementStorage = data.get(element);
     const {
-      transform: {
-        matrix,
-        auxiliary: {
-          translate: {
-            parentMatrix
-          }
-        }
-      },
-      cached = {}
-    } = elementStorage;
-    const [nx, ny] = multiplyMatrixAndPoint(parentMatrix, [dx, dy, 0, 1]);
-    const moveElementMtrx = multiplyMatrix(matrix, createTranslateMatrix$1(nx, ny));
-    const elStyle = matrixToCSS(flatMatrix(moveElementMtrx));
-    this.updateElementView(element, elStyle);
+      matrix: moveElementMtrx,
+      nx,
+      ny
+    } = this.translatedMatrix(element, delta);
+    this.updateElementView(element, matrixToCSS(flatMatrix(moveElementMtrx)));
     data.set(element, {
       ...elementStorage,
       cached: {
-        ...cached,
+        ...elementStorage.cached,
         dist: {
-          dx: floatToFixed(dx),
-          dy: floatToFixed(dy),
+          dx: floatToFixed(delta.dx),
+          dy: floatToFixed(delta.dy),
           ox: floatToFixed(nx),
           oy: floatToFixed(ny)
         }
@@ -3039,37 +3246,14 @@ class Draggable extends Transformable {
 
   /** @internal */
   processRotate(element, radians) {
-    const {
-      storage: {
-        data
-      },
-      options: {
-        restrict
-      }
-    } = this;
-    const {
-      transform: {
-        matrix,
-        auxiliary: {
-          rotate: {
-            translateMatrix
-          }
-        }
-      }
-    } = data.get(element);
-    const cos = Math.cos(radians),
-      sin = Math.sin(radians);
-    const rotationMatrix = createRotateMatrix$1(sin, cos);
-    const transformMatrix = multiplyMatrix(multiplyMatrix(matrixInvert(translateMatrix), rotationMatrix), translateMatrix);
-    const resultMatrix = multiplyMatrix(matrix, transformMatrix);
-    const {
-      x: restX,
-      y: restY
-    } = restrict ? this.restrictHandler(resultMatrix) : {
-      x: null,
-      y: null
-    };
-    if (isDef(restX) || isDef(restY)) return resultMatrix;
+    const resultMatrix = this.rotatedMatrix(element, radians);
+    if (this.options.restrict) {
+      const {
+        x,
+        y
+      } = this.restrictHandler(resultMatrix);
+      if (isDef(x) || isDef(y)) return resultMatrix;
+    }
     this.updateElementView(element, matrixToCSS(flatMatrix(resultMatrix)));
     return resultMatrix;
   }
@@ -3319,10 +3503,7 @@ class Draggable extends Transformable {
         transformOrigin: [originX, originY]
       }
     } = this;
-    const cos = Math.cos(radians),
-      sin = Math.sin(radians);
-    const rotateMatrix = createRotateMatrix$1(sin, cos);
-    const transformMatrix = multiplyMatrix(multiplyMatrix(matrixInvert(wrapperMatrix), rotateMatrix), wrapperMatrix);
+    const transformMatrix = conjugate(rotation(radians), wrapperMatrix);
     const rotateResultMatrix = multiplyMatrix(multiplyMatrix(createTranslateMatrix$1(-originX, -originY), transformMatrix), createTranslateMatrix$1(originX, originY));
     this.updateControlsView(multiplyMatrix(controlsMatrix, rotateResultMatrix));
   }
@@ -3365,113 +3546,18 @@ class Draggable extends Transformable {
   }
 
   /** @internal */
-  processMoveRestrict(element, {
-    dx,
-    dy
-  }) {
-    const {
-      storage: {
-        data
-      }
-    } = this;
-    const elementStorage = data.get(element);
-    const {
-      transform: {
-        matrix,
-        auxiliary: {
-          translate: {
-            parentMatrix
-          }
-        }
-      }
-    } = elementStorage;
-    const [x, y] = multiplyMatrixAndPoint(parentMatrix, [dx, dy, 0, 1]);
-    const preTranslateMatrix = multiplyMatrix(matrix, createTranslateMatrix$1(x, y));
-    return this.restrictHandler(preTranslateMatrix);
+  processMoveRestrict(element, delta) {
+    return this.restrictHandler(this.translatedMatrix(element, delta).matrix);
   }
 
   /** @internal */
   processRotateRestrict(element, radians) {
-    const {
-      storage: {
-        data
-      }
-    } = this;
-    const {
-      transform: {
-        matrix,
-        auxiliary: {
-          rotate: {
-            translateMatrix
-          }
-        }
-      }
-    } = data.get(element);
-    const cos = Math.cos(radians),
-      sin = Math.sin(radians);
-    const rotationMatrix = createRotateMatrix$1(sin, cos);
-    const transformMatrix = multiplyMatrix(multiplyMatrix(matrixInvert(translateMatrix), rotationMatrix), translateMatrix);
-    const resultMatrix = multiplyMatrix(matrix, transformMatrix);
-    return this.restrictHandler(resultMatrix);
+    return this.restrictHandler(this.rotatedMatrix(element, radians));
   }
 
   /** @internal */
-  processResizeRestrict(element, {
-    dx,
-    dy
-  }) {
-    const {
-      storage: {
-        revX,
-        revY,
-        doW,
-        doH,
-        data,
-        bBox: {
-          width: boxWidth,
-          height: boxHeight
-        }
-      },
-      options: {
-        proportions,
-        scalable
-      }
-    } = this;
-    const elementData = data.get(element);
-    const {
-      transform: {
-        matrix,
-        auxiliary: {
-          scale: {
-            translateMatrix
-          }
-        }
-      }
-    } = elementData;
-    const getScaleMatrix = (scaleX, scaleY) => {
-      const scaleMatrix = createScaleMatrix$1(scaleX, scaleY);
-      return multiplyMatrix(multiplyMatrix(translateMatrix, scaleMatrix), matrixInvert(translateMatrix));
-    };
-    const getTranslateMatrix = (scM, ctm) => {
-      const translateX = scM[0][3];
-      const translateY = scM[1][3];
-      const trMatrix = createTranslateMatrix$1(translateX, translateY);
-      const inverted = createTranslateMatrix$1(translateX * (revX ? -1 : 1), translateY * (revY ? -1 : 1));
-      return multiplyMatrix(multiplyMatrix(inverted, ctm), matrixInvert(trMatrix));
-    };
-    const [pScaleX, pScaleY] = resizeBox({
-      width: boxWidth,
-      height: boxHeight,
-      dx,
-      dy,
-      doW,
-      doH,
-      proportions,
-      flip: false
-    });
-    const preScaleMatrix = getScaleMatrix(pScaleX, pScaleY);
-    const preResultMatrix = scalable ? multiplyMatrix(preScaleMatrix, matrix) : getTranslateMatrix(preScaleMatrix, matrix);
-    return this.restrictHandler(preResultMatrix);
+  processResizeRestrict(element, delta) {
+    return this.restrictHandler(this.resizeResult(element, delta).resultMatrix);
   }
 
   /** @internal */
@@ -3502,94 +3588,42 @@ class Draggable extends Transformable {
         rotatorOffset
       }
     } = this;
-    const finalVertices = isGrouped ? this.getGroupVertices() : this.getElementVertices(element, transformMatrix);
-    let rotator = null;
-    if (rotatable) {
-      const anchor = {};
-      let factor = 1;
-      switch (rotatorAnchor) {
-        case 'n':
-          anchor.x = finalVertices.tc[0];
-          anchor.y = finalVertices.tc[1];
-          break;
-        case 's':
-          anchor.x = finalVertices.bc[0];
-          anchor.y = finalVertices.bc[1];
-          factor = -1;
-          break;
-        case 'w':
-          anchor.x = finalVertices.ml[0];
-          anchor.y = finalVertices.ml[1];
-          factor = -1;
-          break;
-        case 'e':
-        default:
-          anchor.x = finalVertices.mr[0];
-          anchor.y = finalVertices.mr[1];
-          break;
-      }
-      const theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? rotatorAngle(finalVertices.bl[0] - finalVertices.tl[0], finalVertices.bl[1] - finalVertices.tl[1], finalVertices.tr[0] - finalVertices.tl[0], finalVertices.tr[1] - finalVertices.tl[1]) : rotatorAngle(finalVertices.tl[0] - finalVertices.tr[0], finalVertices.tl[1] - finalVertices.tr[1], finalVertices.bl[0] - finalVertices.tl[0], finalVertices.bl[1] - finalVertices.tl[1]);
-      rotator = [anchor.x - rotatorOffset * factor * Math.cos(theta), anchor.y - rotatorOffset * factor * Math.sin(theta)];
-      finalVertices.rotator = rotator;
-      finalVertices.anchor = anchor;
-    }
-    return finalVertices;
+    const vertices = isGrouped ? this.getGroupVertices() : this.getElementVertices(element, transformMatrix);
+    if (!rotatable) return vertices;
+    const {
+      anchor,
+      rotator
+    } = rotatorPlacement(toPoints(vertices), rotatorAnchor, rotatorOffset);
+    vertices.rotator = [rotator.x, rotator.y];
+    vertices.anchor = anchor;
+    return vertices;
   }
 
   /** @internal */
   getElementVertices(element, transformMatrix) {
     const {
-      options: {
-        container,
-        isGrouped
-      }
-    } = this;
+      container
+    } = this.options;
     const [offsetLeft, offsetTop] = getAbsoluteOffset(element, container);
     const {
-      width: offsetWidth,
-      height: offsetHeight
+      width,
+      height
     } = getLayoutSize(element);
-    const vertices = {
-      tl: [0, 0, 0, 1],
-      bl: [0, offsetHeight, 0, 1],
-      br: [offsetWidth, offsetHeight, 0, 1],
-      tr: [offsetWidth, 0, 0, 1],
-      tc: [offsetWidth / 2, 0, 0, 1],
-      ml: [0, offsetHeight / 2, 0, 1],
-      bc: [offsetWidth / 2, offsetHeight, 0, 1],
-      mr: [offsetWidth, offsetHeight / 2, 0, 1],
-      center: [offsetWidth / 2, offsetHeight / 2, 0, 1]
-    };
-    const ctm = isGrouped ? null : getCurrentTransformMatrix(element, container);
-    return entries$1(vertices).reduce((result, [key, vertex]) => {
-      const [x, y, z, w] = multiplyMatrixAndPoint(ctm || transformMatrix, vertex);
-      const point = [x + offsetLeft, y + offsetTop, z, w];
-      result[key] = ctm ? multiplyMatrixAndPoint(transformMatrix, point) : point;
-      return result;
-    }, {});
+    const ctm = getCurrentTransformMatrix(element, container);
+    return mapVertices(boxVertices({
+      x: 0,
+      y: 0,
+      width,
+      height
+    }), vertex => {
+      const [x, y, z, w] = multiplyMatrixAndPoint(ctm, vertex);
+      return multiplyMatrixAndPoint(transformMatrix, [x + offsetLeft, y + offsetTop, z, w]);
+    });
   }
 
   /** @internal */
   getGroupVertices() {
-    const {
-      x,
-      y,
-      width,
-      height
-    } = this.getGroupBbox();
-    const hW = width / 2,
-      hH = height / 2;
-    return {
-      tl: [x, y, 0, 1],
-      tr: [x + width, y, 0, 1],
-      mr: [x + width, y + hH, 0, 1],
-      ml: [x, y + hH, 0, 1],
-      tc: [x + hW, y, 0, 1],
-      bc: [x + hW, y + height, 0, 1],
-      br: [x + width, y + height, 0, 1],
-      bl: [x, y + height, 0, 1],
-      center: [x + hW, y + hH, 0, 1]
-    };
+    return toVectors(boxVertices(this.getGroupBbox()));
   }
 
   /** @internal */
@@ -3600,43 +3634,18 @@ class Draggable extends Transformable {
         container
       }
     } = this;
-    const vertices = elements.reduce((result, element) => {
-      const [offsetLeft, offsetTop] = getAbsoluteOffset(element, container);
-      const {
-        width: offsetWidth,
-        height: offsetHeight
-      } = getLayoutSize(element);
-      const vertices = [[0, 0, 0, 1], [0, offsetHeight, 0, 1], [offsetWidth, offsetHeight, 0, 1], [offsetWidth, 0, 0, 1]];
-      const nextTransform = getCurrentTransformMatrix(element, container);
-      const groupVertices = vertices.reduce((nextVertices, vertex) => [...nextVertices, multiplyMatrixAndPoint(nextTransform, vertex)], []).map(([x, y, z, w]) => [x + offsetLeft, y + offsetTop, z, w]);
-      return [...result, groupVertices];
-    }, []);
     const toControls = matrixInvert(this.getControlsMatrix());
-    const [[minX, maxX], [minY, maxY]] = getMinMaxOfArray(vertices.reduce((res, item) => [...res, ...item], []).map(vertex => multiplyMatrixAndPoint(toControls, vertex)));
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY
-    };
-  }
-
-  /** @internal */
-  getElementBBox(element) {
-    const {
-      options: {
-        container
-      }
-    } = this;
-    const [offsetLeft, offsetTop] = getAbsoluteOffset(element, container);
-    const {
-      offsetWidth,
-      offsetHeight
-    } = element;
-    const vertices = [[0, 0, 0, 1], [0, offsetHeight, 0, 1], [offsetWidth, offsetHeight, 0, 1], [offsetWidth, 0, 0, 1]];
-    const nextTransform = getCurrentTransformMatrix(element, container);
-    const nextVertices = vertices.reduce((nextVertices, vertex) => [...nextVertices, multiplyMatrixAndPoint(nextTransform, vertex)], []).map(([x, y, z, w]) => [x + offsetLeft, y + offsetTop, z, w]);
-    const [[minX, maxX], [minY, maxY]] = getMinMaxOfArray(nextVertices);
+    const points = elements.reduce((result, element) => {
+      const [left, top] = getAbsoluteOffset(element, container);
+      return [...result, ...bBoxPoints$1(element, container, getCurrentTransformMatrix(element, container), {
+        ...getLayoutSize(element),
+        offset: {
+          left,
+          top
+        }
+      })];
+    }, []).map(vertex => multiplyMatrixAndPoint(toControls, vertex));
+    const [[minX, maxX], [minY, maxY]] = getMinMaxOfArray(points);
     return {
       x: minX,
       y: minY,
@@ -3666,62 +3675,36 @@ class Draggable extends Transformable {
         } = {}
       }
     } = this;
-    const matrix = multiplyMatrix(boxMatrix,
-    // better to find result matrix instead of calculated
-    matrixInvert(controlsMatrix));
     const {
       anchor = null,
       center,
-      ...finalVertices
-    } = this.getVertices(matrix);
-    let normalLine = null;
-    let rotationHandles = {};
-    if (rotatable) {
-      normalLine = showNormal ? [[anchor.x, anchor.y], finalVertices.rotator] : null;
-      rotationHandles = {
-        rotator: finalVertices.rotator
-      };
-    }
-    const resizingEdges = {
-      te: [finalVertices.tl, finalVertices.tr],
-      be: [finalVertices.bl, finalVertices.br],
-      le: [finalVertices.tl, finalVertices.bl],
-      re: [finalVertices.tr, finalVertices.br],
-      ...(showNormal && normalLine && {
-        normal: normalLine
+      ...vertices
+    } = this.getVertices(multiplyMatrix(boxMatrix, matrixInvert(controlsMatrix)));
+    const normal = rotatable && showNormal ? [[anchor.x, anchor.y], vertices.rotator] : null;
+    const lines = {
+      ...edgeSegments(vertices),
+      ...(normal && {
+        normal
       })
     };
-    keys$1(resizingEdges).forEach(key => {
-      const [pt1, pt2] = resizingEdges[key];
-      const {
-        cx,
-        cy,
-        length,
-        theta
-      } = getLineAttrs(pt1, pt2);
-      helper(handles[key]).css({
-        transform: `translate(${cx}px, ${cy}px) rotate(${theta}deg)`,
-        width: `${length}px`
-      });
-    });
+    entries$3(lines).forEach(([key, [from, to]]) => helper(handles[key]).css(lineStyle(from, to)));
     const allHandles = {
-      ...(resizable && finalVertices),
-      ...rotationHandles,
+      ...(resizable && vertices),
+      ...(rotatable && {
+        rotator: vertices.rotator
+      }),
       ...(!isShifted && Boolean(center) && {
         center
       })
     };
-    return keys$1(allHandles).reduce((result, key) => {
+    entries$3(allHandles).forEach(([key, point]) => {
       const hdl = handles[key];
-      const attr = allHandles[key];
-      result[key] = attr;
-      if (isUndef(attr) || isUndef(hdl)) return result;
-      const [x, y] = attr;
+      if (isUndef(point) || isUndef(hdl)) return;
       helper(hdl).css({
-        transform: `translate(${x}px, ${y}px)`
+        transform: `translate(${point[0]}px, ${point[1]}px)`
       });
-      return result;
-    }, {});
+    });
+    return allHandles;
   }
   setTransformOrigin({
     x,
@@ -3779,30 +3762,18 @@ class Draggable extends Transformable {
     } = this;
     const controlsMatrix = getCurrentTransformMatrix(controls, controls.parentNode);
     const [dx, dy] = multiplyMatrixAndPoint(controlsMatrix, [originX, originY, 0, 1]);
-    const {
-      nextValues,
-      pin
-    } = [{
-      nextValues: () => ({
+    this.updateControlsView();
+    if (isShifted) {
+      this.setTransformOrigin({
         x: dx,
         y: dy
-      }),
-      pin: true,
-      condition: () => isShifted
-    }, {
-      nextValues: () => ({
+      }, true);
+    } else {
+      this.setTransformOrigin({
         dx: 0,
         dy: 0
-      }),
-      pin: false,
-      condition: () => !isShifted
-    }].find(({
-      condition
-    }) => condition());
-    this.updateControlsView();
-    this.setTransformOrigin({
-      ...nextValues()
-    }, pin);
+      }, false);
+    }
     this.applyTransformToHandles();
   }
   getBoundingRect(transformMatrix = null) {
@@ -3833,7 +3804,7 @@ class Draggable extends Transformable {
       height: nextHeight
     };
     const restrictEl = restrict || container;
-    return getBoundingRect$1(element, restrictEl, getCurrentTransformMatrix(element, restrictEl, transformMatrix), nextBox);
+    return bBoxPoints$1(element, restrictEl, getCurrentTransformMatrix(element, restrictEl, transformMatrix), nextBox);
   }
   applyAlignment(direction, target = null) {
     const {
@@ -3849,37 +3820,11 @@ class Draggable extends Transformable {
       center,
       ...vertices
     } = this.getVertices();
-    const restrictBBox = target ? getBoundingRect$1(target, container, getCurrentTransformMatrix(target, container)) : this.getRestrictedBBox(true);
-    const nextVertices = values$1(vertices);
-    const [[minX, maxX], [minY, maxY]] = getMinMaxOfArray(restrictBBox);
-    const [[elMinX, elMaxX], [elMinY, elMaxY]] = getMinMaxOfArray(nextVertices);
-    const getXDir = () => {
-      switch (true) {
-        case /[l]/.test(direction):
-          return minX - elMinX;
-        case /[r]/.test(direction):
-          return maxX - elMaxX;
-        case /[h]/.test(direction):
-          return (maxX + minX) / 2 - (elMaxX + elMinX) / 2;
-        default:
-          return 0;
-      }
-    };
-    const getYDir = () => {
-      switch (true) {
-        case /[t]/.test(direction):
-          return minY - elMinY;
-        case /[b]/.test(direction):
-          return maxY - elMaxY;
-        case /[v]/.test(direction):
-          return (maxY + minY) / 2 - (elMaxY + elMinY) / 2;
-        default:
-          return 0;
-      }
-    };
-    const [x, y] = multiplyMatrixAndPoint(matrixInvert(dropTranslate(getCurrentTransformMatrix(elements[0].parentNode, container))), [getXDir(), getYDir(), 0, 1]);
+    const restrictBBox = target ? bBoxPoints$1(target, container, getCurrentTransformMatrix(target, container)) : this.getRestrictedBBox(true);
+    const [offsetX, offsetY] = alignmentOffset(direction, getMinMaxOfArray(restrictBBox), getMinMaxOfArray(values$1(vertices)));
+    const [x, y] = multiplyMatrixAndPoint(matrixInvert(dropTranslate(getCurrentTransformMatrix(elements[0].parentNode, container))), [offsetX, offsetY, 0, 1]);
     const moveElementMtrx = multiplyMatrix(getTransform(elements[0]), createTranslateMatrix$1(x, y));
-    elements.map(element => this.updateElementView(element, matrixToCSS(flatMatrix(moveElementMtrx))));
+    elements.forEach(element => this.updateElementView(element, matrixToCSS(flatMatrix(moveElementMtrx))));
     this.fitControlsToSize();
   }
   getDimensions() {
@@ -3901,69 +3846,122 @@ class Draggable extends Transformable {
     };
   }
 }
-const createHandler$1 = ([x, y], key = 'handler', style = {}) => {
-  const element = createElement(['sjx-hdl', `sjx-hdl-${key}`]);
-  helper(element).css({
-    transform: `translate(${x}px, ${y}px)`,
-    ...style
-  });
-  return element;
+
+const CIRCLE_SEGMENTS = 32;
+const EDGE_KEYS = ['te', 'be', 'le', 're'];
+const HANDLE_EDGES = {
+  tl: ['te', 'le'],
+  tr: ['te', 're'],
+  bl: ['be', 'le'],
+  br: ['be', 're'],
+  tc: ['te'],
+  bc: ['be'],
+  ml: ['le'],
+  mr: ['re']
 };
-const renderLine$1 = ([pt1, pt2, thickness = 1], key) => {
-  const {
-    cx,
-    cy,
-    length,
-    theta
-  } = getLineAttrs(pt1, pt2, thickness);
-  const line = createElement(['sjx-hdl-line', `sjx-hdl-${key}`]);
-  helper(line).css({
-    transform: `translate(${cx}px, ${cy}px) rotate(${theta}deg)`,
-    height: `${thickness}px`,
-    width: `${length}px`
-  });
-  return line;
+const sub = (a, b) => ({
+  x: a.x - b.x,
+  y: a.y - b.y
+});
+const dot = (a, b) => a.x * b.x + a.y * b.y;
+const length = a => Math.hypot(a.x, a.y);
+const along = (point, direction, distance) => ({
+  x: point.x + direction.x * distance,
+  y: point.y + direction.y * distance
+});
+const edgeEnds = ({
+  tl,
+  tr,
+  bl,
+  br
+}, edge) => ({
+  te: [tl, tr],
+  be: [bl, br],
+  le: [tl, bl],
+  re: [tr, br]
+})[edge];
+const OPPOSITE = {
+  te: 'be',
+  be: 'te',
+  le: 're',
+  re: 'le'
 };
-const getLineAttrs = (pt1, pt2, thickness = 1) => {
-  const [x1, y1] = pt1;
-  const [x2, y2] = pt2;
-  const length = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-  const cx = (x1 + x2) / 2 - length / 2;
-  const cy = (y1 + y2) / 2 - thickness / 2;
-  const theta = Math.atan2(y1 - y2, x1 - x2) * (180 / Math.PI);
-  return {
-    cx,
-    cy,
-    thickness,
-    theta,
-    length
+const edgeNormal = (corners, edge) => {
+  const [a, b] = edgeEnds(corners, edge);
+  const direction = sub(b, a);
+  const size = length(direction);
+  if (size < 1e-9) return {
+    x: 0,
+    y: 0
+  };
+  const normal = {
+    x: direction.y / size,
+    y: -direction.x / size
+  };
+  const [oppositeStart] = edgeEnds(corners, OPPOSITE[edge]);
+  const towardsOpposite = dot(sub(oppositeStart, a), normal);
+  if (Math.abs(towardsOpposite) > 1e-9) {
+    return towardsOpposite > 0 ? {
+      x: -normal.x,
+      y: -normal.y
+    } : normal;
+  }
+  return edge === 'te' || edge === 're' ? normal : {
+    x: -normal.x,
+    y: -normal.y
   };
 };
-const getBoundingRect$1 = (element, container, ctm, bBox) => {
-  const [offsetLeft, offsetTop] = getAbsoluteOffset(element, container);
-  const {
-    width,
-    height,
-    offset: {
-      left,
-      top
-    } = {}
-  } = bBox || {
-    width: element.offsetWidth,
-    height: element.offsetHeight,
-    offset: {
-      left: offsetLeft,
-      top: offsetTop
-    }
-  };
-  const vertices = [[0, 0, 0, 1], [width, 0, 0, 1], [0, height, 0, 1], [width, height, 0, 1]];
-  return vertices.reduce((nextVerteces, vertex) => [...nextVerteces, multiplyMatrixAndPoint(ctm, vertex)], []).map(([x, y, z, w]) => [x + left, y + top, z, w]);
+const edgeDepth = (corners, edge) => {
+  const [a] = edgeEnds(corners, edge);
+  const [oppositeStart] = edgeEnds(corners, OPPOSITE[edge]);
+  return Math.abs(dot(sub(oppositeStart, a), edgeNormal(corners, edge)));
 };
-const createElement = (classNames = []) => {
-  const element = document.createElement('div');
-  classNames.forEach(className => addClass(element, className));
-  return element;
+const clampFor = (corners, edge, radius) => ({
+  normal: edgeNormal(corners, edge),
+  depth: Math.min(radius, edgeDepth(corners, edge) / 4)
+});
+const clockwise = points => {
+  const area = points.reduce((sum, point, i) => {
+    const next = points[(i + 1) % points.length];
+    return sum + point.x * next.y - next.x * point.y;
+  }, 0);
+  return area < 0 ? [...points].reverse() : points;
 };
+const applyClamps = (points, origin, clamps) => clamps.reduce((result, {
+  normal,
+  depth
+}) => result.map(point => {
+  const offset = dot(sub(point, origin), normal);
+  return offset < -depth ? along(point, normal, -depth - offset) : point;
+}), points);
+const hitAreaOutline = (key, center, corners, radius) => {
+  if (radius <= 0) return [];
+  if (corners && EDGE_KEYS.includes(key)) {
+    const edge = key;
+    const [a, b] = edgeEnds(corners, edge);
+    if (length(sub(b, a)) < 1e-9) return [];
+    const {
+      normal,
+      depth
+    } = clampFor(corners, edge, radius);
+    return clockwise([along(a, normal, radius), along(b, normal, radius), along(b, normal, -depth), along(a, normal, -depth)]);
+  }
+  const circle = Array.from({
+    length: CIRCLE_SEGMENTS
+  }, (_, i) => {
+    const angle = i / CIRCLE_SEGMENTS * Math.PI * 2;
+    return {
+      x: center.x + radius * Math.cos(angle),
+      y: center.y + radius * Math.sin(angle)
+    };
+  });
+  const edges = corners ? HANDLE_EDGES[key] || [] : [];
+  return clockwise(applyClamps(circle, center, edges.map(edge => clampFor(corners, edge, radius))));
+};
+const outlineToPath = points => points.length ? `M${points.map(({
+  x,
+  y
+}) => `${+x.toFixed(3)} ${+y.toFixed(3)}`).join('L')}Z` : '';
 
 const sepRE = /\s*,\s*|\s+/g;
 const allowedElements = ['circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text', 'g', 'foreignobject', 'use'];
@@ -4014,6 +4012,8 @@ const createRotateMatrix = (sin, cos) => {
   matrix.d = cos;
   return matrix;
 };
+const createRotationMatrix = radians => createRotateMatrix(floatToFixed(Math.sin(radians)), floatToFixed(Math.cos(radians)));
+const scaleAround = (translateMatrix, scaleX, scaleY) => translateMatrix.multiply(createScaleMatrix(scaleX, scaleY)).multiply(translateMatrix.inverse());
 const createScaleMatrix = (x, y) => {
   const matrix = createSVGMatrix();
   matrix.a = x;
@@ -4102,6 +4102,7 @@ var svgMatrix = /*#__PURE__*/Object.freeze({
     childLocalMatrix: childLocalMatrix,
     cloneMatrix: cloneMatrix,
     createRotateMatrix: createRotateMatrix,
+    createRotationMatrix: createRotationMatrix,
     createSVGElement: createSVGElement,
     createSVGMatrix: createSVGMatrix,
     createSVGPoint: createSVGPoint,
@@ -4117,8 +4118,144 @@ var svgMatrix = /*#__PURE__*/Object.freeze({
     normalizeString: normalizeString,
     parsePoints: parsePoints,
     pointTo: pointTo,
+    scaleAround: scaleAround,
     sepRE: sepRE
 });
+
+const {
+  entries: entries$2
+} = Object;
+const ORIGIN_COLOR = '#fe3232';
+const GUIDE_COLOR = '#ff3d9a';
+const setAttributes = (element, attrs) => {
+  entries$2(attrs).forEach(([attr, value]) => element.setAttribute(attr, String(value)));
+};
+const createHandler = (left, top, color, key) => {
+  const handler = createSVGElement('circle', ['sjx-svg-hdl', `sjx-svg-hdl-${key}`]);
+  setAttributes(handler, {
+    cx: left,
+    cy: top,
+    r: 4,
+    fill: '#fff',
+    stroke: color,
+    'stroke-width': 1,
+    'fill-opacity': 1,
+    'vector-effect': 'non-scaling-stroke'
+  });
+  return handler;
+};
+const renderLine = ([b, e], color, key) => {
+  const handler = createSVGElement('line', ['sjx-svg-line', `sjx-svg-line-${key}`]);
+  setAttributes(handler, {
+    x1: b.x,
+    y1: b.y,
+    x2: e.x,
+    y2: e.y,
+    stroke: color,
+    'stroke-width': 1,
+    'vector-effect': 'non-scaling-stroke'
+  });
+  return handler;
+};
+const setLineStyle = (line, color) => {
+  line.setAttribute('stroke', color);
+  line.setAttribute('stroke-dasharray', '3 3');
+  line.setAttribute('vector-effect', 'non-scaling-stroke');
+};
+const renderRadius = (from, to) => {
+  const radius = createSVGElement('line', ['sjx-hidden']);
+  radius.x1.baseVal.value = from.x;
+  radius.y1.baseVal.value = from.y;
+  radius.x2.baseVal.value = to.x;
+  radius.y2.baseVal.value = to.y;
+  setLineStyle(radius, ORIGIN_COLOR);
+  radius.setAttribute('opacity', '0.5');
+  return radius;
+};
+const createHitArea = key => {
+  const area = createSVGElement('path', ['sjx-svg-hit', `sjx-svg-hit-${key}`, EDGE_KEYS.includes(key) ? 'sjx-svg-hit-edge' : 'sjx-svg-hit-handle']);
+  area.setAttribute('data-sjx-handle', key);
+  area.setAttribute('fill', 'transparent');
+  return area;
+};
+const readCorners = (top, bottom) => {
+  if (!top || !bottom) return null;
+  const point = (line, n) => ({
+    x: Number(line.getAttribute(`x${n}`)) || 0,
+    y: Number(line.getAttribute(`y${n}`)) || 0
+  });
+  return {
+    tl: point(top, 1),
+    tr: point(top, 2),
+    bl: point(bottom, 1),
+    br: point(bottom, 2)
+  };
+};
+const createGuideLine = ({
+  axis,
+  value,
+  from,
+  to
+}) => {
+  const line = createSVGElement('line', ['sjx-svg-guide']);
+  const [x1, y1, x2, y2] = axis === 'x' ? [value, from, value, to] : [from, value, to, value];
+  setAttributes(line, {
+    x1,
+    y1,
+    x2,
+    y2,
+    stroke: GUIDE_COLOR,
+    'stroke-width': 1,
+    'vector-effect': 'non-scaling-stroke',
+    'pointer-events': 'none'
+  });
+  return line;
+};
+const screenScale = element => {
+  const matrix = element.getScreenCTM();
+  return matrix ? Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c)) || 1 : 1;
+};
+
+const {
+  entries: entries$1
+} = Object;
+const transformVertices = (vertices, matrix) => entries$1(vertices).reduce((result, [key, [x, y]]) => {
+  result[key] = pointTo(matrix, x, y);
+  return result;
+}, {});
+const bBoxPoints = (element, ctm, bBox = element.getBBox()) => {
+  const {
+    x,
+    y,
+    width,
+    height
+  } = bBox;
+  return [[x, y], [x + width, y], [x + width, y + height], [x, y + height]].map(([l, t]) => {
+    const {
+      x: nx,
+      y: ny
+    } = pointTo(ctm, l, t);
+    return [nx, ny];
+  });
+};
+const lineRotator = (start, end, rotatorAnchor, rotatorOffset) => {
+  const axisX = end.x - start.x,
+    axisY = end.y - start.y;
+  const length = Math.sqrt(axisX * axisX + axisY * axisY);
+  const [normalX, normalY] = length ? [axisY / length, -axisX / length] : [0, -1];
+  const side = rotatorAnchor === 's' || rotatorAnchor === 'w' ? -1 : 1;
+  const anchor = {
+    x: (start.x + end.x) / 2,
+    y: (start.y + end.y) / 2
+  };
+  return {
+    anchor,
+    rotator: {
+      x: anchor.x + normalX * rotatorOffset * side,
+      y: anchor.y + normalY * rotatorOffset * side
+    }
+  };
+};
 
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
 const dRE = /\s*([achlmqstvz])([^achlmqstvz]*)\s*/gi;
@@ -5029,1714 +5166,6 @@ const arcToCubicCurves = (x1, y1, x2, y2, rx, ry, xAxisRot, largeArcFlag, sweepF
   }
 };
 
-const CIRCLE_SEGMENTS = 32;
-const EDGE_KEYS = ['te', 'be', 'le', 're'];
-const HANDLE_EDGES = {
-  tl: ['te', 'le'],
-  tr: ['te', 're'],
-  bl: ['be', 'le'],
-  br: ['be', 're'],
-  tc: ['te'],
-  bc: ['be'],
-  ml: ['le'],
-  mr: ['re']
-};
-const sub = (a, b) => ({
-  x: a.x - b.x,
-  y: a.y - b.y
-});
-const dot = (a, b) => a.x * b.x + a.y * b.y;
-const length = a => Math.hypot(a.x, a.y);
-const along = (point, direction, distance) => ({
-  x: point.x + direction.x * distance,
-  y: point.y + direction.y * distance
-});
-const edgeEnds = ({
-  tl,
-  tr,
-  bl,
-  br
-}, edge) => ({
-  te: [tl, tr],
-  be: [bl, br],
-  le: [tl, bl],
-  re: [tr, br]
-})[edge];
-const OPPOSITE = {
-  te: 'be',
-  be: 'te',
-  le: 're',
-  re: 'le'
-};
-const edgeNormal = (corners, edge) => {
-  const [a, b] = edgeEnds(corners, edge);
-  const direction = sub(b, a);
-  const size = length(direction);
-  if (size < 1e-9) return {
-    x: 0,
-    y: 0
-  };
-  const normal = {
-    x: direction.y / size,
-    y: -direction.x / size
-  };
-  const [oppositeStart] = edgeEnds(corners, OPPOSITE[edge]);
-  const towardsOpposite = dot(sub(oppositeStart, a), normal);
-  if (Math.abs(towardsOpposite) > 1e-9) {
-    return towardsOpposite > 0 ? {
-      x: -normal.x,
-      y: -normal.y
-    } : normal;
-  }
-  return edge === 'te' || edge === 're' ? normal : {
-    x: -normal.x,
-    y: -normal.y
-  };
-};
-const edgeDepth = (corners, edge) => {
-  const [a] = edgeEnds(corners, edge);
-  const [oppositeStart] = edgeEnds(corners, OPPOSITE[edge]);
-  return Math.abs(dot(sub(oppositeStart, a), edgeNormal(corners, edge)));
-};
-const clampFor = (corners, edge, radius) => ({
-  normal: edgeNormal(corners, edge),
-  depth: Math.min(radius, edgeDepth(corners, edge) / 4)
-});
-const clockwise = points => {
-  const area = points.reduce((sum, point, i) => {
-    const next = points[(i + 1) % points.length];
-    return sum + point.x * next.y - next.x * point.y;
-  }, 0);
-  return area < 0 ? [...points].reverse() : points;
-};
-const applyClamps = (points, origin, clamps) => clamps.reduce((result, {
-  normal,
-  depth
-}) => result.map(point => {
-  const offset = dot(sub(point, origin), normal);
-  return offset < -depth ? along(point, normal, -depth - offset) : point;
-}), points);
-const hitAreaOutline = (key, center, corners, radius) => {
-  if (radius <= 0) return [];
-  if (corners && EDGE_KEYS.includes(key)) {
-    const edge = key;
-    const [a, b] = edgeEnds(corners, edge);
-    if (length(sub(b, a)) < 1e-9) return [];
-    const {
-      normal,
-      depth
-    } = clampFor(corners, edge, radius);
-    return clockwise([along(a, normal, radius), along(b, normal, radius), along(b, normal, -depth), along(a, normal, -depth)]);
-  }
-  const circle = Array.from({
-    length: CIRCLE_SEGMENTS
-  }, (_, i) => {
-    const angle = i / CIRCLE_SEGMENTS * Math.PI * 2;
-    return {
-      x: center.x + radius * Math.cos(angle),
-      y: center.y + radius * Math.sin(angle)
-    };
-  });
-  const edges = corners ? HANDLE_EDGES[key] || [] : [];
-  return clockwise(applyClamps(circle, center, edges.map(edge => clampFor(corners, edge, radius))));
-};
-const outlineToPath = points => points.length ? `M${points.map(({
-  x,
-  y
-}) => `${+x.toFixed(3)} ${+y.toFixed(3)}`).join('L')}Z` : '';
-
-const {
-  E_DRAG,
-  E_RESIZE,
-  E_ROTATE
-} = EVENT_EMITTER_CONSTANTS;
-const {
-  E_MOUSEDOWN: E_MOUSEDOWN$1,
-  E_TOUCHSTART: E_TOUCHSTART$1
-} = CLIENT_EVENTS_CONSTANTS;
-const {
-  START_POINT,
-  END_POINT
-} = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_POINT_KEYS;
-const {
-  keys,
-  entries,
-  values
-} = Object;
-class DraggableSVG extends Transformable {
-  /** @internal */
-  init(elements) {
-    const {
-      options: {
-        container,
-        controlsContainer,
-        resizable,
-        rotatable,
-        showNormal,
-        transformOrigin,
-        restrict,
-        hitRadius,
-        showHitAreas
-      }
-    } = this;
-    const hitAreas = {};
-    const wrapper = createSVGElement('g', showHitAreas ? ['sjx-svg-wrapper', 'sjx-show-hit'] : ['sjx-svg-wrapper']);
-    const controls = createSVGElement('g', ['sjx-svg-controls']);
-    const hitOverlay = hitRadius && showHitAreas ? createSVGElement('path', ['sjx-svg-hit-overlay']) : undefined;
-    if (hitOverlay) {
-      hitOverlay.setAttribute('pointer-events', 'none');
-      controls.appendChild(hitOverlay);
-    }
-    const line = this.getLine();
-    const {
-      rotator = null,
-      anchor = null,
-      ...nextVertices
-    } = this.getVertices();
-    const handles = {};
-    let rotationHandles = {};
-    const nextTransformOrigin = Array.isArray(transformOrigin) ? pointTo(createSVGMatrix(), transformOrigin[0], transformOrigin[1]) : nextVertices.center;
-    if (rotatable) {
-      const normalLine = showNormal ? renderLine([anchor, rotator], THEME_COLOR, 'normal') : null;
-      if (showNormal) controls.appendChild(normalLine);
-      let radius = null;
-      if (transformOrigin) {
-        radius = createSVGElement('line', ['sjx-hidden']);
-        radius.x1.baseVal.value = nextVertices.center.x;
-        radius.y1.baseVal.value = nextVertices.center.y;
-        radius.x2.baseVal.value = nextTransformOrigin.x;
-        radius.y2.baseVal.value = nextTransformOrigin.y;
-        setLineStyle(radius, '#fe3232');
-        radius.setAttribute('opacity', '0.5');
-        controls.appendChild(radius);
-      }
-      rotationHandles = {
-        ...rotationHandles,
-        normal: normalLine,
-        radius
-      };
-    }
-    const boxHandles = {
-      tl: nextVertices.tl,
-      tr: nextVertices.tr,
-      br: nextVertices.br,
-      bl: nextVertices.bl,
-      tc: nextVertices.tc,
-      bc: nextVertices.bc,
-      ml: nextVertices.ml,
-      mr: nextVertices.mr
-    };
-    const lineHandles = {
-      [START_POINT]: nextVertices[START_POINT],
-      [END_POINT]: nextVertices[END_POINT]
-    };
-    const resizingHandles = resizable ? entries(line ? lineHandles : boxHandles).filter(([key]) => this.isHandleEnabled(key)).reduce((result, [key, point]) => {
-      result[key] = point;
-      return result;
-    }, {}) : {};
-    const resizingEdges = {
-      te: [nextVertices.tl, nextVertices.tr],
-      be: [nextVertices.bl, nextVertices.br],
-      le: [nextVertices.tl, nextVertices.bl],
-      re: [nextVertices.tr, nextVertices.br]
-    };
-    keys(resizingEdges).forEach(key => {
-      const data = resizingEdges[key];
-      if (isUndef(data)) return;
-      handles[key] = renderLine(data, THEME_COLOR, key);
-      if (line || !this.isHandleEnabled(key)) {
-        handles[key].setAttribute('pointer-events', 'none');
-      }
-      if (line) {
-        handles[key].setAttribute('visibility', 'hidden');
-      }
-      if (hitRadius && !line && this.isHandleEnabled(key)) {
-        hitAreas[key] = createHitArea(key);
-        controls.appendChild(hitAreas[key]);
-      }
-      controls.appendChild(handles[key]);
-    });
-    const allHandles = {
-      ...resizingHandles,
-      rotator,
-      center: transformOrigin && rotatable ? nextTransformOrigin : undefined
-    };
-    keys(allHandles).forEach(key => {
-      const data = allHandles[key];
-      if (isUndef(data)) return;
-      const {
-        x,
-        y
-      } = data;
-      const color = key === 'center' ? '#fe3232' : THEME_COLOR;
-      handles[key] = createHandler(x, y, color, key);
-      if (hitRadius) {
-        hitAreas[key] = createHitArea(key);
-        controls.appendChild(hitAreas[key]);
-      }
-      controls.appendChild(handles[key]);
-    });
-    wrapper.appendChild(controls);
-    controlsContainer.appendChild(wrapper);
-    const data = new WeakMap();
-    elements.map(element => data.set(element, {
-      parent: element.parentNode,
-      transform: {
-        ctm: getTransformToElement(element, container)
-      },
-      bBox: element.getBBox(),
-      __data__: new WeakMap(),
-      cached: {}
-    }));
-    const restrictContainer = restrict || container;
-    this.storage = {
-      wrapper,
-      controls,
-      handles: {
-        ...handles,
-        ...rotationHandles
-      },
-      data,
-      center: {
-        isShifted: Array.isArray(transformOrigin)
-      },
-      transformOrigin: nextTransformOrigin,
-      transform: {
-        containerMatrix: getTransformToElement(restrictContainer, restrictContainer.parentNode)
-      },
-      cached: {},
-      hitAreas,
-      hitOverlay
-    };
-    this.syncHitAreas();
-    [...elements, controls].map(target => helper(target).on(E_MOUSEDOWN$1, this.onMouseDown).on(E_TOUCHSTART$1, this.onTouchStart));
-  }
-
-  /** @internal */
-  cursorPoint({
-    clientX,
-    clientY
-  }) {
-    const {
-      container
-    } = this.options;
-    return this.applyMatrixToPoint(container.getScreenCTM().inverse(), clientX, clientY);
-  }
-
-  /** @internal */
-  getRestrictedBBox(force = false) {
-    const {
-      storage: {
-        transform: {
-          containerMatrix
-        } = {}
-      } = {},
-      options: {
-        container,
-        restrict
-      } = {}
-    } = this;
-    const restrictEl = restrict || container;
-    return getBoundingRect(restrictEl, force ? getTransformToElement(restrictEl, container) : containerMatrix);
-  }
-
-  /** @internal */
-  pointToTransform({
-    x,
-    y,
-    matrix
-  }) {
-    const nextMatrix = matrix.inverse();
-    nextMatrix.e = nextMatrix.f = 0;
-    return this.applyMatrixToPoint(nextMatrix, x, y);
-  }
-
-  /** @internal */
-  pointToControls({
-    x,
-    y
-  }, transform = this.storage.transform) {
-    const {
-      controlsMatrix
-    } = transform;
-    const matrix = controlsMatrix.inverse();
-    matrix.e = matrix.f = 0;
-    return this.applyMatrixToPoint(matrix, x, y);
-  }
-
-  /** @internal */
-  applyMatrixToPoint(matrix, x, y) {
-    const pt = createSVGElement('svg').createSVGPoint();
-    pt.x = x;
-    pt.y = y;
-    return pt.matrixTransform(matrix);
-  }
-
-  /** @internal */
-  applyTransformToElement(element, actionName) {
-    const {
-      storage: {
-        data,
-        bBox
-      } = {},
-      options: {
-        isGrouped,
-        scalable,
-        applyTranslate: applyDragging
-      } = {}
-    } = this;
-    const {
-      cached = {},
-      ...nextData
-    } = data.get(element);
-    const {
-      transform: {
-        matrix,
-        parentMatrix
-      },
-      __data__
-    } = nextData;
-    const {
-      scaleX,
-      scaleY,
-      dist: {
-        dx,
-        dy,
-        ox,
-        oy
-      } = {},
-      transformMatrix
-    } = cached;
-    if (actionName === E_DRAG) {
-      if (!applyDragging || !dx && !dy) return;
-      const eM = createTranslateMatrix(ox, oy);
-      const translateMatrix = eM.multiply(matrix).multiply(eM.inverse());
-      this.updateElementView(element, ['transform', translateMatrix]);
-      if (isSVGGroup(element)) {
-        checkChildElements(element).map(child => {
-          const eM = createTranslateMatrix(dx, dy);
-          const translateMatrix = eM.multiply(getTransformToElement(child, child.parentNode)).multiply(eM.inverse());
-          if (!isIdentity(translateMatrix)) {
-            child.setAttribute('transform', matrixToString(translateMatrix));
-          }
-          if (!isSVGGroup(child)) {
-            const ctm = parentMatrix.inverse();
-            ctm.e = ctm.f = 0;
-            const {
-              x,
-              y
-            } = pointTo(ctm, ox, oy);
-            applyTranslate(child, {
-              x,
-              y
-            });
-          }
-        });
-      } else {
-        applyTranslate(element, {
-          x: ox,
-          y: oy
-        });
-      }
-    }
-    if (actionName === E_RESIZE) {
-      if (!transformMatrix) return;
-      if (!scalable) {
-        if (isSVGGroup(element) || isGrouped) {
-          const elements = checkChildElements(element);
-          elements.forEach(child => {
-            if (!isSVGGroup(child)) {
-              const childCTM = getTransformToElement(child, isGrouped ? element.parentNode : element);
-              const localCTM = childCTM.inverse().multiply(transformMatrix).multiply(childCTM);
-              applyResize(child, {
-                scaleX,
-                scaleY,
-                localCTM,
-                transformMatrix,
-                __data__,
-                isGrouped
-              });
-            }
-          });
-        } else {
-          applyResize(element, {
-            scaleX,
-            scaleY,
-            localCTM: transformMatrix,
-            transformMatrix,
-            __data__,
-            isGrouped
-          });
-        }
-      }
-    }
-    data.set(element, {
-      ...nextData
-    });
-  }
-
-  /** @internal */
-  processActions(actionName) {
-    const {
-      storage: {
-        transform: {
-          controlsMatrix
-        },
-        center: {
-          isShifted
-        } = {}
-      },
-      options: {
-        isGrouped
-      }
-    } = this;
-    if (isGrouped && actionName === E_ROTATE) {
-      this.applyTransformToHandles();
-      const {
-        x: dx,
-        y: dy
-      } = pointTo(controlsMatrix, 0, 0);
-      if (isShifted) this.moveCenterHandle(dx, dy);
-      this.updateControlsView();
-      if (!isShifted) this.setTransformOrigin({
-        dx: 0,
-        dy: 0
-      }, false);
-    }
-  }
-
-  /** @internal */
-  processResize(element, {
-    dx,
-    dy
-  }) {
-    const {
-      storage: {
-        revX,
-        revY,
-        doW,
-        doH,
-        data,
-        bBox: {
-          x,
-          y,
-          width: boxWidth,
-          height: boxHeight
-        }
-      },
-      options: {
-        isGrouped,
-        proportions,
-        scalable,
-        flip
-      }
-    } = this;
-    const elementData = data.get(element);
-    const {
-      transform: {
-        matrix,
-        auxiliary: {
-          scale: {
-            translateMatrix
-          }
-        }
-      },
-      cached = {}
-    } = elementData;
-    const getScaleMatrix = (scaleX, scaleY) => {
-      const scaleMatrix = createScaleMatrix(scaleX, scaleY);
-      return translateMatrix.multiply(scaleMatrix).multiply(translateMatrix.inverse());
-    };
-    const [scaleX, scaleY, newWidth, newHeight] = resizeBox({
-      width: boxWidth,
-      height: boxHeight,
-      dx,
-      dy,
-      doW,
-      doH,
-      proportions,
-      flip
-    });
-    const scaleMatrix = getScaleMatrix(scaleX, scaleY);
-    const deltaW = newWidth - boxWidth,
-      deltaH = newHeight - boxHeight;
-    const newX = x - deltaW * (doH ? 0.5 : revX ? 1 : 0),
-      newY = y - deltaH * (doW ? 0.5 : revY ? 1 : 0);
-    const resultMatrix = isGrouped ? scaleMatrix.multiply(matrix) : matrix.multiply(scaleMatrix);
-    if (scalable) this.updateElementView(element, ['transform', resultMatrix]);
-    data.set(element, {
-      ...elementData,
-      cached: {
-        ...cached,
-        scaleX,
-        scaleY,
-        transformMatrix: scaleMatrix,
-        resultMatrix
-      }
-    });
-    this.applyTransformToElement(element, E_RESIZE);
-    return {
-      x: newX,
-      y: newY,
-      width: newWidth,
-      height: newHeight,
-      transform: resultMatrix
-    };
-  }
-
-  /** @internal */
-  processMove(element, {
-    dx,
-    dy
-  }) {
-    const {
-      storage: {
-        data
-      }
-    } = this;
-    const elementStorage = data.get(element);
-    const {
-      transform: {
-        matrix,
-        auxiliary: {
-          translate: {
-            translateMatrix,
-            parentMatrix
-          }
-        }
-      },
-      cached
-    } = elementStorage;
-    parentMatrix.e = parentMatrix.f = 0;
-    const {
-      x: nx,
-      y: ny
-    } = pointTo(parentMatrix, dx, dy);
-    data.set(element, {
-      ...elementStorage,
-      cached: {
-        ...cached,
-        dist: {
-          dx: floatToFixed(dx),
-          dy: floatToFixed(dy),
-          ox: floatToFixed(nx),
-          oy: floatToFixed(ny)
-        }
-      }
-    });
-    translateMatrix.e = nx;
-    translateMatrix.f = ny;
-    const moveElementMtrx = translateMatrix.multiply(matrix);
-    this.updateElementView(element, ['transform', moveElementMtrx]);
-    return moveElementMtrx;
-  }
-
-  /** @internal */
-  processRotate(element, radians) {
-    const {
-      storage: {
-        data
-      } = {}
-    } = this;
-    const {
-      transform: {
-        matrix,
-        parentMatrix,
-        auxiliary: {
-          rotate: {
-            translateMatrix
-          }
-        }
-      }
-    } = data.get(element);
-    const cos = floatToFixed(Math.cos(radians)),
-      sin = floatToFixed(Math.sin(radians));
-    const rotateMatrix = createRotateMatrix(sin, cos);
-    parentMatrix.e = parentMatrix.f = 0;
-    const resRotMatrix = parentMatrix.inverse().multiply(rotateMatrix).multiply(parentMatrix);
-    const resRotateMatrix = translateMatrix.multiply(resRotMatrix).multiply(translateMatrix.inverse());
-    const resultMatrix = resRotateMatrix.multiply(matrix);
-    this.updateElementView(element, ['transform', resultMatrix]);
-    return resultMatrix;
-  }
-
-  /** @internal */
-  getElementState(element, {
-    revX,
-    revY,
-    doW,
-    doH
-  }) {
-    const {
-      options: {
-        container,
-        isGrouped
-      },
-      storage: {
-        data,
-        controls,
-        handles: {
-          center: cHandle
-        },
-        transformOrigin: {
-          x: originX,
-          y: originY
-        }
-      }
-    } = this;
-    const elementData = data.get(element);
-    const {
-      __data__
-    } = elementData;
-    storeElementAttributes(element, elementData, container);
-    __data__.delete(element);
-    checkChildElements(element).forEach(child => {
-      __data__.delete(child);
-      storeElementAttributes(child, elementData, element, isGrouped);
-    });
-    const bBox = this.getBBox();
-    const {
-      x: elX,
-      y: elY,
-      width: elW,
-      height: elH
-    } = bBox;
-    const elMatrix = getTransformToElement(element, element.parentNode),
-      ctm = getTransformToElement(element, container),
-      parentMatrix = getTransformToElement(element.parentNode, container);
-    const parentMatrixInverted = parentMatrix.inverse();
-    const scaleX = elX + elW * (doH ? 0.5 : revX ? 1 : 0),
-      scaleY = elY + elH * (doW ? 0.5 : revY ? 1 : 0);
-    const boxCTM = getTransformToElement(controls, container);
-    const elCenterX = elX + elW / 2,
-      elCenterY = elY + elH / 2;
-
-    // c-handle's coordinates
-    const {
-      x: bcx,
-      y: bcy
-    } = pointTo(boxCTM, originX, originY);
-
-    // element's center coordinates
-    const {
-      x: elcx,
-      y: elcy
-    } = cHandle ? pointTo(parentMatrixInverted, bcx, bcy) : pointTo(isGrouped ? parentMatrixInverted : elMatrix, elCenterX, elCenterY);
-    const {
-      x: nextScaleX,
-      y: nextScaleY
-    } = cHandle ? pointTo(isGrouped ? parentMatrixInverted : ctm.inverse(), bcx, bcy) : pointTo(isGrouped ? parentMatrixInverted : createSVGMatrix(), scaleX, scaleY);
-    const transform = {
-      auxiliary: {
-        scale: {
-          scaleMatrix: createSVGMatrix(),
-          translateMatrix: createTranslateMatrix(nextScaleX, nextScaleY)
-        },
-        translate: {
-          parentMatrix: parentMatrixInverted,
-          translateMatrix: createSVGMatrix()
-        },
-        rotate: {
-          translateMatrix: createTranslateMatrix(elcx, elcy)
-        }
-      },
-      matrix: elMatrix,
-      ctm,
-      parentMatrix,
-      scX: Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b),
-      scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d)
-    };
-    return {
-      transform,
-      bBox
-    };
-  }
-
-  /** @internal */
-  getCommonState() {
-    const {
-      elements,
-      options: {
-        isGrouped,
-        container,
-        restrict
-      },
-      storage: {
-        controls,
-        handles: {
-          center: cHandle
-        }
-      }
-    } = this;
-    const bBox = this.getBBox();
-    const {
-      x: elX,
-      y: elY,
-      width: elW,
-      height: elH
-    } = bBox;
-    const elCenterX = elX + elW / 2,
-      elCenterY = elY + elH / 2;
-    const boxCTM = getTransformToElement(controls, container);
-    const centerX = cHandle ? cHandle.cx.baseVal.value : elCenterX;
-    const centerY = cHandle ? cHandle.cy.baseVal.value : elCenterY;
-
-    // c-handle's coordinates
-    const {
-      x: bcx,
-      y: bcy
-    } = pointTo(boxCTM, centerX, centerY);
-
-    // box's center coordinates
-    const {
-      x: rcx,
-      y: rcy
-    } = pointTo(isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container), elCenterX, elCenterY);
-    const restrictContainer = restrict || container;
-    const containerMatrix = getTransformToElement(restrictContainer, restrictContainer.parentNode);
-    const center = {
-      ...(this.storage.center || {}),
-      x: cHandle ? bcx : rcx,
-      y: cHandle ? bcy : rcy,
-      hx: cHandle ? cHandle.cx.baseVal.value : null,
-      hy: cHandle ? cHandle.cy.baseVal.value : null
-    };
-    return {
-      transform: {
-        containerMatrix,
-        controlsMatrix: getTransformToElement(controls, controls.parentNode),
-        controlsTranslateMatrix: createSVGMatrix(),
-        wrapperOriginMatrix: createTranslateMatrix(center.x, center.y)
-      },
-      bBox,
-      center
-    };
-  }
-
-  /**
-   * Handle positions as { x, y } in container coordinates: box corners and edge
-   * midpoints (tl, tc, tr, ml, mr, bl, bc, br), center, line endpoints (p1, p2)
-   * for a single <line>, and rotator with its anchor when rotatable
-   * @param transformMatrix matrix applied on top of the element transform
-   */
-  getVertices(transformMatrix = createSVGMatrix()) {
-    const {
-      elements,
-      options: {
-        isGrouped,
-        rotatable,
-        rotatorAnchor,
-        rotatorOffset,
-        container
-      }
-    } = this;
-    const {
-      x,
-      y,
-      width,
-      height
-    } = this.getBBox();
-    const hW = width / 2,
-      hH = height / 2;
-    const vertices = {
-      tl: [x, y],
-      tr: [x + width, y],
-      mr: [x + width, y + hH],
-      ml: [x, y + hH],
-      tc: [x + hW, y],
-      bc: [x + hW, y + height],
-      br: [x + width, y + height],
-      bl: [x, y + height],
-      center: [x + hW, y + hH]
-    };
-    const line = this.getLine();
-    if (line) {
-      vertices[START_POINT] = [line.x1.baseVal.value, line.y1.baseVal.value];
-      vertices[END_POINT] = [line.x2.baseVal.value, line.y2.baseVal.value];
-    }
-    const nextTransform = isGrouped ? transformMatrix : transformMatrix.multiply(getTransformToElement(elements[0], container));
-    const nextVertices = entries(vertices).reduce((nextRes, [key, [x, y]]) => {
-      nextRes[key] = pointTo(nextTransform, x, y);
-      return nextRes;
-    }, {});
-    if (rotatable && line) {
-      const {
-        [START_POINT]: start,
-        [END_POINT]: end
-      } = nextVertices;
-      const axisX = end.x - start.x,
-        axisY = end.y - start.y;
-      const length = Math.sqrt(axisX * axisX + axisY * axisY);
-      const [normalX, normalY] = length ? [axisY / length, -axisX / length] : [0, -1];
-      const side = rotatorAnchor === 's' || rotatorAnchor === 'w' ? -1 : 1;
-      const anchor = {
-        x: (start.x + end.x) / 2,
-        y: (start.y + end.y) / 2
-      };
-      nextVertices.rotator = {
-        x: anchor.x + normalX * rotatorOffset * side,
-        y: anchor.y + normalY * rotatorOffset * side
-      };
-      nextVertices.anchor = anchor;
-    } else if (rotatable) {
-      const anchor = {};
-      let factor = 1;
-      switch (rotatorAnchor) {
-        case 'n':
-          {
-            const {
-              x,
-              y
-            } = nextVertices.tc;
-            anchor.x = x;
-            anchor.y = y;
-            break;
-          }
-        case 's':
-          {
-            const {
-              x,
-              y
-            } = nextVertices.bc;
-            anchor.x = x;
-            anchor.y = y;
-            factor = -1;
-            break;
-          }
-        case 'w':
-          {
-            const {
-              x,
-              y
-            } = nextVertices.ml;
-            anchor.x = x;
-            anchor.y = y;
-            factor = -1;
-            break;
-          }
-        case 'e':
-        default:
-          {
-            const {
-              x,
-              y
-            } = nextVertices.mr;
-            anchor.x = x;
-            anchor.y = y;
-            break;
-          }
-      }
-      const theta = rotatorAnchor === 'n' || rotatorAnchor === 's' ? rotatorAngle(nextVertices.bl.x - nextVertices.tl.x, nextVertices.bl.y - nextVertices.tl.y, nextVertices.tr.x - nextVertices.tl.x, nextVertices.tr.y - nextVertices.tl.y) : rotatorAngle(nextVertices.tl.x - nextVertices.tr.x, nextVertices.tl.y - nextVertices.tr.y, nextVertices.bl.x - nextVertices.tl.x, nextVertices.bl.y - nextVertices.tl.y);
-      const nextRotatorOffset = rotatorOffset * factor;
-      const rotator = {
-        x: anchor.x - nextRotatorOffset * Math.cos(theta),
-        y: anchor.y - nextRotatorOffset * Math.sin(theta)
-      };
-      nextVertices.rotator = rotator;
-      nextVertices.anchor = anchor;
-    }
-    return nextVertices;
-  }
-
-  /** @internal */
-  getLine() {
-    const {
-      elements: [element],
-      options: {
-        isGrouped
-      }
-    } = this;
-    return !isGrouped && element.tagName.toLowerCase() === 'line' ? element : null;
-  }
-
-  /** @internal */
-  getBBox() {
-    const {
-      elements,
-      options: {
-        container,
-        isGrouped
-      }
-    } = this;
-    if (isGrouped) {
-      const groupBBox = elements.reduce((result, element) => {
-        const elCTM = getTransformToElement(element, container);
-        return [...result, ...getBoundingRect(element, elCTM)];
-      }, []);
-      const [[minX, maxX], [minY, maxY]] = getMinMaxOfArray(groupBBox);
-      return {
-        x: minX,
-        y: minY,
-        width: maxX - minX,
-        height: maxY - minY
-      };
-    } else {
-      return elements[0].getBBox();
-    }
-  }
-
-  /** @internal */
-  moveCenterHandle(dx, dy) {
-    const {
-      storage: {
-        handles: {
-          center,
-          radius
-        },
-        center: prevCenterData,
-        transform: {
-          controlsMatrix = createSVGMatrix()
-        } = {},
-        transformOrigin: {
-          x: originX,
-          y: originY
-        } = {},
-        cached
-      }
-    } = this;
-    if (isUndef(center)) return;
-    const nextX = originX + dx,
-      nextY = originY + dy;
-    center.cx.baseVal.value = nextX;
-    center.cy.baseVal.value = nextY;
-    radius.x2.baseVal.value = nextX;
-    radius.y2.baseVal.value = nextY;
-    this.storage = {
-      ...this.storage,
-      center: {
-        ...prevCenterData,
-        isShifted: true,
-        ...pointTo(controlsMatrix.inverse(), nextX, nextY)
-      },
-      cached: {
-        ...cached,
-        transformOrigin: pointTo(createSVGMatrix(), nextX, nextY)
-      }
-    };
-    this.syncHitAreas();
-  }
-
-  /** @internal */
-  processMoveRestrict(element, {
-    dx,
-    dy
-  }) {
-    const {
-      storage: {
-        data
-      }
-    } = this;
-    const elementStorage = data.get(element);
-    const {
-      transform: {
-        matrix,
-        auxiliary: {
-          translate: {
-            parentMatrix
-          }
-        }
-      }
-    } = elementStorage;
-    parentMatrix.e = parentMatrix.f = 0;
-    const {
-      x,
-      y
-    } = pointTo(parentMatrix, dx, dy);
-    const preTranslateMatrix = createTranslateMatrix(x, y).multiply(matrix);
-    return this.restrictHandler(element, preTranslateMatrix);
-  }
-
-  /** @internal */
-  processRotateRestrict(element, radians) {
-    const {
-      storage: {
-        data
-      } = {}
-    } = this;
-    const {
-      transform: {
-        matrix,
-        parentMatrix,
-        auxiliary: {
-          rotate: {
-            translateMatrix
-          }
-        }
-      }
-    } = data.get(element);
-    const cos = floatToFixed(Math.cos(radians)),
-      sin = floatToFixed(Math.sin(radians));
-    const rotateMatrix = createRotateMatrix(sin, cos);
-    parentMatrix.e = parentMatrix.f = 0;
-    const resRotMatrix = parentMatrix.inverse().multiply(rotateMatrix).multiply(parentMatrix);
-    const resRotateMatrix = translateMatrix.multiply(resRotMatrix).multiply(translateMatrix.inverse());
-    const resultMatrix = resRotateMatrix.multiply(matrix);
-    return this.restrictHandler(element, resultMatrix);
-  }
-
-  /** @internal */
-  processResizeRestrict(element, {
-    dx,
-    dy
-  }) {
-    const {
-      storage: {
-        doW,
-        doH,
-        data,
-        bBox: {
-          width: boxWidth,
-          height: boxHeight
-        }
-      },
-      options: {
-        proportions,
-        flip
-      }
-    } = this;
-    const elementData = data.get(element);
-    const {
-      transform: {
-        matrix,
-        auxiliary: {
-          scale: {
-            translateMatrix
-          }
-        }
-      }
-    } = elementData;
-    const getScaleMatrix = (scaleX, scaleY) => {
-      const scaleMatrix = createScaleMatrix(scaleX, scaleY);
-      return translateMatrix.multiply(scaleMatrix).multiply(translateMatrix.inverse());
-    };
-    const [scaleX, scaleY] = resizeBox({
-      width: boxWidth,
-      height: boxHeight,
-      dx,
-      dy,
-      doW,
-      doH,
-      proportions,
-      flip
-    });
-    const preScaledMatrix = matrix.multiply(getScaleMatrix(scaleX, scaleY));
-    return this.restrictHandler(element, preScaledMatrix);
-  }
-
-  /** @internal */
-  processPointMove(element, point, {
-    dx,
-    dy
-  }) {
-    const {
-      storage: {
-        data,
-        restriction
-      },
-      options: {
-        proportions
-      }
-    } = this;
-    const {
-      transform: {
-        ctm,
-        matrix
-      },
-      __data__
-    } = data.get(element);
-    const {
-      resX1,
-      resY1,
-      resX2,
-      resY2
-    } = __data__.get(element);
-    const isStart = point === START_POINT;
-    const [baseX, baseY, otherX, otherY] = isStart ? [resX1, resY1, resX2, resY2] : [resX2, resY2, resX1, resY1];
-    const toLocal = ctm.inverse();
-    toLocal.e = toLocal.f = 0;
-    let {
-      x: localDx,
-      y: localDy
-    } = pointTo(toLocal, dx, dy);
-    if (proportions) {
-      const axisX = baseX - otherX,
-        axisY = baseY - otherY;
-      const axisLength = axisX * axisX + axisY * axisY;
-      if (axisLength > 0) {
-        const projection = (localDx * axisX + localDy * axisY) / axisLength;
-        localDx = axisX * projection;
-        localDy = axisY * projection;
-      }
-    }
-    const nextX = baseX + localDx,
-      nextY = baseY + localDy;
-    if (restriction) {
-      const {
-        x,
-        y
-      } = pointTo(ctm, nextX, nextY);
-      const {
-        area
-      } = restriction;
-      const tolerance = 1e-6;
-      if (x < area.left - tolerance || x > area.right + tolerance || y < area.top - tolerance || y > area.bottom + tolerance) return null;
-    }
-    element.setAttribute(isStart ? 'x1' : 'x2', String(nextX));
-    element.setAttribute(isStart ? 'y1' : 'y2', String(nextY));
-    this.processControlsResize();
-    const {
-      width,
-      height
-    } = element.getBBox();
-    return {
-      width,
-      height,
-      transform: matrix
-    };
-  }
-
-  /** @internal */
-  processControlsResize() {
-    const {
-      storage: {
-        transform: {
-          controlsMatrix
-        }
-      } = {}
-    } = this;
-    this.applyTransformToHandles({
-      boxMatrix: controlsMatrix.inverse()
-    });
-  }
-
-  /** @internal */
-  processControlsMove({
-    dx,
-    dy
-  }) {
-    const {
-      storage: {
-        transform: {
-          controlsMatrix,
-          controlsTranslateMatrix
-        },
-        center
-      } = {}
-    } = this;
-    controlsTranslateMatrix.e = dx;
-    controlsTranslateMatrix.f = dy;
-    const moveControlsMtrx = controlsTranslateMatrix.multiply(controlsMatrix);
-    this.updateControlsView(moveControlsMtrx);
-    if (center.isShifted) {
-      const centerTransformMatrix = controlsMatrix.inverse();
-      centerTransformMatrix.e = centerTransformMatrix.f = 0;
-      const {
-        x: cx,
-        y: cy
-      } = pointTo(centerTransformMatrix, dx, dy);
-      this.moveCenterHandle(-cx, -cy);
-    }
-  }
-
-  /** @internal */
-  processControlsRotate({
-    radians
-  }) {
-    const {
-      options: {
-        isGrouped
-      },
-      storage: {
-        transform: {
-          controlsMatrix,
-          wrapperOriginMatrix
-        } = {}
-      } = {}
-    } = this;
-    if (isGrouped) {
-      const cos = floatToFixed(Math.cos(radians)),
-        sin = floatToFixed(Math.sin(radians));
-      const rotateMatrix = createRotateMatrix(sin, cos);
-      const wrapperResultMatrix = wrapperOriginMatrix.multiply(rotateMatrix).multiply(wrapperOriginMatrix.inverse()).multiply(controlsMatrix);
-      this.updateControlsView(wrapperResultMatrix);
-    } else {
-      this.applyTransformToHandles({
-        boxMatrix: controlsMatrix.inverse()
-      });
-    }
-  }
-
-  /** @internal */
-  updateElementView(element, [attr, value]) {
-    if (attr === 'transform') {
-      element.setAttribute(attr, matrixToString(value));
-    }
-  }
-
-  /** @internal */
-  updateControlsView(matrix = createSVGMatrix()) {
-    this.storage.controls.setAttribute('transform', matrixToString(matrix));
-    this.storage.cached.controlsMatrix = matrix;
-  }
-
-  /** @internal */
-  applyTransformToHandles({
-    boxMatrix = createSVGMatrix()
-  } = {}) {
-    const {
-      options: {
-        rotatable
-      },
-      storage: {
-        handles,
-        center: {
-          isShifted
-        }
-      }
-    } = this;
-    const {
-      anchor = null,
-      center,
-      ...nextVertices
-    } = this.getVertices(boxMatrix);
-    const resEdges = {
-      te: [nextVertices.tl, nextVertices.tr],
-      be: [nextVertices.bl, nextVertices.br],
-      le: [nextVertices.tl, nextVertices.bl],
-      re: [nextVertices.tr, nextVertices.br]
-    };
-    if (rotatable) {
-      const {
-        normal,
-        radius
-      } = handles;
-      if (isDef(normal)) {
-        normal.x1.baseVal.value = anchor.x;
-        normal.y1.baseVal.value = anchor.y;
-        normal.x2.baseVal.value = nextVertices.rotator.x;
-        normal.y2.baseVal.value = nextVertices.rotator.y;
-      }
-      if (isDef(radius)) {
-        radius.x1.baseVal.value = center.x;
-        radius.y1.baseVal.value = center.y;
-        if (!isShifted) {
-          radius.x2.baseVal.value = center.x;
-          radius.y2.baseVal.value = center.y;
-        }
-      }
-    }
-    keys(resEdges).forEach(key => {
-      const hdl = handles[key];
-      const [b, e] = resEdges[key];
-      if (isUndef(b) || isUndef(hdl)) return;
-      entries({
-        x1: b.x,
-        y1: b.y,
-        x2: e.x,
-        y2: e.y
-      }).map(([attr, value]) => hdl.setAttribute(attr, String(value)));
-    });
-    const handlesVertices = {
-      ...nextVertices,
-      ...(!isShifted && Boolean(center) && {
-        center
-      })
-    };
-    const result = keys(handlesVertices).reduce((result, key) => {
-      const hdl = handles[key];
-      const attr = handlesVertices[key];
-      result[key] = attr;
-      if (isUndef(attr) || isUndef(hdl)) return result;
-      hdl.setAttribute('cx', String(attr.x));
-      hdl.setAttribute('cy', String(attr.y));
-      return result;
-    }, {});
-    this.syncHitAreas();
-    return result;
-  }
-
-  /** @internal */
-  prepareGuides() {
-    const {
-      elements,
-      storage: {
-        wrapper
-      },
-      options: {
-        container,
-        guides
-      }
-    } = this;
-    if (!guides) return null;
-    const {
-      targets,
-      bounds,
-      threshold = 6,
-      snap = true
-    } = guides;
-    const isMoving = element => elements.some(item => item === element || item.contains(element) || element.contains(item));
-    const candidates = typeof targets === 'string' ? [...document.querySelectorAll(targets)] : targets || [...elements[0].parentNode.children];
-    const targetBoxes = candidates.reduce((result, element) => {
-      if (!('getBBox' in element) || isMoving(element) || wrapper.contains(element)) return result;
-      try {
-        result.push(this.getBoundsBox(element));
-      } catch {
-        return result;
-      }
-      return result;
-    }, []);
-    const boundsElement = bounds === false ? null : bounds ? helper(bounds)[0] : container;
-    if (boundsElement) targetBoxes.push(this.getBoundsBox(boundsElement));
-    const screenMatrix = container.getScreenCTM();
-    const scale = screenMatrix ? Math.sqrt(Math.abs(screenMatrix.a * screenMatrix.d - screenMatrix.b * screenMatrix.c)) || 1 : 1;
-    return {
-      ...this.measure(),
-      targets: targetBoxes,
-      threshold: threshold / scale,
-      snap
-    };
-  }
-
-  /** @internal */
-  prepareRestrict() {
-    const {
-      restrict
-    } = this.options;
-    if (!restrict) return null;
-    return {
-      ...this.measure(),
-      area: this.getBoundsBox(restrict)
-    };
-  }
-
-  /** @internal */
-  measure() {
-    const {
-      elements,
-      options: {
-        container,
-        isGrouped
-      }
-    } = this;
-    const matrices = elements.map(element => getTransformToElement(element, container));
-    const [firstMatrix] = matrices;
-    const line = this.getLine();
-    const {
-      point
-    } = this.storage;
-    const pointPosition = line && point ? pointTo(firstMatrix, point === START_POINT ? line.x1.baseVal.value : line.x2.baseVal.value, point === START_POINT ? line.y1.baseVal.value : line.y2.baseVal.value) : null;
-    return {
-      box: unionBoxes(elements.map((element, index) => boxFromPoints(getBoundingRect(element, matrices[index])))),
-      axisAligned: matrices.every(matrix => Math.abs(matrix.b) < 1e-6 && Math.abs(matrix.c) < 1e-6),
-      flipX: !isGrouped && firstMatrix.a < 0,
-      flipY: !isGrouped && firstMatrix.d < 0,
-      point: pointPosition && {
-        x: pointPosition.x,
-        y: pointPosition.y
-      }
-    };
-  }
-
-  /** @internal */
-  getBoundsBox(element) {
-    const {
-      container
-    } = this.options;
-    if (element.tagName.toLowerCase() !== 'svg') {
-      return boxFromPoints(getBoundingRect(element, getTransformToElement(element, container)));
-    }
-    const {
-      left,
-      top,
-      right,
-      bottom
-    } = element.getBoundingClientRect();
-    const toContainer = (container.getScreenCTM() || createSVGMatrix()).inverse();
-    return boxFromPoints([[left, top], [right, top], [right, bottom], [left, bottom]].map(([x, y]) => {
-      const point = pointTo(toContainer, x, y);
-      return [point.x, point.y];
-    }));
-  }
-
-  /** @internal */
-  drawGuides(lines) {
-    const {
-      storage,
-      storage: {
-        wrapper,
-        guidesLayer
-      },
-      options: {
-        container
-      }
-    } = this;
-    if (guidesLayer) {
-      while (guidesLayer.firstChild) guidesLayer.removeChild(guidesLayer.firstChild);
-    }
-    if (!lines.length) return;
-    const layer = guidesLayer || createSVGElement('g', ['sjx-svg-guides']);
-    if (!guidesLayer) {
-      wrapper.insertBefore(layer, wrapper.firstChild);
-      storage.guidesLayer = layer;
-    }
-    layer.setAttribute('transform', matrixToString(getTransformToElement(container, wrapper.parentNode)));
-    lines.forEach(({
-      axis,
-      value,
-      from,
-      to
-    }) => {
-      const line = createSVGElement('line', ['sjx-svg-guide']);
-      const [x1, y1, x2, y2] = axis === 'x' ? [value, from, value, to] : [from, value, to, value];
-      entries({
-        x1,
-        y1,
-        x2,
-        y2,
-        stroke: '#ff3d9a',
-        'stroke-width': 1,
-        'vector-effect': 'non-scaling-stroke',
-        'pointer-events': 'none'
-      }).forEach(([attr, attrValue]) => line.setAttribute(attr, String(attrValue)));
-      layer.appendChild(line);
-    });
-  }
-
-  /** @internal */
-  syncHitAreas() {
-    const {
-      storage: {
-        controls,
-        handles,
-        hitAreas,
-        hitOverlay
-      },
-      options: {
-        hitRadius
-      }
-    } = this;
-    if (!hitAreas) return;
-    const screenMatrix = controls.getScreenCTM();
-    const scale = screenMatrix ? Math.sqrt(Math.abs(screenMatrix.a * screenMatrix.d - screenMatrix.b * screenMatrix.c)) || 1 : 1;
-    const corners = readCorners(handles.te, handles.be);
-    const radius = hitRadius / scale;
-    const outlines = [];
-    entries(hitAreas).forEach(([key, area]) => {
-      const hdl = handles[key];
-      if (isUndef(hdl)) return;
-      const center = {
-        x: Number(hdl.getAttribute('cx')) || 0,
-        y: Number(hdl.getAttribute('cy')) || 0
-      };
-      const path = outlineToPath(hitAreaOutline(key, center, corners, radius));
-      area.setAttribute('d', path);
-      outlines.push(path);
-    });
-    if (hitOverlay) hitOverlay.setAttribute('d', outlines.join(''));
-  }
-  setTransformOrigin({
-    x,
-    y,
-    dx,
-    dy
-  } = {}, pin = true) {
-    const {
-      elements,
-      storage,
-      storage: {
-        controls,
-        handles: {
-          center: handle,
-          radius
-        } = {},
-        center
-      } = {},
-      options: {
-        container,
-        isGrouped
-      }
-    } = this;
-    const isRelative = isDef(dx) && isDef(dy),
-      isAbsolute = isDef(x) && isDef(y);
-    if (!center || !handle || !radius || !(isRelative || isAbsolute)) return;
-    const controlsTransformMatrix = getTransformToElement(controls, controls.parentNode).inverse();
-    const nextTransform = isGrouped ? controlsTransformMatrix : controlsTransformMatrix.multiply(getTransformToElement(elements[0], container));
-    let newX, newY;
-    if (isRelative) {
-      const {
-        x: bx,
-        y: by,
-        width,
-        height
-      } = this.getBBox();
-      const hW = width / 2,
-        hH = height / 2;
-      ({
-        x: newX,
-        y: newY
-      } = pointTo(nextTransform, bx + hW + dx, by + hH + dy));
-    } else {
-      newX = x;
-      newY = y;
-    }
-    handle.cx.baseVal.value = newX;
-    handle.cy.baseVal.value = newY;
-    radius.x2.baseVal.value = newX;
-    radius.y2.baseVal.value = newY;
-    center.isShifted = pin;
-    storage.transformOrigin = pointTo(createSVGMatrix(), newX, newY);
-    this.syncHitAreas();
-  }
-  fitControlsToSize() {
-    const {
-      storage: {
-        controls,
-        center: {
-          isShifted
-        } = {},
-        transformOrigin: {
-          x: originX,
-          y: originY
-        } = {}
-      }
-    } = this;
-    const controlsMatrix = getTransformToElement(controls, controls.parentNode);
-    const {
-      x: dx,
-      y: dy
-    } = pointTo(controlsMatrix, originX, originY);
-    const {
-      nextValues,
-      pin
-    } = [{
-      nextValues: () => ({
-        x: dx,
-        y: dy
-      }),
-      pin: true,
-      condition: () => isShifted
-    }, {
-      nextValues: () => ({
-        dx: 0,
-        dy: 0
-      }),
-      pin: false,
-      condition: () => !isShifted
-    }].find(({
-      condition
-    }) => condition());
-    this.updateControlsView();
-    this.setTransformOrigin({
-      ...nextValues()
-    }, pin);
-    this.applyTransformToHandles();
-  }
-  getBoundingRect(element, transformMatrix = null) {
-    const {
-      options: {
-        restrict,
-        container
-      } = {}
-    } = this;
-    const restrictEl = restrict || container;
-    const nextTransform = transformMatrix ? getTransformToElement(element.parentNode, restrictEl).multiply(transformMatrix) : getTransformToElement(element, restrictEl);
-    return getBoundingRect(element, nextTransform, element.getBBox());
-  }
-  applyAlignment(direction, target = null) {
-    const {
-      elements,
-      options: {
-        container
-      }
-    } = this;
-    const {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      anchor,
-      rotator,
-      center,
-      ...vertices
-    } = this.getVertices();
-    const restrictBBox = target ? getBoundingRect(target, getTransformToElement(target, container)) : this.getRestrictedBBox(true);
-    const nextVertices = values(vertices).map(({
-      x,
-      y
-    }) => [x, y]);
-    const [[minX, maxX], [minY, maxY]] = getMinMaxOfArray(restrictBBox);
-    const [[elMinX, elMaxX], [elMinY, elMaxY]] = getMinMaxOfArray(nextVertices);
-    const getXDir = () => {
-      switch (true) {
-        case /[l]/.test(direction):
-          return minX - elMinX;
-        case /[r]/.test(direction):
-          return maxX - elMaxX;
-        case /[h]/.test(direction):
-          return (maxX + minX) / 2 - (elMaxX + elMinX) / 2;
-        default:
-          return 0;
-      }
-    };
-    const getYDir = () => {
-      switch (true) {
-        case /[t]/.test(direction):
-          return minY - elMinY;
-        case /[b]/.test(direction):
-          return maxY - elMaxY;
-        case /[v]/.test(direction):
-          return (maxY + minY) / 2 - (elMaxY + elMinY) / 2;
-        default:
-          return 0;
-      }
-    };
-    elements.map(element => {
-      const parentMatrix = getTransformToElement(element.parentNode, container);
-      parentMatrix.e = parentMatrix.f = 0;
-      const {
-        x,
-        y
-      } = pointTo(parentMatrix.inverse(), getXDir(), getYDir());
-      const moveElementMtrx = createTranslateMatrix(x, y).multiply(getTransformToElement(element, element.parentNode));
-      this.updateElementView(element, ['transform', moveElementMtrx]);
-    });
-    this.fitControlsToSize();
-  }
-  getDimensions() {
-    const {
-      elements,
-      options: {
-        isGrouped,
-        container
-      }
-    } = this;
-    const {
-      x,
-      y,
-      width,
-      height
-    } = this.getBBox();
-    const vertices = {
-      tl: [x, y],
-      tr: [x + width, y],
-      bl: [x, y + height],
-      br: [x + width, y + height]
-    };
-    const nextTransform = isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container);
-    const {
-      tl,
-      br,
-      tr
-    } = entries(vertices).reduce((nextRes, [key, [x, y]]) => {
-      nextRes[key] = pointTo(nextTransform, x, y);
-      return nextRes;
-    }, {});
-    return {
-      x: floatToFixed(tl.x),
-      y: floatToFixed(tl.y),
-      width: floatToFixed(Math.sqrt(Math.pow(tl.x - tr.x, 2) + Math.pow(tl.y - tr.y, 2))),
-      height: floatToFixed(Math.sqrt(Math.pow(tr.x - br.x, 2) + Math.pow(tr.y - br.y, 2))),
-      rotation: floatToFixed(Math.atan2(tr.y - tl.y, tr.x - tl.x) * DEG)
-    };
-  }
-}
 const applyTranslate = (element, {
   x,
   y
@@ -6806,6 +5235,38 @@ const applyTranslate = (element, {
   }
   attrs.forEach(([name, value]) => element.setAttribute(name, String(value)));
 };
+const translateElement = (element, {
+  matrix,
+  parentMatrix
+}, {
+  dx,
+  dy,
+  ox,
+  oy
+}) => {
+  const eM = createTranslateMatrix(ox, oy);
+  element.setAttribute('transform', matrixToString(eM.multiply(matrix).multiply(eM.inverse())));
+  if (!isSVGGroup(element)) {
+    applyTranslate(element, {
+      x: ox,
+      y: oy
+    });
+    return;
+  }
+  checkChildElements(element).forEach(child => {
+    const childM = createTranslateMatrix(dx, dy);
+    const translateMatrix = childM.multiply(getTransformToElement(child, child.parentNode)).multiply(childM.inverse());
+    if (!isIdentity(translateMatrix)) {
+      child.setAttribute('transform', matrixToString(translateMatrix));
+    }
+    if (!isSVGGroup(child)) {
+      const ctm = parentMatrix.inverse();
+      ctm.e = ctm.f = 0;
+      applyTranslate(child, pointTo(ctm, ox, oy));
+    }
+  });
+};
+
 const applyResize = (element, data) => {
   const {
     scaleX,
@@ -6978,46 +5439,29 @@ const applyResize = (element, data) => {
   }
   attrs.forEach(([name, value]) => element.setAttribute(name, String(value)));
 };
-const createHandler = (left, top, color, key) => {
-  const handler = createSVGElement('circle', ['sjx-svg-hdl', `sjx-svg-hdl-${key}`]);
-  const attrs = {
-    cx: left,
-    cy: top,
-    r: 4,
-    fill: '#fff',
-    stroke: color,
-    'stroke-width': 1,
-    'fill-opacity': 1,
-    'vector-effect': 'non-scaling-stroke'
-  };
-  entries(attrs).forEach(([attr, value]) => handler.setAttribute(attr, String(value)));
-  return handler;
-};
-const readCorners = (top, bottom) => {
-  if (!top || !bottom) return null;
-  const point = (line, n) => ({
-    x: Number(line.getAttribute(`x${n}`)) || 0,
-    y: Number(line.getAttribute(`y${n}`)) || 0
+const resizeElement = (element, params) => {
+  const {
+    transformMatrix,
+    isGrouped
+  } = params;
+  if (!isSVGGroup(element) && !isGrouped) {
+    applyResize(element, {
+      ...params,
+      localCTM: transformMatrix
+    });
+    return;
+  }
+  checkChildElements(element).forEach(child => {
+    if (isSVGGroup(child)) return;
+    const childCTM = getTransformToElement(child, isGrouped ? element.parentNode : element);
+    applyResize(child, {
+      ...params,
+      localCTM: childCTM.inverse().multiply(transformMatrix).multiply(childCTM)
+    });
   });
-  return {
-    tl: point(top, 1),
-    tr: point(top, 2),
-    bl: point(bottom, 1),
-    br: point(bottom, 2)
-  };
 };
-const createHitArea = key => {
-  const area = createSVGElement('path', ['sjx-svg-hit', `sjx-svg-hit-${key}`, EDGE_KEYS.includes(key) ? 'sjx-svg-hit-edge' : 'sjx-svg-hit-handle']);
-  area.setAttribute('data-sjx-handle', key);
-  area.setAttribute('fill', 'transparent');
-  return area;
-};
-const setLineStyle = (line, color) => {
-  line.setAttribute('stroke', color);
-  line.setAttribute('stroke-dasharray', '3 3');
-  line.setAttribute('vector-effect', 'non-scaling-stroke');
-};
-const storeElementAttributes = (element, storage, container, isGrouped) => {
+
+const readAttributes = (element, container, isGrouped) => {
   let data = null;
   switch (element.tagName.toLowerCase()) {
     case 'text':
@@ -7125,43 +5569,1285 @@ const storeElementAttributes = (element, storage, container, isGrouped) => {
         break;
       }
   }
-  storage.__data__.set(element, {
+  return {
     ...data,
     matrix: getTransformToElement(element, element.parentNode),
     ctm: getTransformToElement(element.parentNode, container),
     childCTM: getTransformToElement(element, isGrouped ? container.parentNode : container)
-  });
-};
-const renderLine = ([b, e], color, key) => {
-  const handler = createSVGElement('line', ['sjx-svg-line', `sjx-svg-line-${key}`]);
-  const attrs = {
-    x1: b.x,
-    y1: b.y,
-    x2: e.x,
-    y2: e.y,
-    stroke: color,
-    'stroke-width': 1,
-    'vector-effect': 'non-scaling-stroke'
   };
-  entries(attrs).forEach(([attr, value]) => handler.setAttribute(attr, String(value)));
-  return handler;
 };
-const getBoundingRect = (element, ctm, bBox = element.getBBox()) => {
-  const {
+
+const {
+  E_DRAG,
+  E_RESIZE,
+  E_ROTATE
+} = EVENT_EMITTER_CONSTANTS;
+const {
+  E_MOUSEDOWN: E_MOUSEDOWN$1,
+  E_TOUCHSTART: E_TOUCHSTART$1
+} = CLIENT_EVENTS_CONSTANTS;
+const {
+  START_POINT,
+  END_POINT
+} = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_POINT_KEYS;
+const {
+  entries,
+  values
+} = Object;
+const BOX_HANDLES = ['tl', 'tr', 'br', 'bl', 'tc', 'bc', 'ml', 'mr'];
+const LINE_HANDLES = [START_POINT, END_POINT];
+class DraggableSVG extends Transformable {
+  /** @internal */
+  init(elements) {
+    const {
+      options: {
+        container,
+        controlsContainer,
+        rotatable,
+        transformOrigin,
+        restrict,
+        hitRadius,
+        showHitAreas
+      }
+    } = this;
+    const hitAreas = {};
+    const wrapper = createSVGElement('g', showHitAreas ? ['sjx-svg-wrapper', 'sjx-show-hit'] : ['sjx-svg-wrapper']);
+    const controls = createSVGElement('g', ['sjx-svg-controls']);
+    const hitOverlay = hitRadius && showHitAreas ? createSVGElement('path', ['sjx-svg-hit-overlay']) : undefined;
+    if (hitOverlay) {
+      hitOverlay.setAttribute('pointer-events', 'none');
+      controls.appendChild(hitOverlay);
+    }
+    const {
+      rotator = null,
+      anchor = null,
+      ...vertices
+    } = this.getVertices();
+    const origin = Array.isArray(transformOrigin) ? pointTo(createSVGMatrix(), transformOrigin[0], transformOrigin[1]) : vertices.center;
+    const rotationHandles = rotatable ? this.renderRotationHandles(controls, [anchor, rotator], vertices.center, origin) : {};
+    const edgeHandles = this.renderEdges(controls, vertices, hitAreas);
+    const pointHandles = this.renderPoints(controls, {
+      ...this.resizingPoints(vertices),
+      rotator,
+      center: transformOrigin && rotatable ? origin : undefined
+    }, hitAreas);
+    wrapper.appendChild(controls);
+    controlsContainer.appendChild(wrapper);
+    const data = new WeakMap();
+    elements.forEach(element => data.set(element, {
+      parent: element.parentNode,
+      transform: {
+        ctm: getTransformToElement(element, container)
+      },
+      bBox: element.getBBox(),
+      __data__: new WeakMap(),
+      cached: {}
+    }));
+    const restrictContainer = restrict || container;
+    this.storage = {
+      wrapper,
+      controls,
+      handles: {
+        ...edgeHandles,
+        ...pointHandles,
+        ...rotationHandles
+      },
+      data,
+      center: {
+        isShifted: Array.isArray(transformOrigin)
+      },
+      transformOrigin: origin,
+      transform: {
+        containerMatrix: getTransformToElement(restrictContainer, restrictContainer.parentNode)
+      },
+      cached: {},
+      hitAreas,
+      hitOverlay
+    };
+    this.syncHitAreas();
+    [...elements, controls].forEach(target => helper(target).on(E_MOUSEDOWN$1, this.onMouseDown).on(E_TOUCHSTART$1, this.onTouchStart));
+  }
+
+  /** @internal */
+  renderRotationHandles(controls, normalPoints, center, origin) {
+    const {
+      showNormal,
+      transformOrigin
+    } = this.options;
+    const normal = showNormal ? renderLine(normalPoints, THEME_COLOR, 'normal') : null;
+    if (normal) controls.appendChild(normal);
+    const radius = transformOrigin ? renderRadius(center, origin) : null;
+    if (radius) controls.appendChild(radius);
+    return {
+      normal,
+      radius
+    };
+  }
+
+  /** @internal */
+  renderEdges(controls, vertices, hitAreas) {
+    const {
+      hitRadius
+    } = this.options;
+    const line = this.getLine();
+    const handles = {};
+    entries(edgeSegments(vertices)).forEach(([key, segment]) => {
+      const edge = renderLine(segment, THEME_COLOR, key);
+      const isEnabled = !line && this.isHandleEnabled(key);
+      if (!isEnabled) edge.setAttribute('pointer-events', 'none');
+      if (line) edge.setAttribute('visibility', 'hidden');
+      if (hitRadius && isEnabled) {
+        hitAreas[key] = createHitArea(key);
+        controls.appendChild(hitAreas[key]);
+      }
+      controls.appendChild(edge);
+      handles[key] = edge;
+    });
+    return handles;
+  }
+
+  /** @internal */
+  resizingPoints(vertices) {
+    if (!this.options.resizable) return {};
+    return (this.getLine() ? LINE_HANDLES : BOX_HANDLES).filter(key => this.isHandleEnabled(key)).reduce((result, key) => {
+      result[key] = vertices[key];
+      return result;
+    }, {});
+  }
+
+  /** @internal */
+  renderPoints(controls, points, hitAreas) {
+    const {
+      hitRadius
+    } = this.options;
+    const handles = {};
+    entries(points).forEach(([key, point]) => {
+      if (!point) return;
+      const handle = createHandler(point.x, point.y, key === 'center' ? ORIGIN_COLOR : THEME_COLOR, key);
+      if (hitRadius) {
+        hitAreas[key] = createHitArea(key);
+        controls.appendChild(hitAreas[key]);
+      }
+      controls.appendChild(handle);
+      handles[key] = handle;
+    });
+    return handles;
+  }
+
+  /** @internal */
+  cursorPoint({
+    clientX,
+    clientY
+  }) {
+    const {
+      container
+    } = this.options;
+    return this.applyMatrixToPoint(container.getScreenCTM().inverse(), clientX, clientY);
+  }
+
+  /** @internal */
+  getRestrictedBBox(force = false) {
+    const {
+      storage: {
+        transform: {
+          containerMatrix
+        } = {}
+      } = {},
+      options: {
+        container,
+        restrict
+      } = {}
+    } = this;
+    const restrictEl = restrict || container;
+    return bBoxPoints(restrictEl, force ? getTransformToElement(restrictEl, container) : containerMatrix);
+  }
+
+  /** @internal */
+  pointToTransform({
     x,
     y,
-    width,
-    height
-  } = bBox;
-  const vertices = [[x, y], [x + width, y], [x + width, y + height], [x, y + height]];
-  return vertices.map(([l, t]) => {
+    matrix
+  }) {
+    const nextMatrix = matrix.inverse();
+    nextMatrix.e = nextMatrix.f = 0;
+    return this.applyMatrixToPoint(nextMatrix, x, y);
+  }
+
+  /** @internal */
+  pointToControls({
+    x,
+    y
+  }, transform = this.storage.transform) {
+    const matrix = transform.controlsMatrix.inverse();
+    matrix.e = matrix.f = 0;
+    return this.applyMatrixToPoint(matrix, x, y);
+  }
+
+  /** @internal */
+  applyMatrixToPoint(matrix, x, y) {
+    const pt = createSVGElement('svg').createSVGPoint();
+    pt.x = x;
+    pt.y = y;
+    return pt.matrixTransform(matrix);
+  }
+
+  /** @internal */
+  applyTransformToElement(element, actionName) {
+    const {
+      storage: {
+        data,
+        bBox
+      } = {},
+      options: {
+        isGrouped,
+        scalable,
+        applyTranslate
+      } = {}
+    } = this;
+    const {
+      cached = {},
+      ...nextData
+    } = data.get(element);
+    const {
+      transform,
+      __data__
+    } = nextData;
+    const {
+      scaleX,
+      scaleY,
+      dist,
+      transformMatrix
+    } = cached;
+    if (actionName === E_DRAG) {
+      if (!applyTranslate || !dist || !dist.dx && !dist.dy) return;
+      translateElement(element, transform, dist);
+    }
+    if (actionName === E_RESIZE) {
+      if (!transformMatrix) return;
+      if (!scalable) {
+        resizeElement(element, {
+          dx: dist === null || dist === void 0 ? void 0 : dist.dx,
+          dy: dist === null || dist === void 0 ? void 0 : dist.dy,
+          scaleX: scaleX,
+          scaleY: scaleY,
+          transformMatrix,
+          bBox,
+          __data__,
+          isGrouped
+        });
+      }
+    }
+    data.set(element, {
+      ...nextData
+    });
+  }
+
+  /** @internal */
+  processActions(actionName) {
+    const {
+      storage: {
+        transform: {
+          controlsMatrix
+        },
+        center: {
+          isShifted
+        } = {}
+      },
+      options: {
+        isGrouped
+      }
+    } = this;
+    if (!isGrouped || actionName !== E_ROTATE) return;
+    this.applyTransformToHandles();
+    const {
+      x: dx,
+      y: dy
+    } = pointTo(controlsMatrix, 0, 0);
+    if (isShifted) this.moveCenterHandle(dx, dy);
+    this.updateControlsView();
+    if (!isShifted) this.setTransformOrigin({
+      dx: 0,
+      dy: 0
+    }, false);
+  }
+
+  /** @internal */
+  resizeScale({
+    dx,
+    dy
+  }) {
+    const {
+      storage: {
+        doW,
+        doH,
+        bBox: {
+          width,
+          height
+        }
+      },
+      options: {
+        proportions,
+        flip
+      }
+    } = this;
+    return resizeBox({
+      width,
+      height,
+      dx,
+      dy,
+      doW,
+      doH,
+      proportions,
+      flip
+    });
+  }
+
+  /** @internal */
+  scaleMatrixOf(element, scaleX, scaleY) {
+    const {
+      translateMatrix
+    } = this.storage.data.get(element).transform.auxiliary.scale;
+    return scaleAround(translateMatrix, scaleX, scaleY);
+  }
+
+  /** @internal */
+  rotatedMatrix(element, radians) {
+    const {
+      matrix,
+      parentMatrix,
+      auxiliary: {
+        rotate: {
+          translateMatrix
+        }
+      }
+    } = this.storage.data.get(element).transform;
+    parentMatrix.e = parentMatrix.f = 0;
+    const localRotation = parentMatrix.inverse().multiply(createRotationMatrix(radians)).multiply(parentMatrix);
+    return translateMatrix.multiply(localRotation).multiply(translateMatrix.inverse()).multiply(matrix);
+  }
+
+  /** @internal */
+  parentDelta(element, {
+    dx,
+    dy
+  }) {
+    const {
+      parentMatrix
+    } = this.storage.data.get(element).transform.auxiliary.translate;
+    parentMatrix.e = parentMatrix.f = 0;
+    return pointTo(parentMatrix, dx, dy);
+  }
+
+  /** @internal */
+  processResize(element, delta) {
+    const {
+      storage: {
+        revX,
+        revY,
+        doW,
+        doH,
+        data,
+        bBox: {
+          x,
+          y,
+          width: boxWidth,
+          height: boxHeight
+        }
+      },
+      options: {
+        isGrouped,
+        scalable
+      }
+    } = this;
+    const elementData = data.get(element);
+    const {
+      transform: {
+        matrix
+      },
+      cached = {}
+    } = elementData;
+    const [scaleX, scaleY, newWidth, newHeight] = this.resizeScale(delta);
+    const scaleMatrix = this.scaleMatrixOf(element, scaleX, scaleY);
+    const deltaW = newWidth - boxWidth,
+      deltaH = newHeight - boxHeight;
+    const newX = x - deltaW * (doH ? 0.5 : revX ? 1 : 0),
+      newY = y - deltaH * (doW ? 0.5 : revY ? 1 : 0);
+    const resultMatrix = isGrouped ? scaleMatrix.multiply(matrix) : matrix.multiply(scaleMatrix);
+    if (scalable) this.updateElementView(element, resultMatrix);
+    data.set(element, {
+      ...elementData,
+      cached: {
+        ...cached,
+        scaleX,
+        scaleY,
+        transformMatrix: scaleMatrix,
+        resultMatrix
+      }
+    });
+    this.applyTransformToElement(element, E_RESIZE);
+    return {
+      x: newX,
+      y: newY,
+      width: newWidth,
+      height: newHeight,
+      transform: resultMatrix
+    };
+  }
+
+  /** @internal */
+  processMove(element, delta) {
+    const {
+      data
+    } = this.storage;
+    const elementStorage = data.get(element);
+    const {
+      transform: {
+        matrix,
+        auxiliary: {
+          translate: {
+            translateMatrix
+          }
+        }
+      },
+      cached
+    } = elementStorage;
     const {
       x: nx,
       y: ny
-    } = pointTo(ctm, l, t);
-    return [nx, ny];
-  });
-};
+    } = this.parentDelta(element, delta);
+    data.set(element, {
+      ...elementStorage,
+      cached: {
+        ...cached,
+        dist: {
+          dx: floatToFixed(delta.dx),
+          dy: floatToFixed(delta.dy),
+          ox: floatToFixed(nx),
+          oy: floatToFixed(ny)
+        }
+      }
+    });
+    translateMatrix.e = nx;
+    translateMatrix.f = ny;
+    const moveElementMtrx = translateMatrix.multiply(matrix);
+    this.updateElementView(element, moveElementMtrx);
+    return moveElementMtrx;
+  }
+
+  /** @internal */
+  processRotate(element, radians) {
+    const resultMatrix = this.rotatedMatrix(element, radians);
+    this.updateElementView(element, resultMatrix);
+    return resultMatrix;
+  }
+
+  /** @internal */
+  getElementState(element, {
+    revX,
+    revY,
+    doW,
+    doH
+  }) {
+    const {
+      options: {
+        container,
+        isGrouped
+      },
+      storage: {
+        data,
+        controls,
+        handles: {
+          center: cHandle
+        },
+        transformOrigin: {
+          x: originX,
+          y: originY
+        }
+      }
+    } = this;
+    const elementData = data.get(element);
+    const {
+      __data__
+    } = elementData;
+    __data__.delete(element);
+    checkChildElements(element).forEach(child => __data__.set(child, readAttributes(child, element, isGrouped)));
+    const bBox = this.getBBox();
+    const {
+      x: elX,
+      y: elY,
+      width: elW,
+      height: elH
+    } = bBox;
+    const elMatrix = getTransformToElement(element, element.parentNode),
+      ctm = getTransformToElement(element, container),
+      parentMatrix = getTransformToElement(element.parentNode, container);
+    const parentMatrixInverted = parentMatrix.inverse();
+    const scaleX = elX + elW * (doH ? 0.5 : revX ? 1 : 0),
+      scaleY = elY + elH * (doW ? 0.5 : revY ? 1 : 0);
+    const boxCTM = getTransformToElement(controls, container);
+    const elCenterX = elX + elW / 2,
+      elCenterY = elY + elH / 2;
+
+    // c-handle's coordinates
+    const {
+      x: bcx,
+      y: bcy
+    } = pointTo(boxCTM, originX, originY);
+
+    // element's center coordinates
+    const {
+      x: elcx,
+      y: elcy
+    } = cHandle ? pointTo(parentMatrixInverted, bcx, bcy) : pointTo(isGrouped ? parentMatrixInverted : elMatrix, elCenterX, elCenterY);
+    const {
+      x: nextScaleX,
+      y: nextScaleY
+    } = cHandle ? pointTo(isGrouped ? parentMatrixInverted : ctm.inverse(), bcx, bcy) : pointTo(isGrouped ? parentMatrixInverted : createSVGMatrix(), scaleX, scaleY);
+    const transform = {
+      auxiliary: {
+        scale: {
+          scaleMatrix: createSVGMatrix(),
+          translateMatrix: createTranslateMatrix(nextScaleX, nextScaleY)
+        },
+        translate: {
+          parentMatrix: parentMatrixInverted,
+          translateMatrix: createSVGMatrix()
+        },
+        rotate: {
+          translateMatrix: createTranslateMatrix(elcx, elcy)
+        }
+      },
+      matrix: elMatrix,
+      ctm,
+      parentMatrix,
+      scX: Math.sqrt(ctm.a * ctm.a + ctm.b * ctm.b),
+      scY: Math.sqrt(ctm.c * ctm.c + ctm.d * ctm.d)
+    };
+    return {
+      transform,
+      bBox
+    };
+  }
+
+  /** @internal */
+  getCommonState() {
+    const {
+      elements,
+      options: {
+        isGrouped,
+        container,
+        restrict
+      },
+      storage: {
+        controls,
+        handles: {
+          center: cHandle
+        }
+      }
+    } = this;
+    const bBox = this.getBBox();
+    const {
+      x: elX,
+      y: elY,
+      width: elW,
+      height: elH
+    } = bBox;
+    const elCenterX = elX + elW / 2,
+      elCenterY = elY + elH / 2;
+    const boxCTM = getTransformToElement(controls, container);
+    const centerX = cHandle ? cHandle.cx.baseVal.value : elCenterX;
+    const centerY = cHandle ? cHandle.cy.baseVal.value : elCenterY;
+
+    // c-handle's coordinates
+    const {
+      x: bcx,
+      y: bcy
+    } = pointTo(boxCTM, centerX, centerY);
+
+    // box's center coordinates
+    const {
+      x: rcx,
+      y: rcy
+    } = pointTo(isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container), elCenterX, elCenterY);
+    const restrictContainer = restrict || container;
+    const containerMatrix = getTransformToElement(restrictContainer, restrictContainer.parentNode);
+    const center = {
+      ...(this.storage.center || {}),
+      x: cHandle ? bcx : rcx,
+      y: cHandle ? bcy : rcy,
+      hx: cHandle ? cHandle.cx.baseVal.value : null,
+      hy: cHandle ? cHandle.cy.baseVal.value : null
+    };
+    return {
+      transform: {
+        containerMatrix,
+        controlsMatrix: getTransformToElement(controls, controls.parentNode),
+        controlsTranslateMatrix: createSVGMatrix(),
+        wrapperOriginMatrix: createTranslateMatrix(center.x, center.y)
+      },
+      bBox,
+      center
+    };
+  }
+
+  /**
+   * Handle positions as { x, y } in container coordinates: box corners and edge
+   * midpoints (tl, tc, tr, ml, mr, bl, bc, br), center, line endpoints (p1, p2)
+   * for a single <line>, and rotator with its anchor when rotatable
+   * @param transformMatrix matrix applied on top of the element transform
+   */
+  getVertices(transformMatrix = createSVGMatrix()) {
+    const {
+      elements,
+      options: {
+        isGrouped,
+        rotatable,
+        rotatorAnchor,
+        rotatorOffset,
+        container
+      }
+    } = this;
+    const local = boxVertices(this.getBBox());
+    const line = this.getLine();
+    if (line) {
+      local[START_POINT] = [line.x1.baseVal.value, line.y1.baseVal.value];
+      local[END_POINT] = [line.x2.baseVal.value, line.y2.baseVal.value];
+    }
+    const matrix = isGrouped ? transformMatrix : transformMatrix.multiply(getTransformToElement(elements[0], container));
+    const vertices = transformVertices(local, matrix);
+    if (!rotatable) return vertices;
+    const {
+      anchor,
+      rotator
+    } = line ? lineRotator(vertices[START_POINT], vertices[END_POINT], rotatorAnchor, rotatorOffset) : rotatorPlacement(vertices, rotatorAnchor, rotatorOffset);
+    vertices.rotator = rotator;
+    vertices.anchor = anchor;
+    return vertices;
+  }
+
+  /** @internal */
+  getLine() {
+    const {
+      elements: [element],
+      options: {
+        isGrouped
+      }
+    } = this;
+    return !isGrouped && element.tagName.toLowerCase() === 'line' ? element : null;
+  }
+
+  /** @internal */
+  getBBox() {
+    const {
+      elements,
+      options: {
+        container,
+        isGrouped
+      }
+    } = this;
+    if (!isGrouped) return elements[0].getBBox();
+    const groupBBox = elements.reduce((result, element) => [...result, ...bBoxPoints(element, getTransformToElement(element, container))], []);
+    const [[minX, maxX], [minY, maxY]] = getMinMaxOfArray(groupBBox);
+    return {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY
+    };
+  }
+
+  /** @internal */
+  moveCenterHandle(dx, dy) {
+    const {
+      storage: {
+        handles: {
+          center,
+          radius
+        },
+        center: prevCenterData,
+        transform: {
+          controlsMatrix = createSVGMatrix()
+        } = {},
+        transformOrigin: {
+          x: originX,
+          y: originY
+        } = {},
+        cached
+      }
+    } = this;
+    if (isUndef(center)) return;
+    const nextX = originX + dx,
+      nextY = originY + dy;
+    center.cx.baseVal.value = nextX;
+    center.cy.baseVal.value = nextY;
+    radius.x2.baseVal.value = nextX;
+    radius.y2.baseVal.value = nextY;
+    this.storage = {
+      ...this.storage,
+      center: {
+        ...prevCenterData,
+        isShifted: true,
+        ...pointTo(controlsMatrix.inverse(), nextX, nextY)
+      },
+      cached: {
+        ...cached,
+        transformOrigin: pointTo(createSVGMatrix(), nextX, nextY)
+      }
+    };
+    this.syncHitAreas();
+  }
+
+  /** @internal */
+  processMoveRestrict(element, delta) {
+    const {
+      matrix
+    } = this.storage.data.get(element).transform;
+    const {
+      x,
+      y
+    } = this.parentDelta(element, delta);
+    return this.restrictHandler(element, createTranslateMatrix(x, y).multiply(matrix));
+  }
+
+  /** @internal */
+  processRotateRestrict(element, radians) {
+    return this.restrictHandler(element, this.rotatedMatrix(element, radians));
+  }
+
+  /** @internal */
+  processResizeRestrict(element, delta) {
+    const {
+      matrix
+    } = this.storage.data.get(element).transform;
+    const [scaleX, scaleY] = this.resizeScale(delta);
+    return this.restrictHandler(element, matrix.multiply(this.scaleMatrixOf(element, scaleX, scaleY)));
+  }
+
+  /** @internal */
+  processPointMove(element, point, {
+    dx,
+    dy
+  }) {
+    const {
+      storage: {
+        data,
+        restriction
+      },
+      options: {
+        proportions
+      }
+    } = this;
+    const {
+      transform: {
+        ctm,
+        matrix
+      },
+      __data__
+    } = data.get(element);
+    const {
+      resX1,
+      resY1,
+      resX2,
+      resY2
+    } = __data__.get(element);
+    const isStart = point === START_POINT;
+    const [baseX, baseY, otherX, otherY] = isStart ? [resX1, resY1, resX2, resY2] : [resX2, resY2, resX1, resY1];
+    const toLocal = ctm.inverse();
+    toLocal.e = toLocal.f = 0;
+    let {
+      x: localDx,
+      y: localDy
+    } = pointTo(toLocal, dx, dy);
+    if (proportions) {
+      const axisX = baseX - otherX,
+        axisY = baseY - otherY;
+      const axisLength = axisX * axisX + axisY * axisY;
+      if (axisLength > 0) {
+        const projection = (localDx * axisX + localDy * axisY) / axisLength;
+        localDx = axisX * projection;
+        localDy = axisY * projection;
+      }
+    }
+    const nextX = baseX + localDx,
+      nextY = baseY + localDy;
+    if (restriction) {
+      const {
+        x,
+        y
+      } = pointTo(ctm, nextX, nextY);
+      const {
+        area
+      } = restriction;
+      const tolerance = 1e-6;
+      if (x < area.left - tolerance || x > area.right + tolerance || y < area.top - tolerance || y > area.bottom + tolerance) return null;
+    }
+    element.setAttribute(isStart ? 'x1' : 'x2', String(nextX));
+    element.setAttribute(isStart ? 'y1' : 'y2', String(nextY));
+    this.processControlsResize();
+    const {
+      width,
+      height
+    } = element.getBBox();
+    return {
+      width,
+      height,
+      transform: matrix
+    };
+  }
+
+  /** @internal */
+  processControlsResize() {
+    const {
+      storage: {
+        transform: {
+          controlsMatrix
+        }
+      } = {}
+    } = this;
+    this.applyTransformToHandles({
+      boxMatrix: controlsMatrix.inverse()
+    });
+  }
+
+  /** @internal */
+  processControlsMove({
+    dx,
+    dy
+  }) {
+    const {
+      storage: {
+        transform: {
+          controlsMatrix,
+          controlsTranslateMatrix
+        },
+        center
+      } = {}
+    } = this;
+    controlsTranslateMatrix.e = dx;
+    controlsTranslateMatrix.f = dy;
+    const moveControlsMtrx = controlsTranslateMatrix.multiply(controlsMatrix);
+    this.updateControlsView(moveControlsMtrx);
+    if (center.isShifted) {
+      const centerTransformMatrix = controlsMatrix.inverse();
+      centerTransformMatrix.e = centerTransformMatrix.f = 0;
+      const {
+        x: cx,
+        y: cy
+      } = pointTo(centerTransformMatrix, dx, dy);
+      this.moveCenterHandle(-cx, -cy);
+    }
+  }
+
+  /** @internal */
+  processControlsRotate({
+    radians
+  }) {
+    const {
+      options: {
+        isGrouped
+      },
+      storage: {
+        transform: {
+          controlsMatrix,
+          wrapperOriginMatrix
+        } = {}
+      } = {}
+    } = this;
+    if (isGrouped) {
+      const wrapperResultMatrix = wrapperOriginMatrix.multiply(createRotationMatrix(radians)).multiply(wrapperOriginMatrix.inverse()).multiply(controlsMatrix);
+      this.updateControlsView(wrapperResultMatrix);
+    } else {
+      this.applyTransformToHandles({
+        boxMatrix: controlsMatrix.inverse()
+      });
+    }
+  }
+
+  /** @internal */
+  updateElementView(element, matrix) {
+    element.setAttribute('transform', matrixToString(matrix));
+  }
+
+  /** @internal */
+  updateControlsView(matrix = createSVGMatrix()) {
+    this.storage.controls.setAttribute('transform', matrixToString(matrix));
+    this.storage.cached.controlsMatrix = matrix;
+  }
+
+  /** @internal */
+  applyTransformToHandles({
+    boxMatrix = createSVGMatrix()
+  } = {}) {
+    const {
+      options: {
+        rotatable
+      },
+      storage: {
+        handles,
+        center: {
+          isShifted
+        }
+      }
+    } = this;
+    const {
+      anchor = null,
+      center,
+      ...nextVertices
+    } = this.getVertices(boxMatrix);
+    if (rotatable) {
+      const {
+        normal,
+        radius
+      } = handles;
+      if (isDef(normal)) {
+        normal.x1.baseVal.value = anchor.x;
+        normal.y1.baseVal.value = anchor.y;
+        normal.x2.baseVal.value = nextVertices.rotator.x;
+        normal.y2.baseVal.value = nextVertices.rotator.y;
+      }
+      if (isDef(radius)) {
+        radius.x1.baseVal.value = center.x;
+        radius.y1.baseVal.value = center.y;
+        if (!isShifted) {
+          radius.x2.baseVal.value = center.x;
+          radius.y2.baseVal.value = center.y;
+        }
+      }
+    }
+    entries(edgeSegments(nextVertices)).forEach(([key, [b, e]]) => {
+      const hdl = handles[key];
+      if (isUndef(b) || isUndef(hdl)) return;
+      setAttributes(hdl, {
+        x1: b.x,
+        y1: b.y,
+        x2: e.x,
+        y2: e.y
+      });
+    });
+    const handlesVertices = {
+      ...nextVertices,
+      ...(!isShifted && Boolean(center) && {
+        center
+      })
+    };
+    entries(handlesVertices).forEach(([key, point]) => {
+      const hdl = handles[key];
+      if (isUndef(point) || isUndef(hdl)) return;
+      setAttributes(hdl, {
+        cx: point.x,
+        cy: point.y
+      });
+    });
+    this.syncHitAreas();
+    return handlesVertices;
+  }
+
+  /** @internal */
+  prepareGuides() {
+    const {
+      elements,
+      storage: {
+        wrapper
+      },
+      options: {
+        container,
+        guides
+      }
+    } = this;
+    if (!guides) return null;
+    const {
+      targets,
+      bounds,
+      threshold = 6,
+      snap = true
+    } = guides;
+    const isMoving = element => elements.some(item => item === element || item.contains(element) || element.contains(item));
+    const candidates = typeof targets === 'string' ? [...document.querySelectorAll(targets)] : targets || [...elements[0].parentNode.children];
+    const targetBoxes = candidates.reduce((result, element) => {
+      if (!('getBBox' in element) || isMoving(element) || wrapper.contains(element)) return result;
+      try {
+        result.push(this.getBoundsBox(element));
+      } catch {
+        return result;
+      }
+      return result;
+    }, []);
+    const boundsElement = bounds === false ? null : bounds ? helper(bounds)[0] : container;
+    if (boundsElement) targetBoxes.push(this.getBoundsBox(boundsElement));
+    return {
+      ...this.measure(),
+      targets: targetBoxes,
+      threshold: threshold / screenScale(container),
+      snap
+    };
+  }
+
+  /** @internal */
+  prepareRestrict() {
+    const {
+      restrict
+    } = this.options;
+    if (!restrict) return null;
+    return {
+      ...this.measure(),
+      area: this.getBoundsBox(restrict)
+    };
+  }
+
+  /** @internal */
+  measure() {
+    const {
+      elements,
+      options: {
+        container,
+        isGrouped
+      }
+    } = this;
+    const matrices = elements.map(element => getTransformToElement(element, container));
+    const [firstMatrix] = matrices;
+    const line = this.getLine();
+    const {
+      point
+    } = this.storage;
+    const pointPosition = line && point ? pointTo(firstMatrix, point === START_POINT ? line.x1.baseVal.value : line.x2.baseVal.value, point === START_POINT ? line.y1.baseVal.value : line.y2.baseVal.value) : null;
+    return {
+      box: unionBoxes(elements.map((element, index) => boxFromPoints(bBoxPoints(element, matrices[index])))),
+      axisAligned: matrices.every(matrix => Math.abs(matrix.b) < 1e-6 && Math.abs(matrix.c) < 1e-6),
+      flipX: !isGrouped && firstMatrix.a < 0,
+      flipY: !isGrouped && firstMatrix.d < 0,
+      point: pointPosition && {
+        x: pointPosition.x,
+        y: pointPosition.y
+      }
+    };
+  }
+
+  /** @internal */
+  getBoundsBox(element) {
+    const {
+      container
+    } = this.options;
+    if (element.tagName.toLowerCase() !== 'svg') {
+      return boxFromPoints(bBoxPoints(element, getTransformToElement(element, container)));
+    }
+    const {
+      left,
+      top,
+      right,
+      bottom
+    } = element.getBoundingClientRect();
+    const toContainer = (container.getScreenCTM() || createSVGMatrix()).inverse();
+    return boxFromPoints([[left, top], [right, top], [right, bottom], [left, bottom]].map(([x, y]) => {
+      const point = pointTo(toContainer, x, y);
+      return [point.x, point.y];
+    }));
+  }
+
+  /** @internal */
+  drawGuides(lines) {
+    const {
+      storage,
+      storage: {
+        wrapper,
+        guidesLayer
+      },
+      options: {
+        container
+      }
+    } = this;
+    if (guidesLayer) {
+      while (guidesLayer.firstChild) guidesLayer.removeChild(guidesLayer.firstChild);
+    }
+    if (!lines.length) return;
+    const layer = guidesLayer || createSVGElement('g', ['sjx-svg-guides']);
+    if (!guidesLayer) {
+      wrapper.insertBefore(layer, wrapper.firstChild);
+      storage.guidesLayer = layer;
+    }
+    layer.setAttribute('transform', matrixToString(getTransformToElement(container, wrapper.parentNode)));
+    lines.forEach(guide => layer.appendChild(createGuideLine(guide)));
+  }
+
+  /** @internal */
+  syncHitAreas() {
+    const {
+      storage: {
+        controls,
+        handles,
+        hitAreas,
+        hitOverlay
+      },
+      options: {
+        hitRadius
+      }
+    } = this;
+    if (!hitAreas) return;
+    const corners = readCorners(handles.te, handles.be);
+    const radius = hitRadius / screenScale(controls);
+    const outlines = [];
+    entries(hitAreas).forEach(([key, area]) => {
+      const hdl = handles[key];
+      if (isUndef(hdl)) return;
+      const center = {
+        x: Number(hdl.getAttribute('cx')) || 0,
+        y: Number(hdl.getAttribute('cy')) || 0
+      };
+      const path = outlineToPath(hitAreaOutline(key, center, corners, radius));
+      area.setAttribute('d', path);
+      outlines.push(path);
+    });
+    if (hitOverlay) hitOverlay.setAttribute('d', outlines.join(''));
+  }
+  setTransformOrigin({
+    x,
+    y,
+    dx,
+    dy
+  } = {}, pin = true) {
+    const {
+      elements,
+      storage,
+      storage: {
+        controls,
+        handles: {
+          center: handle,
+          radius
+        } = {},
+        center
+      } = {},
+      options: {
+        container,
+        isGrouped
+      }
+    } = this;
+    const isRelative = isDef(dx) && isDef(dy),
+      isAbsolute = isDef(x) && isDef(y);
+    if (!center || !handle || !radius || !(isRelative || isAbsolute)) return;
+    const controlsTransformMatrix = getTransformToElement(controls, controls.parentNode).inverse();
+    const nextTransform = isGrouped ? controlsTransformMatrix : controlsTransformMatrix.multiply(getTransformToElement(elements[0], container));
+    let newX, newY;
+    if (isRelative) {
+      const {
+        x: bx,
+        y: by,
+        width,
+        height
+      } = this.getBBox();
+      const hW = width / 2,
+        hH = height / 2;
+      ({
+        x: newX,
+        y: newY
+      } = pointTo(nextTransform, bx + hW + dx, by + hH + dy));
+    } else {
+      newX = x;
+      newY = y;
+    }
+    handle.cx.baseVal.value = newX;
+    handle.cy.baseVal.value = newY;
+    radius.x2.baseVal.value = newX;
+    radius.y2.baseVal.value = newY;
+    center.isShifted = pin;
+    storage.transformOrigin = pointTo(createSVGMatrix(), newX, newY);
+    this.syncHitAreas();
+  }
+  fitControlsToSize() {
+    const {
+      storage: {
+        controls,
+        center: {
+          isShifted
+        } = {},
+        transformOrigin: {
+          x: originX,
+          y: originY
+        } = {}
+      }
+    } = this;
+    const controlsMatrix = getTransformToElement(controls, controls.parentNode);
+    const {
+      x: dx,
+      y: dy
+    } = pointTo(controlsMatrix, originX, originY);
+    this.updateControlsView();
+    if (isShifted) {
+      this.setTransformOrigin({
+        x: dx,
+        y: dy
+      }, true);
+    } else {
+      this.setTransformOrigin({
+        dx: 0,
+        dy: 0
+      }, false);
+    }
+    this.applyTransformToHandles();
+  }
+  getBoundingRect(element, transformMatrix = null) {
+    const {
+      options: {
+        restrict,
+        container
+      } = {}
+    } = this;
+    const restrictEl = restrict || container;
+    const nextTransform = transformMatrix ? getTransformToElement(element.parentNode, restrictEl).multiply(transformMatrix) : getTransformToElement(element, restrictEl);
+    return bBoxPoints(element, nextTransform, element.getBBox());
+  }
+  applyAlignment(direction, target = null) {
+    const {
+      elements,
+      options: {
+        container
+      }
+    } = this;
+    const {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      anchor,
+      rotator,
+      center,
+      ...vertices
+    } = this.getVertices();
+    const restrictBBox = target ? bBoxPoints(target, getTransformToElement(target, container)) : this.getRestrictedBBox(true);
+    const [offsetX, offsetY] = alignmentOffset(direction, getMinMaxOfArray(restrictBBox), getMinMaxOfArray(values(vertices).map(({
+      x,
+      y
+    }) => [x, y])));
+    elements.forEach(element => {
+      const parentMatrix = getTransformToElement(element.parentNode, container);
+      parentMatrix.e = parentMatrix.f = 0;
+      const {
+        x,
+        y
+      } = pointTo(parentMatrix.inverse(), offsetX, offsetY);
+      const moveElementMtrx = createTranslateMatrix(x, y).multiply(getTransformToElement(element, element.parentNode));
+      this.updateElementView(element, moveElementMtrx);
+    });
+    this.fitControlsToSize();
+  }
+  getDimensions() {
+    const {
+      elements,
+      options: {
+        isGrouped,
+        container
+      }
+    } = this;
+    const nextTransform = isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container);
+    const {
+      tl,
+      br,
+      tr
+    } = transformVertices(boxVertices(this.getBBox()), nextTransform);
+    return {
+      x: floatToFixed(tl.x),
+      y: floatToFixed(tl.y),
+      width: floatToFixed(Math.sqrt(Math.pow(tl.x - tr.x, 2) + Math.pow(tl.y - tr.y, 2))),
+      height: floatToFixed(Math.sqrt(Math.pow(tr.x - br.x, 2) + Math.pow(tr.y - br.y, 2))),
+      rotation: floatToFixed(Math.atan2(tr.y - tl.y, tr.x - tl.x) * DEG)
+    };
+  }
+}
 
 // factory method for creating draggable elements
 function drag(options, obInstance) {

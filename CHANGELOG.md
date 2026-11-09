@@ -1,3 +1,13 @@
+# [2.0.0-rc.2](https://github.com/nichollascarter/subjx/compare/v2.0.0-rc.1...v2.0.0-rc.2) (2026-11-09)
+
+
+* feat(transform)!: direction cursors on resize handles and no grid snapping by default ([0d51a4d](https://github.com/nichollascarter/subjx/commit/0d51a4d80097c82c8a8c133eb9fb992d287b5a8b))
+
+
+### BREAKING CHANGES
+
+* snap defaults to { x: 0, y: 0, angle: 0 }, so elements move, resize and rotate freely unless a snap step is passed. cursorResize and cursorRotate default to the cursor of the grabbed handle and grabbing instead of auto.
+
 # [2.0.0-rc.1](https://github.com/nichollascarter/subjx/compare/v1.4.0...v2.0.0-rc.1) (2026-11-08)
 
 

@@ -11,6 +11,7 @@ export default abstract class Transformable<M = unknown, S extends TransformStor
     private pendingOptions?;
     private initClasses?;
     private readonly observer;
+    private readonly onControlsOver;
     constructor(elements: Element[], options: DragOptions | undefined, observable: Observable);
     abstract getBoundingRect(elementOrMatrix?: Element | M | null, matrix?: M | null): number[][];
     abstract setTransformOrigin(params?: TransformOriginParams, pin?: boolean): void;

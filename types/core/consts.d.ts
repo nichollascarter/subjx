@@ -32,6 +32,7 @@ export declare const CLIENT_EVENTS_CONSTANTS: {
     E_TOUCHSTART: string;
     E_TOUCHEND: string;
     E_TOUCHMOVE: string;
+    E_MOUSEOVER: string;
 };
 export declare const TRANSFORM_HANDLES_CONSTANTS: {
     TRANSFORM_HANDLES_KEYS: {
