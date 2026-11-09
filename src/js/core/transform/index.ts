@@ -1,5 +1,5 @@
 import { Observable } from '../observable';
-import Draggable from './Draggable';
+import Draggable from './html/Draggable';
 import DraggableSVG from './svg';
 import { checkElement } from './svg/util';
 import { forEach, arrMap, isDef } from '../util/util';

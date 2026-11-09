@@ -10,11 +10,11 @@
     Draggable, Resizable, Rotatable library for creating drag-n-drop applications.
 </h3>
 
-## Demos
+## Demo
 
-### [Basic example](http://jsfiddle.net/nichollascarter/qgwzch0v/)
+### [Playground](https://playground.troposchema.com)
 
-### [Drag, zoom and pan SVG](https://codesandbox.io/s/svg-drag-pan-zoom-wb95s)
+A live sandbox built on subjx: SVG editing with nested layers, guides, snapping, line endpoints, restricted areas and per-element handles. Works in the browser, no sign-up.
 
 ## Usage
 
@@ -171,7 +171,7 @@ reported as a resize (`resizeStart`, `resize`, `resizeEnd`, `onResize`).
 | **container** | Transformation coordinate system | `'selector'` \| `element` | element.parentNode |
 | **controlsContainer** | Parent element of 'controls' | `'selector'` \| `element` | container |
 | **axis** | Constrain movement along an axis | `string`: 'x' \| 'y' \| 'xy' | 'xy' |
-| **snap** | Snapping to grid: x/y in pixels, angle in degrees; missing values use the defaults, 0 disables | `object` | { x: 10, y: 10, angle: 10 } |
+| **snap** | Snapping to grid: x/y in pixels, angle in degrees; missing values use the defaults, 0 disables | `object` | { x: 0, y: 0, angle: 0 } |
 | **each** | Mimic behavior with other '.draggable' elements | `object` | { move: false, resize: false, rotate: false } |
 | **proportions** | Keep aspect ratio on resizing / scaling | `boolean` | false |
 | **flip** | Mirror the element when a resize handle is dragged past the opposite edge (SVG); `false` stops it at the minimum size | `boolean` | true |
@@ -185,7 +185,7 @@ reported as a resize (`resizeStart`, `resize`, `resizeEnd`, `onResize`).
 | **rotatorOffset** | Rotator offset  | `number` | 50 |
 | **showNormal** | Shows the line between the element and the rotator | `boolean` | true |
 | **transformOrigin** | Sets the origin for an element's transformations | `boolean` \| Array<number> | false |
-| **cursorMove** / **cursorResize** / **cursorRotate** | Cursor during an action | `string` | 'auto' |
+| **cursorMove** / **cursorResize** / **cursorRotate** | Cursor during an action. Resize handles and edges show a direction cursor that follows the rotation of the element, the rotator shows `grab` | `string` | 'auto' / direction of the grabbed handle / 'grabbing' |
 | **custom** | Arbitrary user data, available as `options.custom` | `object` | null |
 | **handles** | Resize handles to show: `tl`, `tc`, `tr`, `ml`, `mr`, `bl`, `bc`, `br`, edges `te`, `be`, `le`, `re`, line endpoints `p1`, `p2`; edges left out stay visible but ignore the pointer | `Array<string>` | all |
 | **hitRadius** | Extra grab area around handles and edges, in screen pixels (SVG). Inside the box an area goes at most a quarter of the box size deep, so a narrow element can still be dragged by its middle | `number` | 0 |

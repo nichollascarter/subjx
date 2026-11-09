@@ -8,6 +8,7 @@ const E_MOUSEMOVE = 'mousemove';
 const E_TOUCHSTART = 'touchstart';
 const E_TOUCHEND = 'touchend';
 const E_TOUCHMOVE = 'touchmove';
+const E_MOUSEOVER = 'mouseover';
 
 const E_DRAG_START = 'dragStart';
 const E_DRAG = 'drag';
@@ -89,7 +90,8 @@ export const CLIENT_EVENTS_CONSTANTS = {
     E_MOUSEMOVE,
     E_TOUCHSTART,
     E_TOUCHEND,
-    E_TOUCHMOVE
+    E_TOUCHMOVE,
+    E_MOUSEOVER
 };
 
 const TRANSFORM_HANDLES_KEYS = {
