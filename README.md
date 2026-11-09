@@ -10,11 +10,11 @@
     Draggable, Resizable, Rotatable library for creating drag-n-drop applications.
 </h3>
 
-## Demos
+## Demo
 
-### [Basic example](http://jsfiddle.net/nichollascarter/qgwzch0v/)
+### [Playground](https://playground.troposchema.com)
 
-### [Drag, zoom and pan SVG](https://codesandbox.io/s/svg-drag-pan-zoom-wb95s)
+A live sandbox built on subjx: SVG editing with nested layers, guides, snapping, line endpoints, restricted areas and per-element handles. Works in the browser, no sign-up.
 
 ## Usage
 
