@@ -1,3 +1,4 @@
+import { getMinMaxOfArray } from './common';
 import type { Box } from './guides';
 
 export interface Restriction {
@@ -27,3 +28,22 @@ export const clampMove = ({ box, area }: Restriction, dx: number, dy: number) =>
 export const clampEdge = (edge: number, areaMin: number, areaMax: number, delta: number) => (
     clampAxis(edge, edge, areaMin, areaMax, delta)
 );
+
+export const overflowPoint = (points: number[][], bounds: number[][]) => {
+    const [
+        [minX, maxX],
+        [minY, maxY]
+    ] = getMinMaxOfArray(bounds);
+
+    let x: number | null = null,
+        y: number | null = null;
+
+    for (let i = 0, len = points.length; i < len; i++) {
+        const [px, py] = points[i];
+
+        if (px < minX || px > maxX) x = px;
+        if (py < minY || py > maxY) y = py;
+    }
+
+    return { x, y };
+};

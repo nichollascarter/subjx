@@ -84,3 +84,26 @@
 .sjx-show-hit .sjx-svg-hit-edge:has(+ .sjx-svg-line.sjx-active) {
     fill: rgba(0, 168, 255, 0.15);
 }
+
+.sjx-hdl-rotator,
+.sjx-svg-hdl-rotator,
+.sjx-svg-hit[data-sjx-handle="rotator"] {
+    cursor: grab;
+}
+
+.sjx-hdl-center,
+.sjx-svg-hdl-center,
+.sjx-svg-hit[data-sjx-handle="center"] {
+    cursor: move;
+}
+
+.sjx-svg-hdl-p1,
+.sjx-svg-hdl-p2,
+.sjx-svg-hit[data-sjx-handle="p1"],
+.sjx-svg-hit[data-sjx-handle="p2"] {
+    cursor: crosshair;
+}
+
+.sjx-acting * {
+    cursor: inherit !important;
+}

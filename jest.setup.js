@@ -18,4 +18,7 @@ window.cancelAnimationFrame = function (requestID) {
     window.clearTimeout(requestID);
 };
 
+global.requestAnimationFrame = window.requestAnimationFrame;
+global.cancelAnimationFrame = window.cancelAnimationFrame;
+
 jest.setTimeout(10000);

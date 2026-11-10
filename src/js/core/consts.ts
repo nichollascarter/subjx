@@ -8,6 +8,7 @@ const E_MOUSEMOVE = 'mousemove';
 const E_TOUCHSTART = 'touchstart';
 const E_TOUCHEND = 'touchend';
 const E_TOUCHMOVE = 'touchmove';
+const E_MOUSEOVER = 'mouseover';
 
 const E_DRAG_START = 'dragStart';
 const E_DRAG = 'drag';
@@ -50,13 +51,13 @@ const ON_MOVE = 'onmove';
 const ON_RESIZE = 'onresize';
 const ON_ROTATE = 'onrotate';
 
-const NOTIFIER_EVENTS: string[] = [
+const NOTIFIER_EVENTS = [
     ON_GETSTATE,
     ON_APPLY,
     ON_MOVE,
     ON_RESIZE,
     ON_ROTATE
-];
+] as const;
 
 export const NOTIFIER_CONSTANTS = {
     NOTIFIER_EVENTS,
@@ -65,7 +66,7 @@ export const NOTIFIER_CONSTANTS = {
     ON_MOVE,
     ON_RESIZE,
     ON_ROTATE
-};
+} as const;
 
 export const EVENT_EMITTER_CONSTANTS = {
     EMITTER_EVENTS,
@@ -89,7 +90,8 @@ export const CLIENT_EVENTS_CONSTANTS = {
     E_MOUSEMOVE,
     E_TOUCHSTART,
     E_TOUCHEND,
-    E_TOUCHMOVE
+    E_TOUCHMOVE,
+    E_MOUSEOVER
 };
 
 const TRANSFORM_HANDLES_KEYS = {

@@ -1,5 +1,6 @@
 import { warn, forEach } from './../../util/util';
 import { addClass } from '../../util/css-util';
+import { floatToFixed } from '../common';
 
 export const sepRE = /\s*,\s*|\s+/g;
 
@@ -73,6 +74,16 @@ export const createRotateMatrix = (sin: number, cos: number): DOMMatrix => {
 
     return matrix;
 };
+
+export const createRotationMatrix = (radians: number): DOMMatrix => (
+    createRotateMatrix(floatToFixed(Math.sin(radians)), floatToFixed(Math.cos(radians)))
+);
+
+export const scaleAround = (translateMatrix: DOMMatrix, scaleX: number, scaleY: number): DOMMatrix => (
+    translateMatrix
+        .multiply(createScaleMatrix(scaleX, scaleY))
+        .multiply(translateMatrix.inverse())
+);
 
 export const createScaleMatrix = (x: number, y: number): DOMMatrix => {
     const matrix = createSVGMatrix();

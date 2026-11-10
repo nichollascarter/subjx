@@ -15,3 +15,7 @@ export declare const clampMove: ({ box, area }: Restriction, dx: number, dy: num
     dy: number;
 };
 export declare const clampEdge: (edge: number, areaMin: number, areaMax: number, delta: number) => number;
+export declare const overflowPoint: (points: number[][], bounds: number[][]) => {
+    x: number | null;
+    y: number | null;
+};

@@ -3,12 +3,12 @@ export declare const THEME_COLOR = "#00a8ff";
 export declare const LIB_CLASS_PREFIX = "sjx-";
 export declare const CSS_PREFIXES: string[];
 export declare const NOTIFIER_CONSTANTS: {
-    NOTIFIER_EVENTS: string[];
-    ON_GETSTATE: string;
-    ON_APPLY: string;
-    ON_MOVE: string;
-    ON_RESIZE: string;
-    ON_ROTATE: string;
+    readonly NOTIFIER_EVENTS: readonly ["ongetstate", "onapply", "onmove", "onresize", "onrotate"];
+    readonly ON_GETSTATE: "ongetstate";
+    readonly ON_APPLY: "onapply";
+    readonly ON_MOVE: "onmove";
+    readonly ON_RESIZE: "onresize";
+    readonly ON_ROTATE: "onrotate";
 };
 export declare const EVENT_EMITTER_CONSTANTS: {
     EMITTER_EVENTS: string[];
@@ -32,6 +32,7 @@ export declare const CLIENT_EVENTS_CONSTANTS: {
     E_TOUCHSTART: string;
     E_TOUCHEND: string;
     E_TOUCHMOVE: string;
+    E_MOUSEOVER: string;
 };
 export declare const TRANSFORM_HANDLES_CONSTANTS: {
     TRANSFORM_HANDLES_KEYS: {

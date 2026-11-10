@@ -1,5 +1,5 @@
 import { Observable } from '../observable';
-import Draggable from './Draggable';
+import Draggable from './html/Draggable';
 import DraggableSVG from './svg';
 import type Helper from '../Helper';
 import type { DragOptions } from '../options';

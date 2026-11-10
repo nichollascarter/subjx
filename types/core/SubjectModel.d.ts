@@ -18,6 +18,7 @@ export interface ProxyMethods {
 }
 export default abstract class SubjectModel<S extends object = object, P extends ProxyMethods = ProxyMethods, EM extends object = Record<string, unknown>> {
     elements: Element[];
+    /** Internal state. Its shape is not part of the public API and may change in any minor release. */
     storage?: S | null;
     constructor(elements: Element[]);
     enable(options?: object): void;

@@ -43,14 +43,13 @@ const babelPlugins = (target) => ([
     babel({
         exclude: 'node_modules/**',
         extensions,
-        presets: ['@babel/preset-env'],
         babelHelpers: 'bundled',
         envName: target
     })
 ]);
 
 const umdPlugins = [
-    ...babelPlugins('cjs'),
+    ...babelPlugins('umd'),
     production && terser({
         compress: {
             evaluate: false,
@@ -127,7 +126,6 @@ export default [
                     babel({
                         exclude: 'node_modules/**',
                         extensions,
-                        presets: ['@babel/preset-env'],
                         babelHelpers: 'runtime',
                         plugins: [
                             ['@babel/plugin-transform-runtime', {

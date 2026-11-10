@@ -1,6 +1,7 @@
 import babelParser from '@babel/eslint-parser';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import unicorn from 'eslint-plugin-unicorn';
 
 const rules = {
     'no-const-assign': 'error',
@@ -15,7 +16,7 @@ const rules = {
     'semi': 'error',
     'semi-spacing': 'error',
     'padded-blocks': ['error', { 'blocks': 'never', 'classes': 'always', 'switches': 'always' }],
-    'no-unused-vars': ['error', { 'vars': 'all', 'args': 'after-used', 'ignoreRestSiblings': false }],
+    'no-unused-vars': ['error', { 'vars': 'all', 'args': 'after-used', 'argsIgnorePattern': '^_', 'ignoreRestSiblings': false }],
     'comma-dangle': ['error', {
         'arrays': 'never',
         'objects': 'never',
@@ -29,6 +30,21 @@ const rules = {
 export default [
     {
         ignores: ['node_modules/**', 'dist/**', 'dev/**', '**/*.css']
+    },
+    {
+        files: ['src/**/*.{js,ts}', 'test/**/*.js'],
+        plugins: {
+            unicorn
+        },
+        rules: {
+            'unicorn/filename-case': ['error', {
+                cases: {
+                    kebabCase: true,
+                    pascalCase: true
+                },
+                ignore: [/^[A-Z][A-Za-z0-9]*\.ts$/]
+            }]
+        }
     },
     {
         files: ['src/**/*.js'],

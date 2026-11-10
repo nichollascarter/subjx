@@ -1,0 +1,13 @@
+import type { Point } from '../transformable';
+import type { GuideLine } from '../guides';
+import type { HitCorners } from './hit-areas';
+export declare const ORIGIN_COLOR = "#fe3232";
+export declare const setAttributes: (element: Element, attrs: Record<string, string | number>) => void;
+export declare const createHandler: (left: number, top: number, color: string, key: string) => SVGCircleElement;
+export declare const renderLine: ([b, e]: (Point | null)[], color: string, key: string) => SVGLineElement;
+export declare const setLineStyle: (line: Element, color: string) => void;
+export declare const renderRadius: (from: Point, to: Point) => SVGLineElement;
+export declare const createHitArea: (key: string) => SVGPathElement;
+export declare const readCorners: (top?: Element | null, bottom?: Element | null) => HitCorners | null;
+export declare const createGuideLine: ({ axis, value, from, to }: GuideLine) => SVGLineElement;
+export declare const screenScale: (element: SVGGraphicsElement) => number;

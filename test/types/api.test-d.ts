@@ -9,7 +9,8 @@ import type {
     DragOptions,
     Draggable,
     DraggableSVG,
-    Observable
+    Observable,
+    TransformHandles
 } from 'subjx';
 
 declare const div: HTMLDivElement;
@@ -66,9 +67,19 @@ draggable.exeRotate({ delta: 0.5 });
 draggable.setTransformOrigin({ x: 1, y: 1 }, true);
 draggable.setTransformOrigin({ dx: 0, dy: 0 });
 draggable.resetTransformOrigin();
+// @ts-expect-error
 draggable.setCenterPoint();
+// @ts-expect-error
 draggable.resetCenterPoint();
+// @ts-expect-error
+draggable.observable;
+// @ts-expect-error
+subjx(div).drag({ rotationPoint: true });
 draggable.fitControlsToSize();
+draggable.update({ axis: 'x', resizable: false, handles: ['tl', 'br'], onMove() {} });
+draggable.update();
+// @ts-expect-error
+draggable.update({ axis: 'z' });
 
 const direction: AlignmentDirection = 't';
 draggable.applyAlignment(direction);
@@ -80,6 +91,8 @@ dimensions.rotation.toFixed();
 box.forEach(([x, y]) => x + y);
 
 draggable.controls.querySelector('.sjx-hdl');
+const handles: TransformHandles = draggable.handles;
+handles.tl?.getBoundingClientRect();
 draggable.elements.map(el => el.getAttribute('id'));
 const { te } = draggable.storage.handles;
 te?.setAttribute('stroke', 'red');

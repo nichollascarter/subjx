@@ -1,12 +1,43 @@
 import { isDef, isUndef } from '../util/util';
 import { NOTIFIER_CONSTANTS } from '../consts';
 
+export interface NotifyMoveArgs {
+    dx: number;
+    dy: number;
+}
+
+export interface NotifyRotateArgs {
+    radians: number;
+    [key: string]: unknown;
+}
+
+export interface NotifyResizeArgs extends NotifyMoveArgs {
+    revX: boolean;
+    revY: boolean;
+    dox: boolean;
+    doy: boolean;
+}
+
+export interface NotifyActionArgs {
+    clientX: number;
+    clientY: number;
+    actionName: string;
+    triggerEvent: boolean;
+}
+
+export interface NotifyGetStateArgs extends NotifyActionArgs {
+    revX?: boolean;
+    revY?: boolean;
+    doW?: boolean;
+    doH?: boolean;
+}
+
 export interface Observer {
-    notifyMove(data: any): void;
-    notifyRotate(data: any): void;
-    notifyResize(data: any): void;
-    notifyApply(data: any): void;
-    notifyGetState(data: any): void;
+    notifyMove(data: NotifyMoveArgs): void;
+    notifyRotate(data: NotifyRotateArgs): void;
+    notifyResize(data: NotifyResizeArgs): void;
+    notifyApply(data: NotifyActionArgs): void;
+    notifyGetState(data: NotifyGetStateArgs): void;
 }
 
 const {
@@ -17,15 +48,33 @@ const {
     ON_ROTATE
 } = NOTIFIER_CONSTANTS;
 
+export interface NotifierPayloads {
+    [ON_GETSTATE]: NotifyGetStateArgs;
+    [ON_APPLY]: NotifyActionArgs;
+    [ON_MOVE]: NotifyMoveArgs;
+    [ON_RESIZE]: NotifyResizeArgs;
+    [ON_ROTATE]: NotifyRotateArgs;
+}
+
+export type NotifierEvent = keyof NotifierPayloads;
+
+const handlers: { [K in NotifierEvent]: (observer: Observer, data: NotifierPayloads[K]) => void } = {
+    [ON_GETSTATE]: (observer, data) => observer.notifyGetState(data),
+    [ON_APPLY]: (observer, data) => observer.notifyApply(data),
+    [ON_MOVE]: (observer, data) => observer.notifyMove(data),
+    [ON_RESIZE]: (observer, data) => observer.notifyResize(data),
+    [ON_ROTATE]: (observer, data) => observer.notifyRotate(data)
+};
+
 export default class Observable {
 
-    observers: Record<string, Observer[]>;
+    observers: Partial<Record<NotifierEvent, Observer[]>>;
 
     constructor() {
         this.observers = {};
     }
 
-    subscribe(eventName: string, sub: Observer) {
+    subscribe(eventName: NotifierEvent, sub: Observer) {
         const obs = this.observers;
 
         if (isUndef(obs[eventName])) {
@@ -34,48 +83,30 @@ export default class Observable {
             });
         }
 
-        obs[eventName].push(sub);
+        obs[eventName]!.push(sub);
 
         return this;
     }
 
-    unsubscribe(eventName: string, f: Observer) {
+    unsubscribe(eventName: NotifierEvent, f: Observer) {
         const obs = this.observers;
 
         if (isDef(obs[eventName])) {
             const index = obs[eventName].indexOf(f);
-            obs[eventName].splice(index, 1);
+            if (index !== -1) obs[eventName].splice(index, 1);
         }
 
         return this;
     }
 
-    notify(eventName: string, source: Observer, data: unknown) {
-        if (isUndef(this.observers[eventName])) return;
+    notify<K extends NotifierEvent>(eventName: K, source: Observer, data: NotifierPayloads[K]) {
+        const observers = this.observers[eventName];
+        const handler = handlers[eventName];
 
-        this.observers[eventName].forEach(observer => {
-            if (source === observer) return;
-            switch (eventName) {
+        if (isUndef(observers) || isUndef(handler)) return;
 
-                case ON_MOVE:
-                    observer.notifyMove(data);
-                    break;
-                case ON_ROTATE:
-                    observer.notifyRotate(data);
-                    break;
-                case ON_RESIZE:
-                    observer.notifyResize(data);
-                    break;
-                case ON_APPLY:
-                    observer.notifyApply(data);
-                    break;
-                case ON_GETSTATE:
-                    observer.notifyGetState(data);
-                    break;
-                default:
-                    break;
-
-            }
+        observers.forEach(observer => {
+            if (source !== observer) handler(observer, data);
         });
     }
 

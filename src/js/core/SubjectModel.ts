@@ -40,6 +40,7 @@ export default abstract class SubjectModel<
 > {
 
     elements: Element[];
+    /** Internal state. Its shape is not part of the public API and may change in any minor release. */
     storage?: S | null;
     /** @internal */
     protected proxyMethods: P | null;
@@ -65,8 +66,12 @@ export default abstract class SubjectModel<
     enable(options?: object) {
         this.processOptions(options);
         this.init(this.elements);
+        this.afterInit();
         this.proxyMethods!.onInit.call(this, this.elements);
     }
+
+    /** @internal */
+    protected afterInit() { }
 
     abstract disable(): void;
 
@@ -116,6 +121,7 @@ export default abstract class SubjectModel<
 
     /** @internal */
     protected onMouseDown(e: MouseEvent) {
+        if (e.button !== 0) return;
         this.start(e);
         helper(document)
             .on(E_MOUSEMOVE, this.onMouseMove)

@@ -48,17 +48,17 @@ export interface MimicOptions {
 export interface SnapOptions {
     /**
      * Snap step for x-axis in pixels, 0 disables snapping
-     * @default 10
+     * @default 0
      */
     x?: number;
     /**
      * Snap step for y-axis in pixels, 0 disables snapping
-     * @default 10
+     * @default 0
      */
     y?: number;
     /**
      * Snap step for rotation angle in degrees, 0 disables snapping
-     * @default 10
+     * @default 0
      */
     angle?: number;
 }
@@ -293,7 +293,7 @@ export interface DragOptions {
     each?: MimicOptions;
     /**
      * Snapping to grid; missing values fall back to the defaults
-     * @default { x: 10, y: 10, angle: 10 }
+     * @default { x: 0, y: 0, angle: 0 }
      */
     snap?: SnapOptions;
     /**
@@ -307,20 +307,14 @@ export interface DragOptions {
      */
     cursorMove?: string;
     /**
-     * Cursor style during resizing / scaling
-     * @default 'auto'
+     * Cursor style during resizing / scaling, by default the direction cursor of the grabbed handle
      */
     cursorResize?: string;
     /**
      * Cursor style during rotating
-     * @default 'auto'
+     * @default 'grabbing'
      */
     cursorRotate?: string;
-    /**
-     * @deprecated Use `transformOrigin` instead
-     * Show rotation point handle
-     */
-    rotationPoint?: boolean;
     /**
      * Show and enable custom transform origin handle.
      * Can be boolean or initial position as [x, y] array
