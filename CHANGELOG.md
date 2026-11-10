@@ -1,3 +1,10 @@
+# [2.0.0-rc.3](https://github.com/nichollascarter/subjx/compare/v2.0.0-rc.2...v2.0.0-rc.3) (2026-11-10)
+
+
+### Bug Fixes
+
+* **guides:** stop resize guides at the minimum size when flip is disabled ([#106](https://github.com/nichollascarter/subjx/issues/106)) ([e5047d9](https://github.com/nichollascarter/subjx/commit/e5047d98004333d21195821c972310ab1027a5d2))
+
 # [2.0.0-rc.2](https://github.com/nichollascarter/subjx/compare/v2.0.0-rc.1...v2.0.0-rc.2) (2026-11-09)
 
 

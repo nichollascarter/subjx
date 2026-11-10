@@ -1626,39 +1626,79 @@
       topMoves: Boolean(revY) !== Boolean(flipY)
     };
   };
-  var alignResize = function alignResize(guides, session, proportions, _ref3) {
-    var dx = _ref3.dx,
-      dy = _ref3.dy;
+  var room = function room(size) {
+    return size - Math.min(MIN_SIZE, size);
+  };
+  var sizeLimit = function sizeLimit(_ref3, _ref4, _ref5, flip) {
+    var left = _ref3.left,
+      right = _ref3.right,
+      top = _ref3.top,
+      bottom = _ref3.bottom;
+    var dox = _ref4.dox,
+      doy = _ref4.doy;
+    var leftMoves = _ref5.leftMoves,
+      topMoves = _ref5.topMoves;
+    return function (_ref6) {
+      var dx = _ref6.dx,
+        dy = _ref6.dy;
+      if (flip) return {
+        dx: dx,
+        dy: dy
+      };
+      var width = room(right - left);
+      var height = room(bottom - top);
+      return {
+        dx: !dox ? dx : leftMoves ? Math.min(dx, width) : Math.max(dx, -width),
+        dy: !doy ? dy : topMoves ? Math.min(dy, height) : Math.max(dy, -height)
+      };
+    };
+  };
+  var alignResize = function alignResize(guides, session, proportions, delta) {
+    var flip = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
     if (!guides || !guides.axisAligned) return null;
     var box = guides.box;
     var dox = session.dox,
       doy = session.doy,
       doW = session.doW,
       doH = session.doH;
-    var _movingEdges = movingEdges(session, guides),
-      leftMoves = _movingEdges.leftMoves,
-      topMoves = _movingEdges.topMoves;
+    var moving = movingEdges(session, guides);
+    var leftMoves = moving.leftMoves,
+      topMoves = moving.topMoves;
     var widthLeads = doW || !doH;
-    return alignEdges(guides, {
-      x: dox ? leftMoves ? box.left : box.right : null,
-      y: doy ? topMoves ? box.top : box.bottom : null
-    }, function (nextDx, nextDy) {
-      return {
-        left: box.left + (dox && leftMoves ? nextDx : 0),
-        right: box.right + (dox && !leftMoves ? nextDx : 0),
-        top: box.top + (doy && topMoves ? nextDy : 0),
-        bottom: box.bottom + (doy && !topMoves ? nextDy : 0)
-      };
-    }, dx, dy, {
+    var limit = sizeLimit(box, session, moving, flip);
+    var _limit = limit(delta),
+      dx = _limit.dx,
+      dy = _limit.dy;
+    var run = function run(axes) {
+      return alignEdges(guides, {
+        x: dox ? leftMoves ? box.left : box.right : null,
+        y: doy ? topMoves ? box.top : box.bottom : null
+      }, function (nextDx, nextDy) {
+        return {
+          left: box.left + (dox && leftMoves ? nextDx : 0),
+          right: box.right + (dox && !leftMoves ? nextDx : 0),
+          top: box.top + (doy && topMoves ? nextDy : 0),
+          bottom: box.bottom + (doy && !topMoves ? nextDy : 0)
+        };
+      }, dx, dy, axes);
+    };
+    var axes = {
       x: Boolean(dox) && (!proportions || widthLeads),
       y: Boolean(doy) && (!proportions || !widthLeads)
+    };
+    var aligned = run(axes);
+    var bounded = limit(aligned);
+    if (bounded.dx === aligned.dx && bounded.dy === aligned.dy) return aligned;
+    return run({
+      x: axes.x && bounded.dx === aligned.dx,
+      y: axes.y && bounded.dy === aligned.dy
     });
   };
-  var alignPoint = function alignPoint(guides, _ref4, proportions, _ref5) {
-    var dox = _ref4.dox,
-      doy = _ref4.doy;
-    var dx = _ref5.dx,
-      dy = _ref5.dy;
+  var alignPoint = function alignPoint(guides, _ref7, proportions, _ref8) {
+    var dox = _ref7.dox,
+      doy = _ref7.doy;
+    var dx = _ref8.dx,
+      dy = _ref8.dy;
     if (!guides || !guides.point || proportions) return null;
     var _guides$point = guides.point,
       x = _guides$point.x,
@@ -1678,9 +1718,9 @@
       y: doy
     });
   };
-  var clampResize = function clampResize(restriction, session, _ref6) {
-    var dx = _ref6.dx,
-      dy = _ref6.dy;
+  var clampResize = function clampResize(restriction, session, _ref9) {
+    var dx = _ref9.dx,
+      dy = _ref9.dy;
     if (!restriction || !restriction.axisAligned) return {
       dx: dx,
       dy: dy,
@@ -1690,18 +1730,18 @@
       area = restriction.area;
     var dox = session.dox,
       doy = session.doy;
-    var _movingEdges2 = movingEdges(session, restriction),
-      leftMoves = _movingEdges2.leftMoves,
-      topMoves = _movingEdges2.topMoves;
+    var _movingEdges = movingEdges(session, restriction),
+      leftMoves = _movingEdges.leftMoves,
+      topMoves = _movingEdges.topMoves;
     return {
       dx: dox ? clampEdge(leftMoves ? box.left : box.right, area.left, area.right, dx) : dx,
       dy: doy ? clampEdge(topMoves ? box.top : box.bottom, area.top, area.bottom, dy) : dy,
       clamped: true
     };
   };
-  var clampPoint = function clampPoint(restriction, _ref7) {
-    var dx = _ref7.dx,
-      dy = _ref7.dy;
+  var clampPoint = function clampPoint(restriction, _ref0) {
+    var dx = _ref0.dx,
+      dy = _ref0.dy;
     if (!restriction || !restriction.point) return {
       dx: dx,
       dy: dy
@@ -2036,9 +2076,10 @@
           _this$options = this.options,
           restrict = _this$options.restrict,
           proportions = _this$options.proportions,
+          flip = _this$options.flip,
           each = _this$options.each;
         var pointer = this.pointerDelta();
-        var aligned = this.guide(alignResize(storage.guides, session, proportions, pointer), pointer);
+        var aligned = this.guide(alignResize(storage.guides, session, proportions, pointer, flip), pointer);
         var _clampResize = clampResize(storage.restriction, session, aligned),
           dx = _clampResize.dx,
           dy = _clampResize.dy,

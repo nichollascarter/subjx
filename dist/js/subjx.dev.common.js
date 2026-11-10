@@ -1186,10 +1186,34 @@ const movingEdges = ({
   leftMoves: Boolean(revX) !== Boolean(flipX),
   topMoves: Boolean(revY) !== Boolean(flipY)
 });
-const alignResize = (guides, session, proportions, {
+const room = size => size - Math.min(MIN_SIZE, size);
+const sizeLimit = ({
+  left,
+  right,
+  top,
+  bottom
+}, {
+  dox,
+  doy
+}, {
+  leftMoves,
+  topMoves
+}, flip) => ({
   dx,
   dy
 }) => {
+  if (flip) return {
+    dx,
+    dy
+  };
+  const width = room(right - left);
+  const height = room(bottom - top);
+  return {
+    dx: !dox ? dx : leftMoves ? Math.min(dx, width) : Math.max(dx, -width),
+    dy: !doy ? dy : topMoves ? Math.min(dy, height) : Math.max(dy, -height)
+  };
+};
+const alignResize = (guides, session, proportions, delta, flip = true) => {
   if (!guides || !guides.axisAligned) return null;
   const {
     box
@@ -1200,12 +1224,18 @@ const alignResize = (guides, session, proportions, {
     doW,
     doH
   } = session;
+  const moving = movingEdges(session, guides);
   const {
     leftMoves,
     topMoves
-  } = movingEdges(session, guides);
+  } = moving;
   const widthLeads = doW || !doH;
-  return alignEdges(guides, {
+  const limit = sizeLimit(box, session, moving, flip);
+  const {
+    dx,
+    dy
+  } = limit(delta);
+  const run = axes => alignEdges(guides, {
     x: dox ? leftMoves ? box.left : box.right : null,
     y: doy ? topMoves ? box.top : box.bottom : null
   }, (nextDx, nextDy) => ({
@@ -1213,9 +1243,17 @@ const alignResize = (guides, session, proportions, {
     right: box.right + (dox && !leftMoves ? nextDx : 0),
     top: box.top + (doy && topMoves ? nextDy : 0),
     bottom: box.bottom + (doy && !topMoves ? nextDy : 0)
-  }), dx, dy, {
+  }), dx, dy, axes);
+  const axes = {
     x: Boolean(dox) && (!proportions || widthLeads),
     y: Boolean(doy) && (!proportions || !widthLeads)
+  };
+  const aligned = run(axes);
+  const bounded = limit(aligned);
+  if (bounded.dx === aligned.dx && bounded.dy === aligned.dy) return aligned;
+  return run({
+    x: axes.x && bounded.dx === aligned.dx,
+    y: axes.y && bounded.dy === aligned.dy
   });
 };
 const alignPoint = (guides, {
@@ -1613,11 +1651,12 @@ class Transformable extends SubjectModel {
       options: {
         restrict,
         proportions,
+        flip,
         each
       }
     } = this;
     const pointer = this.pointerDelta();
-    const aligned = this.guide(alignResize(storage.guides, session, proportions, pointer), pointer);
+    const aligned = this.guide(alignResize(storage.guides, session, proportions, pointer, flip), pointer);
     const {
       dx,
       dy,
