@@ -375,11 +375,11 @@ export default abstract class Transformable<
             storage,
             session,
             session: { revX, revY, dox, doy },
-            options: { restrict, proportions, each }
+            options: { restrict, proportions, flip, each }
         } = this;
 
         const pointer = this.pointerDelta();
-        const aligned = this.guide(alignResize(storage.guides, session, proportions, pointer), pointer);
+        const aligned = this.guide(alignResize(storage.guides, session, proportions, pointer, flip), pointer);
         const { dx, dy, clamped } = clampResize(storage.restriction, session, aligned);
         const dist = { dx, dy };
 

@@ -1,6 +1,7 @@
 import { alignEdges } from '../guides';
 import type { Alignment, GuideState } from '../guides';
 import { clampEdge } from '../restrict';
+import { MIN_SIZE } from '../../consts';
 import type { Restriction } from '../restrict';
 import type { Delta, TransformStorage } from './types';
 
@@ -16,20 +17,43 @@ const movingEdges = ({ revX, revY }: ResizeSession, { flipX, flipY }: Flips) => 
     topMoves: Boolean(revY) !== Boolean(flipY)
 });
 
+const room = (size: number): number => size - Math.min(MIN_SIZE, size);
+
+const sizeLimit = (
+    { left, right, top, bottom }: GuideState['box'],
+    { dox, doy }: ResizeSession,
+    { leftMoves, topMoves }: ReturnType<typeof movingEdges>,
+    flip: boolean
+) => ({ dx, dy }: Delta): Delta => {
+    if (flip) return { dx, dy };
+
+    const width = room(right - left);
+    const height = room(bottom - top);
+
+    return {
+        dx: !dox ? dx : leftMoves ? Math.min(dx, width) : Math.max(dx, -width),
+        dy: !doy ? dy : topMoves ? Math.min(dy, height) : Math.max(dy, -height)
+    };
+};
+
 export const alignResize = (
     guides: GuideState | null | undefined,
     session: ResizeSession,
     proportions: boolean,
-    { dx, dy }: Delta
+    delta: Delta,
+    flip = true
 ): Alignment | null => {
     if (!guides || !guides.axisAligned) return null;
 
     const { box } = guides;
     const { dox, doy, doW, doH } = session;
-    const { leftMoves, topMoves } = movingEdges(session, guides);
+    const moving = movingEdges(session, guides);
+    const { leftMoves, topMoves } = moving;
     const widthLeads = doW || !doH;
+    const limit = sizeLimit(box, session, moving, flip);
+    const { dx, dy } = limit(delta);
 
-    return alignEdges(
+    const run = (axes: { x: boolean; y: boolean }) => alignEdges(
         guides,
         {
             x: dox ? (leftMoves ? box.left : box.right) : null,
@@ -43,11 +67,22 @@ export const alignResize = (
         }),
         dx,
         dy,
-        {
-            x: Boolean(dox) && (!proportions || widthLeads),
-            y: Boolean(doy) && (!proportions || !widthLeads)
-        }
+        axes
     );
+
+    const axes = {
+        x: Boolean(dox) && (!proportions || widthLeads),
+        y: Boolean(doy) && (!proportions || !widthLeads)
+    };
+    const aligned = run(axes);
+    const bounded = limit(aligned);
+
+    if (bounded.dx === aligned.dx && bounded.dy === aligned.dy) return aligned;
+
+    return run({
+        x: axes.x && bounded.dx === aligned.dx,
+        y: axes.y && bounded.dy === aligned.dy
+    });
 };
 
 export const alignPoint = (

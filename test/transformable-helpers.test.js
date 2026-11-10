@@ -89,6 +89,21 @@ describe('alignment', () => {
         expect(dy).toBe(0);
     });
 
+    it('keeps guides on the edge when flip is off', () => {
+        const guides = { box, targets: [{ left: -60, top: 200, right: -50, bottom: 250 }], threshold: 5, snap: true, axisAligned: true };
+
+        expect(alignResize(guides, { dox: true, doy: false }, false, { dx: -150, dy: 0 }, false)).toEqual({ dx: -98, dy: 0, lines: [] });
+        expect(alignResize(guides, { dox: true, doy: false, revX: true }, false, { dx: 150, dy: 0 }, false)).toMatchObject({ dx: 98, lines: [] });
+        expect(alignResize(guides, { dox: true, doy: false }, false, { dx: -150, dy: 0 })).toMatchObject({ dx: -150 });
+        expect(alignResize(guides, { dox: true, doy: false }, false, { dx: -150, dy: 0 }).lines).toHaveLength(1);
+    });
+
+    it('drops a snap that would flip the element', () => {
+        const guides = { box, targets: [{ left: -40, top: 200, right: 0, bottom: 250 }], threshold: 5, snap: true, axisAligned: true };
+
+        expect(alignResize(guides, { dox: true, doy: false }, false, { dx: -97, dy: 0 }, false)).toEqual({ dx: -97, dy: 0, lines: [] });
+    });
+
     it('clamps the moving edges to the area', () => {
         const restriction = { box, area, axisAligned: true };
 
