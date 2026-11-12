@@ -376,4 +376,4 @@ Named exports: `createObservable`, `Observable`, `matrix`, `svgMatrix`, `common`
 
 ## License
 
-MIT (c) Karen Sarksyan
+MIT (c) Karen Sarksian

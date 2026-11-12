@@ -2,7 +2,7 @@ import { helper } from '../Helper';
 import SubjectModel from '../SubjectModel';
 import type { PointerInput, ProxyMethods } from '../SubjectModel';
 import type { CloneOptions, CloneEventName, DragEventArgs } from '../options';
-import { EVENT_EMITTER_CONSTANTS, CLIENT_EVENTS_CONSTANTS } from '../consts';
+import { EVENT_EMITTER_CONSTANTS } from '../consts';
 
 import {
     requestAnimFrame,
@@ -20,7 +20,6 @@ import {
 } from '../util/css-util';
 
 const { EMITTER_EVENTS } = EVENT_EMITTER_CONSTANTS;
-const { E_MOUSEDOWN, E_TOUCHSTART } = CLIENT_EVENTS_CONSTANTS;
 
 interface CloneStorage {
     style: Record<string, string>;
@@ -77,8 +76,7 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
             data
         };
 
-        helper(elements).on(E_MOUSEDOWN, this.onMouseDown)
-            .on(E_TOUCHSTART, this.onTouchStart);
+        this.bindPress(elements);
 
         EMITTER_EVENTS.slice(0, 3).forEach((eventName) => (
             this.eventDispatcher.registerEvent(eventName)
@@ -239,9 +237,8 @@ export default class Cloneable extends SubjectModel<CloneStorage, ProxyMethods, 
 
         if (isUndef(storage)) return;
 
-        helper(elements)
-            .off(E_MOUSEDOWN, this.onMouseDown)
-            .off(E_TOUCHSTART, this.onTouchStart);
+        this.releaseInput();
+        this.unbindPress(elements);
 
         proxyMethods!.onDestroy.call(this, elements);
         delete this.storage;

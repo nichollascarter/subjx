@@ -8,6 +8,7 @@ const E_MOUSEMOVE = 'mousemove';
 const E_TOUCHSTART = 'touchstart';
 const E_TOUCHEND = 'touchend';
 const E_TOUCHMOVE = 'touchmove';
+const E_TOUCHCANCEL = 'touchcancel';
 const E_MOUSEOVER = 'mouseover';
 
 const E_DRAG_START = 'dragStart';
@@ -91,6 +92,7 @@ export const CLIENT_EVENTS_CONSTANTS = {
     E_TOUCHSTART,
     E_TOUCHEND,
     E_TOUCHMOVE,
+    E_TOUCHCANCEL,
     E_MOUSEOVER
 };
 
