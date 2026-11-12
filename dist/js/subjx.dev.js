@@ -6438,6 +6438,7 @@
           hitAreas: hitAreas,
           hitOverlay: hitOverlay
         };
+        if (this.storage.center.isShifted) this.anchorOrigin(origin);
         this.syncHitAreas();
         [].concat(_toConsumableArray(elements), [controls]).forEach(function (target) {
           return helper(target).on(E_MOUSEDOWN$1, _this.onMouseDown).on(E_TOUCHSTART$1, _this.onTouchStart);
@@ -6641,17 +6642,57 @@
           _this$storage5$center2 = _this$storage5$center === void 0 ? {} : _this$storage5$center,
           isShifted = _this$storage5$center2.isShifted,
           isGrouped = this.options.isGrouped;
-        if (!isGrouped || actionName !== E_ROTATE) return;
-        this.applyTransformToHandles();
-        var _pointTo = pointTo(controlsMatrix, 0, 0),
-          dx = _pointTo.x,
-          dy = _pointTo.y;
-        if (isShifted) this.moveCenterHandle(dx, dy);
-        this.updateControlsView();
-        if (!isShifted) this.setTransformOrigin({
-          dx: 0,
-          dy: 0
-        }, false);
+        if (isGrouped && actionName === E_ROTATE) {
+          this.applyTransformToHandles();
+          var _pointTo = pointTo(controlsMatrix, 0, 0),
+            dx = _pointTo.x,
+            dy = _pointTo.y;
+          if (isShifted) this.moveCenterHandle(dx, dy);
+          this.updateControlsView();
+          if (!isShifted) this.setTransformOrigin({
+            dx: 0,
+            dy: 0
+          }, false);
+        }
+        if (this.storage.center.isShifted) {
+          this.anchorOrigin(this.storage.cached.transformOrigin || this.storage.transformOrigin);
+        }
+      }
+
+      /** @internal */
+    }, {
+      key: "anchorOrigin",
+      value: function anchorOrigin(point) {
+        var elements = this.elements,
+          _this$storage6 = this.storage,
+          controls = _this$storage6.controls,
+          center = _this$storage6.center,
+          container = this.options.container;
+        var _pointTo2 = pointTo(getTransformToElement(controls, controls.parentNode), point.x, point.y),
+          x = _pointTo2.x,
+          y = _pointTo2.y;
+        var local = pointTo(getTransformToElement(elements[0], container).inverse(), x, y);
+        center.local = {
+          x: local.x,
+          y: local.y
+        };
+      }
+
+      /** @internal */
+    }, {
+      key: "anchoredOrigin",
+      value: function anchoredOrigin() {
+        var elements = this.elements,
+          center = this.storage.center,
+          container = this.options.container;
+        if (!center.local) return null;
+        var _pointTo3 = pointTo(getTransformToElement(elements[0], container), center.local.x, center.local.y),
+          x = _pointTo3.x,
+          y = _pointTo3.y;
+        return {
+          x: x,
+          y: y
+        };
       }
 
       /** @internal */
@@ -6660,12 +6701,12 @@
       value: function resizeScale(_ref0) {
         var dx = _ref0.dx,
           dy = _ref0.dy;
-        var _this$storage6 = this.storage,
-          doW = _this$storage6.doW,
-          doH = _this$storage6.doH,
-          _this$storage6$bBox = _this$storage6.bBox,
-          width = _this$storage6$bBox.width,
-          height = _this$storage6$bBox.height,
+        var _this$storage7 = this.storage,
+          doW = _this$storage7.doW,
+          doH = _this$storage7.doH,
+          _this$storage7$bBox = _this$storage7.bBox,
+          width = _this$storage7$bBox.width,
+          height = _this$storage7$bBox.height,
           _this$options7 = this.options,
           proportions = _this$options7.proportions,
           flip = _this$options7.flip;
@@ -6717,17 +6758,17 @@
     }, {
       key: "processResize",
       value: function processResize(element, delta) {
-        var _this$storage7 = this.storage,
-          revX = _this$storage7.revX,
-          revY = _this$storage7.revY,
-          doW = _this$storage7.doW,
-          doH = _this$storage7.doH,
-          data = _this$storage7.data,
-          _this$storage7$bBox = _this$storage7.bBox,
-          x = _this$storage7$bBox.x,
-          y = _this$storage7$bBox.y,
-          boxWidth = _this$storage7$bBox.width,
-          boxHeight = _this$storage7$bBox.height,
+        var _this$storage8 = this.storage,
+          revX = _this$storage8.revX,
+          revY = _this$storage8.revY,
+          doW = _this$storage8.doW,
+          doH = _this$storage8.doH,
+          data = _this$storage8.data,
+          _this$storage8$bBox = _this$storage8.bBox,
+          x = _this$storage8$bBox.x,
+          y = _this$storage8$bBox.y,
+          boxWidth = _this$storage8$bBox.width,
+          boxHeight = _this$storage8$bBox.height,
           _this$options8 = this.options,
           isGrouped = _this$options8.isGrouped,
           scalable = _this$options8.scalable;
@@ -6816,13 +6857,13 @@
         var _this$options9 = this.options,
           container = _this$options9.container,
           isGrouped = _this$options9.isGrouped,
-          _this$storage8 = this.storage,
-          data = _this$storage8.data,
-          controls = _this$storage8.controls,
-          cHandle = _this$storage8.handles.center,
-          _this$storage8$transf = _this$storage8.transformOrigin,
-          originX = _this$storage8$transf.x,
-          originY = _this$storage8$transf.y;
+          _this$storage9 = this.storage,
+          data = _this$storage9.data,
+          controls = _this$storage9.controls,
+          cHandle = _this$storage9.handles.center,
+          _this$storage9$transf = _this$storage9.transformOrigin,
+          originX = _this$storage9$transf.x,
+          originY = _this$storage9$transf.y;
         var elementData = data.get(element);
         var __data__ = elementData.__data__;
         __data__.delete(element);
@@ -6845,9 +6886,9 @@
           elCenterY = elY + elH / 2;
 
         // c-handle's coordinates
-        var _pointTo2 = pointTo(boxCTM, originX, originY),
-          bcx = _pointTo2.x,
-          bcy = _pointTo2.y;
+        var _pointTo4 = pointTo(boxCTM, originX, originY),
+          bcx = _pointTo4.x,
+          bcy = _pointTo4.y;
 
         // element's center coordinates
         var _ref11 = cHandle ? pointTo(parentMatrixInverted, bcx, bcy) : pointTo(isGrouped ? parentMatrixInverted : elMatrix, elCenterX, elCenterY),
@@ -6891,9 +6932,9 @@
           isGrouped = _this$options0.isGrouped,
           container = _this$options0.container,
           restrict = _this$options0.restrict,
-          _this$storage9 = this.storage,
-          controls = _this$storage9.controls,
-          cHandle = _this$storage9.handles.center;
+          _this$storage0 = this.storage,
+          controls = _this$storage0.controls,
+          cHandle = _this$storage0.handles.center;
         var bBox = this.getBBox();
         var elX = bBox.x,
           elY = bBox.y,
@@ -6906,14 +6947,14 @@
         var centerY = cHandle ? cHandle.cy.baseVal.value : elCenterY;
 
         // c-handle's coordinates
-        var _pointTo3 = pointTo(boxCTM, centerX, centerY),
-          bcx = _pointTo3.x,
-          bcy = _pointTo3.y;
+        var _pointTo5 = pointTo(boxCTM, centerX, centerY),
+          bcx = _pointTo5.x,
+          bcy = _pointTo5.y;
 
         // box's center coordinates
-        var _pointTo4 = pointTo(isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container), elCenterX, elCenterY),
-          rcx = _pointTo4.x,
-          rcy = _pointTo4.y;
+        var _pointTo6 = pointTo(isGrouped ? createSVGMatrix() : getTransformToElement(elements[0], container), elCenterX, elCenterY),
+          rcx = _pointTo6.x,
+          rcy = _pointTo6.y;
         var restrictContainer = restrict || container;
         var containerMatrix = getTransformToElement(restrictContainer, restrictContainer.parentNode);
         var center = _objectSpread2(_objectSpread2({}, this.storage.center || {}), {}, {
@@ -7010,20 +7051,20 @@
     }, {
       key: "moveCenterHandle",
       value: function moveCenterHandle(dx, dy) {
-        var _this$storage0 = this.storage,
-          _this$storage0$handle = _this$storage0.handles,
-          center = _this$storage0$handle.center,
-          radius = _this$storage0$handle.radius,
-          prevCenterData = _this$storage0.center,
-          _this$storage0$transf = _this$storage0.transform,
-          _this$storage0$transf2 = _this$storage0$transf === void 0 ? {} : _this$storage0$transf,
-          _this$storage0$transf3 = _this$storage0$transf2.controlsMatrix,
-          controlsMatrix = _this$storage0$transf3 === void 0 ? createSVGMatrix() : _this$storage0$transf3,
-          _this$storage0$transf4 = _this$storage0.transformOrigin,
-          _this$storage0$transf5 = _this$storage0$transf4 === void 0 ? {} : _this$storage0$transf4,
-          originX = _this$storage0$transf5.x,
-          originY = _this$storage0$transf5.y,
-          cached = _this$storage0.cached;
+        var _this$storage1 = this.storage,
+          _this$storage1$handle = _this$storage1.handles,
+          center = _this$storage1$handle.center,
+          radius = _this$storage1$handle.radius,
+          prevCenterData = _this$storage1.center,
+          _this$storage1$transf = _this$storage1.transform,
+          _this$storage1$transf2 = _this$storage1$transf === void 0 ? {} : _this$storage1$transf,
+          _this$storage1$transf3 = _this$storage1$transf2.controlsMatrix,
+          controlsMatrix = _this$storage1$transf3 === void 0 ? createSVGMatrix() : _this$storage1$transf3,
+          _this$storage1$transf4 = _this$storage1.transformOrigin,
+          _this$storage1$transf5 = _this$storage1$transf4 === void 0 ? {} : _this$storage1$transf4,
+          originX = _this$storage1$transf5.x,
+          originY = _this$storage1$transf5.y,
+          cached = _this$storage1.cached;
         if (isUndef(center)) return;
         var nextX = originX + dx,
           nextY = originY + dy;
@@ -7078,9 +7119,9 @@
       value: function processPointMove(element, point, _ref14) {
         var dx = _ref14.dx,
           dy = _ref14.dy;
-        var _this$storage1 = this.storage,
-          data = _this$storage1.data,
-          restriction = _this$storage1.restriction,
+        var _this$storage10 = this.storage,
+          data = _this$storage10.data,
+          restriction = _this$storage10.restriction,
           proportions = this.options.proportions;
         var _ref15 = data.get(element),
           _ref15$transform = _ref15.transform,
@@ -7101,9 +7142,9 @@
           otherY = _ref18[3];
         var toLocal = ctm.inverse();
         toLocal.e = toLocal.f = 0;
-        var _pointTo5 = pointTo(toLocal, dx, dy),
-          localDx = _pointTo5.x,
-          localDy = _pointTo5.y;
+        var _pointTo7 = pointTo(toLocal, dx, dy),
+          localDx = _pointTo7.x,
+          localDy = _pointTo7.y;
         if (proportions) {
           var axisX = baseX - otherX,
             axisY = baseY - otherY;
@@ -7117,9 +7158,9 @@
         var nextX = baseX + localDx,
           nextY = baseY + localDy;
         if (restriction) {
-          var _pointTo6 = pointTo(ctm, nextX, nextY),
-            x = _pointTo6.x,
-            y = _pointTo6.y;
+          var _pointTo8 = pointTo(ctm, nextX, nextY),
+            x = _pointTo8.x,
+            y = _pointTo8.y;
           var area = restriction.area;
           var tolerance = 1e-6;
           if (x < area.left - tolerance || x > area.right + tolerance || y < area.top - tolerance || y > area.bottom + tolerance) return null;
@@ -7141,9 +7182,9 @@
     }, {
       key: "processControlsResize",
       value: function processControlsResize() {
-        var _this$storage10 = this.storage,
-          _this$storage11 = _this$storage10 === void 0 ? {} : _this$storage10,
-          controlsMatrix = _this$storage11.transform.controlsMatrix;
+        var _this$storage11 = this.storage,
+          _this$storage12 = _this$storage11 === void 0 ? {} : _this$storage11,
+          controlsMatrix = _this$storage12.transform.controlsMatrix;
         this.applyTransformToHandles({
           boxMatrix: controlsMatrix.inverse()
         });
@@ -7155,12 +7196,12 @@
       value: function processControlsMove(_ref19) {
         var dx = _ref19.dx,
           dy = _ref19.dy;
-        var _this$storage12 = this.storage,
-          _this$storage13 = _this$storage12 === void 0 ? {} : _this$storage12,
-          _this$storage13$trans = _this$storage13.transform,
-          controlsMatrix = _this$storage13$trans.controlsMatrix,
-          controlsTranslateMatrix = _this$storage13$trans.controlsTranslateMatrix,
-          center = _this$storage13.center;
+        var _this$storage13 = this.storage,
+          _this$storage14 = _this$storage13 === void 0 ? {} : _this$storage13,
+          _this$storage14$trans = _this$storage14.transform,
+          controlsMatrix = _this$storage14$trans.controlsMatrix,
+          controlsTranslateMatrix = _this$storage14$trans.controlsTranslateMatrix,
+          center = _this$storage14.center;
         controlsTranslateMatrix.e = dx;
         controlsTranslateMatrix.f = dy;
         var moveControlsMtrx = controlsTranslateMatrix.multiply(controlsMatrix);
@@ -7168,9 +7209,9 @@
         if (center.isShifted) {
           var centerTransformMatrix = controlsMatrix.inverse();
           centerTransformMatrix.e = centerTransformMatrix.f = 0;
-          var _pointTo7 = pointTo(centerTransformMatrix, dx, dy),
-            cx = _pointTo7.x,
-            cy = _pointTo7.y;
+          var _pointTo9 = pointTo(centerTransformMatrix, dx, dy),
+            cx = _pointTo9.x,
+            cy = _pointTo9.y;
           this.moveCenterHandle(-cx, -cy);
         }
       }
@@ -7181,12 +7222,12 @@
       value: function processControlsRotate(_ref20) {
         var radians = _ref20.radians;
         var isGrouped = this.options.isGrouped,
-          _this$storage14 = this.storage,
-          _this$storage15 = _this$storage14 === void 0 ? {} : _this$storage14,
-          _this$storage15$trans = _this$storage15.transform,
-          _this$storage15$trans2 = _this$storage15$trans === void 0 ? {} : _this$storage15$trans,
-          controlsMatrix = _this$storage15$trans2.controlsMatrix,
-          wrapperOriginMatrix = _this$storage15$trans2.wrapperOriginMatrix;
+          _this$storage15 = this.storage,
+          _this$storage16 = _this$storage15 === void 0 ? {} : _this$storage15,
+          _this$storage16$trans = _this$storage16.transform,
+          _this$storage16$trans2 = _this$storage16$trans === void 0 ? {} : _this$storage16$trans,
+          controlsMatrix = _this$storage16$trans2.controlsMatrix,
+          wrapperOriginMatrix = _this$storage16$trans2.wrapperOriginMatrix;
         if (isGrouped) {
           var wrapperResultMatrix = wrapperOriginMatrix.multiply(createRotationMatrix(radians)).multiply(wrapperOriginMatrix.inverse()).multiply(controlsMatrix);
           this.updateControlsView(wrapperResultMatrix);
@@ -7221,9 +7262,9 @@
           _ref21$boxMatrix = _ref21.boxMatrix,
           boxMatrix = _ref21$boxMatrix === void 0 ? createSVGMatrix() : _ref21$boxMatrix;
         var rotatable = this.options.rotatable,
-          _this$storage16 = this.storage,
-          handles = _this$storage16.handles,
-          isShifted = _this$storage16.center.isShifted;
+          _this$storage17 = this.storage,
+          handles = _this$storage17.handles,
+          isShifted = _this$storage17.center.isShifted;
         var _this$getVertices2 = this.getVertices(boxMatrix),
           _this$getVertices2$an = _this$getVertices2.anchor,
           anchor = _this$getVertices2$an === void 0 ? null : _this$getVertices2$an,
@@ -7392,9 +7433,9 @@
       key: "drawGuides",
       value: function drawGuides(lines) {
         var storage = this.storage,
-          _this$storage17 = this.storage,
-          wrapper = _this$storage17.wrapper,
-          guidesLayer = _this$storage17.guidesLayer,
+          _this$storage18 = this.storage,
+          wrapper = _this$storage18.wrapper,
+          guidesLayer = _this$storage18.guidesLayer,
           container = this.options.container;
         if (guidesLayer) {
           while (guidesLayer.firstChild) guidesLayer.removeChild(guidesLayer.firstChild);
@@ -7415,11 +7456,11 @@
     }, {
       key: "syncHitAreas",
       value: function syncHitAreas() {
-        var _this$storage18 = this.storage,
-          controls = _this$storage18.controls,
-          handles = _this$storage18.handles,
-          hitAreas = _this$storage18.hitAreas,
-          hitOverlay = _this$storage18.hitOverlay,
+        var _this$storage19 = this.storage,
+          controls = _this$storage19.controls,
+          handles = _this$storage19.handles,
+          hitAreas = _this$storage19.hitAreas,
+          hitOverlay = _this$storage19.hitOverlay,
           hitRadius = this.options.hitRadius;
         if (!hitAreas) return;
         var corners = readCorners(handles.te, handles.be);
@@ -7452,14 +7493,14 @@
         var pin = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
         var elements = this.elements,
           storage = this.storage,
-          _this$storage19 = this.storage,
-          _this$storage20 = _this$storage19 === void 0 ? {} : _this$storage19,
-          controls = _this$storage20.controls,
-          _this$storage20$handl = _this$storage20.handles,
-          _this$storage20$handl2 = _this$storage20$handl === void 0 ? {} : _this$storage20$handl,
-          handle = _this$storage20$handl2.center,
-          radius = _this$storage20$handl2.radius,
-          center = _this$storage20.center,
+          _this$storage20 = this.storage,
+          _this$storage21 = _this$storage20 === void 0 ? {} : _this$storage20,
+          controls = _this$storage21.controls,
+          _this$storage21$handl = _this$storage21.handles,
+          _this$storage21$handl2 = _this$storage21$handl === void 0 ? {} : _this$storage21$handl,
+          handle = _this$storage21$handl2.center,
+          radius = _this$storage21$handl2.radius,
+          center = _this$storage21.center,
           _this$options13 = this.options,
           container = _this$options13.container,
           isGrouped = _this$options13.isGrouped;
@@ -7477,9 +7518,9 @@
             height = _this$getBBox.height;
           var hW = width / 2,
             hH = height / 2;
-          var _pointTo8 = pointTo(nextTransform, bx + hW + dx, by + hH + dy);
-          newX = _pointTo8.x;
-          newY = _pointTo8.y;
+          var _pointTo0 = pointTo(nextTransform, bx + hW + dx, by + hH + dy);
+          newX = _pointTo0.x;
+          newY = _pointTo0.y;
         } else {
           newX = x;
           newY = y;
@@ -7490,24 +7531,25 @@
         radius.y2.baseVal.value = newY;
         center.isShifted = pin;
         storage.transformOrigin = pointTo(createSVGMatrix(), newX, newY);
+        if (pin) this.anchorOrigin(storage.transformOrigin);else center.local = null;
         this.syncHitAreas();
       }
     }, {
       key: "fitControlsToSize",
       value: function fitControlsToSize() {
-        var _this$storage21 = this.storage,
-          controls = _this$storage21.controls,
-          _this$storage21$cente = _this$storage21.center,
-          _this$storage21$cente2 = _this$storage21$cente === void 0 ? {} : _this$storage21$cente,
-          isShifted = _this$storage21$cente2.isShifted,
-          _this$storage21$trans = _this$storage21.transformOrigin,
-          _this$storage21$trans2 = _this$storage21$trans === void 0 ? {} : _this$storage21$trans,
-          originX = _this$storage21$trans2.x,
-          originY = _this$storage21$trans2.y;
+        var _this$storage22 = this.storage,
+          controls = _this$storage22.controls,
+          _this$storage22$cente = _this$storage22.center,
+          _this$storage22$cente2 = _this$storage22$cente === void 0 ? {} : _this$storage22$cente,
+          isShifted = _this$storage22$cente2.isShifted,
+          _this$storage22$trans = _this$storage22.transformOrigin,
+          _this$storage22$trans2 = _this$storage22$trans === void 0 ? {} : _this$storage22$trans,
+          originX = _this$storage22$trans2.x,
+          originY = _this$storage22$trans2.y;
         var controlsMatrix = getTransformToElement(controls, controls.parentNode);
-        var _pointTo9 = pointTo(controlsMatrix, originX, originY),
-          dx = _pointTo9.x,
-          dy = _pointTo9.y;
+        var _ref31 = this.anchoredOrigin() || pointTo(controlsMatrix, originX, originY),
+          dx = _ref31.x,
+          dy = _ref31.y;
         this.updateControlsView();
         if (isShifted) {
           this.setTransformOrigin({
@@ -7547,9 +7589,9 @@
           _this$getVertices3.center;
           var vertices = _objectWithoutProperties(_this$getVertices3, _excluded4);
         var restrictBBox = target ? bBoxPoints(target, getTransformToElement(target, container)) : this.getRestrictedBBox(true);
-        var _alignmentOffset = alignmentOffset(direction, getMinMaxOfArray(restrictBBox), getMinMaxOfArray(values(vertices).map(function (_ref31) {
-            var x = _ref31.x,
-              y = _ref31.y;
+        var _alignmentOffset = alignmentOffset(direction, getMinMaxOfArray(restrictBBox), getMinMaxOfArray(values(vertices).map(function (_ref32) {
+            var x = _ref32.x,
+              y = _ref32.y;
             return [x, y];
           }))),
           _alignmentOffset2 = _slicedToArray(_alignmentOffset, 2),
@@ -7558,9 +7600,9 @@
         elements.forEach(function (element) {
           var parentMatrix = getTransformToElement(element.parentNode, container);
           parentMatrix.e = parentMatrix.f = 0;
-          var _pointTo0 = pointTo(parentMatrix.inverse(), offsetX, offsetY),
-            x = _pointTo0.x,
-            y = _pointTo0.y;
+          var _pointTo1 = pointTo(parentMatrix.inverse(), offsetX, offsetY),
+            x = _pointTo1.x,
+            y = _pointTo1.y;
           var moveElementMtrx = createTranslateMatrix(x, y).multiply(getTransformToElement(element, element.parentNode));
           _this5.updateElementView(element, moveElementMtrx);
         });

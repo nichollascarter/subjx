@@ -1,3 +1,10 @@
+## [2.0.1-rc.1](https://github.com/nichollascarter/subjx/compare/v2.0.0...v2.0.1-rc.1) (2026-11-12)
+
+
+### Bug Fixes
+
+* **svg:** keep a shifted transform origin attached to the element when the container is zoomed or panned ([f88f123](https://github.com/nichollascarter/subjx/commit/f88f123e8c705a696493bca1986cfa1958c6faed))
+
 # [2.0.0](https://github.com/nichollascarter/subjx/compare/v1.4.0...v2.0.0) (2026-11-10)
 
 
