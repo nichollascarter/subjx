@@ -5703,6 +5703,7 @@ class DraggableSVG extends Transformable {
       hitAreas,
       hitOverlay
     };
+    if (this.storage.center.isShifted) this.anchorOrigin(origin);
     this.syncHitAreas();
     [...elements, controls].forEach(target => helper(target).on(E_MOUSEDOWN$1, this.onMouseDown).on(E_TOUCHSTART$1, this.onTouchStart));
   }
@@ -5896,18 +5897,67 @@ class DraggableSVG extends Transformable {
         isGrouped
       }
     } = this;
-    if (!isGrouped || actionName !== E_ROTATE) return;
-    this.applyTransformToHandles();
+    if (isGrouped && actionName === E_ROTATE) {
+      this.applyTransformToHandles();
+      const {
+        x: dx,
+        y: dy
+      } = pointTo(controlsMatrix, 0, 0);
+      if (isShifted) this.moveCenterHandle(dx, dy);
+      this.updateControlsView();
+      if (!isShifted) this.setTransformOrigin({
+        dx: 0,
+        dy: 0
+      }, false);
+    }
+    if (this.storage.center.isShifted) {
+      this.anchorOrigin(this.storage.cached.transformOrigin || this.storage.transformOrigin);
+    }
+  }
+
+  /** @internal */
+  anchorOrigin(point) {
     const {
-      x: dx,
-      y: dy
-    } = pointTo(controlsMatrix, 0, 0);
-    if (isShifted) this.moveCenterHandle(dx, dy);
-    this.updateControlsView();
-    if (!isShifted) this.setTransformOrigin({
-      dx: 0,
-      dy: 0
-    }, false);
+      elements,
+      storage: {
+        controls,
+        center
+      },
+      options: {
+        container
+      }
+    } = this;
+    const {
+      x,
+      y
+    } = pointTo(getTransformToElement(controls, controls.parentNode), point.x, point.y);
+    const local = pointTo(getTransformToElement(elements[0], container).inverse(), x, y);
+    center.local = {
+      x: local.x,
+      y: local.y
+    };
+  }
+
+  /** @internal */
+  anchoredOrigin() {
+    const {
+      elements,
+      storage: {
+        center
+      },
+      options: {
+        container
+      }
+    } = this;
+    if (!center.local) return null;
+    const {
+      x,
+      y
+    } = pointTo(getTransformToElement(elements[0], container), center.local.x, center.local.y);
+    return {
+      x,
+      y
+    };
   }
 
   /** @internal */
@@ -6788,6 +6838,7 @@ class DraggableSVG extends Transformable {
     radius.y2.baseVal.value = newY;
     center.isShifted = pin;
     storage.transformOrigin = pointTo(createSVGMatrix(), newX, newY);
+    if (pin) this.anchorOrigin(storage.transformOrigin);else center.local = null;
     this.syncHitAreas();
   }
   fitControlsToSize() {
@@ -6807,7 +6858,7 @@ class DraggableSVG extends Transformable {
     const {
       x: dx,
       y: dy
-    } = pointTo(controlsMatrix, originX, originY);
+    } = this.anchoredOrigin() || pointTo(controlsMatrix, originX, originY);
     this.updateControlsView();
     if (isShifted) {
       this.setTransformOrigin({

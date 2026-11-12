@@ -83,6 +83,7 @@ export interface SVGStorage extends TransformStorage<DOMMatrix> {
         y?: number;
         hx?: number | null;
         hy?: number | null;
+        local?: Point | null;
     };
     transform: {
         containerMatrix: DOMMatrix;
