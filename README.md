@@ -1,6 +1,9 @@
-<h2 align="middle">
-    Subjx(dragging/resizing/rotating)
-</h2>
+<p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nichollascarter/subjx/master/assets/logo-dark.svg">
+        <img src="https://raw.githubusercontent.com/nichollascarter/subjx/master/assets/logo.svg" alt="subjx" height="96">
+    </picture>
+</p>
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/nichollascarter/subjx/master/examples/demo.gif">
