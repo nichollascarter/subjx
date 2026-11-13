@@ -470,12 +470,13 @@
   var MIN_SIZE = 2;
   var THEME_COLOR = '#00a8ff';
   var LIB_CLASS_PREFIX = 'sjx-';
-  var E_MOUSEDOWN$4 = 'mousedown';
-  var E_MOUSEUP$2 = 'mouseup';
-  var E_MOUSEMOVE$2 = 'mousemove';
-  var E_TOUCHSTART$4 = 'touchstart';
-  var E_TOUCHEND$2 = 'touchend';
-  var E_TOUCHMOVE$2 = 'touchmove';
+  var E_MOUSEDOWN$1 = 'mousedown';
+  var E_MOUSEUP$1 = 'mouseup';
+  var E_MOUSEMOVE$1 = 'mousemove';
+  var E_TOUCHSTART$1 = 'touchstart';
+  var E_TOUCHEND$1 = 'touchend';
+  var E_TOUCHMOVE$1 = 'touchmove';
+  var E_TOUCHCANCEL$1 = 'touchcancel';
   var E_MOUSEOVER$1 = 'mouseover';
   var E_DRAG_START$1 = 'dragStart';
   var E_DRAG$3 = 'drag';
@@ -520,12 +521,13 @@
     E_SET_POINT_END: E_SET_POINT_END$1
   };
   var CLIENT_EVENTS_CONSTANTS = {
-    E_MOUSEDOWN: E_MOUSEDOWN$4,
-    E_MOUSEUP: E_MOUSEUP$2,
-    E_MOUSEMOVE: E_MOUSEMOVE$2,
-    E_TOUCHSTART: E_TOUCHSTART$4,
-    E_TOUCHEND: E_TOUCHEND$2,
-    E_TOUCHMOVE: E_TOUCHMOVE$2,
+    E_MOUSEDOWN: E_MOUSEDOWN$1,
+    E_MOUSEUP: E_MOUSEUP$1,
+    E_MOUSEMOVE: E_MOUSEMOVE$1,
+    E_TOUCHSTART: E_TOUCHSTART$1,
+    E_TOUCHEND: E_TOUCHEND$1,
+    E_TOUCHMOVE: E_TOUCHMOVE$1,
+    E_TOUCHCANCEL: E_TOUCHCANCEL$1,
     E_MOUSEOVER: E_MOUSEOVER$1
   };
   var TRANSFORM_HANDLES_KEYS$1 = {
@@ -662,12 +664,22 @@
 
   var _excluded$3 = ["element", "dx", "dy"];
   var E_DRAG$2 = EVENT_EMITTER_CONSTANTS.E_DRAG;
-  var E_MOUSEMOVE$1 = CLIENT_EVENTS_CONSTANTS.E_MOUSEMOVE,
-    E_MOUSEUP$1 = CLIENT_EVENTS_CONSTANTS.E_MOUSEUP,
-    E_TOUCHMOVE$1 = CLIENT_EVENTS_CONSTANTS.E_TOUCHMOVE,
-    E_TOUCHEND$1 = CLIENT_EVENTS_CONSTANTS.E_TOUCHEND;
+  var E_MOUSEDOWN = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
+    E_MOUSEMOVE = CLIENT_EVENTS_CONSTANTS.E_MOUSEMOVE,
+    E_MOUSEUP = CLIENT_EVENTS_CONSTANTS.E_MOUSEUP,
+    E_TOUCHSTART = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART,
+    E_TOUCHMOVE = CLIENT_EVENTS_CONSTANTS.E_TOUCHMOVE,
+    E_TOUCHEND = CLIENT_EVENTS_CONSTANTS.E_TOUCHEND,
+    E_TOUCHCANCEL = CLIENT_EVENTS_CONSTANTS.E_TOUCHCANCEL;
+  var COMPAT_MOUSE_DELAY = 800;
   var SubjectModel = /*#__PURE__*/function () {
     /** Internal state. Its shape is not part of the public API and may change in any minor release. */
+
+    /** @internal */
+
+    /** @internal */
+
+    /** @internal */
 
     /** @internal */
 
@@ -679,6 +691,9 @@
       this.storage = null;
       this.proxyMethods = null;
       this.eventDispatcher = new EventDispatcher();
+      this.activeTouch = null;
+      this.lastTouchTime = -Infinity;
+      this.touchActions = new Map();
       this.onMouseDown = this.onMouseDown.bind(this);
       this.onTouchStart = this.onTouchStart.bind(this);
       this.onMouseMove = this.onMouseMove.bind(this);
@@ -730,19 +745,80 @@
 
       /** @internal */
     }, {
+      key: "bindPress",
+      value: function bindPress(targets) {
+        var _this = this;
+        targets.forEach(function (target) {
+          var _ref2 = target,
+            style = _ref2.style;
+          if (style && !_this.touchActions.has(target)) {
+            _this.touchActions.set(target, style.getPropertyValue('touch-action'));
+            style.setProperty('touch-action', 'none');
+          }
+          helper(target).on(E_MOUSEDOWN, _this.onMouseDown).on(E_TOUCHSTART, _this.onTouchStart);
+        });
+      }
+
+      /** @internal */
+    }, {
+      key: "unbindPress",
+      value: function unbindPress(targets) {
+        var _this2 = this;
+        targets.forEach(function (target) {
+          helper(target).off(E_MOUSEDOWN, _this2.onMouseDown).off(E_TOUCHSTART, _this2.onTouchStart);
+          if (_this2.touchActions.has(target)) {
+            var _ref3 = target,
+              style = _ref3.style;
+            var previous = _this2.touchActions.get(target);
+            if (previous) {
+              style.setProperty('touch-action', previous);
+            } else {
+              style.removeProperty('touch-action');
+            }
+            _this2.touchActions.delete(target);
+          }
+        });
+      }
+
+      /** @internal */
+    }, {
+      key: "releaseInput",
+      value: function releaseInput() {
+        this.activeTouch = null;
+        helper(document).off(E_MOUSEMOVE, this.onMouseMove).off(E_MOUSEUP, this.onMouseUp).off(E_TOUCHMOVE, this.onTouchMove).off(E_TOUCHEND, this.onTouchEnd).off(E_TOUCHCANCEL, this.onTouchEnd);
+      }
+
+      /** @internal */
+    }, {
+      key: "findActiveTouch",
+      value: function findActiveTouch(list) {
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].identifier === this.activeTouch) return list[i];
+        }
+        return null;
+      }
+
+      /** @internal */
+    }, {
       key: "onMouseDown",
       value: function onMouseDown(e) {
         if (e.button !== 0) return;
+        if (this.activeTouch !== null) return;
+        if (Date.now() - this.lastTouchTime < COMPAT_MOUSE_DELAY) return;
         this.start(e);
-        helper(document).on(E_MOUSEMOVE$1, this.onMouseMove).on(E_MOUSEUP$1, this.onMouseUp);
+        helper(document).on(E_MOUSEMOVE, this.onMouseMove).on(E_MOUSEUP, this.onMouseUp);
       }
 
       /** @internal */
     }, {
       key: "onTouchStart",
       value: function onTouchStart(e) {
-        this.start(e.touches[0]);
-        helper(document).on(E_TOUCHMOVE$1, this.onTouchMove).on(E_TOUCHEND$1, this.onTouchEnd);
+        this.lastTouchTime = Date.now();
+        if (this.activeTouch !== null) return;
+        var touch = e.changedTouches[0];
+        this.activeTouch = touch.identifier;
+        this.start(touch);
+        helper(document).on(E_TOUCHMOVE, this.onTouchMove).on(E_TOUCHEND, this.onTouchEnd).on(E_TOUCHCANCEL, this.onTouchEnd);
       }
 
       /** @internal */
@@ -762,14 +838,15 @@
         if (e.preventDefault) {
           e.preventDefault();
         }
-        this.moving(e.touches[0]);
+        var touch = this.findActiveTouch(e.changedTouches);
+        if (touch) this.moving(touch);
       }
 
       /** @internal */
     }, {
       key: "onMouseUp",
       value: function onMouseUp(e) {
-        helper(document).off(E_MOUSEMOVE$1, this.onMouseMove).off(E_MOUSEUP$1, this.onMouseUp);
+        helper(document).off(E_MOUSEMOVE, this.onMouseMove).off(E_MOUSEUP, this.onMouseUp);
         this.end(e, this.elements);
       }
 
@@ -777,10 +854,11 @@
     }, {
       key: "onTouchEnd",
       value: function onTouchEnd(e) {
-        helper(document).off(E_TOUCHMOVE$1, this.onTouchMove).off(E_TOUCHEND$1, this.onTouchEnd);
-        if (e.touches.length === 0) {
-          this.end(e.changedTouches[0], this.elements);
-        }
+        this.lastTouchTime = Date.now();
+        var touch = this.findActiveTouch(e.changedTouches);
+        if (!touch) return;
+        this.releaseInput();
+        this.end(touch, this.elements);
       }
 
       /** @internal */
@@ -1284,13 +1362,7 @@
   var TRANSFORM_HANDLES_KEYS = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_HANDLES_KEYS,
     TRANSFORM_EDGES_KEYS = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_EDGES_KEYS,
     TRANSFORM_POINT_KEYS = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_POINT_KEYS;
-  var E_MOUSEDOWN$3 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
-    E_TOUCHSTART$3 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART,
-    E_MOUSEMOVE = CLIENT_EVENTS_CONSTANTS.E_MOUSEMOVE,
-    E_MOUSEUP = CLIENT_EVENTS_CONSTANTS.E_MOUSEUP,
-    E_TOUCHMOVE = CLIENT_EVENTS_CONSTANTS.E_TOUCHMOVE,
-    E_TOUCHEND = CLIENT_EVENTS_CONSTANTS.E_TOUCHEND,
-    E_MOUSEOVER = CLIENT_EVENTS_CONSTANTS.E_MOUSEOVER;
+  var E_MOUSEOVER = CLIENT_EVENTS_CONSTANTS.E_MOUSEOVER;
   var TOP_LEFT = TRANSFORM_HANDLES_KEYS.TOP_LEFT,
     TOP_CENTER = TRANSFORM_HANDLES_KEYS.TOP_CENTER,
     TOP_RIGHT = TRANSFORM_HANDLES_KEYS.TOP_RIGHT,
@@ -2519,16 +2591,6 @@
 
       /** @internal */
     }, {
-      key: "unbindPress",
-      value: function unbindPress(targets) {
-        var _this8 = this;
-        targets.forEach(function (target) {
-          return helper(target).off(E_MOUSEDOWN$3, _this8.onMouseDown).off(E_TOUCHSTART$3, _this8.onTouchStart);
-        });
-      }
-
-      /** @internal */
-    }, {
       key: "destroy",
       value: function destroy() {
         var elements = this.elements,
@@ -2575,25 +2637,25 @@
     }, {
       key: "prepareState",
       value: function prepareState() {
-        var _this9 = this;
+        var _this8 = this;
         var flags = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : NO_FLAGS;
         var elements = this.elements,
           storage = this.storage,
           data = this.storage.data;
         var commonState = this.getCommonState();
         elements.forEach(function (element) {
-          data.set(element, _objectSpread2(_objectSpread2({}, data.get(element)), _this9.getElementState(element, flags)));
+          data.set(element, _objectSpread2(_objectSpread2({}, data.get(element)), _this8.getElementState(element, flags)));
         });
         this.storage = _objectSpread2(_objectSpread2({}, storage), commonState);
       }
     }, {
       key: "notifyMove",
       value: function notifyMove(_ref10) {
-        var _this0 = this;
+        var _this9 = this;
         var dx = _ref10.dx,
           dy = _ref10.dy;
         this.elements.forEach(function (element) {
-          return _superPropGet(Transformable, "drag", _this0)([{
+          return _superPropGet(Transformable, "drag", _this9)([{
             element: element,
             dx: dx,
             dy: dy
@@ -2607,7 +2669,7 @@
     }, {
       key: "notifyRotate",
       value: function notifyRotate(_ref11) {
-        var _this1 = this;
+        var _this0 = this;
         var radians = _ref11.radians,
           rest = _objectWithoutProperties(_ref11, _excluded5);
         var elements = this.elements,
@@ -2615,7 +2677,7 @@
           _this$options6 = _this$options5 === void 0 ? {} : _this$options5,
           angle = _this$options6.snap.angle;
         elements.forEach(function (element) {
-          return _this1.rotate(_objectSpread2({
+          return _this0.rotate(_objectSpread2({
             element: element,
             radians: snapToGrid(radians, angle)
           }, rest));
@@ -2627,7 +2689,7 @@
     }, {
       key: "notifyResize",
       value: function notifyResize(_ref12) {
-        var _this10 = this;
+        var _this1 = this;
         var dx = _ref12.dx,
           dy = _ref12.dy,
           revX = _ref12.revX,
@@ -2635,9 +2697,9 @@
           dox = _ref12.dox,
           doy = _ref12.doy;
         this.elements.forEach(function (element) {
-          return _this10.resize(_objectSpread2({
+          return _this1.resize(_objectSpread2({
             element: element
-          }, _this10.localDelta(element, {
+          }, _this1.localDelta(element, {
             dx: dx,
             dy: dy
           }, {
@@ -2655,7 +2717,7 @@
     }, {
       key: "notifyApply",
       value: function notifyApply(_ref13) {
-        var _this11 = this;
+        var _this10 = this;
         var clientX = _ref13.clientX,
           clientY = _ref13.clientY,
           actionName = _ref13.actionName,
@@ -2666,7 +2728,7 @@
         });
         if (triggerEvent) {
           this.elements.forEach(function (element) {
-            return _this11.applyTransformToElement(element, actionName);
+            return _this10.applyTransformToElement(element, actionName);
           });
           _superPropGet(Transformable, "emitEvent", this)(["".concat(actionName, "End"), {
             clientX: clientX,
@@ -2677,7 +2739,7 @@
     }, {
       key: "notifyGetState",
       value: function notifyGetState(_ref14) {
-        var _this12 = this;
+        var _this11 = this;
         var clientX = _ref14.clientX,
           clientY = _ref14.clientY,
           actionName = _ref14.actionName,
@@ -2687,7 +2749,7 @@
         var elements = this.elements,
           data = this.storage.data;
         elements.forEach(function (element) {
-          data.set(element, _objectSpread2(_objectSpread2({}, data.get(element)), _this12.getElementState(element, rest)));
+          data.set(element, _objectSpread2(_objectSpread2({}, data.get(element)), _this11.getElementState(element, rest)));
         });
         this.storage = _objectSpread2(_objectSpread2({}, this.storage), this.getCommonState());
         _superPropGet(Transformable, "emitEvent", this)(["".concat(actionName, "Start"), {
@@ -2732,9 +2794,7 @@
           proxyMethods = this.proxyMethods,
           elements = this.elements;
         if (isUndef(storage)) return;
-        if (storage.onExecution) {
-          helper(document).off(E_MOUSEMOVE, this.onMouseMove).off(E_MOUSEUP, this.onMouseUp).off(E_TOUCHMOVE, this.onTouchMove).off(E_TOUCHEND, this.onTouchEnd);
-        }
+        this.releaseInput();
         elements.forEach(function (element) {
           return removeClass(element, "".concat(LIB_CLASS_PREFIX, "drag"));
         });
@@ -2805,7 +2865,7 @@
         var fresh = this.storage;
         var freshClasses = readClasses(fresh);
         this.unbindPress([fresh.controls]);
-        helper(controls).on(E_MOUSEDOWN$3, this.onMouseDown).on(E_TOUCHSTART$3, this.onTouchStart);
+        this.bindPress([controls]);
         adoptControls(prev, fresh, initClasses);
         this.storage = _objectSpread2(_objectSpread2({}, fresh), {}, {
           wrapper: wrapper,
@@ -2830,7 +2890,7 @@
     }, {
       key: "exeDrag",
       value: function exeDrag(_ref18) {
-        var _this13 = this;
+        var _this12 = this;
         var dx = _ref18.dx,
           dy = _ref18.dy;
         var elements = this.elements,
@@ -2845,17 +2905,17 @@
           dy: dy
         };
         elements.forEach(function (element) {
-          _superPropGet(Transformable, "drag", _this13)([_objectSpread2({
+          _superPropGet(Transformable, "drag", _this12)([_objectSpread2({
             element: element
           }, delta)]);
-          _this13.applyTransformToElement(element, E_DRAG$1);
+          _this12.applyTransformToElement(element, E_DRAG$1);
         });
         this.processControlsMove(delta);
       }
     }, {
       key: "exeResize",
       value: function exeResize(_ref19) {
-        var _this14 = this;
+        var _this13 = this;
         var dx = _ref19.dx,
           dy = _ref19.dy,
           _ref19$revX = _ref19.revX,
@@ -2876,12 +2936,12 @@
           doH: doH
         });
         elements.forEach(function (element) {
-          _this14.resize({
+          _this13.resize({
             element: element,
             dx: dx,
             dy: dy
           });
-          _this14.applyTransformToElement(element, E_RESIZE$1);
+          _this13.applyTransformToElement(element, E_RESIZE$1);
         });
         this.processControlsMove({
           dx: dx,
@@ -2891,18 +2951,18 @@
     }, {
       key: "exeRotate",
       value: function exeRotate(_ref20) {
-        var _this15 = this;
+        var _this14 = this;
         var delta = _ref20.delta;
         var elements = this.elements,
           rotatable = this.options.rotatable;
         if (!rotatable) return;
         this.prepareState();
         elements.forEach(function (element) {
-          _this15.rotate({
+          _this14.rotate({
             element: element,
             radians: delta
           });
-          _this15.applyTransformToElement(element, E_ROTATE$1);
+          _this14.applyTransformToElement(element, E_ROTATE$1);
         });
         this.processControlsRotate({
           radians: delta
@@ -3309,8 +3369,6 @@
   var _excluded$1 = ["rotator", "anchor"],
     _excluded2$1 = ["anchor", "center"],
     _excluded3$1 = ["anchor", "rotator", "center"];
-  var E_MOUSEDOWN$2 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
-    E_TOUCHSTART$2 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
   var entries$3 = Object.entries,
     values$1 = Object.values;
   var BOX_HANDLES$1 = ['tl', 'tr', 'br', 'bl', 'tc', 'bc', 'ml', 'mr'];
@@ -3375,9 +3433,7 @@
           },
           cached: {}
         };
-        [].concat(_toConsumableArray(elements), [controls]).forEach(function (target) {
-          return helper(target).on(E_MOUSEDOWN$2, _this.onMouseDown).on(E_TOUCHSTART$2, _this.onTouchStart);
-        });
+        this.bindPress([].concat(_toConsumableArray(elements), [controls]));
       }
 
       /** @internal */
@@ -6358,8 +6414,6 @@
   var E_DRAG = EVENT_EMITTER_CONSTANTS.E_DRAG,
     E_RESIZE = EVENT_EMITTER_CONSTANTS.E_RESIZE,
     E_ROTATE = EVENT_EMITTER_CONSTANTS.E_ROTATE;
-  var E_MOUSEDOWN$1 = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
-    E_TOUCHSTART$1 = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
   var _TRANSFORM_HANDLES_CO = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_POINT_KEYS,
     START_POINT = _TRANSFORM_HANDLES_CO.START_POINT,
     END_POINT = _TRANSFORM_HANDLES_CO.END_POINT;
@@ -6377,7 +6431,6 @@
       key: "init",
       value: /** @internal */
       function init(elements) {
-        var _this = this;
         var _this$options = this.options,
           container = _this$options.container,
           controlsContainer = _this$options.controlsContainer,
@@ -6440,9 +6493,7 @@
         };
         if (this.storage.center.isShifted) this.anchorOrigin(origin);
         this.syncHitAreas();
-        [].concat(_toConsumableArray(elements), [controls]).forEach(function (target) {
-          return helper(target).on(E_MOUSEDOWN$1, _this.onMouseDown).on(E_TOUCHSTART$1, _this.onTouchStart);
-        });
+        this.bindPress([].concat(_toConsumableArray(elements), [controls]));
       }
 
       /** @internal */
@@ -6466,7 +6517,7 @@
     }, {
       key: "renderEdges",
       value: function renderEdges(controls, vertices, hitAreas) {
-        var _this2 = this;
+        var _this = this;
         var hitRadius = this.options.hitRadius;
         var line = this.getLine();
         var handles = {};
@@ -6475,7 +6526,7 @@
             key = _ref2[0],
             segment = _ref2[1];
           var edge = renderLine(segment, THEME_COLOR, key);
-          var isEnabled = !line && _this2.isHandleEnabled(key);
+          var isEnabled = !line && _this.isHandleEnabled(key);
           if (!isEnabled) edge.setAttribute('pointer-events', 'none');
           if (line) edge.setAttribute('visibility', 'hidden');
           if (hitRadius && isEnabled) {
@@ -6492,10 +6543,10 @@
     }, {
       key: "resizingPoints",
       value: function resizingPoints(vertices) {
-        var _this3 = this;
+        var _this2 = this;
         if (!this.options.resizable) return {};
         return (this.getLine() ? LINE_HANDLES : BOX_HANDLES).filter(function (key) {
-          return _this3.isHandleEnabled(key);
+          return _this2.isHandleEnabled(key);
         }).reduce(function (result, key) {
           result[key] = vertices[key];
           return result;
@@ -7325,7 +7376,7 @@
     }, {
       key: "prepareGuides",
       value: function prepareGuides() {
-        var _this4 = this;
+        var _this3 = this;
         var elements = this.elements,
           wrapper = this.storage.wrapper,
           _this$options11 = this.options,
@@ -7347,7 +7398,7 @@
         var targetBoxes = candidates.reduce(function (result, element) {
           if (!('getBBox' in element) || isMoving(element) || wrapper.contains(element)) return result;
           try {
-            result.push(_this4.getBoundsBox(element));
+            result.push(_this3.getBoundsBox(element));
           } catch (_unused) {
             return result;
           }
@@ -7579,7 +7630,7 @@
     }, {
       key: "applyAlignment",
       value: function applyAlignment(direction) {
-        var _this5 = this;
+        var _this4 = this;
         var target = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
         var elements = this.elements,
           container = this.options.container;
@@ -7604,7 +7655,7 @@
             x = _pointTo1.x,
             y = _pointTo1.y;
           var moveElementMtrx = createTranslateMatrix(x, y).multiply(getTransformToElement(element, element.parentNode));
-          _this5.updateElementView(element, moveElementMtrx);
+          _this4.updateElementView(element, moveElementMtrx);
         });
         this.fitControlsToSize();
       }
@@ -7652,8 +7703,6 @@
   }
 
   var EMITTER_EVENTS = EVENT_EMITTER_CONSTANTS.EMITTER_EVENTS;
-  var E_MOUSEDOWN = CLIENT_EVENTS_CONSTANTS.E_MOUSEDOWN,
-    E_TOUCHSTART = CLIENT_EVENTS_CONSTANTS.E_TOUCHSTART;
   var Cloneable = /*#__PURE__*/function (_SubjectModel) {
     function Cloneable(elements, options) {
       var _this;
@@ -7687,7 +7736,7 @@
           style: nextStyle,
           data: data
         };
-        helper(elements).on(E_MOUSEDOWN, this.onMouseDown).on(E_TOUCHSTART, this.onTouchStart);
+        this.bindPress(elements);
         EMITTER_EVENTS.slice(0, 3).forEach(function (eventName) {
           return _this2.eventDispatcher.registerEvent(eventName);
         });
@@ -7844,7 +7893,8 @@
           proxyMethods = this.proxyMethods,
           elements = this.elements;
         if (isUndef(storage)) return;
-        helper(elements).off(E_MOUSEDOWN, this.onMouseDown).off(E_TOUCHSTART, this.onTouchStart);
+        this.releaseInput();
+        this.unbindPress(elements);
         proxyMethods.onDestroy.call(this, elements);
         delete this.storage;
       }

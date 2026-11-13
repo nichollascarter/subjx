@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/nichollascarter/subjx/compare/v2.0.1...v2.0.2) (2026-11-13)
+
+
+### Bug Fixes
+
+* **input:** stop touch gestures from double-firing, sticking or ignoring cancel ([a7ea1e4](https://github.com/nichollascarter/subjx/commit/a7ea1e410bbac7f8f2ce30d1712ccd84dd8b1efa))
+
 ## [2.0.1](https://github.com/nichollascarter/subjx/compare/v2.0.0...v2.0.1) (2026-11-12)
 
 

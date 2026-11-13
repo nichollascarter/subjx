@@ -190,12 +190,13 @@ function helper(params) {
 const MIN_SIZE = 2;
 const THEME_COLOR = '#00a8ff';
 const LIB_CLASS_PREFIX = 'sjx-';
-const E_MOUSEDOWN$4 = 'mousedown';
-const E_MOUSEUP$2 = 'mouseup';
-const E_MOUSEMOVE$2 = 'mousemove';
-const E_TOUCHSTART$4 = 'touchstart';
-const E_TOUCHEND$2 = 'touchend';
-const E_TOUCHMOVE$2 = 'touchmove';
+const E_MOUSEDOWN$1 = 'mousedown';
+const E_MOUSEUP$1 = 'mouseup';
+const E_MOUSEMOVE$1 = 'mousemove';
+const E_TOUCHSTART$1 = 'touchstart';
+const E_TOUCHEND$1 = 'touchend';
+const E_TOUCHMOVE$1 = 'touchmove';
+const E_TOUCHCANCEL$1 = 'touchcancel';
 const E_MOUSEOVER$1 = 'mouseover';
 const E_DRAG_START$1 = 'dragStart';
 const E_DRAG$3 = 'drag';
@@ -240,12 +241,13 @@ const EVENT_EMITTER_CONSTANTS = {
   E_SET_POINT_END: E_SET_POINT_END$1
 };
 const CLIENT_EVENTS_CONSTANTS = {
-  E_MOUSEDOWN: E_MOUSEDOWN$4,
-  E_MOUSEUP: E_MOUSEUP$2,
-  E_MOUSEMOVE: E_MOUSEMOVE$2,
-  E_TOUCHSTART: E_TOUCHSTART$4,
-  E_TOUCHEND: E_TOUCHEND$2,
-  E_TOUCHMOVE: E_TOUCHMOVE$2,
+  E_MOUSEDOWN: E_MOUSEDOWN$1,
+  E_MOUSEUP: E_MOUSEUP$1,
+  E_MOUSEMOVE: E_MOUSEMOVE$1,
+  E_TOUCHSTART: E_TOUCHSTART$1,
+  E_TOUCHEND: E_TOUCHEND$1,
+  E_TOUCHMOVE: E_TOUCHMOVE$1,
+  E_TOUCHCANCEL: E_TOUCHCANCEL$1,
   E_MOUSEOVER: E_MOUSEOVER$1
 };
 const TRANSFORM_HANDLES_KEYS$1 = {
@@ -358,13 +360,23 @@ const {
   E_DRAG: E_DRAG$2
 } = EVENT_EMITTER_CONSTANTS;
 const {
-  E_MOUSEMOVE: E_MOUSEMOVE$1,
-  E_MOUSEUP: E_MOUSEUP$1,
-  E_TOUCHMOVE: E_TOUCHMOVE$1,
-  E_TOUCHEND: E_TOUCHEND$1
+  E_MOUSEDOWN,
+  E_MOUSEMOVE,
+  E_MOUSEUP,
+  E_TOUCHSTART,
+  E_TOUCHMOVE,
+  E_TOUCHEND,
+  E_TOUCHCANCEL
 } = CLIENT_EVENTS_CONSTANTS;
+const COMPAT_MOUSE_DELAY = 800;
 class SubjectModel {
   /** Internal state. Its shape is not part of the public API and may change in any minor release. */
+
+  /** @internal */
+
+  /** @internal */
+
+  /** @internal */
 
   /** @internal */
 
@@ -375,6 +387,9 @@ class SubjectModel {
     this.storage = null;
     this.proxyMethods = null;
     this.eventDispatcher = new EventDispatcher();
+    this.activeTouch = null;
+    this.lastTouchTime = -Infinity;
+    this.touchActions = new Map();
     this.onMouseDown = this.onMouseDown.bind(this);
     this.onTouchStart = this.onTouchStart.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
@@ -436,16 +451,69 @@ class SubjectModel {
   }
 
   /** @internal */
+  bindPress(targets) {
+    targets.forEach(target => {
+      const {
+        style
+      } = target;
+      if (style && !this.touchActions.has(target)) {
+        this.touchActions.set(target, style.getPropertyValue('touch-action'));
+        style.setProperty('touch-action', 'none');
+      }
+      helper(target).on(E_MOUSEDOWN, this.onMouseDown).on(E_TOUCHSTART, this.onTouchStart);
+    });
+  }
+
+  /** @internal */
+  unbindPress(targets) {
+    targets.forEach(target => {
+      helper(target).off(E_MOUSEDOWN, this.onMouseDown).off(E_TOUCHSTART, this.onTouchStart);
+      if (this.touchActions.has(target)) {
+        const {
+          style
+        } = target;
+        const previous = this.touchActions.get(target);
+        if (previous) {
+          style.setProperty('touch-action', previous);
+        } else {
+          style.removeProperty('touch-action');
+        }
+        this.touchActions.delete(target);
+      }
+    });
+  }
+
+  /** @internal */
+  releaseInput() {
+    this.activeTouch = null;
+    helper(document).off(E_MOUSEMOVE, this.onMouseMove).off(E_MOUSEUP, this.onMouseUp).off(E_TOUCHMOVE, this.onTouchMove).off(E_TOUCHEND, this.onTouchEnd).off(E_TOUCHCANCEL, this.onTouchEnd);
+  }
+
+  /** @internal */
+  findActiveTouch(list) {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].identifier === this.activeTouch) return list[i];
+    }
+    return null;
+  }
+
+  /** @internal */
   onMouseDown(e) {
     if (e.button !== 0) return;
+    if (this.activeTouch !== null) return;
+    if (Date.now() - this.lastTouchTime < COMPAT_MOUSE_DELAY) return;
     this.start(e);
-    helper(document).on(E_MOUSEMOVE$1, this.onMouseMove).on(E_MOUSEUP$1, this.onMouseUp);
+    helper(document).on(E_MOUSEMOVE, this.onMouseMove).on(E_MOUSEUP, this.onMouseUp);
   }
 
   /** @internal */
   onTouchStart(e) {
-    this.start(e.touches[0]);
-    helper(document).on(E_TOUCHMOVE$1, this.onTouchMove).on(E_TOUCHEND$1, this.onTouchEnd);
+    this.lastTouchTime = Date.now();
+    if (this.activeTouch !== null) return;
+    const touch = e.changedTouches[0];
+    this.activeTouch = touch.identifier;
+    this.start(touch);
+    helper(document).on(E_TOUCHMOVE, this.onTouchMove).on(E_TOUCHEND, this.onTouchEnd).on(E_TOUCHCANCEL, this.onTouchEnd);
   }
 
   /** @internal */
@@ -461,21 +529,23 @@ class SubjectModel {
     if (e.preventDefault) {
       e.preventDefault();
     }
-    this.moving(e.touches[0]);
+    const touch = this.findActiveTouch(e.changedTouches);
+    if (touch) this.moving(touch);
   }
 
   /** @internal */
   onMouseUp(e) {
-    helper(document).off(E_MOUSEMOVE$1, this.onMouseMove).off(E_MOUSEUP$1, this.onMouseUp);
+    helper(document).off(E_MOUSEMOVE, this.onMouseMove).off(E_MOUSEUP, this.onMouseUp);
     this.end(e, this.elements);
   }
 
   /** @internal */
   onTouchEnd(e) {
-    helper(document).off(E_TOUCHMOVE$1, this.onTouchMove).off(E_TOUCHEND$1, this.onTouchEnd);
-    if (e.touches.length === 0) {
-      this.end(e.changedTouches[0], this.elements);
-    }
+    this.lastTouchTime = Date.now();
+    const touch = this.findActiveTouch(e.changedTouches);
+    if (!touch) return;
+    this.releaseInput();
+    this.end(touch, this.elements);
   }
 
   /** @internal */
@@ -875,12 +945,6 @@ const {
   TRANSFORM_POINT_KEYS
 } = TRANSFORM_HANDLES_CONSTANTS;
 const {
-  E_MOUSEDOWN: E_MOUSEDOWN$3,
-  E_TOUCHSTART: E_TOUCHSTART$3,
-  E_MOUSEMOVE,
-  E_MOUSEUP,
-  E_TOUCHMOVE,
-  E_TOUCHEND,
   E_MOUSEOVER
 } = CLIENT_EVENTS_CONSTANTS;
 const {
@@ -2111,11 +2175,6 @@ class Transformable extends SubjectModel {
   }
 
   /** @internal */
-  unbindPress(targets) {
-    targets.forEach(target => helper(target).off(E_MOUSEDOWN$3, this.onMouseDown).off(E_TOUCHSTART$3, this.onTouchStart));
-  }
-
-  /** @internal */
   destroy() {
     const {
       elements,
@@ -2323,9 +2382,7 @@ class Transformable extends SubjectModel {
       elements
     } = this;
     if (isUndef(storage)) return;
-    if (storage.onExecution) {
-      helper(document).off(E_MOUSEMOVE, this.onMouseMove).off(E_MOUSEUP, this.onMouseUp).off(E_TOUCHMOVE, this.onTouchMove).off(E_TOUCHEND, this.onTouchEnd);
-    }
+    this.releaseInput();
     elements.forEach(element => removeClass(element, `${LIB_CLASS_PREFIX}drag`));
     this.pendingOptions = null;
     this.unsubscribe();
@@ -2399,7 +2456,7 @@ class Transformable extends SubjectModel {
     const fresh = this.storage;
     const freshClasses = readClasses(fresh);
     this.unbindPress([fresh.controls]);
-    helper(controls).on(E_MOUSEDOWN$3, this.onMouseDown).on(E_TOUCHSTART$3, this.onTouchStart);
+    this.bindPress([controls]);
     adoptControls(prev, fresh, initClasses);
     this.storage = {
       ...fresh,
@@ -2798,10 +2855,6 @@ const bBoxPoints$1 = (element, container, ctm, bBox) => {
 };
 
 const {
-  E_MOUSEDOWN: E_MOUSEDOWN$2,
-  E_TOUCHSTART: E_TOUCHSTART$2
-} = CLIENT_EVENTS_CONSTANTS;
-const {
   entries: entries$3,
   values: values$1
 } = Object;
@@ -2864,7 +2917,7 @@ class Draggable extends Transformable {
       },
       cached: {}
     };
-    [...elements, controls].forEach(target => helper(target).on(E_MOUSEDOWN$2, this.onMouseDown).on(E_TOUCHSTART$2, this.onTouchStart));
+    this.bindPress([...elements, controls]);
   }
 
   /** @internal */
@@ -5622,10 +5675,6 @@ const {
   E_ROTATE
 } = EVENT_EMITTER_CONSTANTS;
 const {
-  E_MOUSEDOWN: E_MOUSEDOWN$1,
-  E_TOUCHSTART: E_TOUCHSTART$1
-} = CLIENT_EVENTS_CONSTANTS;
-const {
   START_POINT,
   END_POINT
 } = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_POINT_KEYS;
@@ -5705,7 +5754,7 @@ class DraggableSVG extends Transformable {
     };
     if (this.storage.center.isShifted) this.anchorOrigin(origin);
     this.syncHitAreas();
-    [...elements, controls].forEach(target => helper(target).on(E_MOUSEDOWN$1, this.onMouseDown).on(E_TOUCHSTART$1, this.onTouchStart));
+    this.bindPress([...elements, controls]);
   }
 
   /** @internal */
@@ -6960,10 +7009,6 @@ function drag(options, obInstance) {
 const {
   EMITTER_EVENTS
 } = EVENT_EMITTER_CONSTANTS;
-const {
-  E_MOUSEDOWN,
-  E_TOUCHSTART
-} = CLIENT_EVENTS_CONSTANTS;
 class Cloneable extends SubjectModel {
   constructor(elements, options) {
     super(elements);
@@ -6993,7 +7038,7 @@ class Cloneable extends SubjectModel {
       style: nextStyle,
       data
     };
-    helper(elements).on(E_MOUSEDOWN, this.onMouseDown).on(E_TOUCHSTART, this.onTouchStart);
+    this.bindPress(elements);
     EMITTER_EVENTS.slice(0, 3).forEach(eventName => this.eventDispatcher.registerEvent(eventName));
   }
 
@@ -7141,7 +7186,8 @@ class Cloneable extends SubjectModel {
       elements
     } = this;
     if (isUndef(storage)) return;
-    helper(elements).off(E_MOUSEDOWN, this.onMouseDown).off(E_TOUCHSTART, this.onTouchStart);
+    this.releaseInput();
+    this.unbindPress(elements);
     proxyMethods.onDestroy.call(this, elements);
     delete this.storage;
   }
