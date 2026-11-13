@@ -53,12 +53,6 @@ import {
     E_DRAG,
     E_RESIZE,
     E_ROTATE,
-    E_MOUSEDOWN,
-    E_TOUCHSTART,
-    E_MOUSEMOVE,
-    E_MOUSEUP,
-    E_TOUCHMOVE,
-    E_TOUCHEND,
     E_MOUSEOVER
 } from './consts';
 import {
@@ -792,15 +786,6 @@ export default abstract class Transformable<
     }
 
     /** @internal */
-    private unbindPress(targets: Element[]) {
-        targets.forEach(target => (
-            helper(target)
-                .off(E_MOUSEDOWN, this.onMouseDown)
-                .off(E_TOUCHSTART, this.onTouchStart)
-        ));
-    }
-
-    /** @internal */
     protected destroy() {
         const {
             elements,
@@ -961,13 +946,7 @@ export default abstract class Transformable<
 
         if (isUndef(storage)) return;
 
-        if (storage.onExecution) {
-            helper(document)
-                .off(E_MOUSEMOVE, this.onMouseMove)
-                .off(E_MOUSEUP, this.onMouseUp)
-                .off(E_TOUCHMOVE, this.onTouchMove)
-                .off(E_TOUCHEND, this.onTouchEnd);
-        }
+        this.releaseInput();
 
         elements.forEach((element) => removeClass(element, `${LIB_CLASS_PREFIX}drag`));
 
@@ -1064,9 +1043,7 @@ export default abstract class Transformable<
 
         this.unbindPress([fresh.controls]);
 
-        helper(controls)
-            .on(E_MOUSEDOWN, this.onMouseDown)
-            .on(E_TOUCHSTART, this.onTouchStart);
+        this.bindPress([controls]);
 
         adoptControls(prev, fresh, initClasses);
 

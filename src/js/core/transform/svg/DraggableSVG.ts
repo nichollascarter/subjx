@@ -21,7 +21,6 @@ import { hitAreaOutline, outlineToPath } from './hit-areas';
 import {
     THEME_COLOR,
     EVENT_EMITTER_CONSTANTS,
-    CLIENT_EVENTS_CONSTANTS,
     TRANSFORM_HANDLES_CONSTANTS
 } from '../../consts';
 import {
@@ -60,7 +59,6 @@ import type {
 } from './types';
 
 const { E_DRAG, E_RESIZE, E_ROTATE } = EVENT_EMITTER_CONSTANTS;
-const { E_MOUSEDOWN, E_TOUCHSTART } = CLIENT_EVENTS_CONSTANTS;
 const { START_POINT, END_POINT } = TRANSFORM_HANDLES_CONSTANTS.TRANSFORM_POINT_KEYS;
 
 const { entries, values } = Object;
@@ -170,11 +168,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
 
         this.syncHitAreas();
 
-        [...elements, controls].forEach(target => (
-            helper(target)
-                .on(E_MOUSEDOWN, this.onMouseDown)
-                .on(E_TOUCHSTART, this.onTouchStart)
-        ));
+        this.bindPress([...elements, controls]);
     }
 
     /** @internal */

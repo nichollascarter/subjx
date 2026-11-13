@@ -16,7 +16,6 @@ import {
 } from '../common';
 import { isDef, isUndef } from '../../util/util';
 import { addClass, matrixToCSS, getScrollOffset, getElementOffset, getLayoutSize } from '../../util/css-util';
-import { CLIENT_EVENTS_CONSTANTS } from '../../consts';
 
 import {
     matrixInvert,
@@ -53,8 +52,6 @@ import type {
     HTMLOptions,
     VertexMap
 } from './types';
-
-const { E_MOUSEDOWN, E_TOUCHSTART } = CLIENT_EVENTS_CONSTANTS;
 
 const { entries, values } = Object;
 
@@ -142,11 +139,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
             cached: {}
         } as unknown as HTMLStorage;
 
-        [...elements, controls].forEach(target => (
-            helper(target)
-                .on(E_MOUSEDOWN, this.onMouseDown)
-                .on(E_TOUCHSTART, this.onTouchStart)
-        ));
+        this.bindPress([...elements, controls]);
     }
 
     /** @internal */
