@@ -192,6 +192,7 @@ reported as a resize (`resizeStart`, `resize`, `resizeEnd`, `onResize`).
 | **custom** | Arbitrary user data, available as `options.custom` | `object` | null |
 | **handles** | Resize handles to show: `tl`, `tc`, `tr`, `ml`, `mr`, `bl`, `bc`, `br`, edges `te`, `be`, `le`, `re`, line endpoints `p1`, `p2`; edges left out stay visible but ignore the pointer | `Array<string>` | all |
 | **hitRadius** | Extra grab area around handles and edges, in screen pixels (SVG). Inside the box an area goes at most a quarter of the box size deep, so a narrow element can still be dragged by its middle | `number` | 0 |
+| **boundsPadding** | Grows the frame and the handles around each element: a number pads the box by that many units of the element, `'stroke'` wraps the painted stroke, including the strokes inside a group. Moving, resizing and rotating still use the element geometry (SVG) | `number` \| `'stroke'` | 0 |
 | **showHitAreas** | Keeps grab areas visible, e.g. to tune `hitRadius` (SVG) | `boolean` | false |
 | **guides** | Alignment guides and snapping to other elements and the container (SVG), see below | `boolean` \| `object` | false |
 
@@ -217,8 +218,8 @@ Behavior options (`axis`, `snap`, `each`, `proportions`, `flip`, `draggable`,
 apply at once, even in the middle of a drag.
 
 Options that shape the controls (`resizable`, `rotatable`, `handles`, `hitRadius`,
-`showHitAreas`, `showNormal`, `rotatorAnchor`, `rotatorOffset`, `transformOrigin`,
-`restrict`, `container`, `controlsContainer`) redraw the handles. While a drag,
+`boundsPadding`, `showHitAreas`, `showNormal`, `rotatorAnchor`, `rotatorOffset`,
+`transformOrigin`, `restrict`, `container`, `controlsContainer`) redraw the handles. While a drag,
 resize or rotation is running, they wait until it ends. The redraw keeps the same
 `controls` element, with any nodes and classes you added to it, keeps a
 transform origin that was moved by the user, and does not call `onInit` again.

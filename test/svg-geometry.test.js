@@ -1,5 +1,5 @@
 import { rotatorPlacement, alignmentOffset, boxVertices, edgeSegments } from '../src/js/core/transform/common';
-import { lineRotator } from '../src/js/core/transform/svg/vertices';
+import { lineRotator, padBBox } from '../src/js/core/transform/svg/vertices';
 
 const toPoints = vertices => Object.keys(vertices).reduce((res, key) => {
     const [x, y] = vertices[key];
@@ -12,6 +12,16 @@ const near = (point, x, y) => {
     expect(point.x).toBeCloseTo(x);
     expect(point.y).toBeCloseTo(y);
 };
+
+describe('padded bounding box', () => {
+    it('grows the box evenly on every side', () => {
+        expect(padBBox({ x: 10, y: 20, width: 100, height: 0 }, 5)).toEqual({ x: 5, y: 15, width: 110, height: 10 });
+    });
+
+    it('keeps the box as is without padding', () => {
+        expect(padBBox({ x: 10, y: 20, width: 100, height: 50 }, 0)).toEqual({ x: 10, y: 20, width: 100, height: 50 });
+    });
+});
 
 describe('box vertices', () => {
     it('places corners, edge midpoints and center', () => {

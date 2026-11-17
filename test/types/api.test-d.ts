@@ -26,6 +26,7 @@ const options: DragOptions = {
     rotatorOffset: 30,
     handles: ['tl', 'br', 're', 'p1'],
     hitRadius: 8,
+    boundsPadding: 'stroke',
     showHitAreas: true,
     guides: { targets: '.shape', bounds: '#paper', threshold: 8, snap: true },
     restrict: '#area',
