@@ -1003,6 +1003,7 @@ const normalizeOptions = (options, elements) => {
     resizable = true,
     handles,
     hitRadius = 0,
+    boundsPadding = 0,
     showHitAreas = false,
     guides = false,
     rotatable = true,
@@ -1043,6 +1044,7 @@ const normalizeOptions = (options, elements) => {
     resizable,
     handles: Array.isArray(handles) ? handles : null,
     hitRadius: Math.max(0, Number(hitRadius) || 0),
+    boundsPadding: boundsPadding === 'stroke' ? 'stroke' : Math.max(0, Number(boundsPadding) || 0),
     showHitAreas: Boolean(showHitAreas),
     guides: guides === true ? {} : guides && typeof guides === 'object' ? guides : null,
     rotatable,
@@ -2945,7 +2947,7 @@ class Draggable extends Transformable {
     const handles = {};
     entries$3(edgeSegments(vertices)).forEach(([key, segment]) => {
       const edge = renderLine$1(segment, key);
-      if (!this.isHandleEnabled(key)) helper(edge).css({
+      if (!this.options.resizable || !this.isHandleEnabled(key)) helper(edge).css({
         pointerEvents: 'none'
       });
       controls.appendChild(edge);
@@ -4315,6 +4317,17 @@ const transformVertices = (vertices, matrix) => entries$1(vertices).reduce((resu
   result[key] = pointTo(matrix, x, y);
   return result;
 }, {});
+const padBBox = ({
+  x,
+  y,
+  width,
+  height
+}, padding) => ({
+  x: x - padding,
+  y: y - padding,
+  width: width + padding * 2,
+  height: height + padding * 2
+});
 const bBoxPoints = (element, ctm, bBox = element.getBBox()) => {
   const {
     x,
@@ -4347,6 +4360,53 @@ const lineRotator = (start, end, rotatorAnchor, rotatorOffset) => {
       y: anchor.y + normalY * rotatorOffset * side
     }
   };
+};
+
+const matrixScale = matrix => matrix ? Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c)) || 1 : 1;
+const isHidden = (element, root) => {
+  for (let node = element; node; node = node.parentElement) {
+    if (window.getComputedStyle(node).getPropertyValue('display') === 'none') return true;
+    if (node === root) break;
+  }
+  return false;
+};
+const scaleWithin = (element, root) => {
+  var _element$getCTM, _root$getCTM;
+  if (element === root) return 1;
+  const own = (_element$getCTM = element.getCTM) === null || _element$getCTM === void 0 ? void 0 : _element$getCTM.call(element);
+  const base = (_root$getCTM = root.getCTM) === null || _root$getCTM === void 0 ? void 0 : _root$getCTM.call(root);
+  return own && base ? matrixScale(base.inverse().multiply(own)) : 1;
+};
+const halfStroke = (element, root) => {
+  if (isHidden(element, root)) return 0;
+  const style = window.getComputedStyle(element);
+  const stroke = style.getPropertyValue('stroke');
+  if (!stroke || stroke === 'none') return 0;
+  const width = parseFloat(style.getPropertyValue('stroke-width')) || 0;
+  const scale = style.getPropertyValue('vector-effect') === 'non-scaling-stroke' ? 1 / screenScale(root) : scaleWithin(element, root);
+  return width / 2 * scale;
+};
+const NOT_PAINTED = 'defs, clipPath, mask, marker, pattern, symbol, title, desc, metadata';
+const isPainted = (node, root) => {
+  if (!('getBBox' in node)) return false;
+  const holder = node.closest(NOT_PAINTED);
+  return !holder || !root.contains(holder);
+};
+const strokePadding = element => [element, ...Array.from(element.querySelectorAll('*'))].filter(node => node === element || isPainted(node, element)).reduce((max, node) => Math.max(max, halfStroke(node, element)), 0);
+const nativeStrokeBBox = (element, plain) => {
+  try {
+    const box = element.getBBox({
+      stroke: true
+    });
+    return box.width > plain.width || box.height > plain.height ? box : null;
+  } catch {
+    return null;
+  }
+};
+const strokeBBox = element => {
+  var _nativeStrokeBBox;
+  const plain = element.getBBox();
+  return (_nativeStrokeBBox = nativeStrokeBBox(element, plain)) !== null && _nativeStrokeBBox !== void 0 ? _nativeStrokeBBox : padBBox(plain, strokePadding(element));
 };
 
 // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
@@ -5782,7 +5842,7 @@ class DraggableSVG extends Transformable {
     const handles = {};
     entries(edgeSegments(vertices)).forEach(([key, segment]) => {
       const edge = renderLine(segment, THEME_COLOR, key);
-      const isEnabled = !line && this.isHandleEnabled(key);
+      const isEnabled = !line && this.options.resizable && this.isHandleEnabled(key);
       if (!isEnabled) edge.setAttribute('pointer-events', 'none');
       if (line) edge.setAttribute('visibility', 'hidden');
       if (hitRadius && isEnabled) {
@@ -6345,7 +6405,7 @@ class DraggableSVG extends Transformable {
         container
       }
     } = this;
-    const local = boxVertices(this.getBBox());
+    const local = boxVertices(this.getFrameBBox());
     const line = this.getLine();
     if (line) {
       local[START_POINT] = [line.x1.baseVal.value, line.y1.baseVal.value];
@@ -6375,7 +6435,20 @@ class DraggableSVG extends Transformable {
   }
 
   /** @internal */
+  getFrameBBox() {
+    const {
+      boundsPadding
+    } = this.options;
+    return this.measureBBox(boundsPadding === 'stroke' ? strokeBBox : element => padBBox(element.getBBox(), boundsPadding));
+  }
+
+  /** @internal */
   getBBox() {
+    return this.measureBBox(element => element.getBBox());
+  }
+
+  /** @internal */
+  measureBBox(boxOf) {
     const {
       elements,
       options: {
@@ -6383,8 +6456,8 @@ class DraggableSVG extends Transformable {
         isGrouped
       }
     } = this;
-    if (!isGrouped) return elements[0].getBBox();
-    const groupBBox = elements.reduce((result, element) => [...result, ...bBoxPoints(element, getTransformToElement(element, container))], []);
+    if (!isGrouped) return boxOf(elements[0]);
+    const groupBBox = elements.reduce((result, element) => [...result, ...bBoxPoints(element, getTransformToElement(element, container), boxOf(element))], []);
     const [[minX, maxX], [minY, maxY]] = getMinMaxOfArray(groupBBox);
     return {
       x: minX,

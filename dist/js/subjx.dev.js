@@ -1425,6 +1425,8 @@
       handles = options.handles,
       _options$hitRadius = options.hitRadius,
       hitRadius = _options$hitRadius === void 0 ? 0 : _options$hitRadius,
+      _options$boundsPaddin = options.boundsPadding,
+      boundsPadding = _options$boundsPaddin === void 0 ? 0 : _options$boundsPaddin,
       _options$showHitAreas = options.showHitAreas,
       showHitAreas = _options$showHitAreas === void 0 ? false : _options$showHitAreas,
       _options$guides = options.guides,
@@ -1474,6 +1476,7 @@
       resizable: resizable,
       handles: Array.isArray(handles) ? handles : null,
       hitRadius: Math.max(0, Number(hitRadius) || 0),
+      boundsPadding: boundsPadding === 'stroke' ? 'stroke' : Math.max(0, Number(boundsPadding) || 0),
       showHitAreas: Boolean(showHitAreas),
       guides: guides === true ? {} : guides && _typeof(guides) === 'object' ? guides : null,
       rotatable: rotatable,
@@ -3468,7 +3471,7 @@
             key = _ref2[0],
             segment = _ref2[1];
           var edge = renderLine$1(segment, key);
-          if (!_this2.isHandleEnabled(key)) helper(edge).css({
+          if (!_this2.options.resizable || !_this2.isHandleEnabled(key)) helper(edge).css({
             pointerEvents: 'none'
           });
           controls.appendChild(edge);
@@ -4945,16 +4948,28 @@
       return result;
     }, {});
   };
+  var padBBox = function padBBox(_ref3, padding) {
+    var x = _ref3.x,
+      y = _ref3.y,
+      width = _ref3.width,
+      height = _ref3.height;
+    return {
+      x: x - padding,
+      y: y - padding,
+      width: width + padding * 2,
+      height: height + padding * 2
+    };
+  };
   var bBoxPoints = function bBoxPoints(element, ctm) {
     var bBox = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : element.getBBox();
     var x = bBox.x,
       y = bBox.y,
       width = bBox.width,
       height = bBox.height;
-    return [[x, y], [x + width, y], [x + width, y + height], [x, y + height]].map(function (_ref3) {
-      var _ref4 = _slicedToArray(_ref3, 2),
-        l = _ref4[0],
-        t = _ref4[1];
+    return [[x, y], [x + width, y], [x + width, y + height], [x, y + height]].map(function (_ref4) {
+      var _ref5 = _slicedToArray(_ref4, 2),
+        l = _ref5[0],
+        t = _ref5[1];
       var _pointTo = pointTo(ctm, l, t),
         nx = _pointTo.x,
         ny = _pointTo.y;
@@ -4965,10 +4980,10 @@
     var axisX = end.x - start.x,
       axisY = end.y - start.y;
     var length = Math.sqrt(axisX * axisX + axisY * axisY);
-    var _ref5 = length ? [axisY / length, -axisX / length] : [0, -1],
-      _ref6 = _slicedToArray(_ref5, 2),
-      normalX = _ref6[0],
-      normalY = _ref6[1];
+    var _ref6 = length ? [axisY / length, -axisX / length] : [0, -1],
+      _ref7 = _slicedToArray(_ref6, 2),
+      normalX = _ref7[0],
+      normalY = _ref7[1];
     var side = rotatorAnchor === 's' || rotatorAnchor === 'w' ? -1 : 1;
     var anchor = {
       x: (start.x + end.x) / 2,
@@ -4981,6 +4996,61 @@
         y: anchor.y + normalY * rotatorOffset * side
       }
     };
+  };
+
+  var matrixScale = function matrixScale(matrix) {
+    return matrix ? Math.sqrt(Math.abs(matrix.a * matrix.d - matrix.b * matrix.c)) || 1 : 1;
+  };
+  var isHidden = function isHidden(element, root) {
+    for (var node = element; node; node = node.parentElement) {
+      if (window.getComputedStyle(node).getPropertyValue('display') === 'none') return true;
+      if (node === root) break;
+    }
+    return false;
+  };
+  var scaleWithin = function scaleWithin(element, root) {
+    var _element$getCTM, _root$getCTM;
+    if (element === root) return 1;
+    var own = (_element$getCTM = element.getCTM) === null || _element$getCTM === void 0 ? void 0 : _element$getCTM.call(element);
+    var base = (_root$getCTM = root.getCTM) === null || _root$getCTM === void 0 ? void 0 : _root$getCTM.call(root);
+    return own && base ? matrixScale(base.inverse().multiply(own)) : 1;
+  };
+  var halfStroke = function halfStroke(element, root) {
+    if (isHidden(element, root)) return 0;
+    var style = window.getComputedStyle(element);
+    var stroke = style.getPropertyValue('stroke');
+    if (!stroke || stroke === 'none') return 0;
+    var width = parseFloat(style.getPropertyValue('stroke-width')) || 0;
+    var scale = style.getPropertyValue('vector-effect') === 'non-scaling-stroke' ? 1 / screenScale(root) : scaleWithin(element, root);
+    return width / 2 * scale;
+  };
+  var NOT_PAINTED = 'defs, clipPath, mask, marker, pattern, symbol, title, desc, metadata';
+  var isPainted = function isPainted(node, root) {
+    if (!('getBBox' in node)) return false;
+    var holder = node.closest(NOT_PAINTED);
+    return !holder || !root.contains(holder);
+  };
+  var strokePadding = function strokePadding(element) {
+    return [element].concat(_toConsumableArray(Array.from(element.querySelectorAll('*')))).filter(function (node) {
+      return node === element || isPainted(node, element);
+    }).reduce(function (max, node) {
+      return Math.max(max, halfStroke(node, element));
+    }, 0);
+  };
+  var nativeStrokeBBox = function nativeStrokeBBox(element, plain) {
+    try {
+      var box = element.getBBox({
+        stroke: true
+      });
+      return box.width > plain.width || box.height > plain.height ? box : null;
+    } catch (_unused) {
+      return null;
+    }
+  };
+  var strokeBBox = function strokeBBox(element) {
+    var _nativeStrokeBBox;
+    var plain = element.getBBox();
+    return (_nativeStrokeBBox = nativeStrokeBBox(element, plain)) !== null && _nativeStrokeBBox !== void 0 ? _nativeStrokeBBox : padBBox(plain, strokePadding(element));
   };
 
   // https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
@@ -6526,7 +6596,7 @@
             key = _ref2[0],
             segment = _ref2[1];
           var edge = renderLine(segment, THEME_COLOR, key);
-          var isEnabled = !line && _this.isHandleEnabled(key);
+          var isEnabled = !line && _this.options.resizable && _this.isHandleEnabled(key);
           if (!isEnabled) edge.setAttribute('pointer-events', 'none');
           if (line) edge.setAttribute('visibility', 'hidden');
           if (hitRadius && isEnabled) {
@@ -7043,7 +7113,7 @@
           rotatorAnchor = _this$options1.rotatorAnchor,
           rotatorOffset = _this$options1.rotatorOffset,
           container = _this$options1.container;
-        var local = boxVertices(this.getBBox());
+        var local = boxVertices(this.getFrameBBox());
         var line = this.getLine();
         if (line) {
           local[START_POINT] = [line.x1.baseVal.value, line.y1.baseVal.value];
@@ -7072,15 +7142,34 @@
 
       /** @internal */
     }, {
+      key: "getFrameBBox",
+      value: function getFrameBBox() {
+        var boundsPadding = this.options.boundsPadding;
+        return this.measureBBox(boundsPadding === 'stroke' ? strokeBBox : function (element) {
+          return padBBox(element.getBBox(), boundsPadding);
+        });
+      }
+
+      /** @internal */
+    }, {
       key: "getBBox",
       value: function getBBox() {
+        return this.measureBBox(function (element) {
+          return element.getBBox();
+        });
+      }
+
+      /** @internal */
+    }, {
+      key: "measureBBox",
+      value: function measureBBox(boxOf) {
         var elements = this.elements,
           _this$options10 = this.options,
           container = _this$options10.container,
           isGrouped = _this$options10.isGrouped;
-        if (!isGrouped) return elements[0].getBBox();
+        if (!isGrouped) return boxOf(elements[0]);
         var groupBBox = elements.reduce(function (result, element) {
-          return [].concat(_toConsumableArray(result), _toConsumableArray(bBoxPoints(element, getTransformToElement(element, container))));
+          return [].concat(_toConsumableArray(result), _toConsumableArray(bBoxPoints(element, getTransformToElement(element, container), boxOf(element))));
         }, []);
         var _getMinMaxOfArray = getMinMaxOfArray(groupBBox),
           _getMinMaxOfArray2 = _slicedToArray(_getMinMaxOfArray, 2),

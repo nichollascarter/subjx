@@ -1,3 +1,15 @@
+# [2.1.0](https://github.com/nichollascarter/subjx/compare/v2.0.2...v2.1.0) (2026-11-17)
+
+
+### Bug Fixes
+
+* edges let presses through when resizing is off ([5a59fbd](https://github.com/nichollascarter/subjx/commit/5a59fbda3cc5d5c2d17318247057d0379992e49a))
+
+
+### Features
+
+* **svg:** boundsPadding option to grow the frame around an element ([5cbe3aa](https://github.com/nichollascarter/subjx/commit/5cbe3aafc434d21af29456b3cc6b4d60946bb6b6))
+
 ## [2.0.2](https://github.com/nichollascarter/subjx/compare/v2.0.1...v2.0.2) (2026-11-13)
 
 
