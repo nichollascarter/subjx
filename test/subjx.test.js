@@ -711,6 +711,30 @@ describe('Test handles option', () => {
     });
 });
 
+describe('Test edges without resizing', () => {
+    it('lets presses on the edges through to the element', () => {
+        const draggable = subjx(svgElement).drag({ resizable: false, hitRadius: 12 });
+        const { handles, hitAreas } = draggable.storage;
+
+        ['te', 'be', 'le', 're'].forEach(key => {
+            expect(handles[key].getAttribute('pointer-events')).toEqual('none');
+            expect(hitAreas[key]).toBeUndefined();
+        });
+
+        draggable.disable();
+    });
+
+    it('keeps html edges out of the way too', () => {
+        const draggable = subjx(domElement).drag({ resizable: false });
+
+        ['te', 'be', 'le', 're'].forEach(key => {
+            expect(draggable.storage.handles[key].style.pointerEvents).toEqual('none');
+        });
+
+        draggable.disable();
+    });
+});
+
 describe('Test hitRadius option', () => {
     it('adds no hit areas by default', () => {
         const draggable = subjx(svgElement).drag();

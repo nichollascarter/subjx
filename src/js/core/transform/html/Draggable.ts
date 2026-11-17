@@ -173,7 +173,7 @@ export default class Draggable extends Transformable<Matrix, HTMLStorage> {
         entries(edgeSegments<Vector>(vertices)).forEach(([key, segment]) => {
             const edge = renderLine(segment, key);
 
-            if (!this.isHandleEnabled(key)) helper(edge).css({ pointerEvents: 'none' });
+            if (!this.options.resizable || !this.isHandleEnabled(key)) helper(edge).css({ pointerEvents: 'none' });
 
             controls.appendChild(edge);
             handles[key] = edge;

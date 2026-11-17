@@ -199,7 +199,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
 
         entries(edgeSegments(vertices)).forEach(([key, segment]) => {
             const edge = renderLine(segment, THEME_COLOR, key);
-            const isEnabled = !line && this.isHandleEnabled(key);
+            const isEnabled = !line && this.options.resizable && this.isHandleEnabled(key);
 
             if (!isEnabled) edge.setAttribute('pointer-events', 'none');
             if (line) edge.setAttribute('visibility', 'hidden');
