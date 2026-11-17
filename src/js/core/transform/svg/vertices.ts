@@ -11,6 +11,13 @@ export const transformVertices = (vertices: Record<string, number[]>, matrix: DO
     }, {})
 );
 
+export const padBBox = ({ x, y, width, height }: BBox, padding: number): BBox => ({
+    x: x - padding,
+    y: y - padding,
+    width: width + padding * 2,
+    height: height + padding * 2
+});
+
 export const bBoxPoints = (element: SVGGraphicsElement, ctm: DOMMatrix, bBox: BBox = element.getBBox()) => {
     const { x, y, width, height } = bBox;
 

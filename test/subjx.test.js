@@ -141,6 +141,7 @@ const defaultOptions = {
     resizable: true,
     handles: null,
     hitRadius: 0,
+    boundsPadding: 0,
     showHitAreas: false,
     guides: null,
     rotatable: true,
@@ -707,6 +708,48 @@ describe('Test handles option', () => {
         expect(draggable.storage.handles.p1).toBeUndefined();
         expect(draggable.storage.handles.p2).toBeDefined();
 
+        draggable.disable();
+    });
+});
+
+describe('Test edges without resizing', () => {
+    it('lets presses on the edges through to the element', () => {
+        const draggable = subjx(svgElement).drag({ resizable: false, hitRadius: 12 });
+        const { handles, hitAreas } = draggable.storage;
+
+        ['te', 'be', 'le', 're'].forEach(key => {
+            expect(handles[key].getAttribute('pointer-events')).toEqual('none');
+            expect(hitAreas[key]).toBeUndefined();
+        });
+
+        draggable.disable();
+    });
+
+    it('keeps html edges out of the way too', () => {
+        const draggable = subjx(domElement).drag({ resizable: false });
+
+        ['te', 'be', 'le', 're'].forEach(key => {
+            expect(draggable.storage.handles[key].style.pointerEvents).toEqual('none');
+        });
+
+        draggable.disable();
+    });
+});
+
+describe('Test boundsPadding option', () => {
+    it('keeps a number and drops negatives', () => {
+        const padded = subjx(svgElement).drag({ boundsPadding: 4 });
+        expect(padded.options.boundsPadding).toEqual(4);
+        padded.disable();
+
+        const negative = subjx(svgElement).drag({ boundsPadding: -3 });
+        expect(negative.options.boundsPadding).toEqual(0);
+        negative.disable();
+    });
+
+    it('keeps the stroke mode', () => {
+        const draggable = subjx(svgElement).drag({ boundsPadding: 'stroke' });
+        expect(draggable.options.boundsPadding).toEqual('stroke');
         draggable.disable();
     });
 });

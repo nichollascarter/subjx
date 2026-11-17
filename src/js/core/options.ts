@@ -354,6 +354,14 @@ export interface DragOptions {
      */
     hitRadius?: number;
     /**
+     * Grows the frame and the handles around each element. A number pads the box by
+     * that many units of the element's own coordinate system; `'stroke'` wraps the
+     * painted stroke, including strokes of the children of a group. Moving, resizing
+     * and rotating still use the element geometry. SVG only
+     * @default 0
+     */
+    boundsPadding?: number | 'stroke';
+    /**
      * Keep hit areas visible, e.g. to tune `hitRadius`; otherwise they are
      * highlighted on hover only. SVG only
      * @default false

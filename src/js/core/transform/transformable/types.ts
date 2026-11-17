@@ -118,6 +118,7 @@ export interface TransformOptions {
     resizable: boolean;
     handles: ResizeHandleKey[] | null;
     hitRadius: number;
+    boundsPadding: number | 'stroke';
     showHitAreas: boolean;
     guides: GuidesOptions | null;
     rotatable: boolean;

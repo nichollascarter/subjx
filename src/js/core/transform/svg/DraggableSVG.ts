@@ -45,7 +45,8 @@ import {
     screenScale,
     setAttributes
 } from './controls';
-import { bBoxPoints, lineRotator, transformVertices } from './vertices';
+import { bBoxPoints, lineRotator, padBBox, transformVertices } from './vertices';
+import { strokeBBox } from './stroke-bounds';
 import { readAttributes, resizeElement, translateElement } from './shapes';
 import type {
     BBox,
@@ -199,7 +200,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
 
         entries(edgeSegments(vertices)).forEach(([key, segment]) => {
             const edge = renderLine(segment, THEME_COLOR, key);
-            const isEnabled = !line && this.isHandleEnabled(key);
+            const isEnabled = !line && this.options.resizable && this.isHandleEnabled(key);
 
             if (!isEnabled) edge.setAttribute('pointer-events', 'none');
             if (line) edge.setAttribute('visibility', 'hidden');
@@ -802,7 +803,7 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             }
         } = this;
 
-        const local = boxVertices(this.getBBox());
+        const local = boxVertices(this.getFrameBBox());
         const line = this.getLine();
 
         if (line) {
@@ -843,7 +844,21 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
     }
 
     /** @internal */
+    private getFrameBBox(): BBox {
+        const { boundsPadding } = this.options;
+
+        return this.measureBBox(boundsPadding === 'stroke'
+            ? strokeBBox
+            : element => padBBox(element.getBBox(), boundsPadding));
+    }
+
+    /** @internal */
     private getBBox(): BBox {
+        return this.measureBBox(element => element.getBBox());
+    }
+
+    /** @internal */
+    private measureBBox(boxOf: (element: SVGGraphicsElement) => BBox): BBox {
         const {
             elements,
             options: {
@@ -852,10 +867,10 @@ export default class DraggableSVG extends Transformable<DOMMatrix, SVGStorage> {
             }
         } = this;
 
-        if (!isGrouped) return elements[0].getBBox();
+        if (!isGrouped) return boxOf(elements[0]);
 
         const groupBBox = elements.reduce<number[][]>((result, element) => (
-            [...result, ...bBoxPoints(element, getTransformToElement(element, container))]
+            [...result, ...bBoxPoints(element, getTransformToElement(element, container), boxOf(element))]
         ), []);
 
         const [
